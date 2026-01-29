@@ -1,11 +1,42 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import OrganizerHeader from "./Components/OrganizerHeader";
 import OrganizerSidebar from "./Components/OrganizerSidebar";
 import "./organizer-admin.css";
+import { useRouter } from "next/navigation";
+import authApi from "@/api/authApi";
 
 export default function RootLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const router = useRouter();
+  const [authorized, setAuthorized] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+      try {
+        const response = await authApi.getSelfProfile();
+        if (response.status) {
+          // Supporting both spellings just in case, but backend uses ORGANISER
+          if (response.data.profile.role !== "ORGANISER" && response.data.profile.role !== "ORGANIZER") {
+            router.push("/");
+          } else {
+            setAuthorized(true);
+          }
+        }
+      } catch (error) {
+        router.push("/login");
+      }
+    };
+    checkAuth();
+  }, [router]);
+
+  if (!authorized) return null;
+
   return (
     <html lang="en">
       <body>

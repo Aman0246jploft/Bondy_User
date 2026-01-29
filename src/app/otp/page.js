@@ -1,11 +1,27 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Col, Container, Form, Row } from "react-bootstrap";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import authApi from "@/api/authApi";
+import toast from "react-hot-toast";
 
 export default function OTPPage() {
+  const router = useRouter();
   const [otp, setOtp] = useState(["", "", "", "", ""]);
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const inputRefs = useRef([]);
+
+  useEffect(() => {
+    const storedEmail = localStorage.getItem("registerEmail");
+    if (storedEmail) {
+      setEmail(storedEmail);
+    } else {
+      // If no email, maybe redirect back to register
+      // router.push("/register");
+    }
+  }, []);
 
   const handleChange = (element, index) => {
     if (isNaN(element.value)) return false;
@@ -25,18 +41,60 @@ export default function OTPPage() {
     }
   };
 
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    const otpValue = otp.join("");
+    if (otpValue.length < 5) {
+      toast.error("Please enter full OTP");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await authApi.customerVerifyOtp({
+        email,
+        otp: otpValue,
+      });
+
+      if (response.status) {
+        // Clear registration email
+        localStorage.removeItem("registerEmail");
+        // Save token if returned
+        if (response.data.token) {
+          localStorage.setItem("token", response.data.token);
+        }
+
+        // Check if profile is complete
+        try {
+          const profileRes = await authApi.getSelfProfile();
+          if (profileRes.status && profileRes.data.profile.firstName && profileRes.data.profile.lastName) {
+            router.push("/");
+          } else {
+            router.push("/completeprofile");
+          }
+        } catch (err) {
+          router.push("/completeprofile");
+        }
+      }
+    } catch (error) {
+      // toast handled by interceptor
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="login_sec otp_sec">
       <Container fluid>
         <Row className="justify-content-between align-items-center gy-4 m-0">
           <Col xl={5} lg={7}>
             <div className="login_img">
-              <img src="/img/login_side_img.png" />
+              <img src="/img/login_side_img.png" alt="login side" />
               <div className="content_img_box">
                 <h4>Explore Events Effortlessly</h4>
                 <p>
                   Discover, book, and track events seamlessly with calendar
-                  integration and personalized event curation{" "}
+                  integration and personalized event curation
                 </p>
               </div>
             </div>
@@ -51,11 +109,11 @@ export default function OTPPage() {
                     <p>
                       We sent a verification code to your email
                       <br />
-                      <span>sara.cruz@example.com</span>
+                      <span>{email || "your email"}</span>
                     </p>
                   </div>
 
-                  <Form>
+                  <Form onSubmit={handleVerify}>
                     <div className="otp-container">
                       {otp.map((data, index) => (
                         <input
@@ -71,18 +129,21 @@ export default function OTPPage() {
                         />
                       ))}
                     </div>
+
+                    <div className="other_signup mb-4">
+                      <span>
+                        Didn’t receive the code? <Link href="">Resend</Link>
+                      </span>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="common_btn w-100 border-0"
+                      disabled={loading}
+                    >
+                      {loading ? "Verifying..." : "Verify & Continue"}
+                    </button>
                   </Form>
-
-                  <div className="other_signup mb-4">
-                    <span>
-                      {" "}
-                      Didn’t receive the code? <Link href="">Resend</Link>
-                    </span>
-                  </div>
-
-                  <Link href="/completeprofile" className="common_btn w-100">
-                    Verify & Continue
-                  </Link>
                 </div>
               </Col>
             </Row>

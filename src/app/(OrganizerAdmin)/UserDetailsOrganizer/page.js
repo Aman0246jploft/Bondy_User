@@ -1,8 +1,17 @@
 import Link from "next/link";
 import React from "react";
 import { Col, Row } from "react-bootstrap";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-function page() {
+function UserDetailsOrganizer() {
+  return (
+    <ProtectedRoute>
+      <UserDetailsOrganizerContent />
+    </ProtectedRoute>
+  );
+}
+
+function UserDetailsOrganizerContent() {
   return (
     <div>
       <div className="cards ticket-details">
@@ -122,4 +131,4 @@ function page() {
   );
 }
 
-export default page;
+export default UserDetailsOrganizer;

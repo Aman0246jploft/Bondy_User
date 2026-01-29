@@ -4,17 +4,36 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import LanguageSelector from "./LanguageSelector";
 import Link from "next/link";
+import authApi from "@/api/authApi";
+import { getFullImageUrl } from "@/utils/imageHelper";
 
 export default function BondyHeader() {
   const [isAnimating, setIsAnimating] = useState(true);
   const [showContent, setShowContent] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsAnimating(false);
       setTimeout(() => setShowContent(true), 800);
     }, 1500);
+
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const response = await authApi.getSelfProfile();
+          if (response.status) {
+            setUserProfile(response.data.profile);
+          }
+        } catch (error) {
+          console.error("Header Profile Fetch Error:", error);
+        }
+      }
+    };
+    fetchUser();
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -78,9 +97,31 @@ export default function BondyHeader() {
                 transition={{ duration: 0.8, delay: 0.1 }}
                 style={{ display: "flex", alignItems: "center", gap: "20px" }}>
                 <LanguageSelector />
-                <Link href="/login" className="signup-btn">
-                  Sign Up
-                </Link>
+                {userProfile ? (
+                  <Link
+                    href={
+                      userProfile.role === "ORGANISER" || userProfile.role === "ORGANIZER" ? "/OrganizerPersonalInfo" : userProfile.role === "CUSTOMER" ? "/Personalinfo" : "/completeprofile"
+                    }
+                    className="profile-img-btn"
+                  >
+                    <img
+                      src={getFullImageUrl(userProfile.profileImage)}
+                      alt="profile"
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: "2px solid #fff",
+                        boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
+                      }}
+                    />
+                  </Link>
+                ) : (
+                  <Link href="/login" className="signup-btn">
+                    Sign Up
+                  </Link>
+                )}
 
                 {/* MOBILE ICON */}
                 <button
@@ -161,12 +202,36 @@ export default function BondyHeader() {
               </ul>
 
               <div style={{ marginTop: "auto" }}>
-                <Link
-                  href="/login"
-                  className="signup-btn d-inline-block"
-                  onClick={() => setIsMenuOpen(false)}>
-                  Sign Up
-                </Link>
+                {userProfile ? (
+                  <Link
+                    href={
+                      userProfile.role === "ORGANISER" || userProfile.role === "ORGANIZER" ? "/OrganizerPersonalInfo" : userProfile.role === "CUSTOMER" ? "/Personalinfo" : "/completeprofile"
+                    }
+                    className="profile-img-btn"
+                    onClick={() => setIsMenuOpen(false)}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'white' }}>
+                      <img
+                        src={getFullImageUrl(userProfile.profileImage)}
+                        alt="profile"
+                        style={{
+                          width: "50px",
+                          height: "50px",
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                          border: "2px solid #fff"
+                        }}
+                      />
+                      <span>{userProfile.firstName || 'Profile'}</span>
+                    </div>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="signup-btn d-inline-block"
+                    onClick={() => setIsMenuOpen(false)}>
+                    Sign Up
+                  </Link>
+                )}
               </div>
             </motion.div>
           </>

@@ -34,6 +34,7 @@ function PersonalInfoContent() {
         const response = await authApi.getSelfProfile();
         if (response.status) {
           const profile = response.data.profile;
+          console.log("Profile Data:", profile);
           setProfileData({
             firstName: profile.firstName || "",
             lastName: profile.lastName || "",
@@ -110,7 +111,7 @@ function PersonalInfoContent() {
           longitude: Number(profileData.longitude) || 0,
           city: profileData.city,
           country: profileData.country,
-          address: profileData.state, // Kept for backward compatibility if needed
+          address: profileData.state,
           state: profileData.state,
           zipcode: profileData.zipcode,
         }

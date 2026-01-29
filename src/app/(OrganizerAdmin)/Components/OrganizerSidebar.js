@@ -1,16 +1,26 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function OrganizerSidebar({ toggleSidebar }) {
   const [collapsed, setCollapsed] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const isActive = (path) => {
     if (isDropdownOpen) return false;
     return pathname === path;
+  };
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    localStorage.removeItem("token");
+    localStorage.removeItem("userProfile");
+    toast.success("Logged out successfully");
+    router.push("/login");
   };
 
   return (
@@ -18,7 +28,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
       {/* Header */}
       <div className="sidebar-header">
         <div className="logo">
-          <Link href="/(CustomerAdmin)/Personalinfo">
+          <Link href="/Dashboard">
             <img
               src="/img/sidebar-logo.svg"
               alt="Logo"
@@ -47,9 +57,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
 
         <Link
           href="/EventsManagement"
-          className={`menu-item ${
-            isActive("/EventsManagement") ? "active" : ""
-          }`}>
+          className={`menu-item ${isActive("/EventsManagement") ? "active" : ""
+            }`}>
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-02.svg" alt="" />
           </span>
@@ -82,9 +91,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
         </Link>
         <Link
           href="/SubscriptionBilling"
-          className={`menu-item ${
-            isActive("/SubscriptionBilling") ? "active" : ""
-          }`}>
+          className={`menu-item ${isActive("/SubscriptionBilling") ? "active" : ""
+            }`}>
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-06.svg" alt="" />
           </span>
@@ -106,12 +114,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </span>
           <span className="text">Support Tickets</span>
         </Link>
-        {/* <Link href="" className="menu-item">
-          <span className="icon">
-            <img src="/img/org-img/sidebar-icon-09.svg" alt="" />
-          </span>
-          <span className="text">Create New</span>
-        </Link> */}
+
         <div className="accordion-wrapper create_dropdwon">
           <div
             className={`menu-item ${isDropdownOpen ? "active" : ""}`}
@@ -123,13 +126,12 @@ export default function OrganizerSidebar({ toggleSidebar }) {
             {!collapsed && (
               <>
                 <span className="text">Create</span>
-                {/* Optional Arrow for better UX */}
               </>
             )}
           </div>
 
           <div className={`accordion-content ${isDropdownOpen ? "show" : ""}`}>
-            <Link href="" className="sub-item" onClick={() => {}}>
+            <Link href="" className="sub-item" onClick={() => { }}>
               Create Event
             </Link>
             <Link href="/AddProgram" className="sub-item">
@@ -155,7 +157,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </span>
           <span className="text">Settings</span>
         </Link>
-        <Link href="/" className="menu-item">
+        <Link href="#" className="menu-item" onClick={handleLogout}>
           <span className="icon">
             <img src="/img/logout-icon.svg" alt="" />
           </span>

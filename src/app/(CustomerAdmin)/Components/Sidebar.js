@@ -1,13 +1,23 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function Sidebar({ toggleSidebar }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const isActive = (path) => pathname === path;
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    localStorage.removeItem("token");
+    localStorage.removeItem("userProfile");
+    toast.success("Logged out successfully");
+    router.push("/login");
+  };
 
   return (
     <aside className="customer-sidebar">
@@ -103,7 +113,7 @@ export default function Sidebar({ toggleSidebar }) {
           </span>
           <span className="text">Settings</span>
         </Link>
-        <Link href="/" className="menu-item">
+        <Link href="#" className="menu-item" onClick={handleLogout}>
           <span className="icon">
             <img src="/img/logout-icon.svg" alt="" />
           </span>

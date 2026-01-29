@@ -1,8 +1,26 @@
 import LanguageSelector from "@/components/LanguageSelector";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import authApi from "@/api/authApi";
+import { getFullImageUrl } from "@/utils/imageHelper";
 
 function CustomerHeader() {
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await authApi.getSelfProfile();
+        if (response.status) {
+          setProfile(response.data.profile);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile in CustomerHeader:", error);
+      }
+    };
+    fetchProfile();
+  }, []);
+
   return (
     <div>
       <header className="topbar">
@@ -27,8 +45,8 @@ function CustomerHeader() {
           <LanguageSelector />
 
           <div className="avatar">
-            <Link href="/profile">
-              <img src="/img/avtar.png" alt="User" />
+            <Link href="/Personalinfo">
+              <img src={profile?.profileImage ? getFullImageUrl(profile.profileImage) : "/img/avtar.png"} alt="User" />
             </Link>
           </div>
         </div>

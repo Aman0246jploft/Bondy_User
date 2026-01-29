@@ -1,13 +1,82 @@
 "use client";
 import InterestSelector from "@/components/InterestSelector";
-import Link from "next/link";
-import React, { useState } from "react";
-import { Col, Container, Form, Row } from "react-bootstrap";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import React, { useState, useEffect } from "react";
+import { Col, Container, Row, Button } from "react-bootstrap";
+import { useRouter } from "next/navigation";
+import authApi from "@/api/authApi";
+import toast from "react-hot-toast";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-export default function DittoDesign() {
-  const [startDate, setStartDate] = useState(new Date());
+export default function InterestPage() {
+  return (
+    <ProtectedRoute>
+      <InterestPageContent />
+    </ProtectedRoute>
+  );
+}
+
+function InterestPageContent() {
+  const router = useRouter();
+  const [categories, setCategories] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [catRes, profileRes] = await Promise.all([
+          authApi.getCategoryList(),
+          authApi.getSelfProfile(),
+        ]);
+
+        if (catRes.status) {
+          setCategories(catRes.data.categories);
+        }
+
+        if (profileRes.status) {
+          const profile = profileRes.data.profile;
+          setProfile(profile);
+          // Ensure we only store IDs
+          const existingInterests = (profile.categories || []).map(cat => cat._id || cat);
+          setSelectedIds(existingInterests);
+        }
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleToggle = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleContinue = async () => {
+    if (selectedIds.length === 0) {
+      toast.error("Please select at least one interest");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await authApi.updateProfile({
+        ...profile,
+        categories: selectedIds,
+        location: profile?.location || null
+      });
+      if (response.status) {
+        toast.success("Interests updated successfully");
+        router.push("/"); // Redirect to home or dashboard
+      }
+    } catch (error) {
+      console.error("Failed to update interests:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="login_sec compplete_profile_sec">
@@ -15,12 +84,12 @@ export default function DittoDesign() {
         <Row className="justify-content-between align-items-center gy-4">
           <Col xl={5} lg={7}>
             <div className="login_img">
-              <img src="/img/login_side_img.png" />
+              <img src="/img/login_side_img.png" alt="login side" />
               <div className="content_img_box">
                 <h4>Explore Events Effortlessly</h4>
                 <p>
                   Discover, book, and track events seamlessly with calendar
-                  integration and personalized event curation{" "}
+                  integration and personalized event curation
                 </p>
               </div>
             </div>
@@ -36,10 +105,18 @@ export default function DittoDesign() {
                   </p>
                 </div>
                 <main>
-                  <InterestSelector />
-                  <Link href="/Personalinfo" className="common_btn w-100 mt-4">
-                    Continue
-                  </Link>
+                  <InterestSelector
+                    categories={categories}
+                    selectedIds={selectedIds}
+                    onToggle={handleToggle}
+                  />
+                  <Button
+                    onClick={handleContinue}
+                    className="common_btn w-100 mt-4 border-0"
+                    disabled={loading}
+                  >
+                    {loading ? "Saving..." : "Continue"}
+                  </Button>
                 </main>
               </Col>
             </Row>

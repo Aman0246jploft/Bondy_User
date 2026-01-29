@@ -27,8 +27,8 @@ export default function VerificationModl(props) {
               </p>
             </div>
             <div className="align_btn mt-5">
-              <Link href="/" className="common_btn">
-                Go to Home
+              <Link href={props.redirectPath || "/"} className="common_btn">
+                Go back
               </Link>
             </div>
           </div>

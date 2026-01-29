@@ -1,34 +1,142 @@
 "use client";
-import Link from "next/link";
-import React, { useState, useRef } from "react";
-import { Col, Container, Form, Row } from "react-bootstrap";
+import React, { useState, useRef, useEffect } from "react";
+import { Col, Container, Form, Row, Button } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useRouter } from "next/navigation";
+import authApi from "@/api/authApi";
+import toast from "react-hot-toast";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { getFullImageUrl } from "@/utils/imageHelper";
 
-export default function DittoDesign() {
-  const [startDate, setStartDate] = useState(new Date());
+export default function CompleteProfile() {
+  return (
+    <ProtectedRoute>
+      <CompleteProfileContent />
+    </ProtectedRoute>
+  );
+}
+
+function CompleteProfileContent() {
+  const router = useRouter();
   const fileRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [profileData, setProfileData] = useState({
+    firstName: "",
+    lastName: "",
+    gender: "",
+    dob: null,
+    bio: "",
+    profileImage: "",
+  });
   const [preview, setPreview] = useState(null);
 
-  const handleFileChange = (e) => {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await authApi.getSelfProfile();
+        if (response.status) {
+          const profile = response.data.profile;
+          setProfileData({
+            firstName: profile.firstName || "",
+            lastName: profile.lastName || "",
+            gender: profile.gender || "",
+            dob: profile.dob ? new Date(profile.dob) : null,
+            bio: profile.bio || "",
+            profileImage: profile.profileImage || "",
+            location: profile.location || null,
+          });
+          if (profile.profileImage) {
+            setPreview(getFullImageUrl(profile.profileImage));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const imageUrl = URL.createObjectURL(file);
-    setPreview(imageUrl);
+    // Show local preview immediately
+    const localPreview = URL.createObjectURL(file);
+    setPreview(localPreview);
+
+    const formData = new FormData();
+    formData.append("files", file);
+
+    try {
+      setLoading(true);
+      const response = await authApi.uploadFile(formData);
+      if (response.status) {
+        // Response format: { data: { files: ["path/to/img"] } }
+        const filePath = response.data.files[0];
+        setProfileData((prev) => ({ ...prev, profileImage: filePath }));
+        setPreview(getFullImageUrl(filePath));
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Image upload failed");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Clean up object URL when component unmounts or preview changes
+  useEffect(() => {
+    return () => {
+      if (preview && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDateChange = (date) => {
+    setProfileData((prev) => ({ ...prev, dob: date }));
+  };
+
+  const handleContinue = async (e) => {
+    e.preventDefault();
+    if (!profileData.firstName || !profileData.lastName) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await authApi.updateProfile({
+        ...profileData,
+        location: profileData.location // Preserve existing location object
+      });
+      if (response.status) {
+        router.push("/insterest");
+      }
+    } catch (error) {
+      console.error("Update failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="login_sec compplete_profile_sec">
       <Container fluid>
         <Row className="justify-content-between align-items-center gy-4">
           <Col xl={5} lg={7}>
             <div className="login_img">
-              <img src="/img/login_side_img.png" />
+              <img src="/img/login_side_img.png" alt="login side" />
               <div className="content_img_box">
                 <h4>Explore Events Effortlessly</h4>
                 <p>
                   Discover, book, and track events seamlessly with calendar
-                  integration and personalized event curation{" "}
+                  integration and personalized event curation
                 </p>
               </div>
             </div>
@@ -46,6 +154,7 @@ export default function DittoDesign() {
                   </div>
                   <div
                     className="photo_upload_sec"
+                    style={{ cursor: "pointer" }}
                     onClick={() => fileRef.current.click()}>
                     <div className="photo_circle">
                       {preview ? (
@@ -53,6 +162,7 @@ export default function DittoDesign() {
                           src={preview}
                           alt="Preview"
                           className="preview-img"
+                          style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
                         />
                       ) : (
                         <img
@@ -76,14 +186,18 @@ export default function DittoDesign() {
                     />
                   </div>
 
-                  <Form className="common_field">
+                  <Form className="common_field" onSubmit={handleContinue}>
                     <Row className="gy-3">
                       <Col md={6}>
                         <Form.Group controlId="firstName">
                           <Form.Control
                             type="text"
+                            name="firstName"
                             placeholder="First name"
                             className="custom_field_input"
+                            value={profileData.firstName}
+                            onChange={handleChange}
+                            required
                           />
                         </Form.Group>
                       </Col>
@@ -91,8 +205,12 @@ export default function DittoDesign() {
                         <Form.Group controlId="lastName">
                           <Form.Control
                             type="text"
+                            name="lastName"
                             placeholder="Last name"
                             className="custom_field_input"
+                            value={profileData.lastName}
+                            onChange={handleChange}
+                            required
                           />
                         </Form.Group>
                       </Col>
@@ -103,8 +221,13 @@ export default function DittoDesign() {
                         <div className="select_gender">
                           <span>Gender</span>
                           <Form.Group controlId="gender">
-                            <Form.Select className="custom_field_input custom_select">
-                              <option value="" disabled selected>
+                            <Form.Select
+                              name="gender"
+                              className="custom_field_input custom_select"
+                              value={profileData.gender}
+                              onChange={handleChange}
+                            >
+                              <option value="" disabled>
                                 Gender
                               </option>
                               <option value="male">Male</option>
@@ -118,18 +241,17 @@ export default function DittoDesign() {
                     <Row className="mt-3">
                       <Col xs={12}>
                         <Form.Group controlId="dob">
-                          <Form.Group controlId="dob">
-                            <DatePicker
-                              selected={startDate}
-                              onChange={(date) => setStartDate(date)}
-                              placeholderText="Date of Birth"
-                              className="form-control w-100"
-                              dateFormat="dd/MM/yyyy"
-                              showYearDropdown
-                              showMonthDropdown
-                              dropdownMode="select"
-                            />
-                          </Form.Group>
+                          <DatePicker
+                            selected={profileData.dob}
+                            onChange={handleDateChange}
+                            placeholderText="Date of Birth"
+                            className="form-control w-100"
+                            dateFormat="dd/MM/yyyy"
+                            maxDate={new Date()}
+                            showYearDropdown
+                            showMonthDropdown
+                            dropdownMode="select"
+                          />
                         </Form.Group>
                       </Col>
                     </Row>
@@ -140,16 +262,24 @@ export default function DittoDesign() {
                           <Form.Control
                             as="textarea"
                             rows={4}
+                            name="bio"
                             placeholder="Bio"
                             className="custom_field_input custom_bio"
+                            value={profileData.bio}
+                            onChange={handleChange}
                           />
                         </Form.Group>
                       </Col>
                     </Row>
+
+                    <Button
+                      type="submit"
+                      className="common_btn w-100 mt-4 border-0"
+                      disabled={loading}
+                    >
+                      {loading ? "Updating..." : "Continue"}
+                    </Button>
                   </Form>
-                  <Link href="/insterest" className="common_btn w-100 mt-4">
-                    Continue
-                  </Link>
                 </div>
               </Col>
             </Row>
