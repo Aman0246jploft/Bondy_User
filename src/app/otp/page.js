@@ -14,12 +14,14 @@ export default function OTPPage() {
   const inputRefs = useRef([]);
 
   useEffect(() => {
-    const storedEmail = localStorage.getItem("registerEmail");
+    const searchParams = new URLSearchParams(window.location.search);
+    const flow = searchParams.get("flow");
+    const storedEmail = flow === "login"
+      ? localStorage.getItem("loginEmail")
+      : localStorage.getItem("registerEmail");
+
     if (storedEmail) {
       setEmail(storedEmail);
-    } else {
-      // If no email, maybe redirect back to register
-      // router.push("/register");
     }
   }, []);
 
@@ -49,26 +51,53 @@ export default function OTPPage() {
       return;
     }
 
+    const searchParams = new URLSearchParams(window.location.search);
+    const flow = searchParams.get("flow");
+
     setLoading(true);
     try {
-      const response = await authApi.customerVerifyOtp({
-        email,
-        otp: otpValue,
-      });
+      let response;
+      if (flow === "login") {
+        response = await authApi.loginVerify({
+          email,
+          otp: otpValue,
+        });
+      } else {
+        response = await authApi.customerVerifyOtp({
+          email,
+          otp: otpValue,
+        });
+      }
 
       if (response.status) {
-        // Clear registration email
-        localStorage.removeItem("registerEmail");
-        // Save token if returned
+        // Clear stored email
+        if (flow === "login") {
+          localStorage.removeItem("loginEmail");
+        } else {
+          localStorage.removeItem("registerEmail");
+        }
+
+        // Save token
         if (response.data.token) {
           localStorage.setItem("token", response.data.token);
         }
 
-        // Check if profile is complete
+        // Check profile and redirect
         try {
           const profileRes = await authApi.getSelfProfile();
-          if (profileRes.status && profileRes.data.profile.firstName && profileRes.data.profile.lastName) {
-            router.push("/");
+          if (profileRes.status) {
+            const profile = profileRes.data.profile;
+            // Check for names to determine completeness
+            if (profile.firstName && profile.lastName) {
+              // Redirect based on role
+              if (profile.role === "ORGANISER" || profile.role === "ORGANIZER") {
+                router.push("/Dashboard");
+              } else {
+                router.push("/");
+              }
+            } else {
+              router.push("/completeprofile");
+            }
           } else {
             router.push("/completeprofile");
           }
@@ -80,6 +109,23 @@ export default function OTPPage() {
       // toast handled by interceptor
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async (e) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Email not found");
+      return;
+    }
+
+    try {
+      const response = await authApi.resendOtp({ email });
+      if (response.status) {
+        toast.success("OTP resent successfully");
+      }
+    } catch (error) {
+      // error handled by apiClient
     }
   };
 
@@ -132,7 +178,10 @@ export default function OTPPage() {
 
                     <div className="other_signup mb-4">
                       <span>
-                        Didn’t receive the code? <Link href="">Resend</Link>
+                        Didn’t receive the code?{" "}
+                        <Link href="#" onClick={handleResend}>
+                          Resend
+                        </Link>
                       </span>
                     </div>
 

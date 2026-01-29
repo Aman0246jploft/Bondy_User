@@ -2,10 +2,47 @@
 import Link from "next/link";
 import React, { useState } from "react";
 import { Col, Container, Form, Nav, Row, Tab } from "react-bootstrap";
+import authApi from "@/api/authApi";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function Page() {
-  const [selected, setSelected] = useState("card"); // Aapka original state
+  const router = useRouter();
   const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("Customer");
+
+  // Form State
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await authApi.loginInit({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (response.status) {
+        localStorage.setItem("loginEmail", formData.email);
+        localStorage.setItem("loginType", activeTab.toLowerCase());
+        router.push("/otp?flow=login");
+      }
+    } catch (error) {
+      // Toast error handled by apiClient interceptor
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="login_sec">
@@ -36,7 +73,11 @@ export default function Page() {
                     </p>
                   </div>
 
-                  <Tab.Container id="Login" defaultActiveKey="Customer">
+                  <Tab.Container
+                    id="Login"
+                    activeKey={activeTab}
+                    onSelect={(k) => setActiveTab(k)}
+                  >
                     <Row>
                       <Col sm={12} className="mb-4">
                         <Nav
@@ -54,13 +95,17 @@ export default function Page() {
                       <Col sm={12}>
                         <Tab.Content>
                           <Tab.Pane eventKey="Customer">
-                            <Form className="login_field">
+                            <Form className="login_field" onSubmit={handleLogin}>
                               <Form.Group
                                 className="mb-3"
                                 controlId="customerEmail">
                                 <Form.Control
                                   type="email"
+                                  name="email"
                                   placeholder="Email"
+                                  value={formData.email}
+                                  onChange={handleChange}
+                                  required
                                 />
                               </Form.Group>
                               <Form.Group
@@ -69,30 +114,30 @@ export default function Page() {
                                 <div className="d-flex gap-2 position-relative">
                                   <Form.Control
                                     type={show ? "text" : "password"}
+                                    name="password"
                                     placeholder="Enter your password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
                                   />
                                   <button
                                     type="button"
                                     onClick={() => setShow(!show)}
                                     className="password-eye-btn">
                                     <img
-                                      src={
-                                        show
-                                          ? "/img/lock.svg"
-                                          : "/img/unlock.svg"
-                                      }
+                                      src={show ? "/img/lock.svg" : "/img/unlock.svg"}
                                       alt="toggle password"
                                     />
                                   </button>
                                 </div>
                               </Form.Group>
+                              <button
+                                type="submit"
+                                disabled={loading}
+                                className="common_btn w-100 d-block text-center text-decoration-none border-0">
+                                {loading ? "Signing In..." : "Sign In"}
+                              </button>
                             </Form>
-
-                            <Link
-                              href="/otp?type=customer"
-                              className="common_btn w-100 d-block text-center text-decoration-none">
-                              Sign In
-                            </Link>
 
                             <div className="other_text">
                               <span></span>
@@ -124,15 +169,18 @@ export default function Page() {
                             </div>
                           </Tab.Pane>
 
-                          {/* ORGANIZER TAB CONTENT */}
                           <Tab.Pane eventKey="Organizer">
-                            <Form className="login_field">
+                            <Form className="login_field" onSubmit={handleLogin}>
                               <Form.Group
                                 className="mb-3"
                                 controlId="organizerEmail">
                                 <Form.Control
                                   type="email"
+                                  name="email"
                                   placeholder="Email"
+                                  value={formData.email}
+                                  onChange={handleChange}
+                                  required
                                 />
                               </Form.Group>
                               <Form.Group
@@ -141,30 +189,30 @@ export default function Page() {
                                 <div className="d-flex gap-2 position-relative">
                                   <Form.Control
                                     type={show ? "text" : "password"}
+                                    name="password"
                                     placeholder="Enter your password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
                                   />
                                   <button
                                     type="button"
                                     onClick={() => setShow(!show)}
                                     className="password-eye-btn">
                                     <img
-                                      src={
-                                        show
-                                          ? "/img/lock.svg"
-                                          : "/img/unlock.svg"
-                                      }
+                                      src={show ? "/img/lock.svg" : "/img/unlock.svg"}
                                       alt="toggle password"
                                     />
                                   </button>
                                 </div>
                               </Form.Group>
+                              <button
+                                type="submit"
+                                disabled={loading}
+                                className="common_btn w-100 d-block text-center text-decoration-none border-0">
+                                {loading ? "Signing In..." : "Sign In"}
+                              </button>
                             </Form>
-
-                            <Link
-                              href="/otp?type=organizer"
-                              className="common_btn w-100 d-block text-center text-decoration-none">
-                              Sign In
-                            </Link>
 
                             <div className="other_text">
                               <span></span>

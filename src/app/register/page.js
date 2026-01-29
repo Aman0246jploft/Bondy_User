@@ -74,7 +74,7 @@ export default function Page() {
       const formData = new FormData();
       formData.append("files", file);
       const response = await authApi.uploadFile(formData);
-      if (response.success) {
+      if (response.status) {
         setOrganizerData((prev) => ({
           ...prev,
           documents: response.data.files,
