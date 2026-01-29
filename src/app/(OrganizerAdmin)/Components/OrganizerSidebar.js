@@ -28,7 +28,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
       {/* Header */}
       <div className="sidebar-header">
         <div className="logo">
-          <Link href="/Dashboard">
+          {/* <Link href="/Dashboard"> */}
+          <Link href="/">
             <img
               src="/img/sidebar-logo.svg"
               alt="Logo"
@@ -47,8 +48,19 @@ export default function OrganizerSidebar({ toggleSidebar }) {
       {/* Middle Section */}
       <nav className="sidebar-menu">
         <Link
+          href="/OrganizerPersonalInfo"
+          className={`menu-item ${isActive("/OrganizerPersonalInfo") ? "active" : ""}`}
+        >
+          <span className="icon">
+            <img src="/img/user-icon.svg" alt="" />
+          </span>
+          <span className="text">PersonalInfo</span>
+        </Link>
+
+        <Link
           href="/Dashboard"
-          className={`menu-item ${isActive("/Dashboard") ? "active" : ""}`}>
+          className={`menu-item ${isActive("/Dashboard") ? "active" : ""}`}
+        >
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-01.svg" alt="" />
           </span>
@@ -57,8 +69,10 @@ export default function OrganizerSidebar({ toggleSidebar }) {
 
         <Link
           href="/EventsManagement"
-          className={`menu-item ${isActive("/EventsManagement") ? "active" : ""
-            }`}>
+          className={`menu-item ${
+            isActive("/EventsManagement") ? "active" : ""
+          }`}
+        >
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-02.svg" alt="" />
           </span>
@@ -66,7 +80,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
         </Link>
         <Link
           href="/Analytics"
-          className={`menu-item ${isActive("/Analytics") ? "active" : ""}`}>
+          className={`menu-item ${isActive("/Analytics") ? "active" : ""}`}
+        >
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-03.svg" alt="" />
           </span>
@@ -75,7 +90,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
 
         <Link
           href="/Promotions"
-          className={`menu-item ${isActive("/Promotions") ? "active" : ""}`}>
+          className={`menu-item ${isActive("/Promotions") ? "active" : ""}`}
+        >
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-04.svg" alt="" />
           </span>
@@ -83,7 +99,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
         </Link>
         <Link
           href="/Earnings"
-          className={`menu-item ${isActive("/Earnings") ? "active" : ""}`}>
+          className={`menu-item ${isActive("/Earnings") ? "active" : ""}`}
+        >
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-05.svg" alt="" />
           </span>
@@ -91,8 +108,10 @@ export default function OrganizerSidebar({ toggleSidebar }) {
         </Link>
         <Link
           href="/SubscriptionBilling"
-          className={`menu-item ${isActive("/SubscriptionBilling") ? "active" : ""
-            }`}>
+          className={`menu-item ${
+            isActive("/SubscriptionBilling") ? "active" : ""
+          }`}
+        >
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-06.svg" alt="" />
           </span>
@@ -100,7 +119,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
         </Link>
         <Link
           href="/Referral"
-          className={`menu-item ${isActive("/Referral") ? "active" : ""}`}>
+          className={`menu-item ${isActive("/Referral") ? "active" : ""}`}
+        >
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-07.svg" alt="" />
           </span>
@@ -108,7 +128,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
         </Link>
         <Link
           href="/SupportTickets"
-          className={`menu-item ${isActive("/SupportTickets") ? "active" : ""}`}>
+          className={`menu-item ${isActive("/SupportTickets") ? "active" : ""}`}
+        >
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-08.svg" alt="" />
           </span>
@@ -119,7 +140,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <div
             className={`menu-item ${isDropdownOpen ? "active" : ""}`}
             onClick={() => setIsDropdownOpen(!isDropdownOpen)} // Toggle logic
-            style={{ cursor: "pointer" }}>
+            style={{ cursor: "pointer" }}
+          >
             <span className="icon">
               <img src="/img/org-img/sidebar-icon-09.svg" alt="" />
             </span>
@@ -131,7 +153,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </div>
 
           <div className={`accordion-content ${isDropdownOpen ? "show" : ""}`}>
-            <Link href="" className="sub-item" onClick={() => { }}>
+            <Link href="" className="sub-item" onClick={() => {}}>
               Create Event
             </Link>
             <Link href="/AddProgram" className="sub-item">
@@ -141,7 +163,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
         </div>
         <Link
           href="/Verifiedprofile"
-          className={`menu-item ${isActive("/Verifiedprofile") ? "active" : ""}`}>
+          className={`menu-item ${isActive("/Verifiedprofile") ? "active" : ""}`}
+        >
           <span className="icon">
             <img src="/img/org-img/verifiedprofile.svg" alt="" />
           </span>

@@ -21,16 +21,16 @@ export default function Footer() {
 
               <div className="footer-links">
                 <div>
-                  <Link href="#">Agenda</Link>
-                  <Link href="#">Speakers</Link>
+                  {/* <Link href="#">Agenda</Link> */}
+                  {/* <Link href="#">Speakers</Link> */}
                   <Link href="/register">Register</Link>
-                  <Link href="#">Venue</Link>
-                  <Link href="#">FAQ</Link>
+                  {/* <Link href="#">Venue</Link> */}
+                  {/* <Link href="#">FAQ</Link> */}
                 </div>
                 <div>
                   <Link href="#">Terms & Conditions</Link>
                   <Link href="#">Privacy Policy</Link>
-                  <Link href="#">Cookie Policy</Link>
+                  {/* <Link href="#">Cookie Policy</Link> */}
                 </div>
               </div>
               <div className="copyright">© 2026 Bondy. All rights reserved.</div>

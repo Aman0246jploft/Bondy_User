@@ -91,7 +91,9 @@ export default function OTPPage() {
             if (profile.firstName && profile.lastName) {
               // Redirect based on role
               if (profile.role === "ORGANISER" || profile.role === "ORGANIZER") {
-                router.push("/Dashboard");
+                // router.push("/Dashboard");
+                router.push("/");
+
               } else {
                 router.push("/");
               }

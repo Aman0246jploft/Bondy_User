@@ -205,7 +205,7 @@ export default function BondyHeader() {
                 {userProfile ? (
                   <Link
                     href={
-                      userProfile.role === "ORGANISER" || userProfile.role === "ORGANIZER" ? "/OrganizerPersonalInfo" : userProfile.role === "CUSTOMER" ? "/Personalinfo" : "/completeprofile"
+                      userProfile.role === "ORGANISER" || userProfile.role === "ORGANIZER" ? "/Dashboard" : userProfile.role === "CUSTOMER" ? "/Personalinfo" : "/completeprofile"
                     }
                     className="profile-img-btn"
                     onClick={() => setIsMenuOpen(false)}>
