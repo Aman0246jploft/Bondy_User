@@ -23,7 +23,7 @@ function page() {
       const newLinks = [];
       for (const file of files) {
         const formData = new FormData();
-        formData.append("images", file);
+        formData.append("files", file);
         const response = await authApi.uploadFile(formData);
         if (response.data && response.data.files && response.data.files.length > 0) {
           newLinks.push(response.data.files[0].url);
