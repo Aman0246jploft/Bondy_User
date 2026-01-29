@@ -1,18 +1,36 @@
 "use client";
 import Link from "next/link";
-import React from "react";
-import { useRef } from "react";
+import React, { useRef } from "react";
 import { Col, Form, Row } from "react-bootstrap";
+import { useEventContext } from "@/context/EventContext";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 function page() {
-  const inputRef = useRef(null);
+  const { eventData, updateEventData } = useEventContext();
+  const router = useRouter();
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    updateEventData({ [name]: value });
+  };
+
+  const handleNext = (e) => {
+    e.preventDefault();
+    if (!eventData.ticketName || !eventData.ticketPrice) {
+      toast.error("Please fill in required fields");
+      return;
+    }
+    router.push("/Gallery");
+  };
+
   return (
     <div>
       <Row className="justify-content-center">
         <Col md={8}>
           <ul className="event-steps">
             <li className="steps-item">
-              <Link href="" className="steps-link active">
+              <Link href="/BasicInfo" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-01.svg" className="me-2" />
                   Event Basic Info
@@ -23,7 +41,7 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="" className="steps-link active">
+              <Link href="/DateTime" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-02.svg" className="me-2" />
                   Date, Time and Location
@@ -34,7 +52,7 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="" className="steps-link active">
+              <Link href="/TicketsPricing" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-03.svg" className="me-2" />
                   Tickets & Pricing
@@ -45,7 +63,7 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="" className="steps-link">
+              <Link href="/Gallery" className="steps-link">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-04.svg" className="me-2" />
                   Gallery
@@ -61,86 +79,119 @@ function page() {
               <Row>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Ticket Name</label>
-                    <input type="text" className="form-control" />
+                    <label className="form-label">Ticket Name <span className="text-danger">*</span></label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="ticketName"
+                      value={eventData.ticketName}
+                      onChange={handleInputChange}
+                      placeholder="Enter ticket name"
+                    />
                   </div>
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
                     <label className="form-label">Quantity Available</label>
-                    <input type="number" className="form-control" />
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="ticketQtyAvailable"
+                      value={eventData.ticketQtyAvailable}
+                      onChange={handleInputChange}
+                    />
                   </div>
                 </Col>
               </Row>
               <Row>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Price per Ticket</label>
-                    <input type="number" className="form-control" />
+                    <label className="form-label">Price per Ticket <span className="text-danger">*</span></label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="ticketPrice"
+                      value={eventData.ticketPrice}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </Col>
+                <Col md={6}>
+                  <div className="event-frm-bx">
+                    <label className="form-label">Total Tickets</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="totalTickets"
+                      value={eventData.totalTickets}
+                      onChange={handleInputChange}
+                    />
                   </div>
                 </Col>
               </Row>
               <Row>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Start Date</label>
+                    <label className="form-label">Sales Start Date</label>
                     <div className="date-input-wrapper">
                       <input
-                        ref={inputRef}
                         type="date"
                         className="date-input form-control"
+                        name="ticketSelesStartDate"
+                        value={eventData.ticketSelesStartDate}
+                        onChange={handleInputChange}
                       />
-
-                      <span
-                        className="calendar-icon"
-                        onClick={() => inputRef.current.showPicker()}
-                      >
-                        <img src="/img/date_icon.svg" alt="calendar" />
-                      </span>
                     </div>
                   </div>
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">End Date</label>
+                    <label className="form-label">Sales End Date</label>
                     <div className="date-input-wrapper">
                       <input
-                        ref={inputRef}
                         type="date"
                         className="date-input form-control"
+                        name="ticketSelesEndDate"
+                        value={eventData.ticketSelesEndDate}
+                        onChange={handleInputChange}
                       />
-
-                      <span
-                        className="calendar-icon"
-                        onClick={() => inputRef.current.showPicker()}
-                      >
-                        <img src="/img/date_icon.svg" alt="calendar" />
-                      </span>
                     </div>
                   </div>
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
                     <label className="form-label">Refund Policy</label>
-                    <input type="text" className="form-control" />
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="refundPolicy"
+                      value={eventData.refundPolicy}
+                      onChange={handleInputChange}
+                      placeholder="e.g. No Refunds"
+                    />
                   </div>
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Coupon</label>
-                    <input type="text" className="form-control" />
+                    <label className="form-label">Add-ons</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="addOns"
+                      value={eventData.addOns}
+                      onChange={handleInputChange}
+                      placeholder="Optional add-ons"
+                    />
                   </div>
                 </Col>
               </Row>
               <div className="d-flex gap-2 justify-content-end mt-2">
                 <Link href="/DateTime" className="outline-btn">
-                  {" "}
                   Back
                 </Link>
-                <Link href="/Gallery" className="custom-btn">
-                  {" "}
+                <button type="button" onClick={handleNext} className="custom-btn">
                   Save and Continue
-                </Link>
+                </button>
               </div>
             </div>
           </Form>

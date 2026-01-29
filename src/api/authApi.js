@@ -13,7 +13,14 @@ const authApi = {
         }),
     getSelfProfile: () => apiClient.get("/user/selfProfile", { skipToast: true }),
     updateProfile: (data) => apiClient.post("/user/update-profile", data, { skipToast: true }),
-    getCategoryList: () => apiClient.get("/category/list?page=1&limit=1000000000&search="),
+    getCategoryList: (params) => apiClient.get("/category/list", {
+        params: {
+            page: 1,
+            limit: 1000000000,
+            search: "",
+            ...params
+        }
+    }),
     loginInit: (data) => apiClient.post("/user/login/init", data),
     loginVerify: (data) => apiClient.post("/user/login/verify", data),
     resendOtp: (data) => apiClient.post("/user/resend-otp", data),

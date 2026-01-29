@@ -6,6 +6,7 @@ const eventApi = {
         // params should include: page, limit, filter, categoryId, search, latitude, longitude
         return apiClient.get("/event/list", { params, skipToast: true });
     },
+    createEvent: (data) => apiClient.post("/event/create", data),
 };
 
 export default eventApi;

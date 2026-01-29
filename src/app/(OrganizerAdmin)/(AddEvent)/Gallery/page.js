@@ -1,18 +1,64 @@
 "use client";
 import Link from "next/link";
-import React from "react";
-import { useRef } from "react";
+import React, { useState } from "react";
 import { Col, Form, Row } from "react-bootstrap";
+import { useEventContext } from "@/context/EventContext";
+import authApi from "@/api/authApi";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 function page() {
-  const inputRef = useRef(null);
+  const { eventData, updateEventData } = useEventContext();
+  const [uploading, setUploading] = useState(false);
+  const router = useRouter();
+
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    setUploading(true);
+    try {
+      // Upload one by one or loop
+      // Assuming api supports single file update mostly, but we can call it multiple times
+      const newLinks = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("images", file);
+        const response = await authApi.uploadFile(formData);
+        if (response.data && response.data.files && response.data.files.length > 0) {
+          newLinks.push(response.data.files[0].url);
+        }
+      }
+
+      updateEventData({
+        mediaLinks: [...eventData.mediaLinks, ...newLinks]
+      });
+      toast.success("Images uploaded successfully");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = (index) => {
+    const updatedLinks = eventData.mediaLinks.filter((_, i) => i !== index);
+    updateEventData({ mediaLinks: updatedLinks });
+  };
+
+  const handleNext = (e) => {
+    e.preventDefault();
+    router.push("/EventPreview");
+  }
+
   return (
     <div>
       <Row className="justify-content-center">
         <Col md={8}>
           <ul className="event-steps">
             <li className="steps-item">
-              <Link href="" className="steps-link active">
+              <Link href="/BasicInfo" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-01.svg" className="me-2" />
                   Event Basic Info
@@ -23,7 +69,7 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="" className="steps-link active">
+              <Link href="/DateTime" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-02.svg" className="me-2" />
                   Date, Time and Location
@@ -34,7 +80,7 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="" className="steps-link active">
+              <Link href="/TicketsPricing" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-03.svg" className="me-2" />
                   Tickets & Pricing
@@ -45,7 +91,7 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="" className="steps-link active">
+              <Link href="/Gallery" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-04.svg" className="me-2" />
                   Gallery
@@ -69,66 +115,37 @@ function page() {
                         click to browse.
                       </p>
                     </div>
-                    <input type="file" id="upload" className="d-none" />
-                    <label htmlFor="upload">Upload</label>
+                    <input
+                      type="file"
+                      id="upload"
+                      className="d-none"
+                      multiple
+                      onChange={handleImageUpload}
+                      accept="image/*"
+                    />
+                    <label htmlFor="upload">{uploading ? "Uploading..." : "Upload"}</label>
                   </div>
                   <div className="upload-images">
-                    <div className="images-innr">
-                      <img src="/img/org-img/upload-img-01.png" />
-                      <button type="button" className="close-btn">
-                        <img src="/img/org-img/close.svg" />
-                      </button>
-                    </div>
-                    <div className="images-innr">
-                      <img src="/img/org-img/upload-img-02.png" />
-                      <button type="button" className="close-btn">
-                        <img src="/img/org-img/close.svg" />
-                      </button>
-                    </div>
-                    <div className="images-innr">
-                      <img src="/img/org-img/upload-img-03.png" />
-                      <button type="button" className="close-btn">
-                        <img src="/img/org-img/close.svg" />
-                      </button>
-                    </div>
-                    <div className="images-innr">
-                      <img src="/img/org-img/upload-img-04.png" />
-                      <button type="button" className="close-btn">
-                        <img src="/img/org-img/close.svg" />
-                      </button>
-                    </div>
-                    <div className="images-innr">
-                      <img src="/img/org-img/upload-img-05.png" />
-                      <button type="button" className="close-btn">
-                        <img src="/img/org-img/close.svg" />
-                      </button>
-                    </div>
-                    <div className="images-innr">
-                      <img src="/img/org-img/upload-img-06.png" />
-                      <button type="button" className="close-btn">
-                        <img src="/img/org-img/close.svg" />
-                      </button>
-                    </div>
-                    <div className="images-innr">
-                      <img src="/img/org-img/upload-img-07.png" />
-                      <button type="button" className="close-btn">
-                        <img src="/img/org-img/close.svg" />
-                      </button>
-                    </div>
+                    {eventData.mediaLinks.map((link, index) => (
+                      <div className="images-innr" key={index}>
+                        <img src={link} alt={`gallery-${index}`} />
+                        <button type="button" className="close-btn" onClick={() => removeImage(index)}>
+                          <img src="/img/org-img/close.svg" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </Col>
               </Row>
 
               <div className="d-flex gap-2 justify-content-end mt-2">
                 <Link href="/TicketsPricing" className="outline-btn">
-                  {" "}
                   Back
                 </Link>
 
-                <Link href="/EventPreview" className="custom-btn">
-                  {" "}
+                <button type="button" onClick={handleNext} className="custom-btn">
                   Save and Continue
-                </Link>
+                </button>
               </div>
             </div>
           </Form>

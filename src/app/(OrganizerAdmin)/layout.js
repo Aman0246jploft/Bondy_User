@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { EventProvider } from "@/context/EventContext";
 import OrganizerHeader from "./Components/OrganizerHeader";
 import OrganizerSidebar from "./Components/OrganizerSidebar";
 import "./organizer-admin.css";
@@ -43,15 +44,17 @@ export default function RootLayout({ children }) {
         <div
           className={`app-layout ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}
         >
-          <OrganizerSidebar
-            toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          />
+          <EventProvider>
+            <OrganizerSidebar
+              toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            />
 
-          <div className="content-area">
-            <OrganizerHeader />
+            <div className="content-area">
+              <OrganizerHeader />
 
-            <main className="main-content">{children}</main>
-          </div>
+              <main className="main-content">{children}</main>
+            </div>
+          </EventProvider>
         </div>
       </body>
     </html>

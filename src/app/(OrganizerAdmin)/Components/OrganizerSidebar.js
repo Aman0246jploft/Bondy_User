@@ -153,7 +153,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </div>
 
           <div className={`accordion-content ${isDropdownOpen ? "show" : ""}`}>
-            <Link href="" className="sub-item" onClick={() => {}}>
+            <Link href="/BasicInfo" className="sub-item" onClick={() => {}}>
               Create Event
             </Link>
             <Link href="/AddProgram" className="sub-item">

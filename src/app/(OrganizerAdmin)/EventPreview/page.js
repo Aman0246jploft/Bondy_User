@@ -1,14 +1,40 @@
+"use client";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 import { Col, Row } from "react-bootstrap";
+import { useEventContext } from "@/context/EventContext";
+import eventApi from "@/api/eventApi";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 function page() {
+  const { eventData } = useEventContext();
+  const [publishing, setPublishing] = useState(false);
+  const router = useRouter();
+
+  const handlePublish = async (isDraft = false) => {
+    setPublishing(true);
+    try {
+      const payload = { ...eventData, isDraft };
+      const response = await eventApi.createEvent(payload);
+      if (response.status) {
+        toast.success(isDraft ? "Event saved as draft" : "Event published successfully");
+        router.push("/Dashboard"); // Redirect to dashboard or event list
+      }
+    } catch (error) {
+      console.error("Error creating event:", error);
+      // Error handled by apiClient toast usually, but explicitly log
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   return (
     <div>
       <div className="cards event-details">
-        <Link href="" className="back-btn">
+        <Link href="/Gallery" className="back-btn">
           <img src="/img/arrow-left-white.svg" alt="Back" />
-          Back to List
+          Back to Gallery
         </Link>
         <h4 className="line-title">
           <span>Event Details</span>
@@ -17,31 +43,31 @@ function page() {
           <Col md={2}>
             <div className="event-dtl-card">
               <div className="event-dtl-card-img">
-                <img src="/img/org-img/event-dtl-img.png" alt="Ticket Icon" />
+                <img
+                  src={eventData.posterImage[0] || "/img/org-img/event-dtl-img.png"}
+                  alt="Event Poster"
+                  onError={(e) => { e.target.src = "/img/org-img/event-dtl-img.png" }}
+                />
               </div>
-              <h3>Adele Concert</h3>
+              <h3>{eventData.eventTitle || "Event Title"}</h3>
             </div>
           </Col>
           <Col md={10}>
             <ul className="event-dtl-rgt">
               <li>
                 <h6>Category</h6>
-                <p>Sports</p>
+                <p>{eventData.eventCategory || "-"}</p> {/* Ideally fetch name */}
               </li>
               <li>
-                <h6>Created Date</h6>
-                <p>Tue 30 Sep - 7:30 PM</p>
-              </li>
-              <li>
-                <h6>Organizer Name</h6>
-                <p>Esther Howard</p>
+                <h6>Start Date</h6>
+                <p>{eventData.startDate} {eventData.startTime}</p>
               </li>
               <li>
                 <h6>Tags</h6>
-                <p>Music</p>
+                <p>{eventData.tags && eventData.tags.join(", ")}</p>
               </li>
               <li>
-                <span className="status-badge pending">Upcoming</span>
+                <span className="status-badge pending">{eventData.isDraft ? "Draft" : "Review"}</span>
               </li>
             </ul>
           </Col>
@@ -53,7 +79,7 @@ function page() {
           <ul className="event-dtl-rgt">
             <li>
               <h6>Venue Name</h6>
-              <p>Arena Stadium </p>
+              <p>{eventData.venueName}</p>
             </li>
             <li>
               <h6>
@@ -61,17 +87,9 @@ function page() {
                 Start Date
               </h6>
               <p>
-                <span>Tue 30 Sep</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="4"
-                  height="4"
-                  viewBox="0 0 4 4"
-                  fill="none"
-                >
-                  <circle cx="2" cy="2" r="2" fill="#999999" />
-                </svg>
-                <span>7:30 PM</span>
+                <span>{eventData.startDate}</span>
+                <span className="mx-2 text-secondary">•</span>
+                <span>{eventData.startTime}</span>
               </p>
             </li>
             <li>
@@ -80,17 +98,9 @@ function page() {
                 End Date
               </h6>
               <p>
-                <span>Thu 2 Oct</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="4"
-                  height="4"
-                  viewBox="0 0 4 4"
-                  fill="none"
-                >
-                  <circle cx="2" cy="2" r="2" fill="#999999" />
-                </svg>
-                <span>7:30 PM</span>
+                <span>{eventData.endDate}</span>
+                <span className="mx-2 text-secondary">•</span>
+                <span>{eventData.endTime}</span>
               </p>
             </li>
             <li>
@@ -99,15 +109,9 @@ function page() {
                 Location
               </h6>
               <p>
-                American Airlines Center <br /> Dallas,Texas,USA
+                {eventData.venueAddress.address} <br />
+                {eventData.venueAddress.city}, {eventData.venueAddress.country}
               </p>
-            </li>
-            <li>
-              <h6>
-                <img src="/img/clock.svg" alt="" />
-                Time Zone
-              </h6>
-              <p>GMT-5</p>
             </li>
           </ul>
         </div>
@@ -118,31 +122,35 @@ function page() {
           <ul className="event-dtl-rgt">
             <li>
               <h6>Ticket Name</h6>
-              <p>Negar khosravi </p>
+              <p>{eventData.ticketName}</p>
             </li>
             <li>
               <h6>Quantity Available</h6>
-              <p>200</p>
+              <p>{eventData.ticketQtyAvailable}</p>
             </li>
             <li>
               <h6>Price Per Ticket</h6>
-              <p>$260</p>
+              <p>${eventData.ticketPrice}</p>
             </li>
             <li>
-              <h6>Coupon</h6>
-              <p>zZVIxGUw</p>
+              <h6>Total Tickets</h6>
+              <p>{eventData.totalTickets}</p>
+            </li>
+            <li>
+              <h6>Add-ons</h6>
+              <p>{eventData.addOns || "-"}</p>
             </li>
             <li>
               <h6>Sale Start Date</h6>
-              <p>Tue 15 Sep</p>
+              <p>{eventData.ticketSelesStartDate}</p>
             </li>
             <li>
               <h6>Sale End Date</h6>
-              <p>Mon 29 Sep</p>
+              <p>{eventData.ticketSelesEndDate}</p>
             </li>
             <li>
               <h6>Refund Policy</h6>
-              <p>No Refunds</p>
+              <p>{eventData.refundPolicy}</p>
             </li>
           </ul>
         </div>
@@ -151,11 +159,7 @@ function page() {
             <span>Short Description</span>
           </h4>
           <p>
-            Experience an unforgettable music concert filled with energy,
-            passion, and powerful live performances. Enjoy electrifying beats,
-            stunning lights, and an atmosphere that brings music lovers
-            together. From soulful melodies to high-energy rhythms, every moment
-            is crafted to create lasting memories and pure musical excitement.
+            {eventData.shortdesc}
           </p>
         </div>
         <div className="long-desc mt-20">
@@ -163,16 +167,7 @@ function page() {
             <span>Detailed Description/Highlights</span>
           </h4>
           <p>
-            Experience a spectacular music concert that blends powerful live
-            performances with immersive sound and vibrant lighting. Enjoy a
-            carefully curated lineup delivering soulful melodies, energetic
-            beats, and crowd-moving rhythms. The concert offers a dynamic
-            atmosphere where music lovers connect, dance, and celebrate
-            together. High-quality audio, stunning visuals, and engaging stage
-            presence create an unforgettable experience. Whether you enjoy
-            relaxing tunes or high-energy tracks, this event promises nonstop
-            entertainment, memorable moments, and an electrifying vibe from
-            start to finish.
+            {eventData.longdesc}
           </p>
         </div>
         <div className="gellry-images">
@@ -180,39 +175,32 @@ function page() {
             <span>Gallery</span>
           </h4>
           <div className="gallery-grid">
-            <div className="gallery-item large">
-              <img src="/img/org-img/gallery-img-01.png" alt="Event" />
-            </div>
-
-            <div className="gallery-item">
-              <img src="/img/org-img/gallery-img-02.png" alt="Event" />
-            </div>
-            <div className="gallery-item">
-              <img src="/img/org-img/gallery-img-03.png" alt="Event" />
-            </div>
-            <div className="gallery-item">
-              <img src="/img/org-img/gallery-img-04.png" alt="Event" />
-            </div>
-            <div className="gallery-item">
-              <img src="/img/org-img/gallery-img-05.png" alt="Event" />
-            </div>
-            <div className="gallery-item">
-              <img src="/img/org-img/gallery-img-06.png" alt="Event" />
-            </div>
-            <div className="gallery-item">
-              <img src="/img/org-img/gallery-img-07.png" alt="Event" />
-            </div>
+            {eventData.mediaLinks.map((link, index) => (
+              <div className={`gallery-item ${index === 0 ? "large" : ""}`} key={index}>
+                <img src={link} alt={`Gallery ${index}`} onError={(e) => { e.target.src = "/img/org-img/gallery-img-01.png" }} />
+              </div>
+            ))}
           </div>
         </div>
         <div className="d-flex gap-2 justify-content-end mt-5">
           <Link href="/Gallery" className="outline-btn">
             Back
           </Link>
-          <button type="button" className="custom-btn">
-            Save / Draft
+          <button
+            type="button"
+            className="custom-btn"
+            onClick={() => handlePublish(true)}
+            disabled={publishing}
+          >
+            {publishing ? "Saving..." : "Save / Draft"}
           </button>
-          <button type="button" className="custom-btn publish-btn">
-            Publish
+          <button
+            type="button"
+            className="custom-btn publish-btn"
+            onClick={() => handlePublish(false)}
+            disabled={publishing}
+          >
+            {publishing ? "Publishing..." : "Publish"}
           </button>
         </div>
       </div>
