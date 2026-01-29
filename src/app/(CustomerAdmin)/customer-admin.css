@@ -1,0 +1,659 @@
+:root {
+  --primary-teal: #23ada4;
+  --dark-bg: #242424;
+  --text-gray: #9ca3af;
+  --white: #fff;
+}
+
+body {
+  font-family: "SF Pro Display";
+  font-weight: normal;
+  background: var(--dark-bg) !important;
+  color: var(--white);
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.app-layout {
+  display: flex;
+  background-image: url(../../../public/img/layout-bg.png);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+.cards {
+  padding: 40px;
+  border-radius: 24px;
+  background: #1a1a1a;
+  height: 100%;
+}
+.card-title {
+  padding-bottom: 15px;
+  border-bottom: 1px solid #242424;
+  margin-bottom: 20px;
+}
+.card-title h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+}
+.personal-profile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid rgba(35, 173, 164, 0.3);
+  background: #1a1a1a;
+  margin-bottom: 45px;
+}
+.personal-profile-lft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.personal-profile-img {
+  padding: 5px;
+  height: 105px;
+  width: 105px;
+  border: 1px solid var(--primary-teal);
+  border-radius: 50%;
+}
+.personal-profile-img img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.personal-profile-info h5 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.personal-profile-info p {
+  font-size: 12px;
+  font-weight: 400;
+  color: #b3b3b3;
+  margin-bottom: 0;
+}
+
+.edit-profile-btn {
+  display: flex;
+  height: 32px;
+  padding: 3px 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  color: #999;
+  background-color: transparent;
+  border: none;
+}
+
+.ticket-cards {
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(35, 173, 164, 0.3);
+  background: #191919;
+  margin-bottom: 16px;
+}
+.ticket-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #242424;
+  margin-bottom: 16px;
+}
+
+.ticket-lft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ticket-lft .form-check-input {
+  height: 20px;
+  width: 20px;
+  background-color: #191919;
+  border-color: #737373;
+  border-radius: 6px;
+  box-shadow: none;
+}
+.form-check-input:checked {
+  border-color: var(--primary-teal);
+  background-color: var(--primary-teal);
+}
+.ticket-lft h5 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+.ticket-lft p {
+  font-size: 16px;
+  font-weight: 400;
+  color: #737373;
+  margin-bottom: 0;
+}
+
+.ticket-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ticket-bottom p {
+  margin-bottom: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ticket-bottom p span {
+  font-size: 14px;
+  font-weight: 400;
+  color: #999;
+}
+
+.ticket-bottom a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--primary-teal);
+}
+.back-btn {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.ticket-dtl-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.ticket-dtl-card-img {
+  width: 200px;
+  height: 200px;
+  border-radius: 18px;
+  margin-bottom: 10px;
+}
+
+.ticket-dtl-card-img img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 18px;
+}
+.ticket-dtl-card h3 {
+  color: var(--white);
+  font-size: 20px;
+  font-weight: 700;
+}
+.ticket-dtl-main {
+  flex-direction: column;
+  display: flex;
+  justify-content: space-between;
+  height: 85%;
+}
+.tickt-dtl-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.tickt-dtl-info h4 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary-teal);
+  margin-bottom: 0;
+}
+.tickt-dtl-info-btns {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tickt-dtl-info-btns .custom-btn:hover {
+  background-color: var(--primary-teal);
+  border-color: var(--primary-teal);
+  color: var(--white);
+}
+
+.refund-btn {
+  padding: 8px 16px;
+  border: 0;
+  outline: none;
+  background-color: transparent;
+  color: #737373;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.tickt-dtl-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.tickt-dtl-bottom h6 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.tickt-dtl-bottom p {
+  font-size: 16px;
+  font-weight: 400;
+  color: #737373;
+  margin-bottom: 0;
+}
+.event-dtl {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.event-dtl-innr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.event-dtl-innr h6 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.event-dtl-innr p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #737373;
+}
+.payment-dtl-innr {
+  padding-left: 0;
+  margin-bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.payment-dtl-innr li {
+  list-style-type: none;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  text-align: left;
+  height: 100%;
+  position: relative;
+  border-right: 1px solid #242424;
+  padding-right: 100px;
+}
+.payment-dtl-innr li:nth-last-child(1) {
+  border-right: none;
+  padding-right: 0;
+}
+.payment-dtl-innr li > div:first-child {
+  margin-bottom: 40px;
+}
+
+.payment-dtl-innr li h6 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 10px;
+}
+.payment-dtl-innr li p {
+  color: #737373;
+  margin-bottom: 0;
+  font-size: 16px;
+  font-weight: 400;
+}
+.payment-cards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 85vh;
+}
+.payment-cards h5 {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--white);
+  margin: 24px 0;
+}
+.payment-cards p {
+  font-size: 20px;
+  font-weight: 400;
+  color: #b3b3b3;
+  margin-bottom: 24px;
+}
+.payment-type {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.payment-type .payment-card-btn {
+  outline: none;
+  width: 80px;
+  height: 56px;
+  border-radius: 8px;
+  border: 1px solid #454545;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #1a1a1a;
+}
+.txt {
+  color: #b3b3b3;
+  font-size: 16px;
+  font-weight: 400;
+  margin-bottom: 0;
+}
+.add-card-form {
+  margin-top: 40px;
+}
+
+.add-card-form .custom-floting .form-control,
+.add-card-form .custom-floting .form-select {
+  padding: 30px 30px 30px 20px !important;
+}
+.add-card-form .success-icn {
+  position: absolute;
+  top: 19px;
+  right: 20px;
+}
+
+.eye-button {
+  cursor: pointer;
+  position: absolute;
+  top: 19px;
+  right: 20px;
+}
+.add-card-box {
+  height: 230px;
+  border-radius: 16px;
+  border: 1px dashed #b3b3b3;
+  background: #242424;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.add-card-box h6 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #737373;
+  margin-top: 10px;
+}
+
+.credit-card {
+  width: 100%;
+  border-radius: 20px;
+  padding: 22px;
+  color: #fff;
+  background-image: url(../../../public/img/card-bg.png);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+  position: relative;
+  overflow: hidden;
+  background-repeat: no-repeat;
+  background-size: cover;
+  margin-bottom: 30px;
+}
+
+/* Title */
+.credit-card .credit-card-title {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+/* VISA */
+.credit-card .visa-text {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+/* Card Number */
+.credit-card .card-number {
+  font-size: 22px;
+  letter-spacing: 3px;
+  font-weight: 500;
+}
+
+/* Labels */
+.credit-card .label {
+  font-size: 14px;
+  color: var(--white);
+  font-weight: 400;
+}
+
+.credit-card .value {
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.notification-card .card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.notification-card .card-title p {
+  font-size: 15px;
+  font-weight: 400;
+  color: #737373;
+  margin-bottom: 0;
+}
+.notification-cards {
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(35, 173, 164, 0.3);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.notification-cards div {
+  flex-basis: 80%;
+}
+.notification-cards h5,
+.setting-info-lft h5 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.notification-cards h5 span {
+  color: var(--primary-teal);
+}
+.notification-cards p,
+.setting-info-lft p {
+  margin-bottom: 0;
+  font-size: 14px;
+  color: #737373;
+}
+.setting-info {
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(35, 173, 164, 0.3);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.setting-info-lft {
+  flex-basis: 80%;
+}
+.setting-info-rgt .form-check-input {
+  width: 50px;
+  height: 25px;
+  cursor: pointer;
+  box-shadow: none;
+  background-color: #363636;
+  border-color: #363636;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+
+  background-repeat: no-repeat;
+  background-size:
+    25px 25px,
+    cover;
+}
+
+.setting-info-rgt .form-check-input:checked {
+  background-color: var(--primary-teal);
+  border-color: var(--primary-teal);
+}
+
+.language-wrapper {
+  max-width: 360px;
+  color: #fff;
+}
+
+.language-wrapper .title {
+  font-size: 14px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+/* Select */
+.language-select {
+  background: linear-gradient(180deg, #1f1f1f, #181818);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+/* Arrow */
+.language-select .arrow {
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+.language-select .arrow.rotate {
+  transform: rotate(180deg);
+}
+
+/* Dropdown */
+.language-dropdown {
+  background: #1a1a1a;
+  border-radius: 14px;
+  margin-top: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Item */
+.language-item {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.language-item img {
+  height: 20px;
+  width: 20px;
+}
+
+.language-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.bookmark-btn {
+  background-color: var(--primary-teal);
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+@media (max-width: 1299.98px) {
+  .cards {
+    padding: 20px;
+  }
+  .personal-profile {
+    padding: 15px;
+  }
+  .personal-profile-img {
+    width: 90px;
+    height: 90px;
+  }
+}
+@media (max-width: 991.98px) {
+  .cards {
+    padding: 10px;
+    border-radius: 10px;
+  }
+  .ticket-cards {
+    padding: 10px;
+  }
+  .ticket-bottom p {
+    gap: 5px;
+    font-size: 13px;
+  }
+  .payment-cards h5 {
+    margin: 15px 0;
+    font-size: 16px;
+  }
+  .payment-cards {
+    height: 100%;
+  }
+  .payment-cards p {
+    font-size: 14px;
+    text-align: center;
+  }
+  .setting-info {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .ticket-inner,
+  .ticket-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .ticket-bottom p {
+    font-size: 16px;
+  }
+  .notification-cards {
+    padding: 10px;
+    flex-direction: column;
+  }
+  .notification-cards h5,
+  .setting-info-lft h5 {
+    font-size: 14px;
+  }
+}
