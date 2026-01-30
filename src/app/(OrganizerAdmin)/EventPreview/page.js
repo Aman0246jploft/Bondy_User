@@ -1,16 +1,41 @@
 "use client";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Col, Row } from "react-bootstrap";
 import { useEventContext } from "@/context/EventContext";
 import eventApi from "@/api/eventApi";
+import authApi from "@/api/authApi";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { getFullImageUrl } from "@/utils/imageHelper";
 
 function page() {
   const { eventData } = useEventContext();
   const [publishing, setPublishing] = useState(false);
+  const [categories, setCategories] = useState([]);
   const router = useRouter();
+
+
+  console.log("event Image 22222", eventData)
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await authApi.getCategoryList({ type: "event" });
+        if (response.data && response.data.categories) {
+          setCategories(response.data.categories);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const getCategoryName = (id) => {
+    const category = categories.find((cat) => cat._id === id);
+    return category ? category.name : "-";
+  };
 
   const handlePublish = async (isDraft = false) => {
     setPublishing(true);
@@ -44,7 +69,7 @@ function page() {
             <div className="event-dtl-card">
               <div className="event-dtl-card-img">
                 <img
-                  src={eventData.posterImage[0] || "/img/org-img/event-dtl-img.png"}
+                  src={getFullImageUrl(eventData.posterImage[0]) || "/img/org-img/event-dtl-img.png"}
                   alt="Event Poster"
                   onError={(e) => { e.target.src = "/img/org-img/event-dtl-img.png" }}
                 />
@@ -56,7 +81,7 @@ function page() {
             <ul className="event-dtl-rgt">
               <li>
                 <h6>Category</h6>
-                <p>{eventData.eventCategory || "-"}</p> {/* Ideally fetch name */}
+                <p>{getCategoryName(eventData.eventCategory)}</p>
               </li>
               <li>
                 <h6>Start Date</h6>
@@ -108,7 +133,7 @@ function page() {
                 <img src="/img/Map-Point.svg" alt="" />
                 Location
               </h6>
-              <p>
+              <p style={{ wordBreak: "break-word" }}>
                 {eventData.venueAddress.address} <br />
                 {eventData.venueAddress.city}, {eventData.venueAddress.country}
               </p>
@@ -158,7 +183,7 @@ function page() {
           <h4 className="line-title">
             <span>Short Description</span>
           </h4>
-          <p>
+          <p style={{ wordBreak: "break-word" }}>
             {eventData.shortdesc}
           </p>
         </div>
@@ -166,10 +191,23 @@ function page() {
           <h4 className="line-title">
             <span>Detailed Description/Highlights</span>
           </h4>
-          <p>
+          <p style={{ wordBreak: "break-word" }}>
             {eventData.longdesc}
           </p>
         </div>
+        {eventData.shortTeaserVideo && eventData.shortTeaserVideo.length > 0 && (
+          <div className="video-section mt-20">
+            <h4 className="line-title">
+              <span>Teaser Video</span>
+            </h4>
+            <video
+              src={getFullImageUrl(eventData.shortTeaserVideo[0])}
+              controls
+              width="100%"
+              style={{ borderRadius: "12px" }}
+            />
+          </div>
+        )}
         <div className="gellry-images">
           <h4 className="line-title">
             <span>Gallery</span>
@@ -177,7 +215,7 @@ function page() {
           <div className="gallery-grid">
             {eventData.mediaLinks.map((link, index) => (
               <div className={`gallery-item ${index === 0 ? "large" : ""}`} key={index}>
-                <img src={link} alt={`Gallery ${index}`} onError={(e) => { e.target.src = "/img/org-img/gallery-img-01.png" }} />
+                <img src={getFullImageUrl(link)} alt={`Gallery ${index}`} onError={(e) => { e.target.src = "/img/org-img/gallery-img-01.png" }} />
               </div>
             ))}
           </div>

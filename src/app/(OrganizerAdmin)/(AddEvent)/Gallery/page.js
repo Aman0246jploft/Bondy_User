@@ -6,6 +6,7 @@ import { useEventContext } from "@/context/EventContext";
 import authApi from "@/api/authApi";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { getFullImageUrl } from "@/utils/imageHelper";
 
 function page() {
   const { eventData, updateEventData } = useEventContext();
@@ -26,7 +27,7 @@ function page() {
         formData.append("files", file);
         const response = await authApi.uploadFile(formData);
         if (response.data && response.data.files && response.data.files.length > 0) {
-          newLinks.push(response.data.files[0].url);
+          newLinks.push(response.data.files[0]);
         }
       }
 
@@ -59,7 +60,7 @@ function page() {
         formData.append("files", file);
         const response = await authApi.uploadFile(formData);
         if (response.data && response.data.files && response.data.files.length > 0) {
-          newLinks.push(response.data.files[0].url);
+          newLinks.push(response.data.files[0]);
         }
       }
 
@@ -172,7 +173,7 @@ function page() {
                   <div className="upload-images">
                     {eventData.mediaLinks.map((link, index) => (
                       <div className="images-innr" key={index}>
-                        <img src={link} alt={`gallery-${index}`} />
+                        <img src={getFullImageUrl(link)} alt={`gallery-${index}`} />
                         <button type="button" className="close-btn" onClick={() => removeImage(index)}>
                           <img src="/img/org-img/close.svg" />
                         </button>
@@ -201,7 +202,7 @@ function page() {
                   <div className="upload-images">
                     {(eventData.shortTeaserVideo || []).map((link, index) => (
                       <div className="images-innr" key={index} style={{ width: '150px', height: '150px' }}>
-                        <video src={link} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} controls />
+                        <video src={getFullImageUrl(link)} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} controls />
                         <button type="button" className="close-btn" onClick={() => removeVideo(index)} style={{ top: '-10px', right: '-10px' }}>
                           <img src="/img/org-img/close.svg" />
                         </button>

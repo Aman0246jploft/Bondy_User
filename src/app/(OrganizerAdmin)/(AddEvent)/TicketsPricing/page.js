@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 
 function page() {
   const { eventData, updateEventData } = useEventContext();
+  console.log("Current Event Data in TicketsPricing:", eventData);
   const router = useRouter();
 
   const handleInputChange = (e) => {

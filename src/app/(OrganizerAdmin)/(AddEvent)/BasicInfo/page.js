@@ -55,7 +55,7 @@ function page() {
         response.data.files &&
         response.data.files.length > 0
       ) {
-        updateEventData({ posterImage: [response.data.files[0].url] });
+        updateEventData({ posterImage: [response.data.files[0]] });
         toast.success("Image uploaded successfully");
       }
     } catch (error) {

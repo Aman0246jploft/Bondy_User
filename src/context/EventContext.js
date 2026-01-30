@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState } from "react";
 const EventContext = createContext();
 
 export const EventProvider = ({ children }) => {
+
     const [eventData, setEventData] = useState({
         // Basic Info
         eventTitle: "",
@@ -19,8 +20,8 @@ export const EventProvider = ({ children }) => {
             address: "",
             city: "",
             country: "",
-            latitude: null,
-            longitude: null,
+            latitude: 0,
+            longitude: 0,
         },
         startDate: "",
         endDate: "",
@@ -58,6 +59,17 @@ export const EventProvider = ({ children }) => {
         if (storedData) {
             try {
                 const parsed = JSON.parse(storedData);
+
+                // Ensure latitude and longitude are 0 if null/undefined (handle legacy data)
+                if (parsed.venueAddress) {
+                    if (parsed.venueAddress.latitude === null || parsed.venueAddress.latitude === undefined) {
+                        parsed.venueAddress.latitude = 0;
+                    }
+                    if (parsed.venueAddress.longitude === null || parsed.venueAddress.longitude === undefined) {
+                        parsed.venueAddress.longitude = 0;
+                    }
+                }
+
                 setEventData(parsed);
             } catch (e) {
                 console.error("Failed to parse stored event data", e);
@@ -86,8 +98,8 @@ export const EventProvider = ({ children }) => {
                 address: "",
                 city: "",
                 country: "",
-                latitude: null,
-                longitude: null,
+                latitude: 0,
+                longitude: 0,
             },
             startDate: "",
             endDate: "",
@@ -120,5 +132,6 @@ export const EventProvider = ({ children }) => {
 };
 
 export const useEventContext = () => {
+
     return useContext(EventContext);
 };
