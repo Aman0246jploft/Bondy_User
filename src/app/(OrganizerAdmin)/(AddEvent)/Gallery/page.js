@@ -47,6 +47,39 @@ function page() {
     updateEventData({ mediaLinks: updatedLinks });
   };
 
+  const handleVideoUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    setUploading(true);
+    try {
+      const newLinks = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("files", file);
+        const response = await authApi.uploadFile(formData);
+        if (response.data && response.data.files && response.data.files.length > 0) {
+          newLinks.push(response.data.files[0].url);
+        }
+      }
+
+      updateEventData({
+        shortTeaserVideo: [...(eventData.shortTeaserVideo || []), ...newLinks]
+      });
+      toast.success("Videos uploaded successfully");
+    } catch (error) {
+      console.error("Error uploading video:", error);
+      toast.error("Failed to upload video");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeVideo = (index) => {
+    const updatedLinks = (eventData.shortTeaserVideo || []).filter((_, i) => i !== index);
+    updateEventData({ shortTeaserVideo: updatedLinks });
+  };
+
   const handleNext = (e) => {
     e.preventDefault();
     router.push("/EventPreview");
@@ -91,9 +124,20 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="/Gallery" className="steps-link active">
+              <Link href="/Agerestraction" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-04.svg" className="me-2" />
+                  Age Restriction
+                </span>
+                <span className="steps-arrow">
+                  <img src="/img/Arrow-Right.svg" className="ms-3" />
+                </span>
+              </Link>
+            </li>
+            <li className="steps-item">
+              <Link href="/Gallery" className="steps-link active">
+                <span className="steps-text">
+                  <img src="/img/org-img/step-icon-01.svg" className="me-2" />
                   Gallery
                 </span>
                 <span className="steps-arrow">
@@ -135,11 +179,40 @@ function page() {
                       </div>
                     ))}
                   </div>
+
+                  <div className="event-frm-bx upload mt-4">
+                    <div>
+                      <h5>Short Teaser Clips</h5>
+                      <p>
+                        Upload short video clips to tease your event. <br />
+                        Drag and drop files or click to browse.
+                      </p>
+                    </div>
+                    <input
+                      type="file"
+                      id="upload-video"
+                      className="d-none"
+                      multiple
+                      onChange={handleVideoUpload}
+                      accept="video/*"
+                    />
+                    <label htmlFor="upload-video">{uploading ? "Uploading..." : "Upload Video"}</label>
+                  </div>
+                  <div className="upload-images">
+                    {(eventData.shortTeaserVideo || []).map((link, index) => (
+                      <div className="images-innr" key={index} style={{ width: '150px', height: '150px' }}>
+                        <video src={link} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} controls />
+                        <button type="button" className="close-btn" onClick={() => removeVideo(index)} style={{ top: '-10px', right: '-10px' }}>
+                          <img src="/img/org-img/close.svg" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </Col>
               </Row>
 
               <div className="d-flex gap-2 justify-content-end mt-2">
-                <Link href="/TicketsPricing" className="outline-btn">
+                <Link href="/Agerestraction" className="outline-btn">
                   Back
                 </Link>
 

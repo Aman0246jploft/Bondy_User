@@ -75,9 +75,20 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="/Gallery" className="steps-link">
+              <Link href="/Agerestraction" className="steps-link">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-04.svg" className="me-2" />
+                  Age Restriction
+                </span>
+                <span className="steps-arrow">
+                  <img src="/img/Arrow-Right.svg" className="ms-3" />
+                </span>
+              </Link>
+            </li>
+            <li className="steps-item">
+              <Link href="/Gallery" className="steps-link">
+                <span className="steps-text">
+                  <img src="/img/org-img/step-icon-01.svg" className="me-2" />
                   Gallery
                 </span>
                 <span className="steps-arrow">

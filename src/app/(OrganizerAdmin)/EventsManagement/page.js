@@ -74,7 +74,8 @@ function page() {
                           width="4"
                           height="4"
                           viewBox="0 0 4 4"
-                          fill="none">
+                          fill="none"
+                        >
                           <circle cx="2" cy="2" r="2" fill="#999999" />
                         </svg>
                       </span>{" "}
@@ -122,7 +123,8 @@ function page() {
                           width="4"
                           height="4"
                           viewBox="0 0 4 4"
-                          fill="none">
+                          fill="none"
+                        >
                           <circle cx="2" cy="2" r="2" fill="#999999" />
                         </svg>
                       </span>{" "}
@@ -170,7 +172,8 @@ function page() {
                           width="4"
                           height="4"
                           viewBox="0 0 4 4"
-                          fill="none">
+                          fill="none"
+                        >
                           <circle cx="2" cy="2" r="2" fill="#999999" />
                         </svg>
                       </span>{" "}
@@ -222,7 +225,8 @@ function page() {
                           width="4"
                           height="4"
                           viewBox="0 0 4 4"
-                          fill="none">
+                          fill="none"
+                        >
                           <circle cx="2" cy="2" r="2" fill="#999999" />
                         </svg>
                       </span>{" "}
@@ -270,7 +274,8 @@ function page() {
                           width="4"
                           height="4"
                           viewBox="0 0 4 4"
-                          fill="none">
+                          fill="none"
+                        >
                           <circle cx="2" cy="2" r="2" fill="#999999" />
                         </svg>
                       </span>{" "}
@@ -318,7 +323,8 @@ function page() {
                           width="4"
                           height="4"
                           viewBox="0 0 4 4"
-                          fill="none">
+                          fill="none"
+                        >
                           <circle cx="2" cy="2" r="2" fill="#999999" />
                         </svg>
                       </span>{" "}
@@ -366,7 +372,8 @@ function page() {
                           width="4"
                           height="4"
                           viewBox="0 0 4 4"
-                          fill="none">
+                          fill="none"
+                        >
                           <circle cx="2" cy="2" r="2" fill="#999999" />
                         </svg>
                       </span>{" "}
@@ -418,7 +425,8 @@ function page() {
                           width="4"
                           height="4"
                           viewBox="0 0 4 4"
-                          fill="none">
+                          fill="none"
+                        >
                           <circle cx="2" cy="2" r="2" fill="#999999" />
                         </svg>
                       </span>{" "}
@@ -466,7 +474,8 @@ function page() {
                           width="4"
                           height="4"
                           viewBox="0 0 4 4"
-                          fill="none">
+                          fill="none"
+                        >
                           <circle cx="2" cy="2" r="2" fill="#999999" />
                         </svg>
                       </span>{" "}

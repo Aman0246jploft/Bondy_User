@@ -50,7 +50,11 @@ function page() {
     setUploading(true);
     try {
       const response = await authApi.uploadFile(formData);
-      if (response.data && response.data.files && response.data.files.length > 0) {
+      if (
+        response.data &&
+        response.data.files &&
+        response.data.files.length > 0
+      ) {
         updateEventData({ posterImage: [response.data.files[0].url] });
         toast.success("Image uploaded successfully");
       }
@@ -110,9 +114,20 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="/Gallery" className="steps-link">
+              <Link href="/Agerestraction" className="steps-link">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-04.svg" className="me-2" />
+                  Age Restriction
+                </span>
+                <span className="steps-arrow">
+                  <img src="/img/Arrow-Right.svg" className="ms-3" />
+                </span>
+              </Link>
+            </li>
+            <li className="steps-item">
+              <Link href="/Gallery" className="steps-link">
+                <span className="steps-text">
+                  <img src="/img/org-img/step-icon-01.svg" className="me-2" />
                   Gallery
                 </span>
                 <span className="steps-arrow">
@@ -126,7 +141,9 @@ function page() {
               <Row>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Event Title <span className="text-danger">*</span></label>
+                    <label className="form-label">
+                      Event Title <span className="text-danger">*</span>
+                    </label>
                     <input
                       type="text"
                       className="form-control"
@@ -139,7 +156,9 @@ function page() {
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Event Category <span className="text-danger">*</span></label>
+                    <label className="form-label">
+                      Event Category <span className="text-danger">*</span>
+                    </label>
                     <select
                       className="form-select"
                       name="eventCategory"
@@ -171,11 +190,10 @@ function page() {
                     <label htmlFor="upload">
                       {uploading ? "Uploading..." : "Upload"}
                     </label>
-                    {eventData.posterImage && eventData.posterImage.length > 0 && (
-                      <div className="mt-2 text-success">
-                        Image uploaded!
-                      </div>
-                    )}
+                    {eventData.posterImage &&
+                      eventData.posterImage.length > 0 && (
+                        <div className="mt-2 text-success">Image uploaded!</div>
+                      )}
                   </div>
                 </Col>
               </Row>
@@ -212,10 +230,18 @@ function page() {
                 />
               </div>
               <div className="d-flex gap-2 justify-content-end mt-2">
-                <button className="outline-btn" type="button" onClick={() => router.back()}>
+                <button
+                  className="outline-btn"
+                  type="button"
+                  onClick={() => router.back()}
+                >
                   Back
                 </button>
-                <button className="custom-btn" type="button" onClick={handleNext}>
+                <button
+                  className="custom-btn"
+                  type="button"
+                  onClick={handleNext}
+                >
                   Save and Continue
                 </button>
               </div>

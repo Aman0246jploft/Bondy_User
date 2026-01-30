@@ -114,7 +114,7 @@ function PersonalInfoContent() {
           address: profileData.state,
           state: profileData.state,
           zipcode: profileData.zipcode,
-        }
+        },
       };
 
       const response = await authApi.updateProfile(updatePayload);
@@ -140,7 +140,16 @@ function PersonalInfoContent() {
                 style={{ cursor: "pointer" }}
                 onClick={() => fileRef.current.click()}
               >
-                <img src={preview || "/img/avtar.png"} alt="Profile" />
+                <img
+                  style={{
+                    width: "95px",
+                    height: "95px",
+                    objectFit: "cover",
+                    borderRadius: "50%",
+                  }}
+                  src={preview || "/img/avtar.png"}
+                  alt="Profile"
+                />
                 <input
                   type="file"
                   hidden
@@ -317,11 +326,7 @@ function PersonalInfoContent() {
                 >
                   Discard
                 </button>
-                <button
-                  className="custom-btn"
-                  type="submit"
-                  disabled={loading}
-                >
+                <button className="custom-btn" type="submit" disabled={loading}>
                   {loading ? "Saving..." : "Save Changes"}
                 </button>
               </div>

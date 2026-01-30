@@ -46,6 +46,7 @@ export const EventProvider = ({ children }) => {
         ageRestriction: {
             type: "MIN_AGE",
             minAge: 18,
+            maxAge: 60
         },
         dressCode: "Business Casual",
         fetcherEvent: false,

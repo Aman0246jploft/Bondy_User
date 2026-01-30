@@ -25,6 +25,7 @@ const authApi = {
     loginVerify: (data) => apiClient.post("/user/login/verify", data),
     resendOtp: (data) => apiClient.post("/user/resend-otp", data),
     getFaqs: () => apiClient.get("/faq/list", { skipToast: true }),
+    getGlobalSetting: (key) => apiClient.get(`/globalsetting/${key}`, { skipToast: true }),
 };
 
 export default authApi;
