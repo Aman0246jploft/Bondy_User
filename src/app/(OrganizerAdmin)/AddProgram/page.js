@@ -26,15 +26,15 @@ function page() {
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Program Name</label>
+                    <label className="form-label">Course Name</label>
                     <input type="text" className="form-control" />
                   </div>
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Program Category</label>
+                    <label className="form-label">Course Category</label>
                     <select className="form-select">
-                      <option>Select Event Category</option>
+                      <option>Select Course Category</option>
                     </select>
                   </div>
                 </Col>
@@ -69,7 +69,8 @@ function page() {
 
                       <span
                         className="calendar-icon"
-                        onClick={() => inputRef.current.showPicker()}>
+                        onClick={() => inputRef.current.showPicker()}
+                      >
                         <img src="/img/date_icon.svg" alt="calendar" />
                       </span>
                     </div>
@@ -87,7 +88,8 @@ function page() {
 
                       <span
                         className="calendar-icon"
-                        onClick={() => inputRef.current.showPicker()}>
+                        onClick={() => inputRef.current.showPicker()}
+                      >
                         <img src="/img/date_icon.svg" alt="calendar" />
                       </span>
                     </div>
@@ -105,7 +107,8 @@ function page() {
 
                       <span
                         className="calendar-icon"
-                        onClick={() => inputRef.current.showPicker()}>
+                        onClick={() => inputRef.current.showPicker()}
+                      >
                         <img src="/img/org-img/clock.svg" alt="calendar" />
                       </span>
                     </div>
@@ -123,7 +126,8 @@ function page() {
 
                       <span
                         className="calendar-icon"
-                        onClick={() => inputRef.current.showPicker()}>
+                        onClick={() => inputRef.current.showPicker()}
+                      >
                         <img src="/img/org-img/clock.svg" alt="calendar" />
                       </span>
                     </div>
@@ -160,7 +164,7 @@ function page() {
               </Row>
               <div className="d-flex gap-2 justify-content-center mt-2">
                 <button className="custom-btn" type="button">
-                  Create Program
+                  Create Course
                 </button>
               </div>
             </div>
