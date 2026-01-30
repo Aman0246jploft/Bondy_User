@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 /* 🔹 DATA */
 import React, { useEffect, useState } from "react";
