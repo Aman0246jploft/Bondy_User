@@ -1,5 +1,5 @@
 export const getFullImageUrl = (path) => {
-    console.log("getFullImageUrl called with path:", path);
+    // console.log("getFullImageUrl called with path:", path);
     if (!path) return "/img/default-user.png";
     if (path.startsWith("http")) return path;
 

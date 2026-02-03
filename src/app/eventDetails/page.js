@@ -14,6 +14,8 @@ import Footer from "@/components/Footer";
 import EventSection from "@/components/EventSection";
 import Link from "next/link";
 
+import { getFullImageUrl } from "@/utils/imageHelper";
+
 export default function page() {
   const searchParams = useSearchParams();
   const eventId = searchParams.get("id");
@@ -40,12 +42,36 @@ export default function page() {
 
     fetchEventDetails();
   }, [eventId]);
-  const images = [
-    "/img/interactive-process-image-1.png",
-    "/img/interactive-process-image-2.png",
-    "/img/interactive-process-image-4.png",
-    "/img/interactive-process-image-1.png",
+
+  const mediaItems = [
+    ...(event?.shortTeaserVideo || []).map((url) => ({ type: "video", url })),
+    ...(event?.posterImage || []).map((url) => ({ type: "image", url })),
+    ...(event?.mediaLinks || []).map((url) => ({ type: "image", url })),
   ];
+
+  const formatEventDateTime = (start, sTime, eTime) => {
+    if (!start) return "";
+    const date = new Date(start);
+    const dateStr = date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const formatTime = (time) => {
+      if (!time) return "";
+      const [h, m] = time.split(":");
+      const hour = parseInt(h);
+      const ampm = hour >= 12 ? "pm" : "am";
+      const h12 = hour % 12 || 12;
+      return `${String(h12).padStart(2, "0")}:${m} ${ampm}`;
+    };
+
+    return `${dateStr} at ${formatTime(sTime)} to ${formatTime(eTime)}`;
+  };
+  console.log("5555>>><<<<>>1111", event);
+
 
   return (
     <>
@@ -60,7 +86,7 @@ export default function page() {
                   <br />
                 </h1>
                 <p className="event-meta">
-                  {event?.duration} • Comedy show • Live
+                  {event?.duration} • {event?.eventCategory?.name} • {event?.status}
                 </p>
                 <Button className="book_mark_icon">
                   <img src="/img/bookmark_icon.svg" />
@@ -69,12 +95,15 @@ export default function page() {
             </Col>
 
             <Col lg={5} className="">
-              <p className="event-desc mb-4">{event?.longdesc}</p>
+              <p className="event-desc mb-4">{event?.shortdesc}</p>
               <div className="onwards_sec">
                 <h4 className="mb-0">
-                  <span className="price-text">$599 to $799</span> onwards
+                  <span className="price-text">${event?.ticketPrice} </span>
                 </h4>
-                <Link href="/eventbooking" className="common_btn">
+                <Link
+                  href={`/eventbooking?eventId=${event?._id}`}
+                  className="common_btn"
+                >
                   Book Ticket Now
                 </Link>
                 <Button className="book_mark_icon">
@@ -110,12 +139,36 @@ export default function page() {
                   },
                 }}
               >
-                {images.map((img, index) => (
+                {mediaItems.map((item, index) => (
                   <SwiperSlide key={index}>
-                    <div
-                      className="event-card-img"
-                      style={{ backgroundImage: `url(${img})` }}
-                    />
+                    {item.type === "video" ? (
+                      <a
+                        href={getFullImageUrl(item.url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="event-card-img d-block"
+                        style={{ display: "block" }}
+                      >
+                        <video
+                          src={getFullImageUrl(item.url)}
+                          className="w-100 h-100 object-fit-cover rounded-4"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                        />
+                      </a>
+                    ) : (
+                      <a
+                        href={getFullImageUrl(item.url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="event-card-img d-block"
+                        style={{
+                          backgroundImage: `url(${getFullImageUrl(item.url)})`,
+                        }}
+                      />
+                    )}
                   </SwiperSlide>
                 ))}
               </Swiper>
@@ -133,22 +186,29 @@ export default function page() {
                   <div className="event_time_mange">
                     <h5>Date & Time</h5>
                     <span>
-                      Fri oct 25 2024 at 06:30 pm to 11:00 pm (GMT + 05:30)
+                      {formatEventDateTime(
+                        event?.startDate,
+                        event?.startTime,
+                        event?.endTime
+                      )}
                     </span>
                   </div>
                   <div className="event_time_mange">
                     <h5>Location</h5>
                     <span>
-                      45/2 Central Business Innovation Near International Trade
-                      Tower
+                      {event?.venueAddress?.address}
                     </span>
                   </div>
-                  <div className="event_time_mange">
+                  {/* <div className="event_time_mange">
                     <h5>Date & Time</h5>
                     <span>
-                      Fri oct 25 2024 at 06:30 pm to 11:00 pm (GMT + 05:30)
+                      {formatEventDateTime(
+                        event?.startDate,
+                        event?.startTime,
+                        event?.endTime
+                      )}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
                 <div className="map-container">
                   <Map />
@@ -157,27 +217,17 @@ export default function page() {
                 {/* Text Content Sections */}
                 <div className="content-section">
                   <h2 className="section-heading">
-                    Leadership & Growth Conference
+                    {event?.eventTitle}
                   </h2>
                   <p className="section-text">
-                    Join us for an inspiring and action-packed event designed to
-                    bring together creators, professionals, and innovators from
-                    all walks of life. This event features expert-led sessions,
-                    interactive workshops, and powerful networking opportunities
-                    that help you learn, grow, and connect with like-minded
-                    individuals.
+                    {event?.shortdesc}
                   </p>
                 </div>
 
                 <div className="content-section">
                   <h3 className="section-heading">What to expect</h3>
                   <p className="section-text">
-                    Experience a dynamic gathering filled with insightful
-                    sessions, expert speakers, hands-on workshops, and endless
-                    networking opportunities. From inspiring keynotes to
-                    real-world learning, our event is designed to spark ideas,
-                    build connections, and help you grow personally and
-                    professionally.
+                    {event?.longdesc}
                   </p>
                 </div>
 
@@ -185,52 +235,47 @@ export default function page() {
                 <div className="content-section">
                   <h3 className="section-heading">Event Gallery</h3>
                   <div className="gallery-grid">
-                    {/* Main Large Image */}
-                    <img
-                      src="/img/details_img01.png"
-                      className="gallery-item large-gallery-item"
-                      alt="Conference Hall"
-                    />
-
-                    {/* Small Images */}
-                    <img
-                      src="/img/details_img02.png"
-                      className="gallery-item"
-                      alt="Live Music"
-                    />
-                    <img
-                      src="/img/details_img03.png"
-                      className="gallery-item"
-                      alt="Drums"
-                    />
-                    <img
-                      src="/img/details_img04.png"
-                      className="gallery-item"
-                      alt="Stage Crowd"
-                    />
-
-                    {/* Second row of small images */}
-                    <img
-                      src="/img/details_img05.png"
-                      className="gallery-item"
-                      alt="Networking"
-                    />
-                    <img
-                      src="/img/details_img06.png"
-                      className="gallery-item"
-                      alt="Audience"
-                    />
-                    <img
-                      src="/img/details_img07.png"
-                      className="gallery-item"
-                      alt="Presentation"
-                    />
+                    {mediaItems.length > 0 ? (
+                      mediaItems.map((item, index) => (
+                        <a
+                          key={index}
+                          href={getFullImageUrl(item.url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`gallery-item ${index === 0 ? "large-gallery-item" : ""
+                            }`}
+                          style={{ display: "block", textDecoration: "none" }}
+                        >
+                          {item.type === "video" ? (
+                            <video
+                              src={getFullImageUrl(item.url)}
+                              className="w-100 h-100 object-fit-cover"
+                              muted
+                              loop
+                              playsInline
+                              autoPlay
+                            />
+                          ) : (
+                            <img
+                              src={getFullImageUrl(item.url)}
+                              className="w-100 h-100 object-fit-cover"
+                              alt={`Gallery item ${index + 1}`}
+                            />
+                          )}
+                        </a>
+                      ))
+                    ) : (
+                      <p>No gallery items available.</p>
+                    )}
                   </div>
                   <div className="onwards_sec mt-4">
                     <h4 className="mb-0">
-                      <span className="price-text">$599 to $799</span> onwards
+                      <span className="price-text">${event?.ticketPrice} </span>
                     </h4>
-                    <Link href="/eventbooking" className="common_btn">
+                    <Link
+                      href={`/eventbooking?eventId=${event?._id}`}
+                      className="common_btn"
+                    >
                       Book Ticket Now
                     </Link>
                     <Button className="book_mark_icon">
@@ -254,7 +299,7 @@ export default function page() {
 
                   <div className="  whisiGoing_box">
                     <div>
-                      <h2>48</h2>
+                      <h2>{event?.totalAttendees}</h2>
                       <small className="text-secondary">Attendees</small>
                     </div>
 
@@ -297,16 +342,34 @@ export default function page() {
 
                   <div className="mt-3">
                     <span>Events Seats</span>
-                    <p className="small mb-2">Seats Booked - 1000</p>
-                    <div className="custom-progress-bg mb-2">
-                      <div
-                        className="custom-progress-bar"
-                        style={{ width: "65%" }}
-                      ></div>
-                    </div>
-                    <div className="text-end">
-                      <small className="small">Seats left - 500</small>
-                    </div>
+                    {(() => {
+                      const totalTickets = event?.totalTickets || 0;
+                      const availableTickets = event?.ticketQtyAvailable || 0;
+                      const bookedSeats = totalTickets - availableTickets;
+                      const progress =
+                        totalTickets > 0
+                          ? (bookedSeats / totalTickets) * 100
+                          : 0;
+
+                      return (
+                        <>
+                          <p className="small mb-2">
+                            Seats Booked - {bookedSeats}
+                          </p>
+                          <div className="custom-progress-bg mb-2">
+                            <div
+                              className="custom-progress-bar"
+                              style={{ width: `${progress}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-end">
+                            <small className="small">
+                              Seats left - {availableTickets}
+                            </small>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -317,11 +380,15 @@ export default function page() {
               <div className="sponsor-card">
                 <div className="sponsor-card_profile">
                   <img
-                    src="/img/img.svg"
+                    src={
+                      event?.createdBy?.profileImage
+                        ? getFullImageUrl(event?.createdBy?.profileImage)
+                        : "/img/default-user.png"
+                    }
                     className="sponsor-img"
                     alt="Sponsor"
                   />
-                  <h5 className="mb-0 fw-semibold">Esther Howard</h5>
+                  <h5 className="mb-0 fw-semibold">{event?.createdBy?.firstName} {event?.createdBy?.lastName}</h5>
                 </div>
                 <Button className="btn-book py-2 px-4">View Details</Button>
               </div>

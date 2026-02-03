@@ -3,12 +3,55 @@ import React, { useState } from "react";
 import { Container } from "react-bootstrap";
 import EventTicketscart from "./EventTicketscart";
 import PayNow from "./Modal/PayNow";
+import bookingApi from "@/api/bookingApi";
+import toast from "react-hot-toast";
 
-export default function TicketBooking() {
+export default function TicketBooking({ event }) {
   const [step, setStep] = useState(1); // 1: Tickets, 2: Payment, 3: Review
-  const [qty, setQty] = useState(2);
+  const [qty, setQty] = useState(1); // Default to 1
   const [selectedMethod, setSelectedMethod] = useState("card");
   const [modalShow, setModalShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const ticketPrice = event?.ticketPrice || 0;
+  const taxes = 10; // Hardcoded tax for now, logic can be improved later
+  const discount = 0; // Hardcoded discount for now
+  const totalPrice = ticketPrice * qty + taxes - discount;
+
+  const handleBooking = async () => {
+    if (!event) return;
+    setLoading(true);
+    try {
+      // 1. Initiate Booking
+      const initResponse = await bookingApi.initiateBooking({
+        eventId: event._id,
+        qty: qty,
+      });
+
+      if (initResponse.status) {
+        const transactionId = initResponse.data.transactionId;
+
+        // 2. Confirm Payment (Mock)
+        const confirmResponse = await bookingApi.confirmPayment({
+          transactionId: transactionId,
+        });
+
+        if (confirmResponse.status) {
+          setModalShow(true); // Show success modal
+        } else {
+          toast.error(confirmResponse.message || "Payment failed");
+        }
+      } else {
+        toast.error(initResponse.message || "Booking initiation failed");
+      }
+    } catch (error) {
+      console.error("Booking error:", error);
+      toast.error("Something went wrong during booking");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -18,13 +61,15 @@ export default function TicketBooking() {
             <div className="quantity-selector mb-5">
               <button
                 className="btn text-white fs-4"
-                onClick={() => setQty(qty > 1 ? qty - 1 : 1)}>
+                onClick={() => setQty(qty > 1 ? qty - 1 : 1)}
+              >
                 −
               </button>
               <span className="fs-4 fw-bold">{qty}</span>
               <button
                 className="btn text-white fs-4"
-                onClick={() => setQty(qty + 1)}>
+                onClick={() => setQty(qty + 1)}
+              >
                 +
               </button>
             </div>
@@ -39,20 +84,20 @@ export default function TicketBooking() {
             <div className="price_box">
               <div className="d-flex justify-content-between price_text">
                 <span className="">Ticket Price</span>
-                <span className="">$590</span>
+                <span className="">${ticketPrice * qty}</span>
               </div>
               <div className="d-flex justify-content-between  price_text">
                 <span className="">Taxes</span>
-                <span className="">$ 10</span>
+                <span className="">$ {taxes}</span>
               </div>
 
               <div className="d-flex justify-content-between  price_text">
                 <span>Discount</span>
-                <span className="text-info">-20</span>
+                <span className="text-info">-{discount}</span>
               </div>
               <div className="d-flex justify-content-between align-items-center price_text">
                 <span>Total</span>
-                <span className="text-info">$580</span>
+                <span className="text-info">${totalPrice}</span>
               </div>
             </div>
             <div className="tickets_btn">
@@ -71,27 +116,19 @@ export default function TicketBooking() {
                 <h5 className="text-start">Price Details</h5>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Ticket Price</span>
-                  <span className="">$590</span>
+                  <span className="">${ticketPrice * qty}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Taxes</span>
-                  <span className="">$ 10</span>
+                  <span className="">$ {taxes}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Discount</span>
-                  <span className="">-20</span>
+                  <span className="">-{discount}</span>
                 </div>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Total</span>
-                  <span className="">$580</span>
-                </div>
-                <div className="d-flex justify-content-between  price_text">
-                  <span>Discount</span>
-                  <span className="text-info">-20</span>
-                </div>
-                <div className="d-flex justify-content-between align-items-center price_text">
-                  <span>Total</span>
-                  <span className="text-info">$580</span>
+                  <span className="">${totalPrice}</span>
                 </div>
               </div>
 
@@ -100,10 +137,13 @@ export default function TicketBooking() {
                 <div
                   className="payment_method_item"
                   onClick={() => setSelectedMethod("card")}
-                  style={{ cursor: "pointer" }}>
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="method_left">
                     <div
-                      className={`radio_outer ${selectedMethod === "card" ? "active_radio" : ""}`}>
+                      className={`radio_outer ${selectedMethod === "card" ? "active_radio" : ""
+                        }`}
+                    >
                       {selectedMethod === "card" && (
                         <div className="radio_inner"></div>
                       )}
@@ -122,7 +162,8 @@ export default function TicketBooking() {
                   </div>
                   <button
                     className="edit_btn"
-                    onClick={(e) => e.stopPropagation()}>
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     EDIT
                   </button>
                 </div>
@@ -132,10 +173,13 @@ export default function TicketBooking() {
                 <div
                   className="payment_method_item"
                   onClick={() => setSelectedMethod("qpay")}
-                  style={{ cursor: "pointer" }}>
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="method_left">
                     <div
-                      className={`radio_outer ${selectedMethod === "qpay" ? "active_radio" : ""}`}>
+                      className={`radio_outer ${selectedMethod === "qpay" ? "active_radio" : ""
+                        }`}
+                    >
                       {selectedMethod === "qpay" && (
                         <div className="radio_inner"></div>
                       )}
@@ -152,10 +196,13 @@ export default function TicketBooking() {
                 <div
                   className="payment_method_item"
                   onClick={() => setSelectedMethod("social")}
-                  style={{ cursor: "pointer" }}>
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="method_left">
                     <div
-                      className={`radio_outer ${selectedMethod === "social" ? "active_radio" : ""}`}>
+                      className={`radio_outer ${selectedMethod === "social" ? "active_radio" : ""
+                        }`}
+                    >
                       {selectedMethod === "social" && (
                         <div className="radio_inner"></div>
                       )}
@@ -184,27 +231,19 @@ export default function TicketBooking() {
                 <h5 className="text-start">Price Details</h5>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Ticket Price</span>
-                  <span className="">$590</span>
+                  <span className="">${ticketPrice * qty}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Taxes</span>
-                  <span className="">$ 10</span>
+                  <span className="">$ {taxes}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Discount</span>
-                  <span className="">-20</span>
+                  <span className="">-{discount}</span>
                 </div>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Total</span>
-                  <span className="">$580</span>
-                </div>
-                <div className="d-flex justify-content-between  price_text">
-                  <span>Discount</span>
-                  <span className="text-info">-20</span>
-                </div>
-                <div className="d-flex justify-content-between align-items-center price_text">
-                  <span>Total</span>
-                  <span className="text-info">$580</span>
+                  <span className="">${totalPrice}</span>
                 </div>
               </div>
             </div>
@@ -249,8 +288,10 @@ export default function TicketBooking() {
             <div className="tickets_btn">
               <button
                 className="common_btn  mt-4"
-                onClick={() => setModalShow(true)}>
-                Pay Now
+                onClick={handleBooking} // Call dynamic handleBooking
+                disabled={loading}
+              >
+                {loading ? "Processing..." : "Pay Now"}
               </button>
             </div>
           </div>
@@ -258,6 +299,8 @@ export default function TicketBooking() {
     }
   };
 
+
+  console.log("77777888", event)
   return (
     <>
       <div className="Tickets_booking_sec">
@@ -314,7 +357,7 @@ export default function TicketBooking() {
 
             <div className="row g-5">
               <div className="col-lg-5 ">
-                <EventTicketscart />
+                <EventTicketscart event={event} />
               </div>
               <div className="col-lg-7 ">{renderStep()}</div>
             </div>

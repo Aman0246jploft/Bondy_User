@@ -1176,6 +1176,12 @@ select:-webkit-autofill {
   width: 16px;
 }
 
+.event-meta {
+  text-transform: capitalize;
+}
+
+
+
 .price-tag {
   font-size: 14px;
   font-style: normal;
@@ -2574,6 +2580,8 @@ footer .social_icon img {
   font-style: normal;
   font-weight: 700;
   line-height: normal;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .event-page-wrapper .price-text {
@@ -2838,6 +2846,8 @@ a.view-map {
   font-style: normal;
   font-weight: 400;
   line-height: 21px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .details_Event_box .gallery-grid {
