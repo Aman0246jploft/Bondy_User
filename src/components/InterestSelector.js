@@ -1,3 +1,4 @@
+import { getFullImageUrl } from "@/utils/imageHelper";
 import React from "react";
 
 const InterestSelector = ({ categories = [], selectedIds = [], onToggle }) => {
@@ -11,7 +12,7 @@ const InterestSelector = ({ categories = [], selectedIds = [], onToggle }) => {
           <span className="icon">
             {item.image ? (
               <img
-                src={item.image}
+                src={getFullImageUrl(item.image)}
                 alt={item.name}
                 style={{ width: "24px", height: "24px", borderRadius: "50%", objectFit: "cover" }}
               />

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Col, Form, Row, Button } from "react-bootstrap";
-import PhoneInput from "react-phone-number-input";
+import PhoneInput, { parsePhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
@@ -42,7 +42,10 @@ function PersonalInfoContent() {
             city: profile.location?.city || "",
             country: profile.location?.country || "",
             dob: profile.dob ? profile.dob.split("T")[0] : "",
-            contactNumber: profile.contactNumber || "",
+            contactNumber: profile.contactNumber
+              ? (profile.countryCode ? `${profile.countryCode}${profile.contactNumber}` : profile.contactNumber)
+              : "",
+            countryCode: profile.countryCode || "",
             zipcode: profile.location?.zipcode || "",
             profileImage: profile.profileImage || "",
             latitude: profile.location?.coordinates?.[1] || 0,
@@ -98,12 +101,25 @@ function PersonalInfoContent() {
     e.preventDefault();
     try {
       setLoading(true);
+      // Parse phone number
+      let finalCountryCode = profileData.countryCode;
+      let finalContactNumber = profileData.contactNumber;
+
+      if (profileData.contactNumber) {
+        const parsed = parsePhoneNumber(profileData.contactNumber);
+        if (parsed) {
+          finalCountryCode = `+${parsed.countryCallingCode}`;
+          finalContactNumber = parsed.nationalNumber;
+        }
+      }
+
       // Construct location object to match backend requirement exactly
       const updatePayload = {
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         dob: profileData.dob,
-        contactNumber: profileData.contactNumber,
+        contactNumber: finalContactNumber,
+        countryCode: finalCountryCode,
         profileImage: profileData.profileImage,
         location: {
           latitude: Number(profileData.latitude) || 0,
@@ -139,7 +155,16 @@ function PersonalInfoContent() {
                 style={{ cursor: "pointer" }}
                 onClick={() => fileRef.current.click()}
               >
-                <img src={preview || "/img/avtar.png"} alt="Profile" />
+                <img
+                  style={{
+                    width: "95px",
+                    height: "95px",
+                    objectFit: "cover",
+                    borderRadius: "50%",
+                  }}
+                  src={preview || "/img/avtar.png"}
+                  alt="Profile"
+                />
                 <input
                   type="file"
                   hidden

@@ -65,8 +65,15 @@ export default function OTPPage() {
         // Check if profile is complete to determine next step
         try {
           const profileRes = await authApi.getSelfProfile();
-          if (profileRes.status && profileRes.data.profile.firstName && profileRes.data.profile.lastName) {
-            setRedirectPath("/");
+          if (profileRes.status) {
+            const profile = profileRes.data.profile;
+            if (!profile.firstName || !profile.lastName) {
+              setRedirectPath("/completeprofile");
+            } else if (!profile.categories || profile.categories.length === 0) {
+              setRedirectPath("/insterest");
+            } else {
+              setRedirectPath("/");
+            }
           } else {
             setRedirectPath("/completeprofile");
           }

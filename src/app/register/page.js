@@ -2,7 +2,7 @@
 import Link from "next/link";
 import React, { useRef, useState } from "react";
 import { Col, Container, Form, Nav, Row, Tab } from "react-bootstrap";
-import PhoneInput from "react-phone-number-input";
+import PhoneInput, { parsePhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import authApi from "@/api/authApi";
 import { useRouter } from "next/navigation";
@@ -77,7 +77,10 @@ export default function Page() {
       if (response.status) {
         setOrganizerData((prev) => ({
           ...prev,
-          documents: response.data.files,
+          documents: response.data.files.map((uploadedFile) => ({
+            file: uploadedFile,
+            name: "Business Proof",
+          })),
         }));
       }
     } catch (error) {
@@ -93,10 +96,21 @@ export default function Page() {
     }
     setLoading(true);
     try {
+      let finalCountryCode = "+1";
+      let finalContactNumber = customerData.contactNumber;
+
+      if (customerData.contactNumber) {
+        const parsed = parsePhoneNumber(customerData.contactNumber);
+        if (parsed) {
+          finalCountryCode = `+${parsed.countryCallingCode}`;
+          finalContactNumber = parsed.nationalNumber;
+        }
+      }
+
       const payload = {
         email: customerData.email,
-        contactNumber: customerData.contactNumber,
-        countryCode: "+1", // Default for now, extract from phone input if needed
+        contactNumber: finalContactNumber,
+        countryCode: finalCountryCode,
         password: customerData.password,
         confirmPassword: customerData.confirmPassword,
       };
@@ -124,9 +138,21 @@ export default function Page() {
     }
     setLoading(true);
     try {
+      let finalCountryCode = "+1";
+      let finalContactNumber = organizerData.contactNumber;
+
+      if (organizerData.contactNumber) {
+        const parsed = parsePhoneNumber(organizerData.contactNumber);
+        if (parsed) {
+          finalCountryCode = `+${parsed.countryCallingCode}`;
+          finalContactNumber = parsed.nationalNumber;
+        }
+      }
+
       const payload = {
         ...organizerData,
-        countryCode: "+1", // Default for now
+        contactNumber: finalContactNumber,
+        countryCode: finalCountryCode,
       };
       const response = await authApi.organizerSignup(payload);
       if (response.status) {

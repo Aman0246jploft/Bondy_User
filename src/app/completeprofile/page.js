@@ -8,6 +8,7 @@ import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { fetchCurrentLocation, formatLocationForApi } from "@/utils/locationHelper";
 
 export default function CompleteProfile() {
   return (
@@ -103,9 +104,36 @@ function CompleteProfileContent() {
     setProfileData((prev) => ({ ...prev, dob: date }));
   };
 
+
+
+  // Auto-fetch location on mount
+  useEffect(() => {
+    if (!profileData.location) {
+      fetchCurrentLocation()
+        .then((locationData) => {
+          setProfileData((prev) => ({
+            ...prev,
+            location: locationData,
+          }));
+        })
+        .catch((error) => {
+          console.error("Error auto-fetching location:", error);
+        });
+    }
+  }, [profileData.location]);
+
+  // handleGetLocation is no longer needed as a standalone function for a button, 
+  // unless we want a retry mechanism. But user asked to remove button.
+
   const handleContinue = async (e) => {
     e.preventDefault();
     if (!profileData.firstName || !profileData.lastName) {
+      toast.error("Please enter your name");
+      return;
+    }
+
+    if (!profileData.location) {
+      toast.error("Please provide your location to continue");
       return;
     }
 
@@ -113,7 +141,7 @@ function CompleteProfileContent() {
       setLoading(true);
       const response = await authApi.updateProfile({
         ...profileData,
-        location: profileData.location // Preserve existing location object
+        location: formatLocationForApi(profileData.location) // Format for API
       });
       if (response.status) {
         router.push("/insterest");
@@ -271,6 +299,17 @@ function CompleteProfileContent() {
                         </Form.Group>
                       </Col>
                     </Row>
+
+                    {profileData.location && (
+                      <Row className="mt-2">
+                        <Col xs={12}>
+                          <div className="text-success small">
+                            <i className="bi bi-check-circle me-1"></i>
+                            {/* Location secured automatically */}
+                          </div>
+                        </Col>
+                      </Row>
+                    )}
 
                     <Button
                       type="submit"

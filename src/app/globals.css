@@ -2552,7 +2552,13 @@ footer .social_icon img {
   font-style: normal;
   font-weight: 700;
   line-height: 1.2;
+
 }
+
+.event-page-wrapper .event-title::first-letter {
+  text-transform: uppercase;
+}
+
 
 .event-page-wrapper .event-meta {
   color: var(--white);

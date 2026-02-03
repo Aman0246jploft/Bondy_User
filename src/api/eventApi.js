@@ -7,6 +7,7 @@ const eventApi = {
         return apiClient.get("/event/list", { params, skipToast: true });
     },
     createEvent: (data) => apiClient.post("/event/create", data),
+    getEventDetails: (eventId) => apiClient.get(`/event/details/${eventId}`, { skipToast: true }),
 };
 
 export default eventApi;

@@ -1,4 +1,7 @@
 "use client";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import eventApi from "@/api/eventApi";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import { Container, Row, Col, Button } from "react-bootstrap";
@@ -12,6 +15,31 @@ import EventSection from "@/components/EventSection";
 import Link from "next/link";
 
 export default function page() {
+  const searchParams = useSearchParams();
+  const eventId = searchParams.get("id");
+  const [event, setEvent] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [attendees, setAttendees] = useState(null);
+
+  useEffect(() => {
+    const fetchEventDetails = async () => {
+      if (!eventId) return;
+      try {
+        const response = await eventApi.getEventDetails(eventId);
+        if (response.status) {
+          setEvent(response.data.event);
+          setReviews(response.data.reviews || []);
+          setComments(response.data.comments || []);
+          setAttendees(response.data.attendees);
+        }
+      } catch (error) {
+        console.error("Error fetching event details:", error);
+      }
+    };
+
+    fetchEventDetails();
+  }, [eventId]);
   const images = [
     "/img/interactive-process-image-1.png",
     "/img/interactive-process-image-2.png",
@@ -28,10 +56,12 @@ export default function page() {
             <Col lg={7} className="mb-4">
               <div className="header-box">
                 <h1 className="event-title">
-                  Connecting Minds to Shape
-                  <br /> Tomorrow's Big Ideas
+                  {event?.eventTitle}
+                  <br />
                 </h1>
-                <p className="event-meta">2h29m • Comedy show • Live</p>
+                <p className="event-meta">
+                  {event?.duration} • Comedy show • Live
+                </p>
                 <Button className="book_mark_icon">
                   <img src="/img/bookmark_icon.svg" />
                 </Button>
@@ -39,11 +69,7 @@ export default function page() {
             </Col>
 
             <Col lg={5} className="">
-              <p className="event-desc mb-4">
-                Discover the vision that drives this event—a commitment to
-                bringing together innovators, leaders, and changemakers to share
-                knowledge, spark inspiration, and create meaningful connections.
-              </p>
+              <p className="event-desc mb-4">{event?.longdesc}</p>
               <div className="onwards_sec">
                 <h4 className="mb-0">
                   <span className="price-text">$599 to $799</span> onwards
@@ -82,7 +108,8 @@ export default function page() {
                     slidesPerView: 2.5,
                     spaceBetween: 20,
                   },
-                }}>
+                }}
+              >
                 {images.map((img, index) => (
                   <SwiperSlide key={index}>
                     <div
@@ -260,7 +287,8 @@ export default function page() {
                     <a
                       href="#"
                       className="text-teal text-decoration-none small"
-                      style={{ color: "#26a69a" }}>
+                      style={{ color: "#26a69a" }}
+                    >
                       View All
                     </a>
                   </div>
@@ -273,7 +301,8 @@ export default function page() {
                     <div className="custom-progress-bg mb-2">
                       <div
                         className="custom-progress-bar"
-                        style={{ width: "65%" }}></div>
+                        style={{ width: "65%" }}
+                      ></div>
                     </div>
                     <div className="text-end">
                       <small className="small">Seats left - 500</small>

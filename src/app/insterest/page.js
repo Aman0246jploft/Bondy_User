@@ -7,6 +7,8 @@ import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+import { fetchCurrentLocation, formatLocationForApi } from "@/utils/locationHelper";
+
 export default function InterestPage() {
   return (
     <ProtectedRoute>
@@ -35,10 +37,10 @@ function InterestPageContent() {
         }
 
         if (profileRes.status) {
-          const profile = profileRes.data.profile;
-          setProfile(profile);
+          const profileData = profileRes.data.profile;
+          setProfile(profileData);
           // Ensure we only store IDs
-          const existingInterests = (profile.categories || []).map(cat => cat._id || cat);
+          const existingInterests = (profileData.categories || []).map(cat => cat._id || cat);
           setSelectedIds(existingInterests);
         }
       } catch (error) {
@@ -47,6 +49,22 @@ function InterestPageContent() {
     };
     fetchData();
   }, []);
+
+  // Auto-fetch location if missing
+  useEffect(() => {
+    if (profile && !profile.location) {
+      fetchCurrentLocation()
+        .then((locationData) => {
+          setProfile((prev) => ({
+            ...prev,
+            location: locationData,
+          }));
+        })
+        .catch((error) => {
+          console.error("Error auto-fetching location:", error);
+        });
+    }
+  }, [profile]);
 
   const handleToggle = (id) => {
     setSelectedIds((prev) =>
@@ -62,11 +80,42 @@ function InterestPageContent() {
 
     try {
       setLoading(true);
-      const response = await authApi.updateProfile({
-        ...profile,
-        categories: selectedIds,
-        location: profile?.location || null
-      });
+      // Construct allowed payload based on updateUserSchema
+      const payload = {
+
+        categories: selectedIds, // Updated with user selection
+        location: formatLocationForApi(profile?.location) // Formatted
+      };
+      if (profile?.profileImage) {
+        payload.profileImage = profile?.profileImage;
+      }
+      if (profile?.bio) {
+        payload.bio = profile?.bio;
+      }
+      if (profile?.dob) {
+        payload.dob = profile?.dob;
+      }
+      if (profile?.gender) {
+        payload.gender = profile?.gender;
+      }
+      if (profile?.countryCode) {
+        payload.countryCode = profile?.countryCode;
+      }
+      if (profile?.contactNumber) {
+        payload.contactNumber = profile?.contactNumber;
+      }
+      if (profile?.email) {
+        payload.email = profile?.email;
+      }
+      if (profile?.firstName) {
+        payload.firstName = profile?.firstName;
+      }
+      if (profile?.lastName) {
+        payload.lastName = profile?.lastName;
+      }
+
+
+      const response = await authApi.updateProfile(payload);
       if (response.status) {
         toast.success("Interests updated successfully");
         router.push("/"); // Redirect to home or dashboard

@@ -7,7 +7,6 @@ const apiClient = axios.create({
     },
 });
 
-// Request Interceptor
 apiClient.interceptors.request.use(
     (config) => {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -23,15 +22,19 @@ apiClient.interceptors.request.use(
 
 import toast from "react-hot-toast";
 
-// Response Interceptor
 apiClient.interceptors.response.use(
     (response) => {
         const skipToast = response.config?.skipToast;
-        // Show success message if backend provides it
         if (!skipToast) {
             if (response.data?.status && response.data?.message) {
                 toast.success(response.data.message);
             } else if (response.data?.status === false && response.data?.message) {
+                if (response.data.message === "Invalid or expired token") {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("registerEmail");
+                    window.location.href = "/";
+                    return;
+                }
                 toast.error(response.data.message);
             }
         }

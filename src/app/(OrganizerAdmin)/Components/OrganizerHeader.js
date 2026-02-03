@@ -46,7 +46,18 @@ function OrganizerHeader() {
 
           <div className="avatar">
             <Link href="/OrganizerPersonalInfo">
-              <img src={profile?.profileImage ? getFullImageUrl(profile.profileImage) : "/img/avtar.png"} alt="User" />
+              {console.log(
+                "Rendering profile image with data:",
+                profile?.profileImage,
+              )}
+              <img
+                src={
+                  profile?.profileImage
+                    ? getFullImageUrl(profile.profileImage)
+                    : "/img/avtar.png"
+                }
+                alt="User"
+              />
             </Link>
           </div>
         </div>

@@ -87,8 +87,6 @@ const EventSection = ({
   // If no events and not loading, don't render the section (or render empty state)
   if (!events || events.length === 0) return null;
 
-  console.log("44444444445555555", events);
-
   return (
     <section className="recommended-section">
       <div className="container">
@@ -164,7 +162,8 @@ const EventSection = ({
                         from {item.minPrice ? `$${item.minPrice}` : "Free"}
                       </div> */}
                       <div className="price-tag">
-                        from {item.ticketPrice ? `$${item.ticketPrice}` : "Free"}
+                        from{" "}
+                        {item.ticketPrice ? `$${item.ticketPrice}` : "Free"}
                       </div>
                     </div>
                   </div>

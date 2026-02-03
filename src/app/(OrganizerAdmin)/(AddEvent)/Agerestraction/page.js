@@ -12,12 +12,11 @@ function page() {
   const router = useRouter();
   // Dynamically import or require authApi if needed, or assume it is available in scope if I add the import at the top.
   // Ideally, I should add the import at the top separately.
-  // Let's assume I will add `import authApi from "@/api/authApi";` at line 2. 
-  // Wait, I can't add imports easily with replace in the middle. 
+  // Let's assume I will add `import authApi from "@/api/authApi";` at line 2.
+  // Wait, I can't add imports easily with replace in the middle.
   // Let's replace the whole top section including imports.
 
-
-  const [featureFee, setFeatureFee] = useState(5.00); // Default fallback
+  const [featureFee, setFeatureFee] = useState(5.0); // Default fallback
 
   useEffect(() => {
     const fetchFeatureFee = async () => {
@@ -52,7 +51,7 @@ function page() {
         ...eventData.ageRestriction,
         type: type,
         // Reset minAge if ALL_AGES? Or keep it? keeping it is safer for switching back
-      }
+      },
     });
   };
 
@@ -60,8 +59,8 @@ function page() {
     updateEventData({
       ageRestriction: {
         ...eventData.ageRestriction,
-        minAge: parseInt(e.target.value)
-      }
+        minAge: parseInt(e.target.value),
+      },
     });
   };
 
@@ -69,8 +68,8 @@ function page() {
     updateEventData({
       ageRestriction: {
         ...eventData.ageRestriction,
-        maxAge: parseInt(e.target.value)
-      }
+        maxAge: parseInt(e.target.value),
+      },
     });
   };
 
@@ -147,8 +146,12 @@ function page() {
                 <Col md={12}>
                   <div className="event-frm-bx d-flex justify-content-between align-items-center">
                     <div>
-                      <label className="form-label mb-0">Access & Privacy</label>
-                      <p className="text-white small mb-0">Only People with the link can view</p>
+                      <label className="form-label mb-0">
+                        Access & Privacy
+                      </label>
+                      <p className="text-white small mb-0">
+                        Only People with the link can view
+                      </p>
                     </div>
                     <div className="form-check form-switch">
                       <input
@@ -164,7 +167,7 @@ function page() {
                 </Col>
 
                 <Col md={12}>
-                  <hr className="my-4" style={{ borderColor: '#333' }} />
+                  <hr className="my-4" style={{ borderColor: "#333" }} />
                 </Col>
 
                 <Col md={12}>
@@ -173,57 +176,64 @@ function page() {
                     <div className="d-flex gap-3 mb-4">
                       <button
                         type="button"
-                        className={`custom-btn ${eventData.ageRestriction?.type === 'ALL_AGES' ? '' : 'outline-btn'}`}
-                        onClick={() => handleAgeTypeChange('ALL_AGES')}
-                        style={{ minWidth: '100px' }}
+                        className={`custom-btn ${eventData.ageRestriction?.type === "ALL_AGES" ? "" : "outline-btn"}`}
+                        onClick={() => handleAgeTypeChange("ALL_AGES")}
+                        style={{ minWidth: "100px" }}
                       >
                         All Ages
                       </button>
                       <button
                         type="button"
-                        className={`custom-btn ${eventData.ageRestriction?.type === 'MIN_AGE' && eventData.ageRestriction?.minAge === 18 ? '' : 'outline-btn'}`}
+                        className={`custom-btn ${eventData.ageRestriction?.type === "MIN_AGE" && eventData.ageRestriction?.minAge === 18 ? "" : "outline-btn"}`}
                         onClick={() => {
                           updateEventData({
-                            ageRestriction: { type: 'MIN_AGE', minAge: 18 }
+                            ageRestriction: { type: "MIN_AGE", minAge: 18 },
                           });
                         }}
-                        style={{ minWidth: '100px' }}
+                        style={{ minWidth: "100px" }}
                       >
                         18+
                       </button>
                       <button
                         type="button"
-                        className={`custom-btn ${eventData.ageRestriction?.type === 'MIN_AGE' && eventData.ageRestriction?.minAge === 21 ? '' : 'outline-btn'}`}
+                        className={`custom-btn ${eventData.ageRestriction?.type === "MIN_AGE" && eventData.ageRestriction?.minAge === 21 ? "" : "outline-btn"}`}
                         onClick={() => {
                           updateEventData({
-                            ageRestriction: { type: 'MIN_AGE', minAge: 21 }
+                            ageRestriction: { type: "MIN_AGE", minAge: 21 },
                           });
                         }}
-                        style={{ minWidth: '100px' }}
+                        style={{ minWidth: "100px" }}
                       >
                         21+
                       </button>
                       <button
                         type="button"
-                        className={`custom-btn ${eventData.ageRestriction?.type === 'RANGE' ? '' : 'outline-btn'}`}
+                        className={`custom-btn ${eventData.ageRestriction?.type === "RANGE" ? "" : "outline-btn"}`}
                         onClick={() => {
-                          handleAgeTypeChange('RANGE');
+                          handleAgeTypeChange("RANGE");
                           if (!eventData.ageRestriction.maxAge) {
                             updateEventData({
-                              ageRestriction: { ...eventData.ageRestriction, type: 'RANGE', minAge: 18, maxAge: 60 }
+                              ageRestriction: {
+                                ...eventData.ageRestriction,
+                                type: "RANGE",
+                                minAge: 18,
+                                maxAge: 60,
+                              },
                             });
                           }
                         }}
-                        style={{ minWidth: '100px' }}
+                        style={{ minWidth: "100px" }}
                       >
                         Range
                       </button>
                     </div>
 
                     {/* Single Slider for Custom Min Age */}
-                    {eventData.ageRestriction?.type === 'MIN_AGE' && (
+                    {eventData.ageRestriction?.type === "MIN_AGE" && (
                       <div className="mt-3">
-                        <label className="form-label small text-white">Minimum Age: {eventData.ageRestriction.minAge}</label>
+                        <label className="form-label small text-white">
+                          Minimum Age: {eventData.ageRestriction.minAge}
+                        </label>
                         <input
                           type="range"
                           className="form-range"
@@ -236,11 +246,13 @@ function page() {
                     )}
 
                     {/* Dual Inputs/Sliders for Range */}
-                    {eventData.ageRestriction?.type === 'RANGE' && (
+                    {eventData.ageRestriction?.type === "RANGE" && (
                       <div className="mt-3">
                         <Row>
                           <Col md={6}>
-                            <label className="form-label small text-white">Min Age: {eventData.ageRestriction.minAge}</label>
+                            <label className="form-label small text-white">
+                              Min Age: {eventData.ageRestriction.minAge}
+                            </label>
                             <input
                               type="range"
                               className="form-range"
@@ -251,7 +263,9 @@ function page() {
                             />
                           </Col>
                           <Col md={6}>
-                            <label className="form-label small text-white">Max Age: {eventData.ageRestriction.maxAge}</label>
+                            <label className="form-label small text-white">
+                              Max Age: {eventData.ageRestriction.maxAge}
+                            </label>
                             <input
                               type="range"
                               className="form-range"
@@ -264,7 +278,6 @@ function page() {
                         </Row>
                       </div>
                     )}
-
                   </div>
                 </Col>
 
@@ -283,14 +296,17 @@ function page() {
                 </Col>
 
                 <Col md={12}>
-                  <hr className="my-4" style={{ borderColor: '#333' }} />
+                  <hr className="my-4" style={{ borderColor: "#333" }} />
                 </Col>
 
                 <Col md={12}>
                   <div className="event-frm-bx d-flex justify-content-between align-items-center">
                     <div>
                       <label className="form-label mb-0">Feature Event</label>
-                      <p className="text-white small mb-0">Boost visibility on the homepage for ${featureFee.toFixed(2)}</p>
+                      <p className="text-white small mb-0">
+                        Boost visibility on the homepage for $
+                        {featureFee.toFixed(2)}
+                      </p>
                     </div>
                     <div className="form-check form-switch">
                       <input
@@ -310,7 +326,11 @@ function page() {
                 <Link href="/TicketsPricing" className="outline-btn">
                   Back
                 </Link>
-                <button type="button" onClick={handleNext} className="custom-btn">
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="custom-btn"
+                >
                   Save and Continue
                 </button>
               </div>

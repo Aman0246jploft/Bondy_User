@@ -87,23 +87,27 @@ export default function OTPPage() {
           const profileRes = await authApi.getSelfProfile();
           if (profileRes.status) {
             const profile = profileRes.data.profile;
-            // Check for names to determine completeness
-            if (profile.firstName && profile.lastName) {
-              // Redirect based on role
-              if (profile.role === "ORGANISER" || profile.role === "ORGANIZER") {
-                // router.push("/Dashboard");
-                router.push("/");
 
-              } else {
-                router.push("/");
-              }
-            } else {
+            // 1. Check Personal Details (Name)
+            if (!profile.firstName || !profile.lastName) {
               router.push("/completeprofile");
+              return;
             }
+
+            // 2. Check Interests (Categories)
+            if (!profile.categories || profile.categories.length === 0) {
+              router.push("/insterest");
+              return;
+            }
+
+            // 3. Profile Complete - Go to Home/Dashboard
+            router.push("/");
           } else {
+            // Fallback if profile fetch fails but status is false (unlikely if token works)
             router.push("/completeprofile");
           }
         } catch (err) {
+          console.error("Profile check failed:", err);
           router.push("/completeprofile");
         }
       }
