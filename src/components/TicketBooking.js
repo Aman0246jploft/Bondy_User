@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import EventTicketscart from "./EventTicketscart";
 import PayNow from "./Modal/PayNow";
@@ -13,40 +13,133 @@ export default function TicketBooking({ event }) {
   const [modalShow, setModalShow] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const ticketPrice = event?.ticketPrice || 0;
-  const taxes = 10; // Hardcoded tax for now, logic can be improved later
-  const discount = 0; // Hardcoded discount for now
-  const totalPrice = ticketPrice * qty + taxes - discount;
+  // New state for price breakdown
+  const [priceBreakdown, setPriceBreakdown] = useState({
+    basePrice: 0,
+    taxes: 0,
+    discount: 0,
+    totalAmount: 0,
+  });
 
-  const handleBooking = async () => {
+  const [promoCode, setPromoCode] = useState(""); // Input value
+  const [appliedPromoCode, setAppliedPromoCode] = useState(""); // Validated/Applied value
+  const [promoMessage, setPromoMessage] = useState(null); // { type: 'success' | 'error', text: '' }
+  const [transactionId, setTransactionId] = useState(null); // Store initiated transaction ID
+
+  // Calculate booking details when qty or appliedPromoCode changes
+  useEffect(() => {
+    const fetchBreakdown = async () => {
+      if (!event) return;
+      try {
+        const res = await bookingApi.calculateBooking({
+          eventId: event._id,
+          qty: qty,
+          discountCode: appliedPromoCode,
+        });
+
+        if (res.status) {
+          setPriceBreakdown({
+            basePrice: res.data.breakdown.basePrice,
+            taxes: res.data.breakdown.taxAmount,
+            discount: res.data.breakdown.discountAmount,
+            totalAmount: res.data.breakdown.totalAmount,
+          });
+        }
+      } catch (error) {
+        console.error("Error calculating booking price:", error);
+      }
+    };
+
+    fetchBreakdown();
+  }, [event, qty, appliedPromoCode]);
+
+  const handleApplyPromo = async () => {
+    setPromoMessage(null);
+    if (!promoCode.trim()) {
+      toast.error("Please enter a promo code");
+      return;
+    }
+
+    try {
+      const res = await bookingApi.calculateBooking({
+        eventId: event._id,
+        qty: qty,
+        discountCode: promoCode,
+      });
+
+      if (res.status) {
+        setAppliedPromoCode(promoCode);
+        setPriceBreakdown({
+          basePrice: res.data.breakdown.basePrice,
+          taxes: res.data.breakdown.taxAmount,
+          discount: res.data.breakdown.discountAmount,
+          totalAmount: res.data.breakdown.totalAmount,
+        });
+        setPromoMessage({ type: "success", text: "Promo code applied!" });
+        toast.success("Promo code applied!");
+      } else {
+        toast.error(res.message || "Invalid promo code");
+        setAppliedPromoCode(""); // Reset if invalid
+        setPromoMessage({
+          type: "error",
+          text: res.message || "Invalid promo code",
+        });
+      }
+    } catch (error) {
+      console.error("Promo code error:", error);
+      const msg = error?.response?.data?.message || "Invalid promo code";
+      toast.error(msg);
+      setAppliedPromoCode("");
+      setPromoMessage({ type: "error", text: msg });
+    }
+  };
+
+  // Step 2 -> Step 3: Initiate Booking
+  const handleInitiateBooking = async () => {
     if (!event) return;
     setLoading(true);
     try {
-      // 1. Initiate Booking
       const initResponse = await bookingApi.initiateBooking({
         eventId: event._id,
         qty: qty,
+        discountCode: appliedPromoCode,
       });
 
       if (initResponse.status) {
-        const transactionId = initResponse.data.transactionId;
-
-        // 2. Confirm Payment (Mock)
-        const confirmResponse = await bookingApi.confirmPayment({
-          transactionId: transactionId,
-        });
-
-        if (confirmResponse.status) {
-          setModalShow(true); // Show success modal
-        } else {
-          toast.error(confirmResponse.message || "Payment failed");
-        }
+        setTransactionId(initResponse.data.transactionId);
+        setStep(3); // Move to Review Step
+        toast.success("Booking initiated, please review.");
       } else {
         toast.error(initResponse.message || "Booking initiation failed");
       }
     } catch (error) {
-      console.error("Booking error:", error);
-      toast.error("Something went wrong during booking");
+      console.error("Initiate booking error:", error);
+      toast.error("Failed to initiate booking");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 3 -> Finish: Confirm Payment
+  const handleConfirmBooking = async () => {
+    if (!transactionId) {
+      toast.error("No booking to confirm. Please restart.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const confirmResponse = await bookingApi.confirmPayment({
+        transactionId: transactionId,
+      });
+
+      if (confirmResponse.status) {
+        setModalShow(true); // Show success modal
+      } else {
+        toast.error(confirmResponse.message || "Payment failed");
+      }
+    } catch (error) {
+      console.error("Confirm payment error:", error);
+      toast.error("Something went wrong during payment");
     } finally {
       setLoading(false);
     }
@@ -75,29 +168,46 @@ export default function TicketBooking({ event }) {
             </div>
 
             <h5 className="text-start">Discount Code</h5>
-            <div className="promo-group mb-5">
-              <input type="text" placeholder="Enter code here" />
-              <button className="common_btn">APPLY</button>
+            <div className="promo-group mb-2">
+              <input
+                type="text"
+                placeholder="Enter code here"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+              />
+              <button className="common_btn" onClick={handleApplyPromo}>
+                APPLY
+              </button>
             </div>
+            {promoMessage && (
+              <div
+                className={`mb-4 ${promoMessage.type === "success"
+                  ? "text-success"
+                  : "text-danger"
+                  }`}
+              >
+                {promoMessage.text}
+              </div>
+            )}
 
             <h5 className="text-start">Price Details</h5>
             <div className="price_box">
               <div className="d-flex justify-content-between price_text">
                 <span className="">Ticket Price</span>
-                <span className="">${ticketPrice * qty}</span>
+                <span className="">${priceBreakdown.basePrice}</span>
               </div>
               <div className="d-flex justify-content-between  price_text">
                 <span className="">Taxes</span>
-                <span className="">$ {taxes}</span>
+                <span className="">$ {priceBreakdown.taxes}</span>
               </div>
 
               <div className="d-flex justify-content-between  price_text">
                 <span>Discount</span>
-                <span className="text-info">-{discount}</span>
+                <span className="text-info">-{priceBreakdown.discount}</span>
               </div>
               <div className="d-flex justify-content-between align-items-center price_text">
                 <span>Total</span>
-                <span className="text-info">${totalPrice}</span>
+                <span className="text-info">${priceBreakdown.totalAmount}</span>
               </div>
             </div>
             <div className="tickets_btn">
@@ -116,19 +226,19 @@ export default function TicketBooking({ event }) {
                 <h5 className="text-start">Price Details</h5>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Ticket Price</span>
-                  <span className="">${ticketPrice * qty}</span>
+                  <span className="">${priceBreakdown.basePrice}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Taxes</span>
-                  <span className="">$ {taxes}</span>
+                  <span className="">$ {priceBreakdown.taxes}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Discount</span>
-                  <span className="">-{discount}</span>
+                  <span className="">-{priceBreakdown.discount}</span>
                 </div>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Total</span>
-                  <span className="">${totalPrice}</span>
+                  <span className="">${priceBreakdown.totalAmount}</span>
                 </div>
               </div>
 
@@ -215,8 +325,12 @@ export default function TicketBooking({ event }) {
                 </div>
               </div>
               <div className="tickets_btn">
-                <button className="common_btn  mt-4" onClick={() => setStep(3)}>
-                  Pay Now
+                <button
+                  className="common_btn  mt-4"
+                  onClick={handleInitiateBooking}
+                  disabled={loading}
+                >
+                  {loading ? "Processing..." : "Pay Now"}
                 </button>
               </div>
             </div>
@@ -231,19 +345,19 @@ export default function TicketBooking({ event }) {
                 <h5 className="text-start">Price Details</h5>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Ticket Price</span>
-                  <span className="">${ticketPrice * qty}</span>
+                  <span className="">${priceBreakdown.basePrice}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Taxes</span>
-                  <span className="">$ {taxes}</span>
+                  <span className="">$ {priceBreakdown.taxes}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Discount</span>
-                  <span className="">-{discount}</span>
+                  <span className="">-{priceBreakdown.discount}</span>
                 </div>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Total</span>
-                  <span className="">${totalPrice}</span>
+                  <span className="">${priceBreakdown.totalAmount}</span>
                 </div>
               </div>
             </div>
@@ -288,7 +402,7 @@ export default function TicketBooking({ event }) {
             <div className="tickets_btn">
               <button
                 className="common_btn  mt-4"
-                onClick={handleBooking} // Call dynamic handleBooking
+                onClick={handleConfirmBooking} // Call confirm booking
                 disabled={loading}
               >
                 {loading ? "Processing..." : "Pay Now"}
@@ -299,8 +413,6 @@ export default function TicketBooking({ event }) {
     }
   };
 
-
-  console.log("77777888", event)
   return (
     <>
       <div className="Tickets_booking_sec">
@@ -309,7 +421,8 @@ export default function TicketBooking({ event }) {
             <div className="stepper-container">
               <span
                 className={`step-item ${step >= 1 ? "active" : ""}`}
-                onClick={() => setStep(1)}>
+                onClick={() => setStep(1)}
+              >
                 {" "}
                 <img src="/img/tickets_icon.svg" /> Tickets
               </span>
@@ -319,7 +432,8 @@ export default function TicketBooking({ event }) {
                   width="24"
                   height="24"
                   viewBox="0 0 24 24"
-                  fill="none">
+                  fill="none"
+                >
                   <path
                     fill-rule="evenodd"
                     clip-rule="evenodd"
@@ -330,7 +444,8 @@ export default function TicketBooking({ event }) {
               </span>
               <span
                 className={`step-item ${step >= 2 ? "active" : ""}`}
-                onClick={() => setStep(2)}>
+                onClick={() => setStep(2)}
+              >
                 <img src="/img/payment_icon.svg" /> Payment
               </span>
               <span className={`step-divider ${step >= 3 ? "active" : ""}`}>
@@ -339,7 +454,8 @@ export default function TicketBooking({ event }) {
                   width="24"
                   height="24"
                   viewBox="0 0 24 24"
-                  fill="none">
+                  fill="none"
+                >
                   <path
                     fill-rule="evenodd"
                     clip-rule="evenodd"
@@ -350,7 +466,8 @@ export default function TicketBooking({ event }) {
               </span>
               <span
                 className={`step-item ${step === 3 ? "active" : ""}`}
-                onClick={() => setStep(3)}>
+                onClick={() => setStep(3)}
+              >
                 <img src="/img/review_icon.svg" /> Review
               </span>
             </div>

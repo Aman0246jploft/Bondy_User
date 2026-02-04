@@ -96,8 +96,8 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="text">My Favorites</span>
         </Link>
         <Link
-          href="/SupportTickets"
-          className={`menu-item ${isActive("/SupportTickets") ? "active" : ""}`}>
+          href="/SupportTicketsC"
+          className={`menu-item ${isActive("/SupportTicketsC") ? "active" : ""}`}>
           <span className="icon">
             <img src="/img/favorite-icon.svg" alt="" />
           </span>

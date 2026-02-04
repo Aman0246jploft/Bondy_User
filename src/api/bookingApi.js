@@ -13,10 +13,10 @@ const bookingApi = {
     // Calculate pricing preview (optional, if needed for dynamic price updates before booking)
     calculateBooking: (data) => apiClient.post("/booking/calculate", data),
 
-    getTicketList: (params) => apiClient.get("/booking/ticket/list", { params }),
+    getTicketList: (params) => apiClient.get("/booking/list", { params }),
 
     getTicketDetail: (transactionId) =>
-        apiClient.get(`/booking/ticket/${transactionId}`),
+        apiClient.get(`/booking/detail/${transactionId}`),
 };
 
 export default bookingApi;

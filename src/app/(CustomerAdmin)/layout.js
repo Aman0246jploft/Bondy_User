@@ -37,19 +37,15 @@ export default function RootLayout({ children }) {
   if (!authorized) return null;
 
   return (
-    <html lang="en">
-      <body>
-        <div
-          className={`app-layout ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}
-        >
-          <Sidebar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+    <div
+      className={`app-layout ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}
+    >
+      <Sidebar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-          <div className="content-area">
-            <CustomerHeader />
-            <main className="main-content">{children}</main>
-          </div>
-        </div>
-      </body>
-    </html>
+      <div className="content-area">
+        <CustomerHeader />
+        <main className="main-content">{children}</main>
+      </div>
+    </div>
   );
 }

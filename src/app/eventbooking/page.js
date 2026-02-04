@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TicketBooking from "@/components/TicketBooking";
 import eventApi from "@/api/eventApi";
+import bookingApi from "@/api/bookingApi";
 
 export default function page() {
   const searchParams = useSearchParams();

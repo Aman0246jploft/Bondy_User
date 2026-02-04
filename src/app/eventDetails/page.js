@@ -70,8 +70,8 @@ export default function page() {
 
     return `${dateStr} at ${formatTime(sTime)} to ${formatTime(eTime)}`;
   };
-  console.log("5555>>><<<<>>1111", event);
 
+  console.log("000000000", attendees);
 
   return (
     <>
@@ -86,7 +86,8 @@ export default function page() {
                   <br />
                 </h1>
                 <p className="event-meta">
-                  {event?.duration} • {event?.eventCategory?.name} • {event?.status}
+                  {event?.duration} • {event?.eventCategory?.name} •{" "}
+                  {event?.status}
                 </p>
                 <Button className="book_mark_icon">
                   <img src="/img/bookmark_icon.svg" />
@@ -189,15 +190,13 @@ export default function page() {
                       {formatEventDateTime(
                         event?.startDate,
                         event?.startTime,
-                        event?.endTime
+                        event?.endTime,
                       )}
                     </span>
                   </div>
                   <div className="event_time_mange">
                     <h5>Location</h5>
-                    <span>
-                      {event?.venueAddress?.address}
-                    </span>
+                    <span>{event?.venueAddress?.address}</span>
                   </div>
                   {/* <div className="event_time_mange">
                     <h5>Date & Time</h5>
@@ -216,19 +215,13 @@ export default function page() {
 
                 {/* Text Content Sections */}
                 <div className="content-section">
-                  <h2 className="section-heading">
-                    {event?.eventTitle}
-                  </h2>
-                  <p className="section-text">
-                    {event?.shortdesc}
-                  </p>
+                  <h2 className="section-heading">{event?.eventTitle}</h2>
+                  <p className="section-text">{event?.shortdesc}</p>
                 </div>
 
                 <div className="content-section">
                   <h3 className="section-heading">What to expect</h3>
-                  <p className="section-text">
-                    {event?.longdesc}
-                  </p>
+                  <p className="section-text">{event?.longdesc}</p>
                 </div>
 
                 {/* Event Gallery Section */}
@@ -242,8 +235,9 @@ export default function page() {
                           href={getFullImageUrl(item.url)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`gallery-item ${index === 0 ? "large-gallery-item" : ""
-                            }`}
+                          className={`gallery-item ${
+                            index === 0 ? "large-gallery-item" : ""
+                          }`}
                           style={{ display: "block", textDecoration: "none" }}
                         >
                           {item.type === "video" ? (
@@ -388,7 +382,9 @@ export default function page() {
                     className="sponsor-img"
                     alt="Sponsor"
                   />
-                  <h5 className="mb-0 fw-semibold">{event?.createdBy?.firstName} {event?.createdBy?.lastName}</h5>
+                  <h5 className="mb-0 fw-semibold">
+                    {event?.createdBy?.firstName} {event?.createdBy?.lastName}
+                  </h5>
                 </div>
                 <Button className="btn-book py-2 px-4">View Details</Button>
               </div>

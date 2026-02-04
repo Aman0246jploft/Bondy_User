@@ -25,6 +25,8 @@ function page() {
     }
   };
 
+
+
   const fetchTickets = async () => {
     setLoading(true);
     try {
@@ -107,10 +109,7 @@ function page() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
-                <button
-                  type="button"
-                  className="position-absolute end-0 top-50 translate-middle-y border-0 bg-transparent pe-2"
-                >
+                <button type="button" className="position-absolute end-0 top-50 translate-middle-y border-0 bg-transparent pe-2">
                   <img src="/img/org-img/search-white.svg" />
                 </button>
               </div>
@@ -135,14 +134,14 @@ function page() {
                       <td>
                         {ticket.category
                           ? ticket.category.charAt(0).toUpperCase() +
-                            ticket.category.slice(1)
+                          ticket.category.slice(1)
                           : "N/A"}
                       </td>
                       <td>{ticket.subject}</td>
                       <td>
                         <span
                           className={`status-badge ${getStatusBadge(
-                            ticket.status,
+                            ticket.status
                           )}`}
                         >
                           {ticket.status}
@@ -150,14 +149,11 @@ function page() {
                       </td>
                       <td>
                         {ticket.updatedAt
-                          ? new Date(ticket.updatedAt).toLocaleDateString(
-                              "en-GB",
-                              {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              },
-                            )
+                          ? new Date(ticket.updatedAt).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })
                           : "-"}
                       </td>
                     </tr>
