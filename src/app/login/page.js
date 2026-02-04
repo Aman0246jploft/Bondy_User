@@ -82,7 +82,8 @@ export default function Page() {
                       <Col sm={12} className="mb-4">
                         <Nav
                           variant="pills"
-                          className="custom-nav-pills justify-content-center m-auto">
+                          className="custom-nav-pills justify-content-center m-auto"
+                        >
                           <Nav.Item>
                             <Nav.Link eventKey="Customer">Customer</Nav.Link>
                           </Nav.Item>
@@ -95,10 +96,14 @@ export default function Page() {
                       <Col sm={12}>
                         <Tab.Content>
                           <Tab.Pane eventKey="Customer">
-                            <Form className="login_field" onSubmit={handleLogin}>
+                            <Form
+                              className="login_field"
+                              onSubmit={handleLogin}
+                            >
                               <Form.Group
                                 className="mb-3"
-                                controlId="customerEmail">
+                                controlId="customerEmail"
+                              >
                                 <Form.Control
                                   type="email"
                                   name="email"
@@ -110,7 +115,8 @@ export default function Page() {
                               </Form.Group>
                               <Form.Group
                                 className="mb-3"
-                                controlId="customerPassword">
+                                controlId="customerPassword"
+                              >
                                 <div className="d-flex gap-2 position-relative">
                                   <Form.Control
                                     type={show ? "text" : "password"}
@@ -123,9 +129,14 @@ export default function Page() {
                                   <button
                                     type="button"
                                     onClick={() => setShow(!show)}
-                                    className="password-eye-btn">
+                                    className="password-eye-btn"
+                                  >
                                     <img
-                                      src={show ? "/img/lock.svg" : "/img/unlock.svg"}
+                                      src={
+                                        show
+                                          ? "/img/lock.svg"
+                                          : "/img/unlock.svg"
+                                      }
                                       alt="toggle password"
                                     />
                                   </button>
@@ -134,7 +145,8 @@ export default function Page() {
                               <button
                                 type="submit"
                                 disabled={loading}
-                                className="common_btn w-100 d-block text-center text-decoration-none border-0">
+                                className="common_btn w-100 d-block text-center text-decoration-none border-0"
+                              >
                                 {loading ? "Signing In..." : "Sign In"}
                               </button>
                             </Form>
@@ -170,10 +182,14 @@ export default function Page() {
                           </Tab.Pane>
 
                           <Tab.Pane eventKey="Organizer">
-                            <Form className="login_field" onSubmit={handleLogin}>
+                            <Form
+                              className="login_field"
+                              onSubmit={handleLogin}
+                            >
                               <Form.Group
                                 className="mb-3"
-                                controlId="organizerEmail">
+                                controlId="organizerEmail"
+                              >
                                 <Form.Control
                                   type="email"
                                   name="email"
@@ -185,7 +201,8 @@ export default function Page() {
                               </Form.Group>
                               <Form.Group
                                 className="mb-3"
-                                controlId="organizerPassword">
+                                controlId="organizerPassword"
+                              >
                                 <div className="d-flex gap-2 position-relative">
                                   <Form.Control
                                     type={show ? "text" : "password"}
@@ -198,9 +215,14 @@ export default function Page() {
                                   <button
                                     type="button"
                                     onClick={() => setShow(!show)}
-                                    className="password-eye-btn">
+                                    className="password-eye-btn"
+                                  >
                                     <img
-                                      src={show ? "/img/lock.svg" : "/img/unlock.svg"}
+                                      src={
+                                        show
+                                          ? "/img/lock.svg"
+                                          : "/img/unlock.svg"
+                                      }
                                       alt="toggle password"
                                     />
                                   </button>
@@ -209,7 +231,8 @@ export default function Page() {
                               <button
                                 type="submit"
                                 disabled={loading}
-                                className="common_btn w-100 d-block text-center text-decoration-none border-0">
+                                className="common_btn w-100 d-block text-center text-decoration-none border-0"
+                              >
                                 {loading ? "Signing In..." : "Sign In"}
                               </button>
                             </Form>

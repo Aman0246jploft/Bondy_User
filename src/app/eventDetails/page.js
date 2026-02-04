@@ -71,8 +71,6 @@ export default function page() {
     return `${dateStr} at ${formatTime(sTime)} to ${formatTime(eTime)}`;
   };
 
-  console.log("000000000", attendees);
-
   return (
     <>
       <Header />

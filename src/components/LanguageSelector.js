@@ -51,10 +51,7 @@ export default function LanguageSelector() {
 
   return (
     <div className="lang-wrapper" ref={wrapperRef}>
-      <button
-        className="lang-selector"
-        onClick={() => setOpen(!open)}
-      >
+      <button className="lang-selector" onClick={() => setOpen(!open)}>
         <Image
           src={selectedLang.flag}
           alt={selectedLang.name}

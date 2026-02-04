@@ -68,7 +68,7 @@ export default function Page() {
     const imageUrl = URL.createObjectURL(file);
     setPreview(imageUrl);
 
-    // Upload file immediately or on submit? Usually better on submit if possible, 
+    // Upload file immediately or on submit? Usually better on submit if possible,
     // but the user's backend seems to have a separate upload endpoint.
     try {
       const formData = new FormData();
@@ -204,7 +204,8 @@ export default function Page() {
                       <Col sm={12} className="mb-4">
                         <Nav
                           variant="pills"
-                          className="custom-nav-pills justify-content-center m-auto">
+                          className="custom-nav-pills justify-content-center m-auto"
+                        >
                           <Nav.Item>
                             <Nav.Link eventKey="Customer">Customer</Nav.Link>
                           </Nav.Item>
@@ -217,7 +218,10 @@ export default function Page() {
                       <Col sm={12}>
                         <Tab.Content>
                           <Tab.Pane eventKey="Customer">
-                            <Form className="login_field" onSubmit={handleCustomerSignup}>
+                            <Form
+                              className="login_field"
+                              onSubmit={handleCustomerSignup}
+                            >
                               <Form.Group className="mb-3">
                                 <Form.Control
                                   type="email"
@@ -235,7 +239,9 @@ export default function Page() {
                                   international
                                   countryCallingCodeEditable={false}
                                   value={customerData.contactNumber}
-                                  onChange={(val) => handlePhoneChange(val, "Customer")}
+                                  onChange={(val) =>
+                                    handlePhoneChange(val, "Customer")
+                                  }
                                   className="phone_input"
                                 />
                               </Form.Group>
@@ -253,9 +259,14 @@ export default function Page() {
                                   <button
                                     type="button"
                                     onClick={() => setShow(!show)}
-                                    className="password-eye-btn">
+                                    className="password-eye-btn"
+                                  >
                                     <img
-                                      src={show ? "/img/lock.svg" : "/img/unlock.svg"}
+                                      src={
+                                        show
+                                          ? "/img/lock.svg"
+                                          : "/img/unlock.svg"
+                                      }
                                       alt="toggle password"
                                     />
                                   </button>
@@ -275,9 +286,14 @@ export default function Page() {
                                   <button
                                     type="button"
                                     onClick={() => setShow2(!show2)}
-                                    className="password-eye-btn">
+                                    className="password-eye-btn"
+                                  >
                                     <img
-                                      src={show2 ? "/img/unlock.svg" : "/img/lock.svg"}
+                                      src={
+                                        show2
+                                          ? "/img/unlock.svg"
+                                          : "/img/lock.svg"
+                                      }
                                       alt="toggle confirm password"
                                     />
                                   </button>
@@ -287,7 +303,8 @@ export default function Page() {
                               <button
                                 type="submit"
                                 disabled={loading}
-                                className="common_btn w-100 d-block text-center text-decoration-none">
+                                className="common_btn w-100 d-block text-center text-decoration-none"
+                              >
                                 {loading ? "Signing Up..." : "Sign Up"}
                               </button>
                             </Form>
@@ -306,19 +323,26 @@ export default function Page() {
                                 <img src="/img/google_icon.svg" alt="google" />
                               </Link>
                               <Link href="">
-                                <img src="/img/facebook_icon.svg" alt="facebook" />
+                                <img
+                                  src="/img/facebook_icon.svg"
+                                  alt="facebook"
+                                />
                               </Link>
                             </div>
 
                             <div className="other_signup">
                               <span>
-                                Already have an account? <Link href="/login">Login</Link>
+                                Already have an account?{" "}
+                                <Link href="/login">Login</Link>
                               </span>
                             </div>
                           </Tab.Pane>
 
                           <Tab.Pane eventKey="Organizer">
-                            <Form className="login_field" onSubmit={handleOrganizerSignup}>
+                            <Form
+                              className="login_field"
+                              onSubmit={handleOrganizerSignup}
+                            >
                               <Row>
                                 <Col md={6}>
                                   <Form.Group className="mb-3">
@@ -363,7 +387,9 @@ export default function Page() {
                                   international
                                   countryCallingCodeEditable={false}
                                   value={organizerData.contactNumber}
-                                  onChange={(val) => handlePhoneChange(val, "Organizer")}
+                                  onChange={(val) =>
+                                    handlePhoneChange(val, "Organizer")
+                                  }
                                   className="phone_input"
                                 />
                               </Form.Group>
@@ -381,9 +407,14 @@ export default function Page() {
                                   <button
                                     type="button"
                                     onClick={() => setShow(!show)}
-                                    className="password-eye-btn">
+                                    className="password-eye-btn"
+                                  >
                                     <img
-                                      src={show ? "/img/lock.svg" : "/img/unlock.svg"}
+                                      src={
+                                        show
+                                          ? "/img/lock.svg"
+                                          : "/img/unlock.svg"
+                                      }
                                       alt="toggle password"
                                     />
                                   </button>
@@ -403,9 +434,14 @@ export default function Page() {
                                   <button
                                     type="button"
                                     onClick={() => setShow2(!show2)}
-                                    className="password-eye-btn">
+                                    className="password-eye-btn"
+                                  >
                                     <img
-                                      src={show2 ? "/img/unlock.svg" : "/img/lock.svg"}
+                                      src={
+                                        show2
+                                          ? "/img/unlock.svg"
+                                          : "/img/lock.svg"
+                                      }
                                       alt="toggle confirm password"
                                     />
                                   </button>
@@ -481,7 +517,8 @@ export default function Page() {
                               <button
                                 type="submit"
                                 disabled={loading}
-                                className="common_btn w-100 d-block text-center text-decoration-none">
+                                className="common_btn w-100 d-block text-center text-decoration-none"
+                              >
                                 {loading ? "Signing Up..." : "Sign Up"}
                               </button>
                             </Form>
@@ -500,13 +537,17 @@ export default function Page() {
                                 <img src="/img/google_icon.svg" alt="google" />
                               </Link>
                               <Link href="">
-                                <img src="/img/facebook_icon.svg" alt="facebook" />
+                                <img
+                                  src="/img/facebook_icon.svg"
+                                  alt="facebook"
+                                />
                               </Link>
                             </div>
 
                             <div className="other_signup">
                               <span>
-                                Already have an account? <Link href="/login">Login</Link>
+                                Already have an account?{" "}
+                                <Link href="/login">Login</Link>
                               </span>
                             </div>
                           </Tab.Pane>
