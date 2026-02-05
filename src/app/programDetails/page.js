@@ -104,7 +104,11 @@ export default function page() {
                   <span className="price-text">${price}</span> onwards
                 </h4>
                 <Link
-                  href={`/eventbooking?id=${courseDetails._id}`}
+                  href={
+                    currentSchedule?._id
+                      ? `/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`
+                      : `/eventbooking?id=${courseDetails._id}`
+                  }
                   className="common_btn"
                 >
                   Book Now
@@ -227,7 +231,11 @@ export default function page() {
                       <span className="price-text">${price}</span>
                     </h4>
                     <Link
-                      href={`/eventbooking?id=${courseDetails._id}`}
+                      href={
+                        currentSchedule?._id
+                          ? `/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`
+                          : `/eventbooking?id=${courseDetails._id}`
+                      }
                       className="common_btn"
                     >
                       Book Now

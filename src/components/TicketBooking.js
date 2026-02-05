@@ -6,7 +6,7 @@ import PayNow from "./Modal/PayNow";
 import bookingApi from "@/api/bookingApi";
 import toast from "react-hot-toast";
 
-export default function TicketBooking({ event }) {
+export default function TicketBooking({ item, type, scheduleId }) {
   const [step, setStep] = useState(1); // 1: Tickets, 2: Payment, 3: Review
   const [qty, setQty] = useState(1); // Default to 1
   const [selectedMethod, setSelectedMethod] = useState("card");
@@ -29,13 +29,22 @@ export default function TicketBooking({ event }) {
   // Calculate booking details when qty or appliedPromoCode changes
   useEffect(() => {
     const fetchBreakdown = async () => {
-      if (!event) return;
+      if (!item) return;
       try {
-        const res = await bookingApi.calculateBooking({
-          eventId: event._id,
+        const payload = {
           qty: qty,
           discountCode: appliedPromoCode,
-        });
+          bookingType: type,
+        };
+
+        if (type === "EVENT") {
+          payload.eventId = item._id;
+        } else if (type === "COURSE") {
+          payload.courseId = item._id;
+          payload.scheduleId = scheduleId;
+        }
+
+        const res = await bookingApi.calculateBooking(payload);
 
         if (res.status) {
           setPriceBreakdown({
@@ -51,7 +60,7 @@ export default function TicketBooking({ event }) {
     };
 
     fetchBreakdown();
-  }, [event, qty, appliedPromoCode]);
+  }, [item, qty, appliedPromoCode, type, scheduleId]);
 
   const handleApplyPromo = async () => {
     setPromoMessage(null);
@@ -61,11 +70,20 @@ export default function TicketBooking({ event }) {
     }
 
     try {
-      const res = await bookingApi.calculateBooking({
-        eventId: event._id,
+      const payload = {
         qty: qty,
         discountCode: promoCode,
-      });
+        bookingType: type,
+      };
+
+      if (type === "EVENT") {
+        payload.eventId = item._id;
+      } else if (type === "COURSE") {
+        payload.courseId = item._id;
+        payload.scheduleId = scheduleId;
+      }
+
+      const res = await bookingApi.calculateBooking(payload);
 
       if (res.status) {
         setAppliedPromoCode(promoCode);
@@ -96,21 +114,30 @@ export default function TicketBooking({ event }) {
 
   // Step 2 -> Step 3: Initiate Booking
   const handleInitiateBooking = async () => {
-    if (!event) return;
+    if (!item) return;
     setLoading(true);
     try {
-      const initResponse = await bookingApi.initiateBooking({
-        eventId: event._id,
+      const payload = {
         qty: qty,
         discountCode: appliedPromoCode,
-      });
+        bookingType: type,
+      };
+
+      if (type === "EVENT") {
+        payload.eventId = item._id;
+      } else if (type === "COURSE") {
+        payload.courseId = item._id;
+        payload.scheduleId = scheduleId;
+      }
+
+      const initResponse = await bookingApi.initiateBooking(payload);
 
       if (initResponse.status) {
         setTransactionId(initResponse.data.transactionId);
         setStep(3); // Move to Review Step
         toast.success("Booking initiated, please review.");
       } else {
-        toast.error(initResponse.message || "Booking initiation failed");
+        toast.error(initResponse.message || "Booking initiation failed"); // Reverted step logic removal
       }
     } catch (error) {
       console.error("Initiate booking error:", error);
@@ -474,7 +501,7 @@ export default function TicketBooking({ event }) {
 
             <div className="row g-5">
               <div className="col-lg-5 ">
-                <EventTicketscart event={event} />
+                <EventTicketscart item={item} />
               </div>
               <div className="col-lg-7 ">{renderStep()}</div>
             </div>

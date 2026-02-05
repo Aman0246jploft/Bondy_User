@@ -1,10 +1,10 @@
 import React from "react";
 import { getFullImageUrl } from "@/utils/imageHelper";
 
-const EventTicketscart = ({ event }) => {
+const EventTicketscart = ({ item }) => {
   const posterImage =
-    event?.posterImage && event.posterImage.length > 0
-      ? event.posterImage[0]
+    item?.posterImage && item.posterImage.length > 0
+      ? item.posterImage[0]
       : null;
 
   return (
@@ -18,24 +18,24 @@ const EventTicketscart = ({ event }) => {
                   ? getFullImageUrl(posterImage)
                   : "/img/event_image.png"
               }
-              alt={event?.eventTitle || "Event Image"}
+              alt={item?.title || "Image"}
             />
           </div>
 
           <div className="card-overlay">
             <div className="overlay-content">
               <h5 className="artist-name text-capitalize">
-                {event?.eventTitle || "Event Name"}
+                {item?.title || "Name"}
               </h5>
 
               <ul className="list_event text-capitalize">
-                <li>{event?.duration || "Duration"}</li>
-                <li>{event?.eventCategory?.name || "Category"}</li>
-                <li>{event?.status || "Status"}</li>
+                <li>{item?.duration || "Duration N/A"}</li>
+                <li>{item?.categoryName || "Category"}</li>
+                <li>{item?.status || "Status"}</li>
                 {/* <li>7:30 PM</li> */}
               </ul>
               <span className="text-capitalize">
-                {event?.venueAddress?.address || "Location"}
+                {item?.venueAddress?.address || "Location"}
               </span>
               {/* <span>Las Vegas,Nevada,USA</span> */}
             </div>
