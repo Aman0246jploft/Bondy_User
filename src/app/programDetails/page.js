@@ -8,16 +8,70 @@ import Reviews from "@/components/Reviews";
 import Header from "@/components/Header";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
-import EventSection from "@/components/EventSection";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import courseApi from "@/api/courseApi";
+import { getFullImageUrl } from "@/utils/imageHelper";
+import { formatDate } from "@/utils/dateFormater";
 
 export default function page() {
-  const images = [
-    "/img/program-process-image-1.png",
-    "/img/program-process-image-2.png",
-    "/img/program-process-image-4.png",
-    "/img/program-process-image-1.png",
-  ];
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+  const [courseDetails, setCourseDetails] = useState(null);
+
+  useEffect(() => {
+    if (id) {
+      const fetchDetails = async () => {
+        try {
+          const response = await courseApi.getCourseDetails(id);
+          if (response && response.data) {
+            setCourseDetails(response.data);
+          }
+        } catch (error) {
+          console.error("Error fetching course details:", error);
+        }
+      };
+      fetchDetails();
+    }
+  }, [id]);
+
+  console.log("Course Details:", courseDetails);
+
+  if (!courseDetails) {
+    return (
+      <>
+        <Header />
+        <Container className="my-5 text-center">
+          <h2>Loading...</h2>
+        </Container>
+        <Footer />
+      </>
+    );
+  }
+
+  const {
+    courseTitle,
+    posterImage,
+    shortdesc,
+    price,
+    duration,
+    currentSchedule,
+    schedules,
+    venueAddress,
+    createdBy,
+    enrollmentType,
+  } = courseDetails;
+
+  const images =
+    posterImage && posterImage.length > 0
+      ? posterImage.map(getFullImageUrl)
+      : ["/img/program-process-image-1.png"];
+
+  // Helper to resolve location string
+  const locationString = venueAddress
+    ? `${venueAddress.address}, ${venueAddress.city}, ${venueAddress.state}`
+    : "Location not available";
 
   return (
     <>
@@ -27,9 +81,15 @@ export default function page() {
           <Row className="align-items-start mb-5">
             <Col lg={7} className="mb-4">
               <div className="header-box">
-                <h1 className="event-title">Salsa for Beginners</h1>
+                <h1 className="event-title">{courseTitle}</h1>
                 <p className="event-meta">
-                  2h29m • May 1 – Jun 1 • 12 sessions
+                  {duration || "N/A"} •{" "}
+                  {currentSchedule
+                    ? `${formatDate(currentSchedule.startDate)} – ${formatDate(
+                      currentSchedule.endDate
+                    )}`
+                    : "Dates N/A"}{" "}
+                  • {schedules?.length || 0} sessions
                 </p>
                 <Button className="book_mark_icon">
                   <img src="/img/bookmark_icon.svg" />
@@ -38,16 +98,15 @@ export default function page() {
             </Col>
 
             <Col lg={5} className="">
-              <p className="event-desc mb-4">
-                Discover the vision that drives this event—a commitment to
-                bringing together innovators, leaders, and changemakers to share
-                knowledge, spark inspiration, and create meaningful connections.
-              </p>
+              <p className="event-desc mb-4">{shortdesc}</p>
               <div className="onwards_sec">
                 <h4 className="mb-0">
-                  <span className="price-text">$200</span> onwards
+                  <span className="price-text">${price}</span> onwards
                 </h4>
-                <Link href="/eventbooking" className="common_btn">
+                <Link
+                  href={`/eventbooking?id=${courseDetails._id}`}
+                  className="common_btn"
+                >
                   Book Now
                 </Link>
                 <Button className="book_mark_icon">
@@ -63,8 +122,8 @@ export default function page() {
             <Col xs={12}>
               <Swiper
                 modules={[Autoplay]}
-                spaceBetween={20} // Gap ko zero kar diya
-                slidesPerView={1} // Default mobile ke liye 1 slide
+                spaceBetween={20}
+                slidesPerView={1}
                 centeredSlides={true}
                 loop={true}
                 speed={800}
@@ -73,18 +132,17 @@ export default function page() {
                   disableOnInteraction: false,
                 }}
                 breakpoints={{
-                  // Jab screen 768px se badi ho
                   768: {
                     slidesPerView: 2,
                     spaceBetween: 20,
                   },
-                  // Jab screen 1024px se badi ho
                   1024: {
-                    slidesPerView: 3, // Ya phir 'auto' agar images ki width fixed hai
+                    slidesPerView: 3,
                     spaceBetween: 20,
                   },
                 }}
-                className="mySwiper">
+                className="mySwiper"
+              >
                 {images.map((img, index) => (
                   <SwiperSlide key={index}>
                     <div
@@ -108,16 +166,18 @@ export default function page() {
                   <div className="event_time_mange">
                     <h5>Date & Time</h5>
                     <span>
-                      Fri oct 25 2024 at 06:30 pm to 11:00 pm (GMT + 05:30)
+                      {currentSchedule
+                        ? `${formatDate(
+                          currentSchedule.startDate
+                        )} at ${currentSchedule.startTime} to ${currentSchedule.endTime}`
+                        : "Detailed timing not available"}
                     </span>
                   </div>
                   <div className="event_time_mange">
                     <h5>Location</h5>
-                    <span>
-                      45/2 Central Business Innovation Near International Trade
-                      Tower
-                    </span>
+                    <span>{locationString}</span>
                   </div>
+
 
                   <Link className="view-map" href="">
                     View in Map
@@ -129,88 +189,47 @@ export default function page() {
 
                 {/* Text Content Sections */}
                 <div className="content-section">
-                  <h2 className="section-heading">
-                    Leadership & Growth Conference
-                  </h2>
-                  <p className="section-text">
-                    Join us for an inspiring and action-packed event designed to
-                    bring together creators, professionals, and innovators from
-                    all walks of life. This event features expert-led sessions,
-                    interactive workshops, and powerful networking opportunities
-                    that help you learn, grow, and connect with like-minded
-                    individuals.
-                  </p>
-                </div>
-
-                <div className="content-section">
-                  <h3 className="section-heading">What to expect</h3>
-                  <p className="section-text">
-                    Experience a dynamic gathering filled with insightful
-                    sessions, expert speakers, hands-on workshops, and endless
-                    networking opportunities. From inspiring keynotes to
-                    real-world learning, our event is designed to spark ideas,
-                    build connections, and help you grow personally and
-                    professionally.
-                  </p>
+                  <h2 className="section-heading">Description</h2>
+                  <p className="section-text">{shortdesc}</p>
                 </div>
 
                 <div className="organization_profile">
                   <h4>Organized By</h4>
                   <div className="item_org">
-                    <img src="/img/prfl.png" />
-                    <span>Marco & Elena</span>
+                    <img
+                      src={
+                        getFullImageUrl(createdBy?.profileImage) ||
+                        "/img/prfl.png"
+                      }
+                      alt="Organizer"
+                    />
+                    <span>
+                      {createdBy?.firstName} {createdBy?.lastName}
+                    </span>
                   </div>
                 </div>
 
                 <div className="content-section m-0">
                   <h3 className="section-heading">Event Gallery</h3>
                   <div className="gallery-grid">
-                    {/* Main Large Image */}
-                    <img
-                      src="/img/program-process-image-01.png"
-                      className="gallery-item large-gallery-item"
-                      alt="Conference Hall"
-                    />
-
-                    {/* Small Images */}
-                    <img
-                      src="/img/program-process-image-02.png"
-                      className="gallery-item"
-                      alt="Live Music"
-                    />
-                    <img
-                      src="/img/program-process-image-03.png"
-                      className="gallery-item"
-                      alt="Drums"
-                    />
-                    <img
-                      src="/img/program-process-image-04.png"
-                      className="gallery-item"
-                      alt="Stage Crowd"
-                    />
-
-                    {/* Second row of small images */}
-                    <img
-                      src="/img/program-process-image-05.png"
-                      className="gallery-item"
-                      alt="Networking"
-                    />
-                    <img
-                      src="/img/program-process-image-06.png"
-                      className="gallery-item"
-                      alt="Audience"
-                    />
-                    <img
-                      src="/img/program-process-image-07.png"
-                      className="gallery-item"
-                      alt="Presentation"
-                    />
+                    {images.slice(0, 5).map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img}
+                        className={`gallery-item ${idx === 0 ? "large-gallery-item" : ""
+                          }`}
+                        alt={`Gallery ${idx}`}
+                      />
+                    ))}
                   </div>
                   <div className="onwards_sec mt-4">
                     <h4 className="mb-0">
-                      <span className="price-text">$200</span>
+                      <span className="price-text">${price}</span>
                     </h4>
-                    <Link href="/eventbooking" className="common_btn">
+                    <Link
+                      href={`/eventbooking?id=${courseDetails._id}`}
+                      className="common_btn"
+                    >
                       Book Now
                     </Link>
                     <Button className="book_mark_icon">
@@ -226,96 +245,55 @@ export default function page() {
             <div className="upcming_session">
               <h4>Upcoming Sessions</h4>
               <div className="upcming_session_box">
-                <div className="upcming_session_item">
-                  <div className="content">
-                    <div className="date_box">
-                      <span>Oct</span>
-                      <span>12</span>
-                    </div>
-                    <div className="upcming_session_content">
-                      <span>Mon • 18:00 - 19:00</span>
-                      <h6>Core Integration</h6>
-                    </div>
-                  </div>
-                  <div className="booking_bx">
-                    <span className="text_pr">$150</span>
-                    <Link href="/eventbooking" className="common_btn">
-                      Book Now
-                    </Link>
-                  </div>
-                </div>
-                <div className="upcming_session_item">
-                  <div className="content">
-                    <div className="date_box">
-                      <span>Oct</span>
-                      <span>13</span>
-                    </div>
-                    <div className="upcming_session_content">
-                      <span>Wed • 18:00 - 19:00</span>
-                      <h6>Flow & Balance</h6>
-                    </div>
-                  </div>
-                  <div className="booking_bx">
-                    <span className="text_pr">$160</span>
-                    <Link href="/eventbooking" className="common_btn">
-                      Book Now
-                    </Link>
-                  </div>
-                </div>
-                <div className="upcming_session_item">
-                  <div className="content">
-                    <div className="date_box">
-                      <span>Oct</span>
-                      <span>14</span>
-                    </div>
-                    <div className="upcming_session_content">
-                      <span>Mon • 18:00 - 19:00</span>
-                      <h6>Core Integration</h6>
-                    </div>
-                  </div>
-                  <div className="booking_bx">
-                    <span className="text_pr">$110</span>
-                    <Link href="/eventbooking" className="common_btn">
-                      Book Now
-                    </Link>
-                  </div>
-                </div>
-                <div className="upcming_session_item">
-                  <div className="content">
-                    <div className="date_box">
-                      <span>Oct</span>
-                      <span>15</span>
-                    </div>
-                    <div className="upcming_session_content">
-                      <span>Fri • 10:00 - 11:30</span>
-                      <h6>Morning Hatha Yoga</h6>
-                    </div>
-                  </div>
-                  <div className="booking_bx">
-                    <span className="text_pr">$180</span>
-                    <Link href="/eventbooking" className="common_btn">
-                      Book Now
-                    </Link>
-                  </div>
-                </div>
-                <div className="upcming_session_item">
-                  <div className="content">
-                    <div className="date_box">
-                      <span>Oct</span>
-                      <span>16</span>
-                    </div>
-                    <div className="upcming_session_content">
-                      <span>Sat • 14:00 - 15:30</span>
-                      <h6>Morning Hatha Yoga</h6>
-                    </div>
-                  </div>
-                  <div className="booking_bx">
-                    <span className="text_pr">$170</span>
-                    <Link href="/eventbooking" className="common_btn">
-                      Book Now
-                    </Link>
-                  </div>
-                </div>
+                {schedules && schedules.length > 0 ? (
+                  schedules.map((schedule, idx) => {
+                    const dateObj = new Date(schedule.startDate);
+                    const month = dateObj.toLocaleString("default", {
+                      month: "short",
+                    });
+                    const day = dateObj.getDate();
+                    const dayName = dateObj.toLocaleString("default", {
+                      weekday: "short",
+                    });
+
+                    return (
+                      <div className="upcming_session_item" key={idx}>
+                        <div className="content">
+                          <div className="date_box">
+                            <span>{month}</span>
+                            <span>{day}</span>
+                          </div>
+                          <div className="upcming_session_content">
+                            <span>
+                              {dayName} • {schedule.startTime} -{" "}
+                              {schedule.endTime}
+                            </span>
+                            <h6>{courseTitle} (Session {idx + 1})</h6>
+                          </div>
+                        </div>
+                        <div className="booking_bx">
+                          <span className="text_pr">
+                            {schedule.isBooked ? "Booked" : (schedule.isFull ? "Full" : `$${price}`)}
+                          </span>
+                          {schedule.isBooked ? (
+                            <span className="badge bg-success">Booked</span>
+                          ) : schedule.isFull ? (
+                            <span className="badge bg-danger">Full</span>
+                          ) : (
+                            <Link
+                              href={`/eventbooking?id=${courseDetails._id}&scheduleId=${schedule._id}`}
+                              className="common_btn"
+                            >
+                              Book Now
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p>No upcoming sessions found.</p>
+                )}
               </div>
             </div>
           </Col>

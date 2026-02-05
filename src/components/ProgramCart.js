@@ -1,3 +1,4 @@
+import { formatDate } from "@/utils/dateFormater";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -60,7 +61,7 @@ const ProgramCart = ({ programsArray, pagination }) => {
                 <div className="card-overlay">
                   <div className="overlay-content program_cart">
                     <div className="program_cart_inner">
-                      <Link href="/programDetails">
+                      <Link href={`/programDetails?id=${program?._id}`}>
                         <div className="program_cart_cntent">
                           <h4>{program?.courseTitle}</h4>
                           <span>{program?.courseCategory?.categoryName}</span>
@@ -85,14 +86,15 @@ const ProgramCart = ({ programsArray, pagination }) => {
                       </li>
 
                       <li>
-                        <img src="/img/0date_icon.svg" /> {program?.date}May 1 –
-                        Jun 1
+                        <img src="/img/0date_icon.svg" />{" "}
+                        {formatDate(program?.currentSchedule?.startDate)} –{" "}
+                        {formatDate(program?.currentSchedule?.endDate)}
                       </li>
                     </ul>
                     <div className="price_align">
-                      {program?.available ? (
+                      {!program?.currentSchedule?.isFull ? (
                         <>
-                          <span>{program?.price}</span>
+                          <span>${program?.price}</span>
                           <Link href="/eventbooking" className="common_btn">
                             Book Now
                           </Link>
