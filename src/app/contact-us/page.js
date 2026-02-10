@@ -13,7 +13,7 @@ export default function Page() {
     email: "",
     phone: "",
     topic: "",
-    message: ""
+    message: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +33,13 @@ export default function Page() {
       const response = await contactApi.createContact(formData);
       if (response.status) {
         toast.success("Message sent successfully!");
-        setFormData({ fullName: "", email: "", phone: "", topic: "", message: "" });
+        setFormData({
+          fullName: "",
+          email: "",
+          phone: "",
+          topic: "",
+          message: "",
+        });
       }
     } catch (error) {
       console.error("Contact error:", error);
@@ -72,7 +78,9 @@ export default function Page() {
                 <Row className="g-4">
                   <Col lg={6}>
                     <Form.Group controlId="fullName">
-                      <Form.Label>Full Name <span className="text-danger">*</span></Form.Label>
+                      <Form.Label>
+                        Full Name <span className="text-danger">*</span>
+                      </Form.Label>
                       <Form.Control
                         type="text"
                         placeholder="Full Name"
@@ -84,7 +92,9 @@ export default function Page() {
                   </Col>
                   <Col lg={6}>
                     <Form.Group controlId="email">
-                      <Form.Label>Email Address <span className="text-danger">*</span></Form.Label>
+                      <Form.Label>
+                        Email Address <span className="text-danger">*</span>
+                      </Form.Label>
                       <Form.Control
                         type="email"
                         placeholder="Email"
@@ -124,7 +134,9 @@ export default function Page() {
                   </Col>
                   <Col lg={12}>
                     <Form.Group controlId="message">
-                      <Form.Label>Your Message <span className="text-danger">*</span></Form.Label>
+                      <Form.Label>
+                        Your Message <span className="text-danger">*</span>
+                      </Form.Label>
                       <Form.Control
                         as="textarea"
                         rows={4}
@@ -135,7 +147,11 @@ export default function Page() {
                     </Form.Group>
                   </Col>
                   <Col lg={12}>
-                    <button className="common_btn w-100" type="submit" disabled={loading}>
+                    <button
+                      className="common_btn w-100"
+                      type="submit"
+                      disabled={loading}
+                    >
                       {loading ? "Sending..." : "Send Message"}
                     </button>
                   </Col>

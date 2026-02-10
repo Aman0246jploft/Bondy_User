@@ -3,12 +3,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useEventContext } from "@/context/EventContext";
 
 export default function OrganizerSidebar({ toggleSidebar }) {
   const [collapsed, setCollapsed] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { clearEventData } = useEventContext();
 
   const isActive = (path) => {
     if (isDropdownOpen) return false;
@@ -69,9 +71,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
 
         <Link
           href="/EventsManagement"
-          className={`menu-item ${
-            isActive("/EventsManagement") ? "active" : ""
-          }`}
+          className={`menu-item ${isActive("/EventsManagement") ? "active" : ""
+            }`}
         >
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-02.svg" alt="" />
@@ -108,9 +109,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
         </Link>
         <Link
           href="/SubscriptionBilling"
-          className={`menu-item ${
-            isActive("/SubscriptionBilling") ? "active" : ""
-          }`}
+          className={`menu-item ${isActive("/SubscriptionBilling") ? "active" : ""
+            }`}
         >
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-06.svg" alt="" />
@@ -135,7 +135,6 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </span>
           <span className="text">Support Tickets</span>
         </Link>
-
         <div className="accordion-wrapper create_dropdwon">
           <div
             className={`menu-item ${isDropdownOpen ? "active" : ""}`}
@@ -153,7 +152,13 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </div>
 
           <div className={`accordion-content ${isDropdownOpen ? "show" : ""}`}>
-            <Link href="/BasicInfo" className="sub-item" onClick={() => {}}>
+            <Link
+              href="/BasicInfo"
+              className="sub-item"
+              onClick={() => {
+                clearEventData();
+              }}
+            >
               Create Event
             </Link>
             <Link href="/AddProgram" className="sub-item">

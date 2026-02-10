@@ -16,12 +16,29 @@ function page() {
     updateEventData({ [name]: value });
   };
 
+  const today = new Date().toISOString().split("T")[0];
+
   const handleNext = (e) => {
     e.preventDefault();
     if (!eventData.ticketName || !eventData.ticketPrice) {
       toast.error("Please fill in required fields");
       return;
     }
+
+    if (eventData.ticketSelesStartDate && eventData.ticketSelesStartDate < today) {
+      toast.error("Ticket sales start date cannot be in the past");
+      return;
+    }
+
+    if (
+      eventData.ticketSelesStartDate &&
+      eventData.ticketSelesEndDate &&
+      eventData.ticketSelesEndDate < eventData.ticketSelesStartDate
+    ) {
+      toast.error("Ticket sales end date must be after start date");
+      return;
+    }
+
     router.push("/Agerestraction");
   };
 
@@ -152,6 +169,7 @@ function page() {
                         name="ticketSelesStartDate"
                         value={eventData.ticketSelesStartDate}
                         onChange={handleInputChange}
+                        min={today}
                       />
                     </div>
                   </div>
@@ -166,6 +184,7 @@ function page() {
                         name="ticketSelesEndDate"
                         value={eventData.ticketSelesEndDate}
                         onChange={handleInputChange}
+                        min={eventData.ticketSelesStartDate || today}
                       />
                     </div>
                   </div>

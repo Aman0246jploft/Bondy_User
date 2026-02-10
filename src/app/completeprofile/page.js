@@ -8,7 +8,10 @@ import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { getFullImageUrl } from "@/utils/imageHelper";
-import { fetchCurrentLocation, formatLocationForApi } from "@/utils/locationHelper";
+import {
+  fetchCurrentLocation,
+  formatLocationForApi,
+} from "@/utils/locationHelper";
 
 export default function CompleteProfile() {
   return (
@@ -89,7 +92,7 @@ function CompleteProfileContent() {
   // Clean up object URL when component unmounts or preview changes
   useEffect(() => {
     return () => {
-      if (preview && preview.startsWith('blob:')) {
+      if (preview && preview.startsWith("blob:")) {
         URL.revokeObjectURL(preview);
       }
     };
@@ -103,8 +106,6 @@ function CompleteProfileContent() {
   const handleDateChange = (date) => {
     setProfileData((prev) => ({ ...prev, dob: date }));
   };
-
-
 
   // Auto-fetch location on mount
   useEffect(() => {
@@ -122,7 +123,7 @@ function CompleteProfileContent() {
     }
   }, [profileData.location]);
 
-  // handleGetLocation is no longer needed as a standalone function for a button, 
+  // handleGetLocation is no longer needed as a standalone function for a button,
   // unless we want a retry mechanism. But user asked to remove button.
 
   const handleContinue = async (e) => {
@@ -141,7 +142,7 @@ function CompleteProfileContent() {
       setLoading(true);
       const response = await authApi.updateProfile({
         ...profileData,
-        location: formatLocationForApi(profileData.location) // Format for API
+        location: formatLocationForApi(profileData.location), // Format for API
       });
       if (response.status) {
         router.push("/insterest");
@@ -183,14 +184,20 @@ function CompleteProfileContent() {
                   <div
                     className="photo_upload_sec"
                     style={{ cursor: "pointer" }}
-                    onClick={() => fileRef.current.click()}>
+                    onClick={() => fileRef.current.click()}
+                  >
                     <div className="photo_circle">
                       {preview ? (
                         <img
                           src={preview}
                           alt="Preview"
                           className="preview-img"
-                          style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                          }}
                         />
                       ) : (
                         <img

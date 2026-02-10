@@ -233,9 +233,8 @@ export default function page() {
                           href={getFullImageUrl(item.url)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`gallery-item ${
-                            index === 0 ? "large-gallery-item" : ""
-                          }`}
+                          className={`gallery-item ${index === 0 ? "large-gallery-item" : ""
+                            }`}
                           style={{ display: "block", textDecoration: "none" }}
                         >
                           {item.type === "video" ? (
@@ -291,38 +290,42 @@ export default function page() {
 
                   <div className="  whisiGoing_box">
                     <div>
-                      <h2>{event?.totalAttendees}</h2>
+                      <h2>{attendees?.total || 0}</h2>
                       <small className="text-secondary">Attendees</small>
                     </div>
 
                     <div className="">
                       <div className="avatar-stack me-3">
-                        <img
-                          src="/img/Ellipse.png"
-                          className="avatar-img"
-                          alt="user"
-                          style={{ marginLeft: 0 }}
-                        />
-                        <img
-                          src="/img/Ellipse-1.png"
-                          className="avatar-img"
-                          alt="user"
-                        />
-                        <img
-                          src="/img/Ellipse-2.png"
-                          className="avatar-img"
-                          alt="user"
-                        />
-                        <img
-                          src="/img/Ellipse-3.png"
-                          className="avatar-img"
-                          alt="user"
-                        />
-                        <div className="avatar-count">5k+</div>
+                        {attendees?.recent?.length > 0 ? (
+                          <>
+                            {attendees.recent.slice(0, 4).map((user, index) => (
+                              <img
+                                key={user._id}
+                                src={
+                                  user.profileImage
+                                    ? getFullImageUrl(user.profileImage)
+                                    : "/img/default-user.png"
+                                }
+                                className="avatar-img"
+                                alt={`${user.firstName} ${user.lastName}`}
+                                style={index === 0 ? { marginLeft: 0 } : {}}
+                              />
+                            ))}
+                            {attendees.total > 4 && (
+                              <div className="avatar-count">
+                                +{attendees.total - 4}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <span className="small text-muted">
+                            Be the first to join!
+                          </span>
+                        )}
                       </div>
                     </div>
                     <a
-                      href="#"
+                      href={`/eventAttendees?id=${event?._id}`}
                       className="text-teal text-decoration-none small"
                       style={{ color: "#26a69a" }}
                     >

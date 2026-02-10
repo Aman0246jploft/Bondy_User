@@ -81,7 +81,7 @@ export default function BondyHeader() {
                     <Link href="/Explore">Explore</Link>
                   </li>
                   <li>
-                    <Link href="/Programs-Listing">Programs</Link>
+                    <Link href="/Programs-Listing">Course</Link>
                   </li>
                   <li>
                     <Link href="/Organizers">Organizers</Link>
@@ -200,7 +200,7 @@ export default function BondyHeader() {
                     href="/Programs-Listing"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Programs
+                    Course
                   </Link>
                 </li>
                 <li>

@@ -16,8 +16,6 @@ function page() {
   const router = useRouter();
 
 
-  console.log("event Image 22222", eventData)
-
   useEffect(() => {
     const fetchCategories = async () => {
       try {

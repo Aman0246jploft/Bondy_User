@@ -27,12 +27,33 @@ function page() {
     }
   };
 
+  const today = new Date().toISOString().split("T")[0];
+
   const handleNext = (e) => {
     e.preventDefault();
+
     if (!eventData.startDate || !eventData.endDate || !eventData.venueName) {
       toast.error("Please fill in required fields");
       return;
     }
+
+    // Combine date and time for validation
+    const startDateTime = new Date(`${eventData.startDate}T${eventData.startTime || "00:00"}`);
+    const endDateTime = new Date(`${eventData.endDate}T${eventData.endTime || "00:00"}`);
+    const now = new Date();
+
+    // Validate Start Date is in the future
+    if (startDateTime < now) {
+      toast.error("Start date/time must be in the future");
+      return;
+    }
+
+    // Validate End Date is after Start Date
+    if (endDateTime <= startDateTime) {
+      toast.error("End date/time must be after start date/time");
+      return;
+    }
+
     router.push("/TicketsPricing");
   };
 
@@ -170,6 +191,7 @@ function page() {
                         name="startDate"
                         value={eventData.startDate}
                         onChange={handleInputChange}
+                        min={today}
                       />
                     </div>
                   </div>
@@ -184,6 +206,7 @@ function page() {
                         name="endDate"
                         value={eventData.endDate}
                         onChange={handleInputChange}
+                        min={eventData.startDate || today}
                       />
                     </div>
                   </div>

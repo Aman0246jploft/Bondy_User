@@ -44,7 +44,9 @@ function PersonalInfoContent() {
             country: profile.location?.country || "",
             dob: profile.dob ? profile.dob.split("T")[0] : "",
             contactNumber: profile.contactNumber
-              ? (profile.countryCode ? `${profile.countryCode}${profile.contactNumber}` : profile.contactNumber)
+              ? profile.countryCode
+                ? `${profile.countryCode}${profile.contactNumber}`
+                : profile.contactNumber
               : "",
             countryCode: profile.countryCode || "",
             zipcode: profile.location?.zipcode || "",
@@ -317,7 +319,8 @@ function PersonalInfoContent() {
                 />
               </div>
             </Col>
-            <Col md={6}>
+
+            {/* <Col md={6}>
               <div className="form-floating custom-floting">
                 <input
                   type="text"
@@ -332,7 +335,7 @@ function PersonalInfoContent() {
                   <img src="/img/form-has.svg" alt="" />
                 </span>
               </div>
-            </Col>
+            </Col> */}
             <Col md={12}>
               <div className="d-flex gap-2 justify-content-end mt-2">
                 <button

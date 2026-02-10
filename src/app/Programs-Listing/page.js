@@ -40,14 +40,13 @@ export default function Page() {
     fetchPrograms();
   }, []);
 
-  console.log("Programs Data:11111111", programs);
-  console.log("Pagination Data:222222222", pagination);
+
 
   return (
     <>
       <div className="listing_page">
         <div className="breadcrumb_text">
-          <h1>Program</h1>
+          <h1>Course</h1>
           <p>"A Night to Remember: Adele Live with Her Greatest Hits " 🎶✨</p>
         </div>
         <Header />
