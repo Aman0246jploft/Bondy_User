@@ -23,52 +23,96 @@ const eventData = {
   },
 };
 
-const SessionCart = ({ type = "NextSession" }) => {
-  // Props ke basis par data fetch karein
-  const section = eventData[type];
+const SessionCart = ({ type, title, events }) => {
+  // If events are passed via props, use them, otherwise check local data (optional fallback)
+  const dataToRender = events || (eventData[type] ? eventData[type].data : []);
+  const displayTitle = title || (eventData[type] ? eventData[type].title : "");
 
-  // Agar data nahi milta toh kuch return na karein
-  if (!section) return null;
+  if (!dataToRender || dataToRender.length === 0) return null;
 
   return (
     <section className="recommended-section">
       <div className="container">
-        
-        {/* 🔹 HEADER - Title dynamic ayegi props ke according */}
         <div className="main_title align_title position-relative z-2 border-bottm">
-          <h2>{section.title}</h2>
-          <Link href="/Listing" className="see-all">See all</Link>
+          <h2>{displayTitle}</h2>
+          <Link href="/Listing" className="see-all">
+            See all
+          </Link>
         </div>
 
         <div className="row gy-5">
-          {section.data.map((item) => (
-            <div key={item.id} className="col-lg-3 col-md-6 col-sm-12">
-              <div className="event_main_cart">
-                <div className="recommended-card">
-                  <img src={item.img} alt={item.name} />
-                </div>
+          {dataToRender.map((item) => {
+            // Map API data to component variables
+            const id = item._id || item.id;
+            const name = item.eventTitle || item.courseTitle || item.name;
+            const img = Array.isArray(item.posterImage) ? item.posterImage[0] : item.posterImage || item.img;
+            const date = item.startDate ? new Date(item.startDate).toLocaleDateString() : item.date;
 
-                <div className="card-overlay">
-                  <div className="overlay-content">
-                    <Link href="/eventDetails"><span className="artist-name">{item.name}</span></Link>
+            // Location mapping
+            let location = item.location;
+            if (!location && item.venueAddress) {
+              location = item.venueAddress.city || item.venueAddress.address;
+            }
 
-                    <div className="event-meta">
-                      <span><img src="/img/date_icon.svg" alt="date" /> {item.date}</span>
-                      <span><img src="/img/loc_icon.svg" alt="location" /> {item.location}</span>
+            const price = item.ticketPrice !== undefined ? `$${item.ticketPrice}` : item.price;
+
+            // Calculate seats left
+            const seatsLeft = item.totalTickets && item.ticketQtyAvailable
+              ? `${item.ticketQtyAvailable}/${item.totalTickets} Seat left`
+              : "42/50 Sheet left";
+
+            // Booking URL Logic
+            const isCourse = item.courseTitle || item.schedules;
+            const now = new Date();
+            let bookingUrl = "#";
+            let scheduleId = null;
+
+            if (isCourse && item.schedules && item.schedules.length > 0) {
+              const futureSchedule = item.schedules.find(s => new Date(s.endDate) >= now);
+              const pastSchedule = item.schedules[item.schedules.length - 1];
+              const targetSchedule = futureSchedule || pastSchedule;
+              scheduleId = targetSchedule?._id;
+              bookingUrl = `/eventbooking?id=${id}&scheduleId=${scheduleId}`;
+            } else {
+              bookingUrl = `/eventbooking?eventId=${id}`;
+            }
+
+            return (
+              <div key={id} className="col-lg-3 col-md-6 col-sm-12">
+                <div className="event_main_cart">
+                  <div className="recommended-card">
+                    <img src={img} alt={name} onError={(e) => e.target.src = "/img/event_img.png"} />
+                  </div>
+
+                  <div className="card-overlay">
+                    <div className="overlay-content">
+                      <Link href={`/eventDetails?id=${id}`}>
+                        <span className="artist-name">{name}</span>
+                      </Link>
+
+                      <div className="event-meta">
+                        <span>
+                          <img src="/img/date_icon.svg" alt="date" /> {date}
+                        </span>
+                        <span>
+                          <img src="/img/loc_icon.svg" alt="location" /> {location || "Online"}
+                        </span>
+                      </div>
+
+                      <div className="price-tag">from {price}</div>
+                      <div className="event_cart_footer">
+                        <Link href={bookingUrl} className="common_btn max_170">
+                          Book
+                        </Link>
+                        <span>{seatsLeft}</span>
+                      </div>
                     </div>
-
-                    <div className="price-tag">from {item.price}</div>
-                   <div className="event_cart_footer">
-                     <Link href="/eventbooking"  className="common_btn max_170"> Book </Link>
-                     <span>42/50 Sheet left</span>
-                   </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-
       </div>
     </section>
   );

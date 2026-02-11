@@ -138,7 +138,7 @@ export default function page() {
                   },
                 }}
               >
-                {mediaItems.map((item, index) => (
+                {mediaItems && mediaItems?.map((item, index) => (
                   <SwiperSlide key={index}>
                     {item.type === "video" ? (
                       <a
@@ -387,7 +387,9 @@ export default function page() {
                     {event?.createdBy?.firstName} {event?.createdBy?.lastName}
                   </h5>
                 </div>
-                <Button className="btn-book py-2 px-4">View Details</Button>
+                <Link href={`/profile?id=${event?.createdBy?._id}`} className="btn-book py-2 px-4 btn text-white text-decoration-none">
+                  View Details
+                </Link>
               </div>
             </div>
           </Col>

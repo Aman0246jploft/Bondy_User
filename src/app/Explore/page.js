@@ -139,7 +139,6 @@ export default function Page() {
           </div>
         </Container>
       </div>
-
       <FAQ />
       <Footer />
     </>

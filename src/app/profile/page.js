@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Col from "react-bootstrap/Col";
-import Nav from "react-bootstrap/Nav";
 import Row from "react-bootstrap/Row";
 import Tab from "react-bootstrap/Tab";
 import { Container } from "react-bootstrap";
@@ -11,9 +11,88 @@ import SessionCart from "@/components/SessionCart";
 import VerifyDropdwons from "@/components/VerifyDropdwons";
 import Footer from "@/components/Footer";
 import GiveRating from "@/components/Modal/GiveRating";
+import authApi from "@/api/authApi";
 
 export default function page() {
   const [modalShow, setModalShow] = useState(false);
+  const searchParams = useSearchParams();
+  const userId = searchParams.get("id");
+
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (userId) {
+        try {
+          setLoading(true);
+          const response = await authApi.getUserProfileById(userId);
+          if (response.status) {
+            setUserProfile(response.data.profile);
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [userId]);
+
+  const handleFollow = async () => {
+    try {
+      const response = await authApi.followUser({ toUser: userId });
+      if (response.status) {
+        setUserProfile((prev) => ({
+          ...prev,
+          isFollowed: true,
+          totalFollowers: (prev.totalFollowers || 0) + 1,
+        }));
+      }
+    } catch (error) {
+      console.error("Error following user:", error);
+    }
+  };
+
+  const handleUnfollow = async () => {
+    try {
+      const response = await authApi.unfollowUser({ toUser: userId });
+      if (response.status) {
+        setUserProfile((prev) => ({
+          ...prev,
+          isFollowed: false,
+          totalFollowers: Math.max((prev.totalFollowers || 0) - 1, 0),
+        }));
+      }
+    } catch (error) {
+      console.error("Error unfollowing user:", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "100vh", backgroundColor: "#000", color: "#fff" }}
+      >
+        Loading profile...
+      </div>
+    );
+  }
+
+  if (!userProfile && !loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "100vh", backgroundColor: "#000", color: "#fff" }}
+      >
+        User not found
+      </div>
+    );
+  }
+
   return (
     <>
       <Header />
@@ -31,7 +110,16 @@ export default function page() {
             <div className="row align-items-start">
               <div className="col-auto">
                 <div className="profile-image-box">
-                  <img src="/img/profile_img.png" alt="Esther Howard" />
+                  <img
+                    src={
+                      userProfile?.profileImage
+                        ? userProfile.profileImage
+                        : "/img/default-user.png"
+                    }
+                    alt={userProfile?.firstName}
+                    className="object-fit-cover"
+                    style={{ width: "100%", height: "100%" }}
+                  />
                 </div>
               </div>
 
@@ -39,36 +127,56 @@ export default function page() {
                 <div className="user_profile_content">
                   <div className="user-info">
                     <h2 className="user-name">
-                      Esther Howard
+                      {userProfile?.firstName} {userProfile?.lastName}
                       <span className="verified-badge">
-                        <VerifyDropdwons />
+                        {userProfile?.organizerVerificationStatus ===
+                          "approved" && <VerifyDropdwons />}
                       </span>
                     </h2>
-                    <p className="designation">Concert Organizer Ulaanbaatar</p>
+                    <p className="designation">
+                      {userProfile?.role === "ORGANISER"
+                        ? "Event Organizer"
+                        : "User"}
+                    </p>
                     <div className="stats-row">
+                      {userProfile?.role === "ORGANISER" && (
+                        <span className="me-3">
+                          {" "}
+                          <img src="/img/event_icon_01.svg" />
+                          {userProfile?.totalEventsHosted || 0} Events Hosted
+                        </span>
+                      )}
                       <span className="me-3">
-                        {" "}
-                        <img src="/img/event_icon_01.svg" />
-                        50+ Events Hosted
+                        <img src="/img/user_icon.svg" />{" "}
+                        {userProfile?.totalFollowers || 0} Followers
                       </span>
-                      <span className="me-3">
-                        <img src="/img/user_icon.svg" /> 1.2K Followers
-                      </span>
-                      <span>
+                      {/* <span>
                         <img src="/img/star-icon.svg" /> 4/5 Rating
-                      </span>
+                      </span> */}
                     </div>
                   </div>
 
                   <div className="action-buttons">
-                    <button
+                    {/* <button
                       className="btn-message"
                       onClick={() => setModalShow(true)}>
                       <img src="/img/star-icon.svg" /> Give Rating
-                    </button>
-                    <button className="btn-follow">
-                      <img src="/img/User_plus.svg" /> Follow
-                    </button>
+                    </button> */}
+                    {userProfile?.role === "ORGANISER" &&
+                      !userProfile?.isFollowed &&
+                      !userProfile?.isMyProfile && (
+                        <button className="btn-follow" onClick={handleFollow}>
+                          <img src="/img/User_plus.svg" /> Follow
+                        </button>
+                      )}
+
+                    {userProfile?.role === "ORGANISER" &&
+                      userProfile?.isFollowed &&
+                      !userProfile?.isMyProfile && (
+                        <button className="btn-follow" onClick={handleUnfollow}>
+                          <img src="/img/User_plus.svg" /> Followed
+                        </button>
+                      )}
 
                     <button className="btn-message">
                       <img src="/img/message.svg" /> Messages
@@ -81,13 +189,7 @@ export default function page() {
                 <div className="about-section mt-4">
                   <h4 className="about-title">About me</h4>
                   <p className="about-text">
-                    I'm an event organizer dedicated to creating memorable and
-                    well-managed experiences. From planning to execution, I
-                    focus on delivering events that run smoothly and exceed
-                    expectations. I work closely with vendors, partners, and
-                    attendees to ensure every detail is handled with care. This
-                    platform helps me manage events, track performance, and
-                    connect with the right audience.
+                    {userProfile?.bio || "No bio available."}
                   </p>
                 </div>
               </div>
@@ -101,7 +203,7 @@ export default function page() {
           <div>
             <Tab.Container id="left-tabs-example" defaultActiveKey="first">
               <Row>
-                <Col sm={12}>
+                {/* <Col sm={12}>
                   <Nav variant="pills">
                     <Nav.Item>
                       <Nav.Link eventKey="first">Concert</Nav.Link>
@@ -113,23 +215,24 @@ export default function page() {
                       <Nav.Link eventKey="Third">Art</Nav.Link>
                     </Nav.Item>
                   </Nav>
-                </Col>
-                <Col sm={12}>
-                  <Tab.Content>
-                    <Tab.Pane eventKey="first">
-                      <SessionCart type="NextSession" />
-                      <SessionCart type="PastSessions" />
-                    </Tab.Pane>
-                    <Tab.Pane eventKey="second">
-                      <SessionCart type="NextSession" />
-                      <SessionCart type="PastSessions" />
-                    </Tab.Pane>
-                    <Tab.Pane eventKey="Third">
-                      <SessionCart type="NextSession" />
-                      <SessionCart type="PastSessions" />
-                    </Tab.Pane>
-                  </Tab.Content>
-                </Col>
+                </Col> */}
+                {userProfile?.role === "ORGANISER" && (
+                  <Col sm={12}>
+                    <Tab.Content>
+                      <Tab.Pane eventKey="first">
+                        <SessionCart
+                          title="Next Session"
+                          events={userProfile?.events?.next}
+                        />
+                        <SessionCart
+                          title="Past Sessions"
+                          events={userProfile?.events?.past}
+                        />
+                      </Tab.Pane>
+
+                    </Tab.Content>
+                  </Col>
+                )}
               </Row>
             </Tab.Container>
           </div>

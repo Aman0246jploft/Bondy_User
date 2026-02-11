@@ -26,6 +26,9 @@ const authApi = {
     resendOtp: (data) => apiClient.post("/user/resend-otp", data),
     getFaqs: () => apiClient.get("/faq/list", { skipToast: true }),
     getGlobalSetting: (key) => apiClient.get(`/globalsetting/${key}`, { skipToast: true }),
+    getUserProfileById: (userId) => apiClient.get(`/user/profile/${userId}`, { skipToast: true }),
+    followUser: (data) => apiClient.post("/follow/create", data),
+    unfollowUser: (data) => apiClient.post("/follow/delete", data),
 };
 
 export default authApi;
