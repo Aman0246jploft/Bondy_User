@@ -36,8 +36,6 @@ export default function page() {
     }
   }, [id]);
 
-  console.log("Course Details:", courseDetails);
-
   if (!courseDetails) {
     return (
       <>
@@ -68,7 +66,6 @@ export default function page() {
       ? posterImage.map(getFullImageUrl)
       : ["/img/program-process-image-1.png"];
 
-  // Helper to resolve location string
   const locationString = venueAddress
     ? `${venueAddress.address}, ${venueAddress.city}, ${venueAddress.state}`
     : "Location not available";
@@ -86,8 +83,8 @@ export default function page() {
                   {duration || "N/A"} •{" "}
                   {currentSchedule
                     ? `${formatDate(currentSchedule.startDate)} – ${formatDate(
-                      currentSchedule.endDate
-                    )}`
+                        currentSchedule.endDate,
+                      )}`
                     : "Dates N/A"}{" "}
                   • {schedules?.length || 0} sessions
                 </p>
@@ -172,8 +169,8 @@ export default function page() {
                     <span>
                       {currentSchedule
                         ? `${formatDate(
-                          currentSchedule.startDate
-                        )} at ${currentSchedule.startTime} to ${currentSchedule.endTime}`
+                            currentSchedule.startDate,
+                          )} at ${currentSchedule.startTime} to ${currentSchedule.endTime}`
                         : "Detailed timing not available"}
                     </span>
                   </div>
@@ -181,7 +178,6 @@ export default function page() {
                     <h5>Location</h5>
                     <span>{locationString}</span>
                   </div>
-
 
                   <Link className="view-map" href="">
                     View in Map
@@ -216,15 +212,19 @@ export default function page() {
                 <div className="content-section m-0">
                   <h3 className="section-heading">Event Gallery</h3>
                   <div className="gallery-grid">
-                    {images.slice(0, 5).map((img, idx) => (
-                      <img
-                        key={idx}
-                        src={img}
-                        className={`gallery-item ${idx === 0 ? "large-gallery-item" : ""
-                          }`}
-                        alt={`Gallery ${idx}`}
-                      />
-                    ))}
+                    {images &&
+                      images
+                        ?.slice(0, 5)
+                        .map((img, idx) => (
+                          <img
+                            key={idx}
+                            src={img}
+                            className={`gallery-item ${
+                              idx === 0 ? "large-gallery-item" : ""
+                            }`}
+                            alt={`Gallery ${idx}`}
+                          />
+                        ))}
                   </div>
                   <div className="onwards_sec mt-4">
                     <h4 className="mb-0">
@@ -276,12 +276,18 @@ export default function page() {
                               {dayName} • {schedule.startTime} -{" "}
                               {schedule.endTime}
                             </span>
-                            <h6>{courseTitle} (Session {idx + 1})</h6>
+                            <h6>
+                              {courseTitle} (Session {idx + 1})
+                            </h6>
                           </div>
                         </div>
                         <div className="booking_bx">
                           <span className="text_pr">
-                            {schedule.isBooked ? "Booked" : (schedule.isFull ? "Full" : `$${price}`)}
+                            {schedule.isBooked
+                              ? "Booked"
+                              : schedule.isFull
+                                ? "Full"
+                                : `$${price}`}
                           </span>
                           {schedule.isBooked ? (
                             <span className="badge bg-success">Booked</span>

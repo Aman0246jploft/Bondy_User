@@ -229,7 +229,6 @@ export default function page() {
                           events={userProfile?.events?.past}
                         />
                       </Tab.Pane>
-
                     </Tab.Content>
                   </Col>
                 )}

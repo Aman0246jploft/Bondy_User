@@ -70,7 +70,7 @@ export default function Sidebar({ toggleSidebar }) {
         </Link>
 
         <Link
-          href="/Message"
+          href="/Messagee"
           className={`menu-item ${isActive("/Message") ? "active" : ""}`}>
           <span className="icon">
             <img src="/img/message-icon.svg" alt="" />
