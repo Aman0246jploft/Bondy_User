@@ -37,7 +37,7 @@ function InterestPageContent() {
         }
 
         if (profileRes.status) {
-          const profileData = profileRes.data.profile;
+          const profileData = profileRes.data.user;
           setProfile(profileData);
           // Ensure we only store IDs
           const existingInterests = (profileData.categories || []).map(cat => cat._id || cat);
@@ -52,9 +52,11 @@ function InterestPageContent() {
 
   // Auto-fetch location if missing
   useEffect(() => {
+
     if (profile && !profile.location) {
       fetchCurrentLocation()
         .then((locationData) => {
+
           setProfile((prev) => ({
             ...prev,
             location: locationData,
@@ -116,6 +118,7 @@ function InterestPageContent() {
 
 
       const response = await authApi.updateProfile(payload);
+
       if (response.status) {
         toast.success("Interests updated successfully");
         router.push("/"); // Redirect to home or dashboard

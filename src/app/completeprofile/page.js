@@ -39,6 +39,7 @@ function CompleteProfileContent() {
     const fetchProfile = async () => {
       try {
         const response = await authApi.getSelfProfile();
+
         if (response.status) {
           const profile = response.data.user;
           setProfileData({
@@ -144,6 +145,7 @@ function CompleteProfileContent() {
         ...profileData,
         location: formatLocationForApi(profileData.location), // Format for API
       });
+
       if (response.status) {
         router.push("/insterest");
       }

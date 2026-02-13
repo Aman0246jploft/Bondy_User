@@ -4,9 +4,13 @@ import "./message.css";
 import Link from "next/link";
 import { useSocket } from "@/context/SocketContext";
 import { toast } from "react-hot-toast";
+import { useSearchParams } from "next/navigation";
+import authApi from "@/api/authApi";
 
 function page() {
   const { socket, isSocketConnected, onlineUsers } = useSocket();
+  const searchParams = useSearchParams();
+  const targetUserId = searchParams.get("userId");
   const [activeChat, setActiveChat] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [message, setMessage] = useState("");
@@ -14,6 +18,8 @@ function page() {
   const [chats, setChats] = useState([]);
   const [messages, setMessages] = useState([]);
   const msgEndRef = useRef();
+  const hasAutoSelected = useRef(false); // Track if we've already auto-selected
+  const chatsLoaded = useRef(false); // Track if chat list has been loaded
 
   // 1. Fetch Chat List on Load
   useEffect(() => {
@@ -22,8 +28,10 @@ function page() {
     socket.emit("get_chat_list", { page: 1, limit: 20 }, (response) => {
       if (response.status === "ok") {
         setChats(response.data);
+        chatsLoaded.current = true; // Mark as loaded
       } else {
         console.error("Error fetching chats:", response.message);
+        chatsLoaded.current = true; // Still mark as loaded even on error
       }
     });
 
@@ -45,19 +53,60 @@ function page() {
     };
   }, [socket]);
 
+  // Auto-select chat when userId parameter is present (only once)
+  useEffect(() => {
+    // Wait for socket, userId param, chat list to load, and ensure not already selected
+    if (!targetUserId || !socket || !chatsLoaded.current || hasAutoSelected.current) return;
+
+    const initializeChat = async () => {
+      // Find existing chat with this user
+      const existingChat = chats.find((chat) => {
+        return chat.participants.some((p) => p._id === targetUserId);
+      });
+
+      if (existingChat) {
+        // Chat exists, select it
+        setActiveChat(existingChat);
+        hasAutoSelected.current = true;
+      } else {
+        // No existing chat - fetch user data and create virtual chat
+        try {
+          const response = await authApi.getUserProfileById(targetUserId);
+          if (response.status && response.data.user) {
+            const userData = response.data.user;
+            setActiveChat({
+              _id: null, // No ID yet
+              isVirtual: true, // Flag to indicate this is not a real chat
+              receiverId: targetUserId, // Store the receiver ID for message sending
+              participants: [{
+                _id: userData._id,
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                profileImage: userData.profileImage
+              }],
+              lastMessage: null,
+              unreadCount: 0
+            });
+            hasAutoSelected.current = true;
+          } else {
+            toast.error("Unable to load user information");
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          toast.error("Failed to load user information");
+        }
+      }
+    };
+
+    initializeChat();
+  }, [targetUserId, chats, socket]); // Depend on chats array to re-check when it updates
+
   // 2. Fetch Messages when Active Chat Changes
   useEffect(() => {
-    if (!socket || !activeChat) return;
+    if (!socket || !activeChat || activeChat.isVirtual) return;
 
     // Join the chat room
     socket.emit("join_chat", { chatId: activeChat._id });
-
-    // Mark as read locally immediately for UI
-    setChats((prev) =>
-      prev.map((c) =>
-        c._id === activeChat._id ? { ...c, unreadCount: 0 } : c
-      )
-    );
 
     socket.emit(
       "get_message_list",
@@ -65,12 +114,19 @@ function page() {
       (response) => {
         if (response.status === "ok") {
           setMessages(response.data.reverse()); // Reverse to show oldest first at top
+
+          // Mark this chat as read in local state after loading messages
+          setChats((prev) =>
+            prev.map((c) =>
+              c._id === activeChat._id ? { ...c, unreadCount: 0 } : c
+            )
+          );
         } else {
           toast.error(response.message);
         }
       }
     );
-  }, [socket, activeChat]);
+  }, [socket, activeChat?._id]); // Only trigger when chat ID changes
 
   // 3. Listen for Incoming Messages
   useEffect(() => {
@@ -109,7 +165,7 @@ function page() {
 
   // Mark messages as read when active chat changes or new message arrives
   useEffect(() => {
-    if (!socket || !activeChat) return;
+    if (!socket || !activeChat || activeChat.isVirtual) return;
     socket.emit("mark_messages_read", { chatId: activeChat._id });
   }, [socket, activeChat, messages.length]);
 
@@ -135,13 +191,30 @@ function page() {
     // Optimistic UI update (optional, but handled by server ack usually)
     // For now, let's wait for ACK to append to be safe and consistent with ids
 
+    // Determine if this is a virtual chat (no real chatId yet)
+    const payload = activeChat.isVirtual
+      ? { receiverId: activeChat.receiverId, content: message }
+      : { chatId: activeChat._id, content: message };
+
     socket.emit(
       "send_message",
-      { chatId: activeChat._id, content: message },
+      payload,
       (response) => {
         if (response.status === "ok") {
           setMessages((prev) => [...prev, response.data]);
           setMessage("");
+
+          // If this was a virtual chat, update activeChat with the real chat info
+          if (activeChat.isVirtual && response.chatId) {
+            // The backend returns the chatId in the response
+            // We should wait for the new_chat or update_chat_list event to properly update
+            // For now, just update the activeChat's _id
+            setActiveChat((prev) => ({
+              ...prev,
+              _id: response.chatId,
+              isVirtual: false
+            }));
+          }
         } else {
           toast.error(response.message);
         }

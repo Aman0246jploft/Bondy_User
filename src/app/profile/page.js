@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
@@ -17,6 +17,7 @@ export default function page() {
   const [modalShow, setModalShow] = useState(false);
   const searchParams = useSearchParams();
   const userId = searchParams.get("id");
+  const router = useRouter();
 
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,8 +28,9 @@ export default function page() {
         try {
           setLoading(true);
           const response = await authApi.getUserProfileById(userId);
+          console.log("responseresponse00000", response)
           if (response.status) {
-            setUserProfile(response.data.profile);
+            setUserProfile(response.data.user);
           }
         } catch (error) {
           console.error("Error fetching user profile:", error);
@@ -178,9 +180,18 @@ export default function page() {
                         </button>
                       )}
 
-                    <button className="btn-message">
+                    {!userProfile?.isMyProfile && <button
+                      className="btn-message"
+                      onClick={() => {
+                        if (userProfile?.role === "ORGANIZER") {
+                          router.push(`/Messagee?userId=${userId}`);
+                        } else {
+                          router.push(`/Message?userId=${userId}`);
+                        }
+                      }}
+                    >
                       <img src="/img/message.svg" /> Messages
-                    </button>
+                    </button>}
                   </div>
                 </div>
 
