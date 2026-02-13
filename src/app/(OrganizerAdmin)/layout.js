@@ -22,8 +22,8 @@ export default function RootLayout({ children }) {
       try {
         const response = await authApi.getSelfProfile();
         if (response.status) {
-          // Supporting both spellings just in case, but backend uses ORGANISER
-          if (response.data.profile.role !== "ORGANISER" && response.data.profile.role !== "ORGANIZER") {
+          // Supporting both spellings just in case, but backend uses ORGANIZER
+          if (response.data.user.role !== "ORGANIZER" && response.data.user.role !== "ORGANIZER") {
             router.push("/");
           } else {
             setAuthorized(true);

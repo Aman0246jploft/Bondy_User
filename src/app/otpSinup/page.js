@@ -66,7 +66,7 @@ export default function OTPPage() {
         try {
           const profileRes = await authApi.getSelfProfile();
           if (profileRes.status) {
-            const profile = profileRes.data.profile;
+            const profile = profileRes.data.user;
             if (!profile.firstName || !profile.lastName) {
               setRedirectPath("/completeprofile");
             } else if (!profile.categories || profile.categories.length === 0) {

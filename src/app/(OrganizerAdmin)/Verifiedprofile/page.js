@@ -69,8 +69,8 @@ function page() {
   const fetchProfile = async () => {
     try {
       const res = await apiClient.get("/user/selfProfile");
-      if (res.data && res.data.profile) {
-        const profile = res.data.profile;
+      if (res.data && res.data.user) {
+        const profile = res.data.user;
         setUserData(profile);
         setStatus(profile.organizerVerificationStatus || "none");
 

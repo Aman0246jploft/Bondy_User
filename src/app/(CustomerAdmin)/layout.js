@@ -21,7 +21,7 @@ export default function RootLayout({ children }) {
       try {
         const response = await authApi.getSelfProfile();
         if (response.status) {
-          if (response.data.profile.role !== "CUSTOMER") {
+          if (response.data.user.role !== "CUSTOMER") {
             router.push("/");
           } else {
             setAuthorized(true);

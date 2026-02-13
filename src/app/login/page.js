@@ -27,14 +27,20 @@ export default function Page() {
     e.preventDefault();
     setLoading(true);
     try {
+      // Map tab name to backend expected Role String
+      // Organizer -> ORGANIZER, Customer -> CUSTOMER
+      const roleType = activeTab === "Organizer" ? "ORGANIZER" : "CUSTOMER";
+
       const response = await authApi.loginInit({
         email: formData.email,
         password: formData.password,
+        type: roleType,
       });
 
       if (response.status) {
         localStorage.setItem("loginEmail", formData.email);
-        localStorage.setItem("loginType", activeTab.toLowerCase());
+        // Store the UPPERCASE standard role for OTP page to use
+        localStorage.setItem("loginType", roleType);
         router.push("/otp?flow=login");
       }
     } catch (error) {

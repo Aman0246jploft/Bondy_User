@@ -12,7 +12,7 @@ function CustomerHeader() {
       try {
         const response = await authApi.getSelfProfile();
         if (response.status) {
-          setProfile(response.data.profile);
+          setProfile(response.data.user);
         }
       } catch (error) {
         console.error("Failed to fetch profile in CustomerHeader:", error);

@@ -134,12 +134,12 @@ export default function page() {
                       </span>
                     </h2>
                     <p className="designation">
-                      {userProfile?.role === "ORGANISER"
+                      {userProfile?.role === "ORGANIZER"
                         ? "Event Organizer"
                         : "User"}
                     </p>
                     <div className="stats-row">
-                      {userProfile?.role === "ORGANISER" && (
+                      {userProfile?.role === "ORGANIZER" && (
                         <span className="me-3">
                           {" "}
                           <img src="/img/event_icon_01.svg" />
@@ -162,7 +162,7 @@ export default function page() {
                       onClick={() => setModalShow(true)}>
                       <img src="/img/star-icon.svg" /> Give Rating
                     </button> */}
-                    {userProfile?.role === "ORGANISER" &&
+                    {userProfile?.role === "ORGANIZER" &&
                       !userProfile?.isFollowed &&
                       !userProfile?.isMyProfile && (
                         <button className="btn-follow" onClick={handleFollow}>
@@ -170,7 +170,7 @@ export default function page() {
                         </button>
                       )}
 
-                    {userProfile?.role === "ORGANISER" &&
+                    {userProfile?.role === "ORGANIZER" &&
                       userProfile?.isFollowed &&
                       !userProfile?.isMyProfile && (
                         <button className="btn-follow" onClick={handleUnfollow}>
@@ -216,7 +216,7 @@ export default function page() {
                     </Nav.Item>
                   </Nav>
                 </Col> */}
-                {userProfile?.role === "ORGANISER" && (
+                {userProfile?.role === "ORGANIZER" && (
                   <Col sm={12}>
                     <Tab.Content>
                       <Tab.Pane eventKey="first">

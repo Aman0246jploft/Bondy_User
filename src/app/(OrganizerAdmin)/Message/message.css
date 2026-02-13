@@ -14,6 +14,7 @@
   padding: 20px 10px;
   position: relative;
 }
+
 .title {
   font-size: 20px;
   margin-bottom: 15px;
@@ -22,6 +23,7 @@
 .search-box {
   position: relative;
 }
+
 .search-box input {
   color: #fff;
   width: 100%;
@@ -35,11 +37,13 @@
   font-weight: 400;
   line-height: normal;
 }
+
 .search-icon {
   position: absolute;
   top: 10px;
   left: 8px;
 }
+
 .no-chat-selected {
   display: flex;
   align-items: center;
@@ -51,6 +55,7 @@
   background: #1a1a1a;
   border-radius: 15px;
 }
+
 .user-chat-box .count {
   width: 20px;
   height: 20px;
@@ -65,10 +70,12 @@
   font-weight: 600;
   line-height: normal;
 }
+
 .chat-window {
   border-radius: 15px;
   background: #1a1a1a;
 }
+
 /* USER LIST */
 .user-items {
   margin-top: 20px;
@@ -201,6 +208,7 @@
   display: flex;
   flex-direction: column;
 }
+
 .options-dropdown a {
   cursor: pointer;
   margin: 0;
@@ -211,9 +219,11 @@
   font-weight: 500;
   line-height: normal;
 }
+
 .block-user {
   color: #e92424;
 }
+
 /* MESSAGES */
 .messages-area {
   flex: 1;
@@ -225,6 +235,7 @@
 
 .message {
   width: fit-content;
+  max-width: 75%;
   margin-bottom: 14px;
   padding: 8px 12px;
   font-size: 14px;
@@ -232,34 +243,41 @@
   align-items: self-start;
   gap: 20px;
 }
+
 .message.left .msg-text {
   background: rgba(61, 181, 180, 0.7);
   border: 1px solid #3c3c3c;
   border-radius: 2px 16px 16px 16px;
   padding: 8px 12px;
   position: relative;
+  word-break: break-word;
 }
 
 .message.right {
   margin-left: auto;
   flex-direction: row-reverse;
 }
+
 .message.right .msg-meta {
   justify-content: end;
   align-items: center;
   gap: 10px;
 }
+
 .message.right .msg-text {
   background: #1a1a1a;
   border: 1px solid #3c3c3c;
   border-radius: 16px 2px 16px 16px;
   padding: 8px 12px;
+  word-break: break-word;
 }
+
 .messages-area .msg-meta {
   display: flex;
   justify-content: space-between;
   margin-bottom: 6px;
 }
+
 .msg-name {
   color: #fff;
   font-size: 16px;
@@ -267,6 +285,7 @@
   font-weight: 600;
   line-height: normal;
 }
+
 .msg-time {
   color: #717171;
   font-size: 12px;
@@ -274,6 +293,7 @@
   font-weight: 400;
   line-height: normal;
 }
+
 /* ---------------------- INPUT AREA ---------------------- */
 .chat-header .info small {
   color: #29b738;
@@ -282,6 +302,7 @@
   font-weight: 400;
   line-height: normal;
 }
+
 .chat-header .info h5 {
   color: #fff;
   font-size: 20px;
@@ -289,12 +310,14 @@
   line-height: normal;
   margin-bottom: 0px;
 }
+
 .message-input {
   padding: 12px;
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .message-input input {
   color: #fff;
   flex: 1;
@@ -303,6 +326,7 @@
   border: 1px solid #3c3c3c;
   background: #1a1a1a;
 }
+
 .chat-header .back-btn {
   margin-bottom: 0;
 }
@@ -330,41 +354,51 @@
   cursor: pointer;
   font-size: 22px;
 }
+
 .message .msg-user-img {
   height: 48px;
   width: 48px;
   border-radius: 50px;
 }
+
 @media (max-width: 991.98px) {
   .user-info h5 {
     font-size: 14px;
   }
+
   .user-chat-box {
     padding: 8px 5px;
   }
+
   .user-chat-box.active {
     border-radius: 10px;
   }
+
   .user-img {
     width: 35px;
     height: 35px;
   }
+
   .user-chat-box .count {
     width: 15px;
     height: 15px;
     font-size: 12px;
   }
+
   .chat-header .info h5 {
     font-size: 16px;
   }
+
   .header-img {
     width: 35px;
     height: 35px;
   }
+
   .message .msg-user-img {
     height: 35px;
     width: 35px;
   }
+
   .msg-name {
     font-size: 12px;
   }
@@ -375,6 +409,7 @@
   .message .msg-user-img {
     width: 30px;
   }
+
   .chat-sidebar.mobile-hide {
     display: none;
   }
@@ -387,24 +422,31 @@
     display: block;
     position: relative;
   }
+
   .main-area {
     padding: 0;
   }
+
   .action-icon-chat {
     gap: 10px !important;
   }
+
   .messages-area {
     padding: 10px 0;
   }
+
   .chat-sidebar {
     height: calc(100vh - 120px);
   }
+
   .user-items {
     height: calc(100vh - 260px);
   }
+
   .back-btn {
     display: inline-block;
   }
+
   .zodiac-view-user {
     align-items: self-start;
     gap: 30px;
@@ -412,12 +454,15 @@
     display: flex;
     flex-wrap: wrap;
   }
+
   .zodiac-info {
     flex: auto;
   }
+
   .zodiac-profile-info img {
     height: 195px;
   }
+
   .zodiac-view-user {
     height: 60vh;
     overflow-y: auto;
@@ -425,12 +470,15 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
+
   .chat-wrapper {
     height: calc(100vh - 50px);
   }
+
   .chat-window {
     height: calc(100vh - 110px);
   }
+
   .message {
     font-size: 12px;
   }
@@ -452,6 +500,7 @@
   top: 50%;
   transform: translateY(-50%);
 }
+
 .action-icon-chat button {
   background-color: transparent;
   outline: none;

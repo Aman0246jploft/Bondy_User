@@ -58,9 +58,11 @@ export default function OTPPage() {
     try {
       let response;
       if (flow === "login") {
+        const type = localStorage.getItem("loginType") || "CUSTOMER";
         response = await authApi.loginVerify({
           email,
           otp: otpValue,
+          type,
         });
       } else {
         response = await authApi.customerVerifyOtp({
@@ -86,7 +88,7 @@ export default function OTPPage() {
         try {
           const profileRes = await authApi.getSelfProfile();
           if (profileRes.status) {
-            const profile = profileRes.data.profile;
+            const profile = profileRes.data.user;
 
             // 1. Check Personal Details (Name)
             if (!profile.firstName || !profile.lastName) {

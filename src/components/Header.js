@@ -25,7 +25,7 @@ export default function BondyHeader() {
         try {
           const response = await authApi.getSelfProfile();
           if (response.status) {
-            setUserProfile(response.data.profile);
+            setUserProfile(response.data.user);
           }
         } catch (error) {
           console.error("Header Profile Fetch Error:", error);
@@ -104,8 +104,8 @@ export default function BondyHeader() {
                 {userProfile ? (
                   <Link
                     href={
-                      userProfile.role === "ORGANISER" ||
-                      userProfile.role === "ORGANIZER"
+                      userProfile.role === "ORGANIZER" ||
+                        userProfile.role === "ORGANIZER"
                         ? "/OrganizerPersonalInfo"
                         : userProfile.role === "CUSTOMER"
                           ? "/Personalinfo"
@@ -219,8 +219,8 @@ export default function BondyHeader() {
                 {userProfile ? (
                   <Link
                     href={
-                      userProfile.role === "ORGANISER" ||
-                      userProfile.role === "ORGANIZER"
+                      userProfile.role === "ORGANIZER" ||
+                        userProfile.role === "ORGANIZER"
                         ? "/Dashboard"
                         : userProfile.role === "CUSTOMER"
                           ? "/Personalinfo"
