@@ -77,7 +77,7 @@ function page() {
       <div className="cards">
         <div className="card-header">
           <div>
-            <h2 className="card-title">Events Management</h2>
+            <h2 className="card-title">Program Management</h2>
             <p className="card-desc">
               Welcome back, Alex! Here's a snapshot of your events and tasks.
             </p>
@@ -86,8 +86,7 @@ function page() {
           <Link
             href="/BasicInfo"
             className="custom-btn"
-            onClick={() => clearEventData()}
-          >
+            onClick={() => clearEventData()}>
             Create New
           </Link>
         </div>
@@ -115,16 +114,23 @@ function page() {
           </Col>
         </Row>
         <div className="ticket-tabs">
-          <Tabs
-            activeKey={activeTab}
-            onSelect={handleTabSelect}
-            className="mb-3"
-          >
-            <Tab eventKey="all" title="All" />
-            <Tab eventKey="upcoming" title="Upcoming" />
-            <Tab eventKey="ongoing" title="Ongoing" />
-            <Tab eventKey="past" title="Past" />
-          </Tabs>
+          <div className="d-flex mb-3 justify-content-between align-items-center">
+            <Tabs activeKey={activeTab} onSelect={handleTabSelect} className="">
+              <Tab eventKey="all" title="All" />
+              <Tab eventKey="upcoming" title="Upcoming" />
+              <Tab eventKey="ongoing" title="Ongoing" />
+              <Tab eventKey="past" title="Past" />
+            </Tabs>
+            <div className="dashboard-filter">
+              <div>
+                <select className="form-select">
+                  <option>Sort by</option>
+                  <option>Latest</option>
+                  <option>Soonest</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
           <div className="ticket-listing">
             {loading ? (
@@ -160,8 +166,7 @@ function page() {
                     </div>
                     <div className="ticket-rgt">
                       <span
-                        className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}
-                      >
+                        className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}>
                         {event.status || "Upcoming"}
                       </span>
                       <p>
@@ -184,8 +189,7 @@ function page() {
                           width="4"
                           height="4"
                           viewBox="0 0 4 4"
-                          fill="none"
-                        >
+                          fill="none">
                           <circle cx="2" cy="2" r="2" fill="#999999" />
                         </svg>
                       </span>{" "}
@@ -232,8 +236,7 @@ function page() {
                   <Pagination.Item
                     key={idx + 1}
                     active={idx + 1 === pagination.page}
-                    onClick={() => handlePageChange(idx + 1)}
-                  >
+                    onClick={() => handlePageChange(idx + 1)}>
                     {idx + 1}
                   </Pagination.Item>
                 ))}

@@ -19,35 +19,77 @@ function page() {
                 <span className="status-pill">Active</span>
               </div>
               <p className="plan-sub">$299 / 7 Days • Renew 12 Oct 2025</p>
-              <div className="progress-block">
-                <div className="progress-top">
-                  <span>Active Events</span>
-                  <span className="value">5/10</span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: "50%" }} />
-                </div>
+              <div className="pricing-cards border-0 p-0">
+                <p>
+                  <img
+                    src="/img/check-mark-color.svg"
+                    className="me-3"
+                    alt=""
+                  />
+                  Unlimited Event Listings
+                </p>
+                <p>
+                  <img
+                    src="/img/check-mark-color.svg"
+                    className="me-3"
+                    alt=""
+                  />
+                  Featured Placement (Homeage, Maps & Areas)
+                </p>
+                <p>
+                  <img
+                    src="/img/check-mark-color.svg"
+                    className="me-3"
+                    alt=""
+                  />
+                  Boosted Visibility & Ranking
+                </p>
+                <p>
+                  <img
+                    src="/img/check-mark-color.svg"
+                    className="me-3"
+                    alt=""
+                  />
+                  Advanced Analytics Dashboard
+                </p>
+                <p>
+                  <img
+                    src="/img/check-mark-color.svg"
+                    className="me-3"
+                    alt=""
+                  />
+                  Promotions & Discounts
+                </p>
+                <p>
+                  <img
+                    src="/img/check-mark-color.svg"
+                    className="me-3"
+                    alt=""
+                  />
+                  Auto Reminders & Scheduled Messages
+                </p>
+                <p>
+                  <img
+                    src="/img/check-mark-color.svg"
+                    className="me-3"
+                    alt=""
+                  />
+                  Priority Support
+                </p>
               </div>
-              {/* Progress Item */}
-              <div className="progress-block">
-                <div className="progress-top">
-                  <span>Ticket Sales Weekly</span>
-                  <span className="value">842 / 2000</span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: "42%" }} />
-                </div>
+              <div className="renew-on mt-3">
+                <span>Renew on: 12 Oct 2025</span>
               </div>
-              <div className="d-flex justify-content-between mt-5">
+              <div className="d-flex justify-content-between mt-3">
+                <button className="outline-btn">Cancel Plan</button>
                 <Link href="/Promotions" className="custom-btn">
                   Upgrade Plan
                 </Link>
-                <button className="outline-btn">Cancel Plan</button>
               </div>
             </div>
           </Col>
           <Col md={5}>
-            <div className="analytics-chart payment-cards">
+            <div className="analytics-chart payment-cards h-100">
               <h3 className="section-title">Payment Methods</h3>
               <div className="card-row">
                 <div className="card-icon">

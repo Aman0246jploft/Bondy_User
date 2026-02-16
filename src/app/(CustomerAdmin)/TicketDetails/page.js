@@ -30,7 +30,6 @@ function TicketDetails() {
       if (res.status && res.data) {
         setTicketInfo(res?.data?.ticket);
         setTicketInfoFull(res?.data);
-
       }
     } catch (error) {
       console.error("Error fetching ticket details:", error);
@@ -51,7 +50,7 @@ function TicketDetails() {
       const canvas = await html2canvas(ticketRef.current, {
         scale: 2,
         useCORS: true,
-        backgroundColor: "#242424" // Matching dark theme background
+        backgroundColor: "#242424", // Matching dark theme background
       });
 
       const imgData = canvas.toDataURL("image/png");
@@ -86,16 +85,25 @@ function TicketDetails() {
   return (
     <div>
       <div className="cards ticket-details">
-        <Link href="/MyTickets" className="back-btn">
-          <img src="/img/arrow-left-white.svg" alt="Back" />
-          Back to ticket
-        </Link>
-        <div ref={ticketRef} style={{ padding: "20px", background: "#242424" }}>
+        <div className="d-flex gap-3  align-items-center justify-content-between">
+          <Link href="/MyTickets" className="back-btn">
+            <img src="/img/arrow-left-white.svg" alt="Back" />
+            Back to ticket
+          </Link>
+          <button className="common_btn" type="button">
+            <img src="/img/share-icon.svg" className="me-2" alt="" />
+            Share
+          </button>
+        </div>
+        <div ref={ticketRef} style={{ padding: "20px 0" }}>
           <Row>
             <Col md={2}>
               <div className="ticket-dtl-card">
                 <div className="ticket-dtl-card-img">
-                  <img src={getFullImageUrl(ticketInfo?.eventId?.posterImage?.[0])} alt="Ticket Icon" />
+                  <img
+                    src={getFullImageUrl(ticketInfo?.eventId?.posterImage?.[0])}
+                    alt="Ticket Icon"
+                  />
                 </div>
                 <h3>{ticketInfo?.eventId?.eventTitle}</h3>
               </div>
@@ -104,12 +112,17 @@ function TicketDetails() {
               <div className="ticket-dtl-main">
                 <div className="tickt-dtl-info">
                   <h4>Ticket Details</h4>
-                  <div className="tickt-dtl-info-btns" data-html2canvas-ignore="true">
+                  <div
+                    className="tickt-dtl-info-btns"
+                    data-html2canvas-ignore="true">
                     {/* <button className="refund-btn" type="button">
                     <img src="/img/history-icon.svg" className="me-2" alt="" />
                     Refound ticket
                   </button> */}
-                    <button className="custom-btn" type="button" onClick={handleDownloadTicket}>
+                    <button
+                      className="common_btn"
+                      type="button"
+                      onClick={handleDownloadTicket}>
                       <img
                         src="/img/download-arrow.svg"
                         className="me-2"
@@ -129,19 +142,17 @@ function TicketDetails() {
                     <p>
                       {ticketInfo?.createdAt
                         ? new Date(ticketInfo.createdAt).toLocaleDateString(
-                          "en-US",
-                          {
-                            weekday: "short",
-                            day: "numeric",
-                            month: "short",
-                          }
-                        )
+                            "en-US",
+                            {
+                              weekday: "short",
+                              day: "numeric",
+                              month: "short",
+                            },
+                          )
                         : "N/A"}
                     </p>
                   </div>
-                  <div>
-                    {getStatusBadge(ticketInfo?.status)}
-                  </div>
+                  <div>{getStatusBadge(ticketInfo?.status)}</div>
                 </div>
               </div>
             </Col>
@@ -156,9 +167,13 @@ function TicketDetails() {
                   <img src="/img/Map-Point.svg" alt="" />
                   Location
                 </h6>
-                <p>{ticketInfo?.eventId?.venueAddress?.address},{ticketInfo?.eventId?.venueAddress?.city},{ticketInfo?.eventId?.venueAddress?.state} {ticketInfo?.eventId?.venueAddress?.country}</p>
+                <p>
+                  {ticketInfo?.eventId?.venueAddress?.address},
+                  {ticketInfo?.eventId?.venueAddress?.city},
+                  {ticketInfo?.eventId?.venueAddress?.state}{" "}
+                  {ticketInfo?.eventId?.venueAddress?.country}
+                </p>
               </div>
-
 
               <div>
                 <h6>
@@ -167,14 +182,13 @@ function TicketDetails() {
                 <p>
                   <span>
                     {ticketInfo?.eventId?.startDate
-                      ? new Date(ticketInfo.eventId.startDate).toLocaleDateString(
-                        "en-US",
-                        {
+                      ? new Date(
+                          ticketInfo.eventId.startDate,
+                        ).toLocaleDateString("en-US", {
                           weekday: "short",
                           day: "numeric",
                           month: "short",
-                        }
-                      )
+                        })
                       : "N/A"}
                   </span>{" "}
                   <svg
@@ -182,38 +196,44 @@ function TicketDetails() {
                     width="4"
                     height="4"
                     viewBox="0 0 4 4"
-                    fill="none"
-                  >
+                    fill="none">
                     <circle cx="2" cy="2" r="2" fill="#999999" />
                   </svg>{" "}
                   <span>
                     {ticketInfo?.eventId?.startTime
                       ? new Date().setHours(
-                        ticketInfo.eventId.startTime.split(":")[0],
-                        ticketInfo.eventId.startTime.split(":")[1]
-                      ) &&
+                          ticketInfo.eventId.startTime.split(":")[0],
+                          ticketInfo.eventId.startTime.split(":")[1],
+                        ) &&
                         new Date().setHours(
                           ticketInfo.eventId.startTime.split(":")[0],
-                          ticketInfo.eventId.startTime.split(":")[1]
+                          ticketInfo.eventId.startTime.split(":")[1],
                         ) &&
-                        new Date().toLocaleTimeString("en-US", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: true,
-                        })
+                        new Date()
+                          .toLocaleTimeString("en-US", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: true,
+                          })
                           .replace(
-                            new Date().toLocaleTimeString("en-US", {
-                              hour: "numeric",
-                              minute: "2-digit",
-                              hour12: true,
-                            }).split(" ")[0] !== "Invalid"
+                            new Date()
+                              .toLocaleTimeString("en-US", {
+                                hour: "numeric",
+                                minute: "2-digit",
+                                hour12: true,
+                              })
+                              .split(" ")[0] !== "Invalid"
                               ? ""
                               : "Invalid Date",
-                            ""
-                          ) === "Invalid Date" ? ticketInfo?.eventId?.startTime : new Date(new Date().setHours(
-                            ticketInfo.eventId.startTime.split(":")[0],
-                            ticketInfo.eventId.startTime.split(":")[1]
-                          )).toLocaleTimeString("en-US", {
+                            "",
+                          ) === "Invalid Date"
+                        ? ticketInfo?.eventId?.startTime
+                        : new Date(
+                            new Date().setHours(
+                              ticketInfo.eventId.startTime.split(":")[0],
+                              ticketInfo.eventId.startTime.split(":")[1],
+                            ),
+                          ).toLocaleTimeString("en-US", {
                             hour: "numeric",
                             minute: "2-digit",
                             hour12: true,
@@ -222,8 +242,6 @@ function TicketDetails() {
                   </span>
                 </p>
               </div>
-
-
 
               {/* <div>
               <h6>
@@ -254,8 +272,6 @@ function TicketDetails() {
                 <span>Seats 29-30</span>
               </p>
             </div> */}
-
-
             </div>
           </div>
           <div className="payment-dtl">
@@ -270,7 +286,10 @@ function TicketDetails() {
                 </div>
                 <div>
                   <h6>Paid by</h6>
-                  <p>{ticketInfo?.userId?.firstName} {ticketInfo?.userId?.lastName}</p>
+                  <p>
+                    {ticketInfo?.userId?.firstName}{" "}
+                    {ticketInfo?.userId?.lastName}
+                  </p>
                 </div>
               </li>
               <li>
@@ -295,11 +314,20 @@ function TicketDetails() {
               </li>
               <li className="d-flex justify-content-center">
                 {ticketInfoFull?.ticket?.qrCodeData ? (
-                  <div style={{ background: "white", padding: "16px", marginBottom: "16px" }}>
+                  <div
+                    style={{
+                      background: "white",
+                      padding: "16px",
+                      marginBottom: "16px",
+                    }}>
                     <QRCode
                       value={ticketInfoFull.ticket.qrCodeData}
                       size={150}
-                      style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                      style={{
+                        height: "auto",
+                        maxWidth: "100%",
+                        width: "100%",
+                      }}
                       viewBox={`0 0 256 256`}
                     />
                   </div>

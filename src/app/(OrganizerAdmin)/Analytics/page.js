@@ -1,13 +1,22 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { useRef } from "react";
 import { Col, Row } from "react-bootstrap";
 import RevenueChart from "../Components/RevenueChart";
 import AttendeeChart from "../Components/AttendeeChart";
 import AttendeeTable from "../Components/AttendeeTable";
 import ProgramPerformance from "../Components/ProgramPerformance";
-
+const categories = ["All", "Upcoming", "Ended"];
 function page() {
+  const [selected, setSelected] = useState(["All"]);
+
+  const handleToggle = (category) => {
+    if (selected.includes(category)) {
+      setSelected(selected.filter((item) => item !== category));
+    } else {
+      setSelected([...selected, category]);
+    }
+  };
   const inputRef = useRef(null);
   return (
     <div>
@@ -128,8 +137,24 @@ function page() {
         </Row>
         <div className="custom-table-cards">
           <div className="card-header">
-            <div>
+            <div className="d-flex gap-3">
               <h5 className="table-title">Program Performance</h5>
+              <div className="MUiltiSelect m-0 w-auto">
+                {categories.map((item) => (
+                  <div key={item} className="d-inline-block me-2">
+                    <input
+                      type="checkbox"
+                      id={`chk-${item}`}
+                      className="category-checkbox"
+                      checked={selected.includes(item)}
+                      onChange={() => handleToggle(item)}
+                    />
+                    <label htmlFor={`chk-${item}`} className="category-label">
+                      {item}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="dashboard-filter">
               <div className="date-input-wrapper">
@@ -170,6 +195,18 @@ function page() {
               <h5 className="table-title">Attendee List</h5>
             </div>
             <div className="dashboard-filter">
+              <div className="position-relative">
+                <input
+                  type="text"
+                  className="form-control text-white"
+                  placeholder="Search by name/email"
+                />
+                <button
+                  type="button"
+                  className="position-absolute end-0 top-50 translate-middle-y border-0 bg-transparent pe-2">
+                  <img src="/img/org-img/search-white.svg" />
+                </button>
+              </div>
               <div className="date-input-wrapper">
                 <input
                   ref={inputRef}

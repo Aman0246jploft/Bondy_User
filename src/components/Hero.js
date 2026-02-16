@@ -91,8 +91,8 @@ const HeroSlider = ({ setView }) => {
             initial="hidden"
             animate="visible">
             <motion.h1 variants={itemVariants}>
-              Find Your Next Adventure in <br />
-              <span>Entertainment!</span>
+              Discover Events, Workshops, Courses <br />
+              <span>& Experiences in Ulaanbaatar</span>
             </motion.h1>
 
             <motion.p variants={itemVariants}>
