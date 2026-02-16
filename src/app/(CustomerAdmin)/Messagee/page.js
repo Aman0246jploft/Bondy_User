@@ -56,7 +56,13 @@ function page() {
   // Auto-select chat when userId parameter is present (only once)
   useEffect(() => {
     // Wait for socket, userId param, chat list to load, and ensure not already selected
-    if (!targetUserId || !socket || !chatsLoaded.current || hasAutoSelected.current) return;
+    if (
+      !targetUserId ||
+      !socket ||
+      !chatsLoaded.current ||
+      hasAutoSelected.current
+    )
+      return;
 
     const initializeChat = async () => {
       // Find existing chat with this user
@@ -78,14 +84,16 @@ function page() {
               _id: null, // No ID yet
               isVirtual: true, // Flag to indicate this is not a real chat
               receiverId: targetUserId, // Store the receiver ID for message sending
-              participants: [{
-                _id: userData._id,
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                profileImage: userData.profileImage
-              }],
+              participants: [
+                {
+                  _id: userData._id,
+                  firstName: userData.firstName,
+                  lastName: userData.lastName,
+                  profileImage: userData.profileImage,
+                },
+              ],
               lastMessage: null,
-              unreadCount: 0
+              unreadCount: 0,
             });
             hasAutoSelected.current = true;
           } else {
@@ -118,13 +126,13 @@ function page() {
           // Mark this chat as read in local state after loading messages
           setChats((prev) =>
             prev.map((c) =>
-              c._id === activeChat._id ? { ...c, unreadCount: 0 } : c
-            )
+              c._id === activeChat._id ? { ...c, unreadCount: 0 } : c,
+            ),
           );
         } else {
           toast.error(response.message);
         }
-      }
+      },
     );
   }, [socket, activeChat?._id]); // Only trigger when chat ID changes
 
@@ -147,12 +155,14 @@ function page() {
 
     const handleReadUpdate = ({ chatId, userId }) => {
       if (activeChat && chatId === activeChat._id) {
-        setMessages(prev => prev.map(m => {
-          if (!m.readBy.includes(userId)) {
-            return { ...m, readBy: [...(m.readBy || []), userId] };
-          }
-          return m;
-        }));
+        setMessages((prev) =>
+          prev.map((m) => {
+            if (!m.readBy.includes(userId)) {
+              return { ...m, readBy: [...(m.readBy || []), userId] };
+            }
+            return m;
+          }),
+        );
       }
     };
     socket.on("messages_read_update", handleReadUpdate);
@@ -174,7 +184,6 @@ function page() {
     msgEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-
   // 4. Send Message
   const sendMessage = () => {
     if (!message.trim() || !activeChat || !socket) return;
@@ -185,7 +194,7 @@ function page() {
       content: message,
       sender: "me", // Placeholder, will optionally replace or just wait for server
       createdAt: new Date(),
-      isTemp: true
+      isTemp: true,
     };
 
     // Optimistic UI update (optional, but handled by server ack usually)
@@ -196,41 +205,38 @@ function page() {
       ? { receiverId: activeChat.receiverId, content: message }
       : { chatId: activeChat._id, content: message };
 
-    socket.emit(
-      "send_message",
-      payload,
-      (response) => {
-        if (response.status === "ok") {
-          setMessages((prev) => [...prev, response.data]);
-          setMessage("");
+    socket.emit("send_message", payload, (response) => {
+      if (response.status === "ok") {
+        setMessages((prev) => [...prev, response.data]);
+        setMessage("");
 
-          // If this was a virtual chat, update activeChat with the real chat info
-          if (activeChat.isVirtual && response.chatId) {
-            // The backend returns the chatId in the response
-            // We should wait for the new_chat or update_chat_list event to properly update
-            // For now, just update the activeChat's _id
-            setActiveChat((prev) => ({
-              ...prev,
-              _id: response.chatId,
-              isVirtual: false
-            }));
-          }
-        } else {
-          toast.error(response.message);
+        // If this was a virtual chat, update activeChat with the real chat info
+        if (activeChat.isVirtual && response.chatId) {
+          // The backend returns the chatId in the response
+          // We should wait for the new_chat or update_chat_list event to properly update
+          // For now, just update the activeChat's _id
+          setActiveChat((prev) => ({
+            ...prev,
+            _id: response.chatId,
+            isVirtual: false,
+          }));
         }
+      } else {
+        toast.error(response.message);
       }
-    );
+    });
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       sendMessage();
     }
-  }
+  };
 
   // Helper to get my ID from token
   const getMyId = () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     return token ? parseJwt(token)?.userId : null;
   };
 
@@ -238,13 +244,15 @@ function page() {
     if (chat.otherUser) return chat.otherUser;
     const myId = getMyId();
     // Fallback: find participant that is not me
-    return chat.participants.find(p => p._id !== myId) || {};
+    return chat.participants.find((p) => p._id !== myId) || {};
   };
 
   // Filter chats by search
   const filteredChats = chats.filter((chat) => {
     const otherUser = getOtherUser(chat);
-    const name = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : "Unknown";
+    const name = otherUser
+      ? `${otherUser.firstName} ${otherUser.lastName}`
+      : "Unknown";
     return name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -256,17 +264,19 @@ function page() {
             <div className="row h-100">
               {/* LEFT CHAT LIST */}
               <div
-                className={`col-lg-3 col-md-4 chat-sidebar ${activeChat ? "mobile-hide" : ""
-                  }`}
+                className={`col-lg-3 col-md-4 chat-sidebar ${
+                  activeChat ? "mobile-hide" : ""
+                }`}
               >
                 <div className="d-flex align-items-center justify-content-between mb-3">
                   <h4 className="title m-0">Messages</h4>
-                  <div className={`connection-status ${isSocketConnected ? 'online' : 'offline'}`}
-                    title={isSocketConnected ? "Connected" : "Disconnected"}>
+                  <div
+                    className={`connection-status ${isSocketConnected ? "online" : "offline"}`}
+                    title={isSocketConnected ? "Connected" : "Disconnected"}
+                  >
                     ●
                   </div>
                 </div>
-
 
                 <div className="search-box">
                   <input
@@ -289,21 +299,31 @@ function page() {
                       <div
                         key={chat._id}
                         onClick={() => setActiveChat(chat)}
-                        className={`user-chat-box ${activeChat?._id === chat._id ? "active" : ""
-                          }`}
+                        className={`user-chat-box ${
+                          activeChat?._id === chat._id ? "active" : ""
+                        }`}
                       >
                         <div className="position-relative">
                           <img
-                            src={other.profileImage || "/img/user_placeholder.png"}
+                            src={
+                              other.profileImage || "/img/user_placeholder.png"
+                            }
                             className="user-img"
-                            onError={(e) => e.target.src = '/img/user_placeholder.png'}
+                            onError={(e) =>
+                              (e.target.src = "/img/user_placeholder.png")
+                            }
                           />
                           {isOnline && <span className="online-badge"></span>}
                         </div>
 
                         <div className="user-info">
-                          <h5>{other.firstName} {other.lastName}</h5>
-                          <p className="text-truncate" style={{ maxWidth: "150px" }}>
+                          <h5>
+                            {other.firstName} {other.lastName}
+                          </h5>
+                          <p
+                            className="text-truncate"
+                            style={{ maxWidth: "150px" }}
+                          >
                             {chat.lastMessage?.content || "No messages yet"}
                           </p>
                         </div>
@@ -311,27 +331,34 @@ function page() {
                         <div className="right-info">
                           {chat.lastMessage?.createdAt && (
                             <small>
-                              {new Date(chat.lastMessage.createdAt).toLocaleTimeString([], {
+                              {new Date(
+                                chat.lastMessage.createdAt,
+                              ).toLocaleTimeString([], {
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })}
                             </small>
                           )}
-                          {chat.unreadCount > 0 && <span className="count">{chat.unreadCount}</span>}
+                          {chat.unreadCount > 0 && (
+                            <span className="count">{chat.unreadCount}</span>
+                          )}
                         </div>
                       </div>
                     );
                   })}
                   {filteredChats.length === 0 && (
-                    <div className="text-center mt-4 text-muted">No chats found</div>
+                    <div className="text-center mt-4 text-muted">
+                      No chats found
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* RIGHT CHAT WINDOW */}
               <div
-                className={`col-lg-9 col-md-8 chat-window-area ${activeChat ? "mobile-show" : ""
-                  }`}
+                className={`col-lg-9 col-md-8 chat-window-area ${
+                  activeChat ? "mobile-show" : ""
+                }`}
               >
                 {activeChat ? (
                   <div className="chat-window">
@@ -345,14 +372,26 @@ function page() {
                       </span>
 
                       <img
-                        src={getOtherUser(activeChat).profileImage || "/img/user_placeholder.png"}
+                        src={
+                          getOtherUser(activeChat).profileImage ||
+                          "/img/user_placeholder.png"
+                        }
                         className="header-img"
-                        onError={(e) => e.target.src = '/img/user_placeholder.png'}
+                        onError={(e) =>
+                          (e.target.src = "/img/user_placeholder.png")
+                        }
                       />
 
                       <div className="info">
-                        <h5>{getOtherUser(activeChat).firstName} {getOtherUser(activeChat).lastName}</h5>
-                        <small>{onlineUsers.has(getOtherUser(activeChat)._id) ? "Online" : "Offline"}</small>
+                        <h5>
+                          {getOtherUser(activeChat).firstName}{" "}
+                          {getOtherUser(activeChat).lastName}
+                        </h5>
+                        <small>
+                          {onlineUsers.has(getOtherUser(activeChat)._id)
+                            ? "Online"
+                            : "Offline"}
+                        </small>
                       </div>
 
                       <div
@@ -376,12 +415,15 @@ function page() {
                     {/* MESSAGES */}
                     <div className="messages-area">
                       {messages.map((m, i) => {
-                        const isMe = m.sender._id === socket?.auth?.userId || m.sender === socket?.auth?.userId || (typeof m.sender === 'object' && !m.sender._id);
-                        // The newly sent message returns populated sender object or just id? 
+                        const isMe =
+                          m.sender._id === socket?.auth?.userId ||
+                          m.sender === socket?.auth?.userId ||
+                          (typeof m.sender === "object" && !m.sender._id);
+                        // The newly sent message returns populated sender object or just id?
                         // Controller: populatedMessage = await newMessage.populate("sender", ...)
                         // So it should be an object.
                         // But we need to check ID against our ID.
-                        // Wait, socket.auth.userId might not be accessible directly if we didn't store it in context state in a way to access here easily. 
+                        // Wait, socket.auth.userId might not be accessible directly if we didn't store it in context state in a way to access here easily.
                         // Decoder of token is needed? Or just check if sender is 'me' (not reliable).
                         // Better: Use a helper to check ID.
                         // For now, let's assume sender is populated object.
@@ -393,20 +435,29 @@ function page() {
                         // Let's get it from localStorage for now or use a simple hack if we trust the 'me' flag from local state (but we are using server data).
 
                         // Simplified check:
-                        const myId = parseJwt(localStorage.getItem("token"))?.userId;
-                        const isMyMessage = (m.sender?._id || m.sender) === myId;
+                        const myId = parseJwt(
+                          localStorage.getItem("token"),
+                        )?.userId;
+                        const isMyMessage =
+                          (m.sender?._id || m.sender) === myId;
 
                         return (
                           <div
                             key={i}
-                            className={`message ${isMyMessage ? "right" : "left"
-                              }`}
+                            className={`message ${
+                              isMyMessage ? "right" : "left"
+                            }`}
                           >
                             {!isMyMessage && (
                               <img
-                                src={m.sender?.profileImage || "/img/user_placeholder.png"}
+                                src={
+                                  m.sender?.profileImage ||
+                                  "/img/user_placeholder.png"
+                                }
                                 className="msg-user-img"
-                                onError={(e) => e.target.src = '/img/user_placeholder.png'}
+                                onError={(e) =>
+                                  (e.target.src = "/img/user_placeholder.png")
+                                }
                                 alt="User"
                               />
                             )}
@@ -417,16 +468,26 @@ function page() {
                                   {isMyMessage ? "You" : `${m.sender?.firstName || 'User'} ${m.sender?.lastName || ''}`}
                                 </span> */}
                                 <span className="msg-time">
-                                  {new Date(m.createdAt).toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
+                                  {new Date(m.createdAt).toLocaleTimeString(
+                                    [],
+                                    {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )}
                                   {isMyMessage && (
                                     <span className="read-status ms-1">
-                                      {m.readBy?.some(id => id !== socket?.auth?.userId && id !== getMyId()) ?
-                                        <span style={{ color: '#34b7f1' }}>✓✓</span> :
+                                      {m.readBy?.some(
+                                        (id) =>
+                                          id !== socket?.auth?.userId &&
+                                          id !== getMyId(),
+                                      ) ? (
+                                        <span style={{ color: "#34b7f1" }}>
+                                          ✓✓
+                                        </span>
+                                      ) : (
                                         <span>✓✓</span>
-                                      }
+                                      )}
                                     </span>
                                   )}
                                 </span>
@@ -491,11 +552,17 @@ function page() {
 
 function parseJwt(token) {
   if (!token) return null;
-  var base64Url = token.split('.')[1];
-  var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-  var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
-    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
+  var base64Url = token.split(".")[1];
+  var base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+  var jsonPayload = decodeURIComponent(
+    window
+      .atob(base64)
+      .split("")
+      .map(function (c) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      })
+      .join(""),
+  );
 
   return JSON.parse(jsonPayload);
 }

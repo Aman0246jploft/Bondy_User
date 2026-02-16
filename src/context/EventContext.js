@@ -124,8 +124,56 @@ export const EventProvider = ({ children }) => {
         localStorage.removeItem("eventCreationData");
     };
 
+    const loadEventForEdit = (eventDetails) => {
+        // Transform GeoJSON venueAddress back to flat structure
+        const transformedEvent = { ...eventDetails };
+        if (eventDetails.venueAddress && eventDetails.venueAddress.type === "Point") {
+            transformedEvent.venueAddress = {
+                latitude: eventDetails.venueAddress.coordinates[1],
+                longitude: eventDetails.venueAddress.coordinates[0],
+                city: eventDetails.venueAddress.city || "",
+                country: eventDetails.venueAddress.country || "",
+                address: eventDetails.venueAddress.address || "",
+            };
+        }
+
+        // Extract IDs from populated fields
+        if (transformedEvent.eventCategory && typeof transformedEvent.eventCategory === 'object') {
+            transformedEvent.eventCategory = transformedEvent.eventCategory._id;
+        }
+        if (transformedEvent.createdBy && typeof transformedEvent.createdBy === 'object') {
+            transformedEvent.createdBy = transformedEvent.createdBy._id;
+        }
+
+        // Format dates for input fields (YYYY-MM-DD)
+        const formatDateForInput = (isoDate) => {
+            if (!isoDate) return "";
+            const date = new Date(isoDate);
+            return date.toISOString().split('T')[0];
+        };
+
+        if (transformedEvent.startDate) {
+            transformedEvent.startDate = formatDateForInput(transformedEvent.startDate);
+        }
+        if (transformedEvent.endDate) {
+            transformedEvent.endDate = formatDateForInput(transformedEvent.endDate);
+        }
+        if (transformedEvent.ticketSelesStartDate) {
+            transformedEvent.ticketSelesStartDate = formatDateForInput(transformedEvent.ticketSelesStartDate);
+        }
+        if (transformedEvent.ticketSelesEndDate) {
+            transformedEvent.ticketSelesEndDate = formatDateForInput(transformedEvent.ticketSelesEndDate);
+        }
+
+        // Store the event ID for edit mode
+        transformedEvent._id = eventDetails._id;
+
+        setEventData(transformedEvent);
+        localStorage.setItem("eventCreationData", JSON.stringify(transformedEvent));
+    };
+
     return (
-        <EventContext.Provider value={{ eventData, updateEventData, setEventData, clearEventData }}>
+        <EventContext.Provider value={{ eventData, updateEventData, setEventData, clearEventData, loadEventForEdit }}>
             {children}
         </EventContext.Provider>
     );

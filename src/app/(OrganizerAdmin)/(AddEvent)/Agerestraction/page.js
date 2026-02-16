@@ -299,27 +299,32 @@ function page() {
                   <hr className="my-4" style={{ borderColor: "#333" }} />
                 </Col>
 
-                <Col md={12}>
-                  <div className="event-frm-bx d-flex justify-content-between align-items-center">
-                    <div>
-                      <label className="form-label mb-0">Feature Event</label>
-                      <p className="text-white small mb-0">
-                        Boost visibility on the homepage for $
-                        {featureFee.toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="form-check form-switch">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        name="fetcherEvent"
-                        checked={eventData.fetcherEvent}
-                        onChange={handleToggleChange}
-                        style={{ width: "3em", height: "1.5em" }}
-                      />
-                    </div>
-                  </div>
-                </Col>
+                {/* Feature Event - Only show during creation, not during edit */}
+                {!eventData._id && (
+                  <>
+                    <Col md={12}>
+                      <div className="event-frm-bx d-flex justify-content-between align-items-center">
+                        <div>
+                          <label className="form-label mb-0">Feature Event</label>
+                          <p className="text-white small mb-0">
+                            Boost visibility on the homepage for $
+                            {featureFee.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="form-check form-switch">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="fetcherEvent"
+                            checked={eventData.fetcherEvent}
+                            onChange={handleToggleChange}
+                            style={{ width: "3em", height: "1.5em" }}
+                          />
+                        </div>
+                      </div>
+                    </Col>
+                  </>
+                )}
               </Row>
 
               <div className="d-flex gap-2 justify-content-end mt-4">
