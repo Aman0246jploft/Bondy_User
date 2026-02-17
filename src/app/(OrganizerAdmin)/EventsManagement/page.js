@@ -91,21 +91,21 @@ function page() {
           </Link>
         </div>
         <Row>
-          <Col md={4}>
+          <Col lg={4} xs={6}>
             <div className="event-cards">
               <h5>Total Revenue</h5>
               <h3>${stats.totalRevenue?.toLocaleString() || 0}</h3>
               <p>+15%</p>
             </div>
           </Col>
-          <Col md={4}>
+          <Col lg={4} xs={6}>
             <div className="event-cards">
               <h5>Total Attendees</h5>
               <h3>{stats.totalAttendees?.toLocaleString() || 0}</h3>
               <p>+10%</p>
             </div>
           </Col>
-          <Col md={4}>
+          <Col lg={4} xs={6}>
             <div className="event-cards">
               <h5>Average Rating</h5>
               <h3>1300</h3>
@@ -114,7 +114,7 @@ function page() {
           </Col>
         </Row>
         <div className="ticket-tabs">
-          <div className="d-flex mb-3 justify-content-between align-items-center">
+          <div className="d-flex mb-3 justify-content-between align-items-center flex-wrap">
             <Tabs activeKey={activeTab} onSelect={handleTabSelect} className="">
               <Tab eventKey="all" title="All" />
               <Tab eventKey="upcoming" title="Upcoming" />

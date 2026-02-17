@@ -52,7 +52,7 @@ function page() {
           </div>
         </div>
         <Row>
-          <Col md={3}>
+          <Col lg={3} xs={6}>
             <div className="dashbord-card">
               <div>
                 <h6>Impressions</h6>
@@ -61,7 +61,7 @@ function page() {
               <img src="/img/org-img/impressions-icon.svg" />
             </div>
           </Col>
-          <Col md={3}>
+          <Col lg={3} xs={6}>
             <div className="dashbord-card">
               <div>
                 <h6>Page Views</h6>
@@ -70,7 +70,7 @@ function page() {
               <img src="/img/org-img/page-views-icon.svg" />
             </div>
           </Col>
-          <Col md={3}>
+          <Col lg={3} xs={6}>
             <div className="dashbord-card">
               <div>
                 <h6>Clicks</h6>
@@ -79,7 +79,7 @@ function page() {
               <img src="/img/org-img/click-icon.svg" />
             </div>
           </Col>
-          <Col md={3}>
+          <Col lg={3} xs={6}>
             <div className="dashbord-card">
               <div>
                 <h6>Tickets Sold</h6>
@@ -90,7 +90,7 @@ function page() {
           </Col>
         </Row>
         <Row>
-          <Col md={3}>
+          <Col lg={3} xs={6}>
             <div className="dashbord-card">
               <div>
                 <h6>CTR</h6>
@@ -99,7 +99,7 @@ function page() {
               <img src="/img/org-img/ctr-icon.svg" />
             </div>
           </Col>
-          <Col md={3}>
+          <Col lg={3} xs={6}>
             <div className="dashbord-card">
               <div>
                 <h6>Fees</h6>
@@ -108,7 +108,7 @@ function page() {
               <img src="/img/org-img/fees-icon.svg" />
             </div>
           </Col>
-          <Col md={3}>
+          <Col lg={3} xs={6}>
             <div className="dashbord-card">
               <div>
                 <h6>Net Payout</h6>
@@ -117,7 +117,7 @@ function page() {
               <img src="/img/org-img/payout-icon.svg" />
             </div>
           </Col>
-          <Col md={3}>
+          <Col lg={3} xs={6}>
             <div className="dashbord-card">
               <div>
                 <h6>Gross Sales</h6>

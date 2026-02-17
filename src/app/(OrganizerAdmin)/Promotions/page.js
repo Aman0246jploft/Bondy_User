@@ -16,7 +16,7 @@ function page() {
         </div>
         <h5 className="promation-title">Choose a promotion package</h5>
         <Row className="gx-5">
-          <Col md={4}>
+          <Col lg={4} xs={12}>
             <div className="pricing-cards">
               <div>
                 <h5>Basic</h5>
@@ -37,7 +37,7 @@ function page() {
               </button>
             </div>
           </Col>
-          <Col md={4}>
+          <Col lg={4} xs={12}>
             <div className="pricing-cards">
               <div>
                 <h5>Standard</h5>

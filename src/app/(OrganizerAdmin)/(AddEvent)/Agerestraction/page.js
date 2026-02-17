@@ -82,7 +82,7 @@ function page() {
   return (
     <div>
       <Row className="justify-content-center">
-        <Col md={8}>
+        <Col lg={10} md={12} xs={12}>
           <ul className="event-steps">
             <li className="steps-item">
               <Link href="/BasicInfo" className="steps-link active">
@@ -178,8 +178,7 @@ function page() {
                         type="button"
                         className={`custom-btn ${eventData.ageRestriction?.type === "ALL_AGES" ? "" : "outline-btn"}`}
                         onClick={() => handleAgeTypeChange("ALL_AGES")}
-                        style={{ minWidth: "100px" }}
-                      >
+                        style={{ minWidth: "100px" }}>
                         All Ages
                       </button>
                       <button
@@ -190,8 +189,7 @@ function page() {
                             ageRestriction: { type: "MIN_AGE", minAge: 18 },
                           });
                         }}
-                        style={{ minWidth: "100px" }}
-                      >
+                        style={{ minWidth: "100px" }}>
                         18+
                       </button>
                       <button
@@ -202,8 +200,7 @@ function page() {
                             ageRestriction: { type: "MIN_AGE", minAge: 21 },
                           });
                         }}
-                        style={{ minWidth: "100px" }}
-                      >
+                        style={{ minWidth: "100px" }}>
                         21+
                       </button>
                       <button
@@ -222,8 +219,7 @@ function page() {
                             });
                           }
                         }}
-                        style={{ minWidth: "100px" }}
-                      >
+                        style={{ minWidth: "100px" }}>
                         Range
                       </button>
                     </div>
@@ -290,8 +286,7 @@ function page() {
                       value={eventData.dressCode}
                       onChange={handleDressCodeChange}
                       placeholder="e.g. Black tie only. No outside food or drinks allowed Doors close at 10 PM sharp..."
-                      rows={4}
-                    ></textarea>
+                      rows={4}></textarea>
                   </div>
                 </Col>
 
@@ -329,8 +324,7 @@ function page() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="custom-btn"
-                >
+                  className="custom-btn">
                   Save and Continue
                 </button>
               </div>

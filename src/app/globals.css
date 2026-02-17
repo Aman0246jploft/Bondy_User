@@ -4230,6 +4230,16 @@ a.view-map {
     padding: 5px 12px;
     font-size: 13px;
   }
+  .card-header {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .event-steps .steps-item .steps-link {
+    font-size: 14px !important;
+  }
+  span.steps-arrow img.ms-3 {
+    margin-left: 0.4rem !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -4993,7 +5003,7 @@ a.view-map {
   color: var(--primary-teal);
 }
 
-@media (max-width: 1024.98px) {
+@media (max-width: 1300px) {
   .sidebar-open .customer-sidebar {
     width: 70px;
   }
@@ -5356,6 +5366,7 @@ a.view-map {
   font-weight: 600;
   margin: 8px;
   transition: 0.3s;
+  display: inline-block;
 }
 
 .eventEase-section .btn-white {
@@ -5367,6 +5378,7 @@ a.view-map {
   font-weight: 600;
   margin: 8px;
   transition: 0.3s;
+  display: inline-block;
 }
 
 .image-mosaic img {
@@ -5436,7 +5448,7 @@ a.view-map {
 /* Responsive fixes */
 @media (max-width: 991px) {
   .cards {
-    padding: 10px !important;
+    padding: 20px 15px !important;
   }
 
   .eventEase-section .image-mosaic {
@@ -5453,7 +5465,6 @@ a.view-map {
   .organizations-event .organizations-event-card {
     height: 350px;
   }
-
   .organizations-event .organizations-event-title {
     font-size: 1.25rem;
   }
@@ -5739,8 +5750,6 @@ a.view-map {
 .doc_upload_sec p {
   color: var(--Gray, #737373);
   text-align: center;
-
-  /* Peragraph - 14 */
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
@@ -5888,4 +5897,33 @@ a.merchant-linked {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
+}
+.phone-input-profile input.PhoneInputInput {
+  background: #323232;
+}
+.uploaded-documents-tbl {
+  background-color: #2b2b2b;
+  border: 1px solid #23ada44d;
+  border-radius: 6px;
+}
+.uploaded-documents-tbl thead th {
+  background-color: var(--primary-teal);
+  color: var(--white);
+  border: none;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 500;
+}
+.uploaded-documents-tbl tbody td {
+  color: #d6d6d6;
+  vertical-align: middle;
+  background-color: #323232;
+  border-top: 1px solid #3a3a3a;
+  padding: 14px;
+  font-size: 13px;
+}
+@media (max-width: 767px) {
+  .hero-content h1 br {
+    display: none;
+  }
 }

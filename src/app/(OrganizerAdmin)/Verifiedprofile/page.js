@@ -59,7 +59,11 @@ function page() {
       setEmail(userData.email || "");
       // Construct full number for PhoneInput
       if (userData.contactNumber) {
-        setContactNumber(userData.countryCode ? `${userData.countryCode}${userData.contactNumber}` : userData.contactNumber);
+        setContactNumber(
+          userData.countryCode
+            ? `${userData.countryCode}${userData.contactNumber}`
+            : userData.contactNumber,
+        );
       } else {
         setContactNumber("");
       }
@@ -75,10 +79,10 @@ function page() {
         setStatus(profile.organizerVerificationStatus || "none");
 
         if (profile.documents && profile.documents.length > 0) {
-          profile.documents.forEach(doc => {
+          profile.documents.forEach((doc) => {
             const docObj = {
               file: doc.file,
-              preview: getFullImageUrl(doc.file)
+              preview: getFullImageUrl(doc.file),
             };
             if (doc.name === "Business Proof") setBusinessDoc(docObj);
             if (doc.name === "Gov ID") setGovIdDoc(docObj);
@@ -105,7 +109,7 @@ function page() {
         const fileUrl = res.data.files[0];
         const docObj = {
           file: fileUrl,
-          preview: getFullImageUrl(fileUrl)
+          preview: getFullImageUrl(fileUrl),
         };
 
         if (docType === "Business Proof") setBusinessDoc(docObj);
@@ -122,7 +126,7 @@ function page() {
   };
 
   const handleSubmit = async () => {
-    // Require at least one? Or both? User said "Business Proof , govId". 
+    // Require at least one? Or both? User said "Business Proof , govId".
     // Let's require at least one for now, or assume both if UI suggests.
     if (!businessDoc && !govIdDoc) {
       toast.error("Please upload at least one document");
@@ -132,7 +136,8 @@ function page() {
     try {
       setLoading(true);
       const documents = [];
-      if (businessDoc) documents.push({ name: "Business Proof", file: businessDoc.file });
+      if (businessDoc)
+        documents.push({ name: "Business Proof", file: businessDoc.file });
       if (govIdDoc) documents.push({ name: "Gov ID", file: govIdDoc.file });
 
       const payload = { documents };
@@ -144,7 +149,9 @@ function page() {
       }
     } catch (error) {
       console.error("Submit error", error);
-      toast.error(error.response?.data?.message || "Failed to submit verification");
+      toast.error(
+        error.response?.data?.message || "Failed to submit verification",
+      );
     } finally {
       setLoading(false);
     }
@@ -154,7 +161,12 @@ function page() {
     <div>
       <Row className="justify-content-center">
         <Col md={6}>
-          <Form className="row" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+          <Form
+            className="row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}>
             <div className="event-form-card">
               <h4 className="mb-4 text-white">Organizer Verification</h4>
 
@@ -166,7 +178,8 @@ function page() {
 
               {status === "rejected" && (
                 <div className="alert alert-danger">
-                  Your verification was rejected. Please re-upload valid documents.
+                  Your verification was rejected. Please re-upload valid
+                  documents.
                 </div>
               )}
 
@@ -182,26 +195,31 @@ function page() {
                     <label className="text-white mb-2">Government ID</label>
                     <div
                       className="doc_upload_sec mt-0"
-                      onClick={() => status !== "approved" && fileRefGov.current.click()}
-                      style={{ cursor: status === "approved" ? "default" : "pointer", opacity: status === "approved" ? 0.7 : 1 }}
-                    >
+                      onClick={() =>
+                        status !== "approved" && fileRefGov.current.click()
+                      }
+                      style={{
+                        cursor: status === "approved" ? "default" : "pointer",
+                        opacity: status === "approved" ? 0.7 : 1,
+                      }}>
                       <div className="photo_circle">
                         {govIdDoc ? (
                           <img
                             src={govIdDoc.preview}
                             alt="Preview"
                             className="preview-img"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              borderRadius: "10px",
+                            }}
                           />
                         ) : (
                           <div className="upload-doc">
                             Upload Gov ID
-                            <p>
-                              Drag and drop or browse to upload
-                            </p>
-                            <span className="add_photo_text">
-                              Upload Photo
-                            </span>
+                            <p>Drag and drop or browse to upload</p>
+                            <span className="add_photo_text">Upload Photo</span>
                           </div>
                         )}
                       </div>
@@ -235,7 +253,7 @@ function page() {
                 <Col md={12}>
                   <div className="event-frm-bx mb-3">
                     <label className="text-white mb-1">Contact Number</label>
-                    <div className="d-flex gap-2 custom-tel-input">
+                    <div className="d-flex gap-2 phone-input-profile">
                       <PhoneInput
                         defaultCountry="US"
                         international
@@ -244,36 +262,48 @@ function page() {
                         onChange={setContactNumber}
                         className="form-control"
                       />
-                      <button type="button" className="btn btn-primary btn-sm" onClick={updateProfile}>Update</button>
+                      <button
+                        type="button"
+                        className="btn common_btn"
+                        onClick={updateProfile}>
+                        Update
+                      </button>
                     </div>
                   </div>
                 </Col>
 
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="text-white mb-2">Business Document (Proof of Business)</label>
+                    <label className="text-white mb-2">
+                      Business Document (Proof of Business)
+                    </label>
                     <div
                       className="doc_upload_sec mt-0"
-                      onClick={() => status !== "approved" && fileRefBusiness.current.click()}
-                      style={{ cursor: status === "approved" ? "default" : "pointer", opacity: status === "approved" ? 0.7 : 1 }}
-                    >
+                      onClick={() =>
+                        status !== "approved" && fileRefBusiness.current.click()
+                      }
+                      style={{
+                        cursor: status === "approved" ? "default" : "pointer",
+                        opacity: status === "approved" ? 0.7 : 1,
+                      }}>
                       <div className="photo_circle">
                         {businessDoc ? (
                           <img
                             src={businessDoc.preview}
                             alt="Preview"
                             className="preview-img"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              borderRadius: "10px",
+                            }}
                           />
                         ) : (
                           <div className="upload-doc">
                             Upload Business Document
-                            <p>
-                              Drag and drop or browse to upload
-                            </p>
-                            <span className="add_photo_text">
-                              Upload Photo
-                            </span>
+                            <p>Drag and drop or browse to upload</p>
+                            <span className="add_photo_text">Upload Photo</span>
                           </div>
                         )}
                       </div>
@@ -296,8 +326,7 @@ function page() {
                   <button
                     type="submit"
                     className="custom-btn"
-                    disabled={loading || (!businessDoc && !govIdDoc)}
-                  >
+                    disabled={loading || (!businessDoc && !govIdDoc)}>
                     {loading ? "Submitting..." : "Submit for Verification"}
                   </button>
                 </div>
@@ -308,7 +337,7 @@ function page() {
                 <div className="mt-5">
                   <h5 className="text-white mb-3">Uploaded Documents</h5>
                   <div className="table-responsive">
-                    <table className="table table-dark table-striped">
+                    <table className="table table-responsive uploaded-documents-tbl">
                       <thead>
                         <tr>
                           <th>Document Name</th>
@@ -320,13 +349,22 @@ function page() {
                         {userData.documents.map((doc, index) => (
                           <tr key={index}>
                             <td>
-                              <a href={getFullImageUrl(doc.file)} target="_blank" rel="noopener noreferrer" className="text-info">
+                              <a
+                                href={getFullImageUrl(doc.file)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-info">
                                 {doc.name}
                               </a>
                             </td>
                             <td>
-                              <span className={`badge ${doc.status === 'approved' ? 'bg-success' :
-                                doc.status === 'rejected' ? 'bg-danger' : 'bg-warning'
+                              <span
+                                className={`badge ${
+                                  doc.status === "approved"
+                                    ? "bg-success"
+                                    : doc.status === "rejected"
+                                      ? "bg-danger"
+                                      : "bg-warning"
                                 }`}>
                                 {doc.status.toUpperCase()}
                               </span>
@@ -339,7 +377,6 @@ function page() {
                   </div>
                 </div>
               )}
-
             </div>
           </Form>
         </Col>

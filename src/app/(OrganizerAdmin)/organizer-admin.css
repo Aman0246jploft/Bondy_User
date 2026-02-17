@@ -1155,7 +1155,8 @@ input[type="number"]::-webkit-outer-spin-button {
 /* Mobile (≤576px) */
 @media (max-width: 576px) {
   .dashbord-card-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    margin-bottom: 20px;
   }
 }
 
@@ -1276,4 +1277,71 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .dashboard-filter input::placeholder {
   color: #fff;
+}
+
+@media (max-width: 1024px) {
+  .ticket-bottom,
+  .ticket-inner {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .ticket-rgt {
+    text-align: left;
+  }
+  .event-cards {
+    margin-bottom: 20px;
+    padding: 20px;
+  }
+  .revenuechart .chart-header {
+    flex-wrap: wrap;
+  }
+  .pricing-cards {
+    height: auto;
+    margin-bottom: 20px;
+  }
+  .event-steps {
+    margin: 20px 0;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .custom-table-cards {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .custom-table-wrapper {
+    max-width: 100%;
+  }
+  .custom-table-cards thead th,
+  .custom-table-cards td {
+    white-space: pre;
+  }
+  .dashboard-filter {
+    flex-wrap: wrap;
+  }
+  .content-area {
+    width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-counter {
+    margin-bottom: 0px !important;
+  }
+  .card-varticl h3 {
+    font-size: 32px;
+  }
+  .recomanded-head {
+    margin: 20px 0;
+  }
+  .card-header {
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .card-header .card-title {
+    font-size: 20px;
+  }
+  .event-cards h3 {
+    font-size: 20px;
+  }
 }

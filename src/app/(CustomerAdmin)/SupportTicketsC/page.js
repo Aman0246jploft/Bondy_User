@@ -110,7 +110,7 @@ function page() {
                 <button
                   type="button"
                   className="position-absolute end-0 top-50 translate-middle-y border-0 bg-transparent pe-2">
-                  <img src="/img/org-img/search-white.svg" />
+                  <img src="/img/org-img/search-white.svg" width={16} />
                 </button>
               </div>
             </div>
