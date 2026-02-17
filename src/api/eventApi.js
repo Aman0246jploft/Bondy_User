@@ -13,6 +13,7 @@ const eventApi = {
     getEventDetails: (eventId) => apiClient.get(`/event/details/${eventId}`, { skipToast: true }),
     getAllAttendees: (eventId, search) => apiClient.get(`/event/attendees/${eventId}`, { params: { search }, skipToast: true }),
     getOrganizerStats: () => apiClient.get("/event/organizer/stats", { skipToast: true }),
+    updateEvent: (eventId, data) => apiClient.post(`/event/edit/${eventId}`, data),
 };
 
 export default eventApi;

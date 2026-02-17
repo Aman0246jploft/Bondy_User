@@ -210,6 +210,16 @@ function page() {
                       </span>{" "}
                       <span>{event.totalTickets || 0} tickets</span>
                     </p>
+
+
+                    <Link href={`/BasicInfo?eventId=${event._id}`}>
+                      Edit{" "}
+                      <img src="/img/Arrow-Right.svg" alt="arrow" />
+                    </Link>
+
+
+
+
                     <Link href={`/EventDetails/${event._id}`}>
                       Event Details{" "}
                       <img src="/img/Arrow-Right.svg" alt="arrow" />

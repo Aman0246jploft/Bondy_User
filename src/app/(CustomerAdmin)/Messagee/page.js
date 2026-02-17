@@ -266,12 +266,14 @@ function page() {
               <div
                 className={`col-lg-3 col-md-4 chat-sidebar ${
                   activeChat ? "mobile-hide" : ""
-                }`}>
+                }`}
+              >
                 <div className="d-flex align-items-center justify-content-between mb-3">
                   <h4 className="title m-0">Messages</h4>
                   <div
                     className={`connection-status ${isSocketConnected ? "online" : "offline"}`}
-                    title={isSocketConnected ? "Connected" : "Disconnected"}>
+                    title={isSocketConnected ? "Connected" : "Disconnected"}
+                  >
                     ●
                   </div>
                 </div>
@@ -299,7 +301,8 @@ function page() {
                         onClick={() => setActiveChat(chat)}
                         className={`user-chat-box ${
                           activeChat?._id === chat._id ? "active" : ""
-                        }`}>
+                        }`}
+                      >
                         <div className="position-relative">
                           <img
                             src={
@@ -319,7 +322,8 @@ function page() {
                           </h5>
                           <p
                             className="text-truncate"
-                            style={{ maxWidth: "150px" }}>
+                            style={{ maxWidth: "150px" }}
+                          >
                             {chat.lastMessage?.content || "No messages yet"}
                           </p>
                         </div>

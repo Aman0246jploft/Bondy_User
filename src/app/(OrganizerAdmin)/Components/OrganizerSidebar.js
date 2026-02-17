@@ -77,6 +77,18 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </span>
           <span className="text">Program Management</span>
         </Link>
+
+        <Link
+          href="/CoursesManagement"
+          className={`menu-item ${isActive("/CoursesManagement") ? "active" : ""
+            }`}
+        >
+          <span className="icon">
+            <img src="/img/org-img/sidebar-icon-02.svg" alt="" />
+          </span>
+          <span className="text">Courses Management</span>
+        </Link>
+
         <Link
           href="/Message"
           className={`menu-item ${isActive("/Message") ? "active" : ""}`}>

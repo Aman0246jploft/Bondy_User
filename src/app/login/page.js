@@ -148,6 +148,11 @@ export default function Page() {
                                   </button>
                                 </div>
                               </Form.Group>
+                              <div className="text-end mb-3">
+                                <Link href="/forgot-password" className="text-decoration-none">
+                                  Forgot Password?
+                                </Link>
+                              </div>
                               <button
                                 type="submit"
                                 disabled={loading}
@@ -234,6 +239,11 @@ export default function Page() {
                                   </button>
                                 </div>
                               </Form.Group>
+                              <div className="text-end mb-3">
+                                <Link href="/forgot-password" className="text-decoration-none">
+                                  Forgot Password?
+                                </Link>
+                              </div>
                               <button
                                 type="submit"
                                 disabled={loading}

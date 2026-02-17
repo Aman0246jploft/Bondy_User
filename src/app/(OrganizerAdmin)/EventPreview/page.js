@@ -39,13 +39,38 @@ function page() {
     setPublishing(true);
     try {
       const payload = { ...eventData, isDraft };
-      const response = await eventApi.createEvent(payload);
+
+      // Clean the payload - extract IDs from populated fields
+      if (payload.eventCategory && typeof payload.eventCategory === 'object') {
+        payload.eventCategory = payload.eventCategory._id;
+      }
+      if (payload.createdBy && typeof payload.createdBy === 'object') {
+        payload.createdBy = payload.createdBy._id;
+      }
+
+      // Remove fields that shouldn't be sent
+      const fieldsToRemove = ['duration', 'status', 'totalAttendees', 'isBooked', 'totalRevenue', 'createdAt', 'updatedAt', '__v'];
+      fieldsToRemove.forEach(field => delete payload[field]);
+
+      const isEditMode = !!eventData._id;
+
+      let response;
+      if (isEditMode) {
+        // Remove _id and creation-only fields from payload before sending
+        const { _id, fetcherEvent, featureEventFee, createdBy, ...updatePayload } = payload;
+        response = await eventApi.updateEvent(_id, updatePayload);
+      } else {
+        response = await eventApi.createEvent(payload);
+      }
+
       if (response.status) {
-        toast.success(isDraft ? "Event saved as draft" : "Event published successfully");
-        router.push("/Dashboard"); // Redirect to dashboard or event list
+        const action = isEditMode ? "updated" : "created";
+        const draftMsg = isDraft ? "as draft" : "successfully";
+        toast.success(`Event ${action} ${draftMsg}`);
+        router.push("/EventsManagement");
       }
     } catch (error) {
-      console.error("Error creating event:", error);
+      console.error("Error saving event:", error);
       // Error handled by apiClient toast usually, but explicitly log
     } finally {
       setPublishing(false);

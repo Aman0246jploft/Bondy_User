@@ -37,7 +37,7 @@ export default function CreateTicket(props) {
     }
   };
 
-  console.log("8878888888", categories)
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({

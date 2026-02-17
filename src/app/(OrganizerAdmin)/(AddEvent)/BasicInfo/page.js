@@ -4,18 +4,46 @@ import React, { useEffect, useState } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import { useEventContext } from "@/context/EventContext";
 import authApi from "@/api/authApi";
-import { useRouter } from "next/navigation";
+import eventApi from "@/api/eventApi";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 
 function page() {
-  const { eventData, updateEventData } = useEventContext();
+  const { eventData, updateEventData, loadEventForEdit } = useEventContext();
   const [categories, setCategories] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     fetchCategories();
+
+    // Check if we're in edit mode
+    const eventId = searchParams.get("eventId");
+    if (eventId) {
+      setIsEditMode(true);
+      loadEventData(eventId);
+    }
   }, []);
+
+  const loadEventData = async (eventId) => {
+    setLoading(true);
+    try {
+      const response = await eventApi.getEventDetails(eventId);
+      if (response.data && response.data.event) {
+        loadEventForEdit(response.data.event);
+        toast.success("Event loaded for editing");
+      }
+    } catch (error) {
+      console.error("Error loading event:", error);
+      toast.error("Failed to load event");
+      router.push("/EventsManagement");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -189,11 +217,63 @@ function page() {
                     <label htmlFor="upload">
                       {uploading ? "Uploading..." : "Upload"}
                     </label>
-                    {eventData.posterImage &&
-                      eventData.posterImage.length > 0 && (
-                        <div className="mt-2 text-success">Image uploaded!</div>
-                      )}
                   </div>
+                  {eventData.posterImage &&
+                    eventData.posterImage.length > 0 && (
+                      <div className="mt-3">
+                        <div className="d-flex align-items-start gap-3">
+                          <div style={{ position: "relative" }}>
+                            <img
+                              src={eventData.posterImage[0]}
+                              alt="Event Poster"
+                              style={{
+                                width: "150px",
+                                height: "150px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                border: "2px solid #ddd",
+                              }}
+                              onError={(e) => {
+                                e.target.src = "/img/details_img02.png";
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateEventData({ posterImage: [] })
+                              }
+                              style={{
+                                position: "absolute",
+                                top: "-8px",
+                                right: "-8px",
+                                background: "#ff4444",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "50%",
+                                width: "24px",
+                                height: "24px",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <div>
+                            <p className="text-success mb-1">
+                              ✓ Event poster uploaded successfully
+                            </p>
+                            <p className="text-muted" style={{ fontSize: "14px" }}>
+                              Click the × button to remove and upload a different image
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                 </Col>
               </Row>
             </div>
