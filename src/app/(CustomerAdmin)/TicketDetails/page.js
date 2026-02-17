@@ -85,7 +85,7 @@ function TicketDetails() {
   return (
     <div>
       <div className="cards ticket-details">
-        <div className="d-flex gap-3  align-items-center justify-content-between">
+        <div className="d-flex gap-3 align-items-center justify-content-between">
           <Link href="/MyTickets" className="back-btn">
             <img src="/img/arrow-left-white.svg" alt="Back" />
             Back to ticket

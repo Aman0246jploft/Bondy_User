@@ -43,7 +43,21 @@ function page() {
   const handleDressCodeChange = (e) => {
     updateEventData({ dressCode: e.target.value });
   };
+  const setSliderBackground = (slider) => {
+    const min = slider.min ? slider.min : 0;
+    const max = slider.max ? slider.max : 100;
+    const value = slider.value;
 
+    const percentage = ((value - min) * 100) / (max - min);
+
+    slider.style.background = `linear-gradient(
+    to right,
+    #23ada4 0%,
+    #23ada4 ${percentage}%,
+    #2c2c2c ${percentage}%,
+    #2c2c2c 100%
+  )`;
+  };
   const handleAgeTypeChange = (type) => {
     // If All Ages, maybe reset minAge or just ignore it
     updateEventData({
@@ -56,22 +70,36 @@ function page() {
   };
 
   const handleMinAgeChange = (e) => {
+    const value = parseInt(e.target.value);
+
+    setSliderBackground(e.target); // 🔥 important
+
     updateEventData({
       ageRestriction: {
         ...eventData.ageRestriction,
-        minAge: parseInt(e.target.value),
+        minAge: value,
       },
     });
   };
 
   const handleMaxAgeChange = (e) => {
+    const value = parseInt(e.target.value);
+
+    setSliderBackground(e.target); // 🔥 important
+
     updateEventData({
       ageRestriction: {
         ...eventData.ageRestriction,
-        maxAge: parseInt(e.target.value),
+        maxAge: value,
       },
     });
   };
+  useEffect(() => {
+    const sliders = document.querySelectorAll(".form-range");
+    sliders.forEach((slider) => {
+      setSliderBackground(slider);
+    });
+  }, [eventData.ageRestriction]);
 
   const handleNext = (e) => {
     e.preventDefault();
@@ -300,7 +328,9 @@ function page() {
                     <Col md={12}>
                       <div className="event-frm-bx d-flex justify-content-between align-items-center">
                         <div>
-                          <label className="form-label mb-0">Feature Event</label>
+                          <label className="form-label mb-0">
+                            Feature Event
+                          </label>
                           <p className="text-white small mb-0">
                             Boost visibility on the homepage for $
                             {featureFee.toFixed(2)}

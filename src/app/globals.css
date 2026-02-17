@@ -207,7 +207,7 @@ select:-webkit-autofill {
   background-color: transparent;
   border: 1px solid #454545;
   color: #454545;
-  padding: 14px 48px;
+  padding: 14px 24px;
   border-radius: 50px;
   font-size: 16px;
   font-weight: 400;
@@ -5935,4 +5935,51 @@ a.merchant-linked {
   .hero-content h1 br {
     display: none;
   }
+}
+.form-range {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 10px;
+  border-radius: 10px;
+  background: transparent; /* important */
+  outline: none;
+}
+
+/* Chrome / Safari Track */
+.form-range::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 10px;
+  background: transparent; /* 🔥 remove white */
+}
+
+/* Firefox Track */
+.form-range::-moz-range-track {
+  height: 10px;
+  border-radius: 10px;
+  background: transparent; /* 🔥 remove white */
+}
+
+/* Thumb */
+.form-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: #23ada4;
+  border: 3px solid #fff;
+  cursor: pointer;
+  margin-top: -6px;
+}
+
+.form-range::-moz-range-thumb {
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: #23ada4;
+  border: 3px solid #fff;
+  cursor: pointer;
+}
+textarea.form-control {
+  padding: 10px 20px;
+  border-radius: 15px;
 }
