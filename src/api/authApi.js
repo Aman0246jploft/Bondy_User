@@ -24,11 +24,16 @@ const authApi = {
     loginInit: (data) => apiClient.post("/user/login/init", data),
     loginVerify: (data) => apiClient.post("/user/login/verify", data),
     resendOtp: (data) => apiClient.post("/user/resend-otp", data),
+    resendUniversalOtp: (data) => apiClient.post("/user/resendOtp", data),
     getFaqs: () => apiClient.get("/faq/list", { skipToast: true }),
     getGlobalSetting: (key) => apiClient.get(`/globalsetting/${key}`, { skipToast: true }),
     getUserProfileById: (userId) => apiClient.get(`/user/profile/${userId}`, { skipToast: true }),
     followUser: (data) => apiClient.post("/follow/create", data),
     unfollowUser: (data) => apiClient.post("/follow/delete", data),
+    // Forgot Password APIs
+    forgotPasswordInit: (data) => apiClient.post("/user/forgot-password/init", data),
+    verifyForgotPasswordOtp: (data) => apiClient.post("/user/forgot-password/verify", data),
+    resetPassword: (data) => apiClient.post("/user/reset-password", data),
 };
 
 export default authApi;
