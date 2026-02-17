@@ -61,7 +61,7 @@ function page() {
                 placeholder="Search Referral ...  "
               />
               <button type="button">
-                <img src="/img/org-img/search-white.svg" />
+                <img src="/img/org-img/search-white.svg" width={16} />
               </button>
             </div>
           </div>

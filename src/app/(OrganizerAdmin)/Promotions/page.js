@@ -16,12 +16,12 @@ function page() {
         </div>
         <h5 className="promation-title">Choose a promotion package</h5>
         <Row className="gx-5">
-          <Col md={4}>
+          <Col lg={4} xs={12}>
             <div className="pricing-cards">
               <div>
                 <h5>Basic</h5>
                 <h2>
-                  $99 <span>per Day</span>
+                  ₮25,000 <span>3 days</span>
                 </h2>
               </div>
               <p>
@@ -37,37 +37,12 @@ function page() {
               </button>
             </div>
           </Col>
-          <Col md={4}>
+          <Col lg={4} xs={12}>
             <div className="pricing-cards">
               <div>
                 <h5>Standard</h5>
                 <h2>
-                  $199 <span>3 Days</span>
-                </h2>
-              </div>
-              <p>
-                <img src="/img/checkmark-vector.svg" className="me-3" alt="" />
-                Discover Feed
-              </p>
-              <p>
-                <img src="/img/checkmark-vector.svg" className="me-3" alt="" />
-                Category Page
-              </p>
-              <p>
-                <img src="/img/checkmark-vector.svg" className="me-3" alt="" />
-                Homepage
-              </p>
-              <button type="button" className="custom-btn w-100">
-                Select
-              </button>
-            </div>
-          </Col>
-          <Col md={4}>
-            <div className="pricing-cards">
-              <div>
-                <h5>Premium</h5>
-                <h2>
-                  $299 <span>7 Days (Week)</span>
+                  ₮70,000 <span>7 days</span>
                 </h2>
               </div>
               <p>
@@ -84,7 +59,7 @@ function page() {
               </p>
               <p>
                 <img src="/img/checkmark-vector.svg" className="me-3" alt="" />
-                Map Highlight
+                Higher visibility
               </p>
               <button type="button" className="custom-btn w-100">
                 Select

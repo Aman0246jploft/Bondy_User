@@ -140,6 +140,7 @@ input[type="number"]::-webkit-outer-spin-button {
   font-weight: 700;
   color: var(--white);
   margin-bottom: 8px;
+  text-transform: capitalize;
 }
 .ticket-lft p {
   font-size: 16px;
@@ -656,4 +657,83 @@ input[type="number"]::-webkit-outer-spin-button {
   .setting-info-lft h5 {
     font-size: 14px;
   }
+}
+
+.custom-table-cards {
+  padding: 20px;
+  border-radius: 10px;
+  background: #323232;
+  margin-top: 40px;
+}
+.custom-table-cards .table-title {
+  color: var(--white);
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 0;
+}
+
+.custom-table-cards .dashboard-filter .form-control,
+.custom-table-cards .dashboard-filter .form-select {
+  background-color: #323232;
+}
+
+.custom-table-cards thead th {
+  padding: 14px;
+  border: none;
+  background-color: var(--primary-teal);
+  color: var(--white);
+  font-size: 16px;
+  font-weight: 500;
+}
+.custom-table-wrapper {
+  background-color: #2b2b2b;
+  border-radius: 6px;
+  border: 1px solid rgba(35, 173, 164, 0.3);
+}
+.custom-table-wrapper .table {
+  margin-bottom: 0;
+}
+.custom-table-cards tbody td {
+  color: #d6d6d6;
+  font-size: 13px;
+  padding: 14px;
+  border-top: 1px solid #3a3a3a;
+  vertical-align: middle;
+  background-color: #323232;
+}
+.custom-table-cards tbody td .sub {
+  color: #737373;
+}
+.custom-table-cards tbody tr {
+  border-color: rgba(35, 173, 164, 0.3);
+}
+.custom-table-cards tbody tr:nth-last-child(1) {
+  border-color: #323232;
+}
+.custom-table-cards .common_btn {
+  border-radius: 8px;
+  color: #0d1c14;
+}
+.custom-table-cards .dashboard-filter .form-control,
+.custom-table-cards .dashboard-filter .form-select {
+  background-color: #323232;
+}
+
+.dashboard-filter .form-control,
+.dashboard-filter .form-select {
+  height: 40px;
+  color: var(--white);
+  box-shadow: none;
+  background-color: #1a1a1a;
+  border: 1px solid #23ada44d;
+  border-radius: 8px;
+}
+.card-header {
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  display: flex;
+}
+.dashboard-filter input::placeholder {
+  color: #fff;
 }

@@ -26,13 +26,17 @@ function page() {
         const formData = new FormData();
         formData.append("files", file);
         const response = await authApi.uploadFile(formData);
-        if (response.data && response.data.files && response.data.files.length > 0) {
+        if (
+          response.data &&
+          response.data.files &&
+          response.data.files.length > 0
+        ) {
           newLinks.push(response.data.files[0]);
         }
       }
 
       updateEventData({
-        mediaLinks: [...eventData.mediaLinks, ...newLinks]
+        mediaLinks: [...eventData.mediaLinks, ...newLinks],
       });
       toast.success("Images uploaded successfully");
     } catch (error) {
@@ -59,13 +63,17 @@ function page() {
         const formData = new FormData();
         formData.append("files", file);
         const response = await authApi.uploadFile(formData);
-        if (response.data && response.data.files && response.data.files.length > 0) {
+        if (
+          response.data &&
+          response.data.files &&
+          response.data.files.length > 0
+        ) {
           newLinks.push(response.data.files[0]);
         }
       }
 
       updateEventData({
-        shortTeaserVideo: [...(eventData.shortTeaserVideo || []), ...newLinks]
+        shortTeaserVideo: [...(eventData.shortTeaserVideo || []), ...newLinks],
       });
       toast.success("Videos uploaded successfully");
     } catch (error) {
@@ -77,19 +85,21 @@ function page() {
   };
 
   const removeVideo = (index) => {
-    const updatedLinks = (eventData.shortTeaserVideo || []).filter((_, i) => i !== index);
+    const updatedLinks = (eventData.shortTeaserVideo || []).filter(
+      (_, i) => i !== index,
+    );
     updateEventData({ shortTeaserVideo: updatedLinks });
   };
 
   const handleNext = (e) => {
     e.preventDefault();
     router.push("/EventPreview");
-  }
+  };
 
   return (
     <div>
       <Row className="justify-content-center">
-        <Col md={8}>
+        <Col lg={10} md={12} xs={12}>
           <ul className="event-steps">
             <li className="steps-item">
               <Link href="/BasicInfo" className="steps-link active">
@@ -168,13 +178,21 @@ function page() {
                       onChange={handleImageUpload}
                       accept="image/*"
                     />
-                    <label htmlFor="upload">{uploading ? "Uploading..." : "Upload"}</label>
+                    <label htmlFor="upload">
+                      {uploading ? "Uploading..." : "Upload"}
+                    </label>
                   </div>
                   <div className="upload-images">
                     {eventData.mediaLinks.map((link, index) => (
                       <div className="images-innr" key={index}>
-                        <img src={getFullImageUrl(link)} alt={`gallery-${index}`} />
-                        <button type="button" className="close-btn" onClick={() => removeImage(index)}>
+                        <img
+                          src={getFullImageUrl(link)}
+                          alt={`gallery-${index}`}
+                        />
+                        <button
+                          type="button"
+                          className="close-btn"
+                          onClick={() => removeImage(index)}>
                           <img src="/img/org-img/close.svg" />
                         </button>
                       </div>
@@ -197,13 +215,31 @@ function page() {
                       onChange={handleVideoUpload}
                       accept="video/*"
                     />
-                    <label htmlFor="upload-video">{uploading ? "Uploading..." : "Upload Video"}</label>
+                    <label htmlFor="upload-video">
+                      {uploading ? "Uploading..." : "Upload Video"}
+                    </label>
                   </div>
                   <div className="upload-images">
                     {(eventData.shortTeaserVideo || []).map((link, index) => (
-                      <div className="images-innr" key={index} style={{ width: '150px', height: '150px' }}>
-                        <video src={getFullImageUrl(link)} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} controls />
-                        <button type="button" className="close-btn" onClick={() => removeVideo(index)} style={{ top: '-10px', right: '-10px' }}>
+                      <div
+                        className="images-innr"
+                        key={index}
+                        style={{ width: "150px", height: "150px" }}>
+                        <video
+                          src={getFullImageUrl(link)}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            borderRadius: "10px",
+                          }}
+                          controls
+                        />
+                        <button
+                          type="button"
+                          className="close-btn"
+                          onClick={() => removeVideo(index)}
+                          style={{ top: "-10px", right: "-10px" }}>
                           <img src="/img/org-img/close.svg" />
                         </button>
                       </div>
@@ -217,7 +253,10 @@ function page() {
                   Back
                 </Link>
 
-                <button type="button" onClick={handleNext} className="custom-btn">
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="custom-btn">
                   Save and Continue
                 </button>
               </div>

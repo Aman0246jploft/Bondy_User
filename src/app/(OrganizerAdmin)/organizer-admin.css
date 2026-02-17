@@ -422,6 +422,7 @@ input[type="number"]::-webkit-outer-spin-button {
   font-weight: 700;
   color: var(--white);
   margin-bottom: 8px;
+  text-transform: capitalize;
 }
 .ticket-lft p {
   font-size: 16px;
@@ -1131,4 +1132,216 @@ input[type="number"]::-webkit-outer-spin-button {
   border: 0;
   outline: none;
   margin-top: 12px;
+}
+
+.dashbord-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
+  gap: 20px;
+}
+@media (max-width: 1200px) {
+  .dashbord-card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Tablets (≤992px) */
+@media (max-width: 992px) {
+  .dashbord-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile (≤576px) */
+@media (max-width: 576px) {
+  .dashbord-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    margin-bottom: 20px;
+  }
+}
+
+.renew-on span {
+  color: var(--Gray, #737373);
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+.subscription .pricing-cards {
+  gap: 8px;
+}
+.card-varticl {
+  border-radius: 15px;
+  border: 1px solid var(--primary-30, rgba(35, 173, 164, 0.3));
+  background: #323232;
+  padding: 20px;
+}
+
+.card-varticl span {
+  color: var(--Gray, #737373);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.card-varticl h3 {
+  color: var(--White-Color, #fff);
+  font-size: 42px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  margin-bottom: 0px;
+}
+
+.card-varticl-attention {
+  border-radius: 10px;
+  border: 1px solid var(--primary-30, rgba(35, 173, 164, 0.3));
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-varticl-attention h3 {
+  color: var(--White-Color, #fff);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 590;
+  line-height: normal;
+}
+
+.card-varticl-attention p {
+  color: var(--Gray, #737373);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-bottom: 0px;
+}
+.gender-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.gender-toggle .switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+}
+
+.gender-toggle .switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.gender-toggle .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #23ada4;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+.gender-toggle .slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+.gender-toggle input:checked + .slider {
+  background-color: #23ada4;
+}
+
+.gender-toggle input:checked + .slider:before {
+  transform: translateX(30px);
+}
+
+.gender-toggle .active-label {
+  font-weight: 600;
+  color: #0d6efd;
+}
+
+.dashboard-filter input::placeholder {
+  color: #fff;
+}
+
+@media (max-width: 1024px) {
+  .ticket-bottom,
+  .ticket-inner {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .ticket-rgt {
+    text-align: left;
+  }
+  .event-cards {
+    margin-bottom: 20px;
+    padding: 20px;
+  }
+  .revenuechart .chart-header {
+    flex-wrap: wrap;
+  }
+  .pricing-cards {
+    height: auto;
+    margin-bottom: 20px;
+  }
+  .event-steps {
+    margin: 20px 0;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .custom-table-cards {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .custom-table-wrapper {
+    max-width: 100%;
+  }
+  .custom-table-cards thead th,
+  .custom-table-cards td {
+    white-space: pre;
+  }
+  .dashboard-filter {
+    flex-wrap: wrap;
+  }
+  .content-area {
+    width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-counter {
+    margin-bottom: 0px !important;
+  }
+  .card-varticl h3 {
+    font-size: 32px;
+  }
+  .recomanded-head {
+    margin: 20px 0;
+  }
+  .card-header {
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .card-header .card-title {
+    font-size: 20px;
+  }
+  .event-cards h3 {
+    font-size: 20px;
+  }
 }

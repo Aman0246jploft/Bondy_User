@@ -8,6 +8,7 @@ const rows = [
     views: "2.1K",
     ticketssold: "235",
     beveirce: "$4,112",
+    period: "May 1 - Jun 1",
   },
   {
     img: "/img/details_img02.png",
@@ -16,6 +17,7 @@ const rows = [
     views: "1.5K",
     ticketssold: "178",
     beveirce: "$5,340",
+    period: "May 1 - Jun 1",
   },
   {
     img: "/img/details_img03.png",
@@ -24,6 +26,7 @@ const rows = [
     views: "2.1K",
     ticketssold: "235",
     beveirce: "$4,112",
+    period: "May 1 - Jun 1",
   },
   {
     img: "/img/details_img04.png",
@@ -32,6 +35,7 @@ const rows = [
     views: "2.1K",
     ticketssold: "235",
     beveirce: "$4,112",
+    period: "May 1 - Jun 1",
   },
   {
     img: "/img/details_img05.png",
@@ -40,6 +44,7 @@ const rows = [
     views: "2.1K",
     ticketssold: "235",
     beveirce: "$4,112",
+    period: "May 1 - Jun 1",
   },
 ];
 
@@ -57,6 +62,7 @@ export default function ProgramPerformance() {
           <tr>
             <th>Event</th>
             <th>Type</th>
+            <th>Period</th>
             <th>Views</th>
             <th>Tickets Sold</th>
             <th>Beveirce</th>
@@ -82,6 +88,7 @@ export default function ProgramPerformance() {
                 {row.event}
               </td>
               <td>{row.type}</td>
+              <td>{row.period}</td>
               <td>{row.views}</td>
               <td>{row.ticketssold}</td>
               <td>{row.beveirce}</td>

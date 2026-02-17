@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import { useState } from "react";
 
 const data = [
   { label: "18-24", percent: 28, count: 1134 },
@@ -8,9 +9,27 @@ const data = [
   { label: "44+", percent: 6.0, count: 243 },
 ];
 const AttendeeChart = () => {
+  const [gender, setGender] = useState(false);
   return (
     <div className="attendee-card analytics-chart">
-      <h4>ATTENDEE AGES</h4>
+      <div className=" d-flex justify-content-between mb-3">
+        <h4>Attendee insights with Age</h4>
+        <div className="gender-toggle">
+          <span className={!gender ? "active-label" : ""}></span>
+
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={gender}
+              onChange={() => setGender(!gender)}
+            />
+            <span className="slider"></span>
+          </label>
+
+          <span className={gender ? "active-label" : ""}></span>
+          <strong>{gender ? "Female" : "Male"}</strong>
+        </div>
+      </div>
 
       {data.map((item) => (
         <div className="age-row" key={item.label}>

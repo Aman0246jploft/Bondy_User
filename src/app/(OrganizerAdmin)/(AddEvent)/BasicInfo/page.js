@@ -106,7 +106,7 @@ function page() {
   return (
     <div>
       <Row className="justify-content-center">
-        <Col md={8}>
+        <Col lg={10} md={12} xs={12}>
           <ul className="event-steps">
             <li className="steps-item">
               <Link href="/BasicInfo" className="steps-link active">
@@ -191,8 +191,7 @@ function page() {
                       className="form-select"
                       name="eventCategory"
                       value={eventData.eventCategory}
-                      onChange={handleInputChange}
-                    >
+                      onChange={handleInputChange}>
                       <option value="">Select Event Category</option>
                       {categories.map((cat) => (
                         <option key={cat._id} value={cat._id}>
@@ -285,8 +284,7 @@ function page() {
                   name="shortdesc"
                   value={eventData.shortdesc}
                   onChange={handleInputChange}
-                  placeholder="Brief summary"
-                ></textarea>
+                  placeholder="Brief summary"></textarea>
               </div>
               <div className="event-frm-bx">
                 <label className="form-label">
@@ -296,8 +294,7 @@ function page() {
                   name="longdesc"
                   value={eventData.longdesc}
                   onChange={handleInputChange}
-                  placeholder="Full details about the event"
-                ></textarea>
+                  placeholder="Full details about the event"></textarea>
               </div>
               <div className="event-frm-bx">
                 <label className="form-label">Tags</label>
@@ -313,15 +310,13 @@ function page() {
                 <button
                   className="outline-btn"
                   type="button"
-                  onClick={() => router.back()}
-                >
+                  onClick={() => router.back()}>
                   Back
                 </button>
                 <button
                   className="custom-btn"
                   type="button"
-                  onClick={handleNext}
-                >
+                  onClick={handleNext}>
                   Save and Continue
                 </button>
               </div>

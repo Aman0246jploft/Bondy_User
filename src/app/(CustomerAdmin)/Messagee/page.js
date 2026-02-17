@@ -358,16 +358,14 @@ function page() {
               <div
                 className={`col-lg-9 col-md-8 chat-window-area ${
                   activeChat ? "mobile-show" : ""
-                }`}
-              >
+                }`}>
                 {activeChat ? (
                   <div className="chat-window">
                     {/* HEADER */}
                     <div className="chat-header">
                       <span
                         className="back-btn"
-                        onClick={() => setActiveChat(null)}
-                      >
+                        onClick={() => setActiveChat(null)}>
                         ←
                       </span>
 
@@ -396,8 +394,7 @@ function page() {
 
                       <div
                         className="menu"
-                        onClick={() => setShowDropdown(!showDropdown)}
-                      >
+                        onClick={() => setShowDropdown(!showDropdown)}>
                         ⋮
                       </div>
 
@@ -446,8 +443,7 @@ function page() {
                             key={i}
                             className={`message ${
                               isMyMessage ? "right" : "left"
-                            }`}
-                          >
+                            }`}>
                             {!isMyMessage && (
                               <img
                                 src={

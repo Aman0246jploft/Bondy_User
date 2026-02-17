@@ -76,8 +76,7 @@ function page() {
             <button
               className="custom-btn"
               type="button"
-              onClick={() => setModalShow(true)}
-            >
+              onClick={() => setModalShow(true)}>
               Create Ticket
             </button>
           </div>
@@ -88,12 +87,11 @@ function page() {
             <div>
               <h5 className="table-title">Ticket List</h5>
             </div>
-            <div className="table-search d-flex gap-2">
+            <div className="dashboard-filter table-search d-flex gap-2">
               <select
                 className="form-select w-auto"
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
+                onChange={(e) => setSelectedCategory(e.target.value)}>
                 <option value="">All Categories</option>
                 {categories.map((cat) => (
                   <option key={cat._id} value={cat.name}>
@@ -109,8 +107,10 @@ function page() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
-                <button type="button" className="position-absolute end-0 top-50 translate-middle-y border-0 bg-transparent pe-2">
-                  <img src="/img/org-img/search-white.svg" />
+                <button
+                  type="button"
+                  className="position-absolute end-0 top-50 translate-middle-y border-0 bg-transparent pe-2">
+                  <img src="/img/org-img/search-white.svg" width={16} />
                 </button>
               </div>
             </div>
@@ -134,26 +134,28 @@ function page() {
                       <td>
                         {ticket.category
                           ? ticket.category.charAt(0).toUpperCase() +
-                          ticket.category.slice(1)
+                            ticket.category.slice(1)
                           : "N/A"}
                       </td>
                       <td>{ticket.subject}</td>
                       <td>
                         <span
                           className={`status-badge ${getStatusBadge(
-                            ticket.status
-                          )}`}
-                        >
+                            ticket.status,
+                          )}`}>
                           {ticket.status}
                         </span>
                       </td>
                       <td>
                         {ticket.updatedAt
-                          ? new Date(ticket.updatedAt).toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })
+                          ? new Date(ticket.updatedAt).toLocaleDateString(
+                              "en-GB",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )
                           : "-"}
                       </td>
                     </tr>

@@ -24,7 +24,7 @@ const EventSection = ({
       case "near":
         return { filter: "nearYou", defaultTitle: "Near You" };
       case "week":
-        return { filter: "thisWeek", defaultTitle: "This Week" };
+        return { filter: "thisWeek", defaultTitle: "Happening Soon" };
       default:
         return { filter: "all", defaultTitle: "Events" };
     }

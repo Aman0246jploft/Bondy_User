@@ -15,14 +15,20 @@ function page() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     // Handle nested venueAddress separately or flattened inputs
-    if (name === "venueName" || name === "startDate" || name === "endDate" || name === "startTime" || name === "endTime") {
+    if (
+      name === "venueName" ||
+      name === "startDate" ||
+      name === "endDate" ||
+      name === "startTime" ||
+      name === "endTime"
+    ) {
       updateEventData({ [name]: value });
     } else if (name === "address" || name === "city" || name === "country") {
       updateEventData({
         venueAddress: {
           ...eventData.venueAddress,
-          [name]: value
-        }
+          [name]: value,
+        },
       });
     }
   };
@@ -38,8 +44,12 @@ function page() {
     }
 
     // Combine date and time for validation
-    const startDateTime = new Date(`${eventData.startDate}T${eventData.startTime || "00:00"}`);
-    const endDateTime = new Date(`${eventData.endDate}T${eventData.endTime || "00:00"}`);
+    const startDateTime = new Date(
+      `${eventData.startDate}T${eventData.startTime || "00:00"}`,
+    );
+    const endDateTime = new Date(
+      `${eventData.endDate}T${eventData.endTime || "00:00"}`,
+    );
     const now = new Date();
 
     // Validate Start Date is in the future
@@ -60,7 +70,7 @@ function page() {
   return (
     <div>
       <Row className="justify-content-center">
-        <Col md={8}>
+        <Col lg={10} md={12} xs={12}>
           <ul className="event-steps">
             <li className="steps-item">
               <Link href="/BasicInfo" className="steps-link active">
@@ -123,7 +133,9 @@ function page() {
               <Row>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Venue Name <span className="text-danger">*</span></label>
+                    <label className="form-label">
+                      Venue Name <span className="text-danger">*</span>
+                    </label>
                     <input
                       type="text"
                       className="form-control"
@@ -183,7 +195,9 @@ function page() {
               <Row>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Start Date <span className="text-danger">*</span></label>
+                    <label className="form-label">
+                      Start Date <span className="text-danger">*</span>
+                    </label>
                     <div className="date-input-wrapper">
                       <input
                         type="date"
@@ -198,7 +212,9 @@ function page() {
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">End Date <span className="text-danger">*</span></label>
+                    <label className="form-label">
+                      End Date <span className="text-danger">*</span>
+                    </label>
                     <div className="date-input-wrapper">
                       <input
                         type="date"
@@ -245,7 +261,10 @@ function page() {
                   Back
                 </Link>
 
-                <button type="button" onClick={handleNext} className="custom-btn">
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="custom-btn">
                   Save and Continue
                 </button>
               </div>

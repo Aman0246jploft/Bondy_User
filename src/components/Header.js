@@ -45,8 +45,7 @@ export default function BondyHeader() {
           className="logo-box"
           initial={{ scale: 2.5, x: "45vw", y: "45vh" }}
           animate={!isAnimating ? { scale: 1, x: 0, y: 0 } : {}}
-          transition={{ duration: 1.2, ease: [0.6, 0.01, -0.05, 0.9] }}
-        >
+          transition={{ duration: 1.2, ease: [0.6, 0.01, -0.05, 0.9] }}>
           <div className="logo_box">
             <Link href="/">
               <img src="/img/logo.svg" alt="logo" />
@@ -59,8 +58,7 @@ export default function BondyHeader() {
           {showContent && (
             <div
               className="nav-content-wrapper"
-              style={{ display: "flex", flexGrow: 1, alignItems: "center" }}
-            >
+              style={{ display: "flex", flexGrow: 1, alignItems: "center" }}>
               {/* DESKTOP MENU (STATIC) */}
               <motion.div
                 className="menu-links-container"
@@ -71,8 +69,7 @@ export default function BondyHeader() {
                   flexGrow: 1,
                   display: "flex",
                   justifyContent: "center",
-                }}
-              >
+                }}>
                 <ul className="desktop-menu">
                   <li>
                     <Link href="/">Home</Link>
@@ -98,21 +95,19 @@ export default function BondyHeader() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.1 }}
-                style={{ display: "flex", alignItems: "center", gap: "20px" }}
-              >
+                style={{ display: "flex", alignItems: "center", gap: "20px" }}>
                 <LanguageSelector />
                 {userProfile ? (
                   <Link
                     href={
                       userProfile.role === "ORGANIZER" ||
-                        userProfile.role === "ORGANIZER"
+                      userProfile.role === "ORGANIZER"
                         ? "/OrganizerPersonalInfo"
                         : userProfile.role === "CUSTOMER"
                           ? "/Personalinfo"
                           : "/completeprofile"
                     }
-                    className="profile-img-btn"
-                  >
+                    className="profile-img-btn">
                     <img
                       src={getFullImageUrl(userProfile.profileImage)}
                       alt="profile"
@@ -135,8 +130,7 @@ export default function BondyHeader() {
                 {/* MOBILE ICON */}
                 <button
                   className="mobile-menu-icon"
-                  onClick={() => setIsMenuOpen(true)}
-                >
+                  onClick={() => setIsMenuOpen(true)}>
                   <Menu size={28} />
                 </button>
               </motion.div>
@@ -162,23 +156,20 @@ export default function BondyHeader() {
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 220 }}
-            >
+              transition={{ type: "spring", damping: 25, stiffness: 220 }}>
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                }}
-              >
+                }}>
                 <div className="logo-box">
                   <img src="/img/logo.svg" alt="logo" />
                 </div>
 
                 <button
                   style={{ background: "none", border: "none", color: "white" }}
-                  onClick={() => setIsMenuOpen(false)}
-                >
+                  onClick={() => setIsMenuOpen(false)}>
                   <X size={24} />
                 </button>
               </div>
@@ -198,8 +189,7 @@ export default function BondyHeader() {
                 <li>
                   <Link
                     href="/Programs-Listing"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
+                    onClick={() => setIsMenuOpen(false)}>
                     Course
                   </Link>
                 </li>
@@ -220,23 +210,21 @@ export default function BondyHeader() {
                   <Link
                     href={
                       userProfile.role === "ORGANIZER" ||
-                        userProfile.role === "ORGANIZER"
+                      userProfile.role === "ORGANIZER"
                         ? "/Dashboard"
                         : userProfile.role === "CUSTOMER"
                           ? "/Personalinfo"
                           : "/completeprofile"
                     }
                     className="profile-img-btn"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
+                    onClick={() => setIsMenuOpen(false)}>
                     <div
                       style={{
                         display: "flex",
                         alignItems: "center",
                         gap: "10px",
                         color: "white",
-                      }}
-                    >
+                      }}>
                       <img
                         src={getFullImageUrl(userProfile.profileImage)}
                         alt="profile"
@@ -255,8 +243,7 @@ export default function BondyHeader() {
                   <Link
                     href="/login"
                     className="signup-btn d-inline-block"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
+                    onClick={() => setIsMenuOpen(false)}>
                     Sign Up
                   </Link>
                 )}

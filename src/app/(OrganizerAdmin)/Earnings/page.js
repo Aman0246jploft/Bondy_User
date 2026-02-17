@@ -85,32 +85,29 @@ function page() {
             <h2 className="card-title">Earnings</h2>
           </div>
         </div>
-        <Row>
-          <Col md={3}>
-            <div className="earning-cards">
-              <h5>Total Earnings</h5>
-              <h4>$12,345</h4>
-            </div>
-          </Col>
-          <Col md={3}>
-            <div className="earning-cards">
-              <h5>Pending Balance</h5>
-              <h4>$5,901</h4>
-            </div>
-          </Col>
-          <Col md={3}>
-            <div className="earning-cards">
-              <h5>Available Balance</h5>
-              <h4>$6,789</h4>
-            </div>
-          </Col>
-          <Col md={3}>
-            <div className="earning-cards">
-              <h5>Total Payout</h5>
-              <h4>$8,709</h4>
-            </div>
-          </Col>
-        </Row>
+        <div className="dashbord-card-grid">
+          <div className="earning-cards">
+            <h5>Total Earnings</h5>
+            <h4>$12,345</h4>
+          </div>
+          <div className="earning-cards">
+            <h5>Pending Balance</h5>
+            <h4>$5,901</h4>
+          </div>
+          <div className="earning-cards">
+            <h5>Available Balance</h5>
+            <h4>$6,789</h4>
+          </div>
+          <div className="earning-cards">
+            <h5>Total Payout</h5>
+            <h4>$8,709</h4>
+          </div>
+          <div className="earning-cards">
+            <h5>Next Payout</h5>
+            <h4>25-3-2026</h4>
+          </div>
+        </div>
+
         <div className="custom-table-cards transaction-history">
           <div className="card-header">
             <div>
@@ -123,7 +120,7 @@ function page() {
                 placeholder="Search Transaction ... "
               />
               <button type="button">
-                <img src="/img/org-img/search-white.svg" />
+                <img src="/img/org-img/search-white.svg" width={16} />
               </button>
             </div>
           </div>

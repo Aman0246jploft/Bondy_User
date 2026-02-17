@@ -25,7 +25,10 @@ function page() {
       return;
     }
 
-    if (eventData.ticketSelesStartDate && eventData.ticketSelesStartDate < today) {
+    if (
+      eventData.ticketSelesStartDate &&
+      eventData.ticketSelesStartDate < today
+    ) {
       toast.error("Ticket sales start date cannot be in the past");
       return;
     }
@@ -45,7 +48,7 @@ function page() {
   return (
     <div>
       <Row className="justify-content-center">
-        <Col md={8}>
+        <Col lg={10} md={12} xs={12}>
           <ul className="event-steps">
             <li className="steps-item">
               <Link href="/BasicInfo" className="steps-link active">
@@ -108,7 +111,9 @@ function page() {
               <Row>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Ticket Name <span className="text-danger">*</span></label>
+                    <label className="form-label">
+                      Ticket Name <span className="text-danger">*</span>
+                    </label>
                     <input
                       type="text"
                       className="form-control"
@@ -135,7 +140,9 @@ function page() {
               <Row>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Price per Ticket <span className="text-danger">*</span></label>
+                    <label className="form-label">
+                      Price per Ticket <span className="text-danger">*</span>
+                    </label>
                     <input
                       type="number"
                       className="form-control"
@@ -220,7 +227,10 @@ function page() {
                 <Link href="/DateTime" className="outline-btn">
                   Back
                 </Link>
-                <button type="button" onClick={handleNext} className="custom-btn">
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="custom-btn">
                   Save and Continue
                 </button>
               </div>

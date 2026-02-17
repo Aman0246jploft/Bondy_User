@@ -52,7 +52,7 @@ export default function AttendeeTable() {
           <tr>
             <th>Name</th>
             <th>Ticket Type</th>
-            <th>Organizer Name</th>
+            <th>Program Name</th>
             <th>Date</th>
             <th>Status</th>
             <th>Action</th>
