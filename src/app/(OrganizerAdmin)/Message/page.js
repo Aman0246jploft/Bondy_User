@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import "./message.css";
 import Link from "next/link";
 import { useSocket } from "@/context/SocketContext";
@@ -7,7 +7,7 @@ import { toast } from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
 import authApi from "@/api/authApi";
 
-function page() {
+function MessageContent() {
     const { socket, isSocketConnected, onlineUsers } = useSocket();
     const searchParams = useSearchParams();
     const targetUserId = searchParams.get("userId");
@@ -500,4 +500,10 @@ function parseJwt(token) {
     return JSON.parse(jsonPayload);
 }
 
-export default page;
+export default function Page() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <MessageContent />
+        </Suspense>
+    );
+}

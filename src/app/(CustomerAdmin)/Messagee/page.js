@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import "./message.css";
 import Link from "next/link";
 import { useSocket } from "@/context/SocketContext";
@@ -7,7 +7,7 @@ import { toast } from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
 import authApi from "@/api/authApi";
 
-function page() {
+function MessageeContent() {
   const { socket, isSocketConnected, onlineUsers } = useSocket();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("userId");
@@ -264,9 +264,8 @@ function page() {
             <div className="row h-100">
               {/* LEFT CHAT LIST */}
               <div
-                className={`col-lg-3 col-md-4 chat-sidebar ${
-                  activeChat ? "mobile-hide" : ""
-                }`}
+                className={`col-lg-3 col-md-4 chat-sidebar ${activeChat ? "mobile-hide" : ""
+                  }`}
               >
                 <div className="d-flex align-items-center justify-content-between mb-3">
                   <h4 className="title m-0">Messages</h4>
@@ -299,9 +298,8 @@ function page() {
                       <div
                         key={chat._id}
                         onClick={() => setActiveChat(chat)}
-                        className={`user-chat-box ${
-                          activeChat?._id === chat._id ? "active" : ""
-                        }`}
+                        className={`user-chat-box ${activeChat?._id === chat._id ? "active" : ""
+                          }`}
                       >
                         <div className="position-relative">
                           <img
@@ -356,9 +354,8 @@ function page() {
 
               {/* RIGHT CHAT WINDOW */}
               <div
-                className={`col-lg-9 col-md-8 chat-window-area ${
-                  activeChat ? "mobile-show" : ""
-                }`}>
+                className={`col-lg-9 col-md-8 chat-window-area ${activeChat ? "mobile-show" : ""
+                  }`}>
                 {activeChat ? (
                   <div className="chat-window">
                     {/* HEADER */}
@@ -441,9 +438,8 @@ function page() {
                         return (
                           <div
                             key={i}
-                            className={`message ${
-                              isMyMessage ? "right" : "left"
-                            }`}>
+                            className={`message ${isMyMessage ? "right" : "left"
+                              }`}>
                             {!isMyMessage && (
                               <img
                                 src={
@@ -563,4 +559,10 @@ function parseJwt(token) {
   return JSON.parse(jsonPayload);
 }
 
-export default page;
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MessageeContent />
+    </Suspense>
+  );
+}

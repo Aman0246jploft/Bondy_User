@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import { useEventContext } from "@/context/EventContext";
 import authApi from "@/api/authApi";
@@ -8,7 +8,7 @@ import eventApi from "@/api/eventApi";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 
-function page() {
+function BasicInfoContent() {
   const { eventData, updateEventData, loadEventForEdit } = useEventContext();
   const [categories, setCategories] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -328,4 +328,10 @@ function page() {
   );
 }
 
-export default page;
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BasicInfoContent />
+    </Suspense>
+  );
+}

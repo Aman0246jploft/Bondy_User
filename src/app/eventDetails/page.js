@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import eventApi from "@/api/eventApi";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -16,7 +16,7 @@ import Link from "next/link";
 
 import { getFullImageUrl } from "@/utils/imageHelper";
 
-export default function page() {
+function EventDetailsContent() {
   const searchParams = useSearchParams();
   const eventId = searchParams.get("id");
   const [event, setEvent] = useState(null);
@@ -407,5 +407,13 @@ export default function page() {
       />
       <Footer />
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EventDetailsContent />
+    </Suspense>
   );
 }

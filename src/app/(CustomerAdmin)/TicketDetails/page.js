@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { Col, Row } from "react-bootstrap";
 import { useSearchParams } from "next/navigation";
 import bookingApi from "@/api/bookingApi";
@@ -142,13 +142,13 @@ function TicketDetails() {
                     <p>
                       {ticketInfo?.createdAt
                         ? new Date(ticketInfo.createdAt).toLocaleDateString(
-                            "en-US",
-                            {
-                              weekday: "short",
-                              day: "numeric",
-                              month: "short",
-                            },
-                          )
+                          "en-US",
+                          {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                          },
+                        )
                         : "N/A"}
                     </p>
                   </div>
@@ -183,12 +183,12 @@ function TicketDetails() {
                   <span>
                     {ticketInfo?.eventId?.startDate
                       ? new Date(
-                          ticketInfo.eventId.startDate,
-                        ).toLocaleDateString("en-US", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                        })
+                        ticketInfo.eventId.startDate,
+                      ).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "short",
+                      })
                       : "N/A"}
                   </span>{" "}
                   <svg
@@ -202,9 +202,9 @@ function TicketDetails() {
                   <span>
                     {ticketInfo?.eventId?.startTime
                       ? new Date().setHours(
-                          ticketInfo.eventId.startTime.split(":")[0],
-                          ticketInfo.eventId.startTime.split(":")[1],
-                        ) &&
+                        ticketInfo.eventId.startTime.split(":")[0],
+                        ticketInfo.eventId.startTime.split(":")[1],
+                      ) &&
                         new Date().setHours(
                           ticketInfo.eventId.startTime.split(":")[0],
                           ticketInfo.eventId.startTime.split(":")[1],
@@ -229,15 +229,15 @@ function TicketDetails() {
                           ) === "Invalid Date"
                         ? ticketInfo?.eventId?.startTime
                         : new Date(
-                            new Date().setHours(
-                              ticketInfo.eventId.startTime.split(":")[0],
-                              ticketInfo.eventId.startTime.split(":")[1],
-                            ),
-                          ).toLocaleTimeString("en-US", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true,
-                          })
+                          new Date().setHours(
+                            ticketInfo.eventId.startTime.split(":")[0],
+                            ticketInfo.eventId.startTime.split(":")[1],
+                          ),
+                        ).toLocaleTimeString("en-US", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        })
                       : ""}
                   </span>
                 </p>
@@ -343,4 +343,10 @@ function TicketDetails() {
   );
 }
 
-export default TicketDetails;
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TicketDetails />
+    </Suspense>
+  );
+}

@@ -10,12 +10,12 @@ import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import courseApi from "@/api/courseApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatDate } from "@/utils/dateFormater";
 
-export default function page() {
+function ProgramDetailsContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [courseDetails, setCourseDetails] = useState(null);
@@ -83,8 +83,8 @@ export default function page() {
                   {duration || "N/A"} •{" "}
                   {currentSchedule
                     ? `${formatDate(currentSchedule.startDate)} – ${formatDate(
-                        currentSchedule.endDate,
-                      )}`
+                      currentSchedule.endDate,
+                    )}`
                     : "Dates N/A"}{" "}
                   • {schedules?.length || 0} sessions
                 </p>
@@ -169,8 +169,8 @@ export default function page() {
                     <span>
                       {currentSchedule
                         ? `${formatDate(
-                            currentSchedule.startDate,
-                          )} at ${currentSchedule.startTime} to ${currentSchedule.endTime}`
+                          currentSchedule.startDate,
+                        )} at ${currentSchedule.startTime} to ${currentSchedule.endTime}`
                         : "Detailed timing not available"}
                     </span>
                   </div>
@@ -219,9 +219,8 @@ export default function page() {
                           <img
                             key={idx}
                             src={img}
-                            className={`gallery-item ${
-                              idx === 0 ? "large-gallery-item" : ""
-                            }`}
+                            className={`gallery-item ${idx === 0 ? "large-gallery-item" : ""
+                              }`}
                             alt={`Gallery ${idx}`}
                           />
                         ))}
@@ -506,5 +505,13 @@ export default function page() {
       <FAQ />
       <Footer />
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProgramDetailsContent />
+    </Suspense>
   );
 }

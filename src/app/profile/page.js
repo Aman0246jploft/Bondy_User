@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Col from "react-bootstrap/Col";
@@ -13,7 +13,7 @@ import Footer from "@/components/Footer";
 import GiveRating from "@/components/Modal/GiveRating";
 import authApi from "@/api/authApi";
 
-export default function page() {
+function ProfileContent() {
   const [modalShow, setModalShow] = useState(false);
   const searchParams = useSearchParams();
   const userId = searchParams.get("id");
@@ -252,5 +252,13 @@ export default function page() {
       <Footer />
       <GiveRating show={modalShow} onHide={() => setModalShow(false)} />
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProfileContent />
+    </Suspense>
   );
 }
