@@ -7,7 +7,10 @@ import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-import { fetchCurrentLocation, formatLocationForApi } from "@/utils/locationHelper";
+import {
+  fetchCurrentLocation,
+  formatLocationForApi,
+} from "@/utils/locationHelper";
 
 export default function InterestPage() {
   return (
@@ -40,7 +43,9 @@ function InterestPageContent() {
           const profileData = profileRes.data.user;
           setProfile(profileData);
           // Ensure we only store IDs
-          const existingInterests = (profileData.categories || []).map(cat => cat._id || cat);
+          const existingInterests = (profileData.categories || []).map(
+            (cat) => cat._id || cat,
+          );
           setSelectedIds(existingInterests);
         }
       } catch (error) {
@@ -52,11 +57,9 @@ function InterestPageContent() {
 
   // Auto-fetch location if missing
   useEffect(() => {
-
     if (profile && !profile.location) {
       fetchCurrentLocation()
         .then((locationData) => {
-
           setProfile((prev) => ({
             ...prev,
             location: locationData,
@@ -70,7 +73,7 @@ function InterestPageContent() {
 
   const handleToggle = (id) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
@@ -84,9 +87,8 @@ function InterestPageContent() {
       setLoading(true);
       // Construct allowed payload based on updateUserSchema
       const payload = {
-
         categories: selectedIds, // Updated with user selection
-        location: formatLocationForApi(profile?.location) // Formatted
+        location: formatLocationForApi(profile?.location), // Formatted
       };
       if (profile?.profileImage) {
         payload.profileImage = profile?.profileImage;
@@ -115,7 +117,6 @@ function InterestPageContent() {
       if (profile?.lastName) {
         payload.lastName = profile?.lastName;
       }
-
 
       const response = await authApi.updateProfile(payload);
 

@@ -121,7 +121,7 @@ export default function Page() {
                         type="Events"
                         filter={activeFilter}
                         onFilterChange={setActiveFilter}
-                        categoryId={selected.join(',')}
+                        categoryId={selected.join(",")}
                       />
                     </Tab.Pane>
                     <Tab.Pane eventKey="Program">
@@ -129,7 +129,7 @@ export default function Page() {
                         type="Program"
                         filter={activeFilter}
                         onFilterChange={setActiveFilter}
-                        categoryId={selected.join(',')}
+                        categoryId={selected.join(",")}
                       />
                     </Tab.Pane>
                   </Tab.Content>
