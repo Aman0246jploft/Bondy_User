@@ -132,7 +132,7 @@ function page() {
                       <td>
                         {ticket.category
                           ? ticket.category.charAt(0).toUpperCase() +
-                            ticket.category.slice(1)
+                          ticket.category.slice(1)
                           : "N/A"}
                       </td>
                       <td>{ticket.subject}</td>
@@ -147,13 +147,13 @@ function page() {
                       <td>
                         {ticket.updatedAt
                           ? new Date(ticket.updatedAt).toLocaleDateString(
-                              "en-GB",
-                              {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              },
-                            )
+                            "en-GB",
+                            {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )
                           : "-"}
                       </td>
                     </tr>
