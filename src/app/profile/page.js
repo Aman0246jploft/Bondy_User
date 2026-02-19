@@ -28,7 +28,6 @@ function ProfileContent() {
         try {
           setLoading(true);
           const response = await authApi.getUserProfileById(userId);
-          console.log("responseresponse00000", response)
           if (response.status) {
             setUserProfile(response.data.user);
           }
@@ -233,11 +232,11 @@ function ProfileContent() {
                       <Tab.Pane eventKey="first">
                         <SessionCart
                           title="Next Session"
-                          events={userProfile?.events?.next}
+                          events={userProfile?.events?.upcoming_events}
                         />
                         <SessionCart
                           title="Past Sessions"
-                          events={userProfile?.events?.past}
+                          events={userProfile?.events?.previous_events}
                         />
                       </Tab.Pane>
                     </Tab.Content>
