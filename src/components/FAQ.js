@@ -1,7 +1,7 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, CircleHelp } from 'lucide-react';
-import authApi from '@/api/authApi';
+import React, { useState, useEffect } from "react";
+import { ChevronDown, ChevronUp, CircleHelp } from "lucide-react";
+import authApi from "@/api/authApi";
 
 export default function FAQ() {
   const [faqs, setFaqs] = useState([]);
@@ -22,7 +22,8 @@ export default function FAQ() {
       }
     };
     fetchFaqs();
-  }, []); ``
+  }, []);
+  ``;
 
   const handleToggle = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -42,8 +43,14 @@ export default function FAQ() {
     <div className="faq-body">
       <div className="faq-wrapper">
         <div className="main_title text-center">
-          <h2>Frequently Asked <span>Questions</span></h2>
-          <p>Explore the most common questions and detailed answers about our events of concerts, and security to help guide your journey in the EVENJO.</p>
+          <h2>
+            Frequently Asked <span>Questions</span>
+          </h2>
+          <p>
+            Explore the most common questions and detailed answers about our
+            events of concerts, and security to help guide your journey in the
+            EVENJO.
+          </p>
         </div>
 
         <div className="faq-list">
@@ -51,20 +58,25 @@ export default function FAQ() {
             faqs.map((item, index) => (
               <div
                 key={item._id || index}
-                className={`faq-item ${activeIndex === index ? 'active' : ''}`}
+                className={`faq-item ${activeIndex === index ? "active" : ""}`}
               >
-                <button className="faq-trigger" onClick={() => handleToggle(index)}>
+                <button
+                  className="faq-trigger"
+                  onClick={() => handleToggle(index)}
+                >
                   <div className="faq-q-text">
                     <CircleHelp size={20} className="faq-icon-left" />
                     <span>{item.question}</span>
                   </div>
-                  {activeIndex === index ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                  {activeIndex === index ? (
+                    <ChevronUp size={18} />
+                  ) : (
+                    <ChevronDown size={18} />
+                  )}
                 </button>
 
                 <div className="faq-content">
-                  <div className="faq-answer-text">
-                    {item.answer}
-                  </div>
+                  <div className="faq-answer-text">{item.answer}</div>
                 </div>
               </div>
             ))
