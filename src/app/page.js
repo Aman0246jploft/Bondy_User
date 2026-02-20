@@ -24,7 +24,7 @@ export default function HomePage() {
 
       <div className="event_bg">
         <EventSection type="recommended" />
-        <EventSection type="near" />
+        <EventSection type="nearYou" />
         <EventSection type="week" />
       </div>
 
