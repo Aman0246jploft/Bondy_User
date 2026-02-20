@@ -2,6 +2,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import eventApi from "@/api/eventApi";
+import wishlistApi from "@/api/wishlistApi";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import { Container, Row, Col, Button } from "react-bootstrap";
@@ -23,6 +24,8 @@ function EventDetailsContent() {
   const [reviews, setReviews] = useState([]);
   const [comments, setComments] = useState([]);
   const [attendees, setAttendees] = useState(null);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -42,6 +45,61 @@ function EventDetailsContent() {
 
     fetchEventDetails();
   }, [eventId]);
+
+  useEffect(() => {
+    const checkWishlistStatus = async () => {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token || !eventId) return;
+
+      try {
+        const response = await wishlistApi.getMyWishlist();
+        if (response.status && response.data) {
+          const found = response.data.some((item) => {
+            // Handle populated or unpopulated entityId
+            const id = item.entityId?._id || item.entityId;
+            return id === eventId;
+          });
+          setIsWishlisted(found);
+        }
+      } catch (error) {
+        console.error("Error checking wishlist status:", error);
+      }
+    };
+
+    checkWishlistStatus();
+  }, [eventId]);
+
+  const handleWishlistToggle = async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+
+    if (wishlistLoading) return;
+    setWishlistLoading(true);
+
+    try {
+      if (isWishlisted) {
+        const response = await wishlistApi.removeFromWishlist({ entityId: eventId });
+        if (response.status) {
+          setIsWishlisted(false);
+        }
+      } else {
+        const response = await wishlistApi.addToWishlist({
+          entityId: eventId,
+          entityModel: "Event"
+        });
+        if (response.status) {
+          setIsWishlisted(true);
+        }
+      }
+    } catch (error) {
+      console.error("Wishlist toggle error:", error);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   const mediaItems = [
     ...(event?.shortTeaserVideo || []).map((url) => ({ type: "video", url })),
@@ -87,8 +145,8 @@ function EventDetailsContent() {
                   {event?.duration} • {event?.eventCategory?.name} •{" "}
                   {event?.status}
                 </p>
-                <Button className="book_mark_icon">
-                  <img src="/img/bookmark_icon.svg" />
+                <Button className="book_mark_icon" onClick={handleWishlistToggle} disabled={wishlistLoading}>
+                  <img src={isWishlisted ? "/img/bookmark_filled_icon.svg" : "/img/bookmark_icon.svg"} alt="Bookmark" />
                 </Button>
               </div>
             </Col>

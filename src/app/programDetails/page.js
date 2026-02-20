@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import courseApi from "@/api/courseApi";
+import wishlistApi from "@/api/wishlistApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatDate } from "@/utils/dateFormater";
 
@@ -19,6 +20,8 @@ function ProgramDetailsContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [courseDetails, setCourseDetails] = useState(null);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -27,6 +30,7 @@ function ProgramDetailsContent() {
           const response = await courseApi.getCourseDetails(id);
           if (response && response.data) {
             setCourseDetails(response.data);
+            setIsWishlisted(response.data.isWishlisted || false);
           }
         } catch (error) {
           console.error("Error fetching course details:", error);
@@ -35,6 +39,38 @@ function ProgramDetailsContent() {
       fetchDetails();
     }
   }, [id]);
+
+  const handleWishlistToggle = async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+
+    if (wishlistLoading) return;
+    setWishlistLoading(true);
+
+    try {
+      if (isWishlisted) {
+        const response = await wishlistApi.removeFromWishlist({ entityId: id });
+        if (response.status) {
+          setIsWishlisted(false);
+        }
+      } else {
+        const response = await wishlistApi.addToWishlist({
+          entityId: id,
+          entityModel: "Course"
+        });
+        if (response.status) {
+          setIsWishlisted(true);
+        }
+      }
+    } catch (error) {
+      console.error("Wishlist toggle error:", error);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   if (!courseDetails) {
     return (
@@ -59,12 +95,14 @@ function ProgramDetailsContent() {
     venueAddress,
     createdBy,
     enrollmentType,
+    whatYouWillLearn,
+    galleryImages
   } = courseDetails;
 
-  const images =
-    posterImage && posterImage.length > 0
-      ? posterImage.map(getFullImageUrl)
-      : ["/img/program-process-image-1.png"];
+  const images = [
+    ...(Array.isArray(posterImage) ? posterImage : [posterImage]),
+    ...(galleryImages || [])
+  ].filter(Boolean).map(getFullImageUrl);
 
   const locationString = venueAddress
     ? `${venueAddress.address}, ${venueAddress.city}, ${venueAddress.state}`
@@ -88,8 +126,12 @@ function ProgramDetailsContent() {
                     : "Dates N/A"}{" "}
                   • {schedules?.length || 0} sessions
                 </p>
-                <Button className="book_mark_icon">
-                  <img src="/img/bookmark_icon.svg" />
+                <Button
+                  className="book_mark_icon"
+                  onClick={handleWishlistToggle}
+                  disabled={wishlistLoading}
+                >
+                  <img src={isWishlisted ? "/img/bookmark_filled_icon.svg" : "/img/bookmark_icon.svg"} alt="Bookmark" />
                 </Button>
               </div>
             </Col>
@@ -193,6 +235,14 @@ function ProgramDetailsContent() {
                   <p className="section-text">{shortdesc}</p>
                 </div>
 
+
+
+
+                <div className="content-section">
+                  <h2 className="section-heading">What You Will Learn</h2>
+                  <p className="section-text">{whatYouWillLearn}</p>
+                </div>
+
                 <div className="organization_profile">
                   <h4>Organized By</h4>
                   <div className="item_org">
@@ -210,12 +260,11 @@ function ProgramDetailsContent() {
                 </div>
 
                 <div className="content-section m-0">
-                  <h3 className="section-heading">Event Gallery</h3>
+                  <h3 className="section-heading">Course Gallery</h3>
                   <div className="gallery-grid">
                     {images &&
                       images
-                        ?.slice(0, 5)
-                        .map((img, idx) => (
+                        ?.map((img, idx) => (
                           <img
                             key={idx}
                             src={img}

@@ -95,7 +95,14 @@ const ProgramCart = ({ programsArray, pagination }) => {
                       {!program?.currentSchedule?.isFull ? (
                         <>
                           <span>${program?.price}</span>
-                          <Link href="/eventbooking" className="common_btn">
+                          <Link
+                            href={
+                              program?.currentSchedule?._id
+                                ? `/eventbooking?id=${program._id}&scheduleId=${program.currentSchedule._id}`
+                                : `/eventbooking?id=${program._id}`
+                            }
+                            className="common_btn"
+                          >
                             Book Now
                           </Link>
                         </>
