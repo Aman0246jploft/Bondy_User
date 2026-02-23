@@ -23,7 +23,7 @@ export default function FAQ() {
     };
     fetchFaqs();
   }, []);
-  ``;
+
 
   const handleToggle = (index) => {
     setActiveIndex(activeIndex === index ? null : index);

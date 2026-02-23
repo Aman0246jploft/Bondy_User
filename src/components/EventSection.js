@@ -95,7 +95,10 @@ const EventSection = ({
           <div className="main_title align_title position-relative z-2 border-bottm">
             <h2>{title}</h2>
             {showSeeAll && (
-              <Link href="/Listing" className="see-all">
+              <Link
+                href={`/Listing?type=${getFilterAndTitle().filter === "all" ? "all" : type}`}
+                className="see-all"
+              >
                 See all
               </Link>
             )}
@@ -152,7 +155,7 @@ const EventSection = ({
                           {item.venueAddress
                             ? item.venueAddress.address
                               ? item.venueAddress.address.substring(0, 20) +
-                                "..."
+                              "..."
                               : "Location"
                             : "Online"}
                         </span>

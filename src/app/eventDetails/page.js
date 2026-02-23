@@ -37,6 +37,7 @@ function EventDetailsContent() {
           setReviews(response.data.reviews || []);
           setComments(response.data.comments || []);
           setAttendees(response.data.attendees);
+          setIsWishlisted(response.data.event.isWishlisted || false);
         }
       } catch (error) {
         console.error("Error fetching event details:", error);
@@ -46,28 +47,6 @@ function EventDetailsContent() {
     fetchEventDetails();
   }, [eventId]);
 
-  useEffect(() => {
-    const checkWishlistStatus = async () => {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      if (!token || !eventId) return;
-
-      try {
-        const response = await wishlistApi.getMyWishlist();
-        if (response.status && response.data) {
-          const found = response.data.some((item) => {
-            // Handle populated or unpopulated entityId
-            const id = item.entityId?._id || item.entityId;
-            return id === eventId;
-          });
-          setIsWishlisted(found);
-        }
-      } catch (error) {
-        console.error("Error checking wishlist status:", error);
-      }
-    };
-
-    checkWishlistStatus();
-  }, [eventId]);
 
   const handleWishlistToggle = async () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;

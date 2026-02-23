@@ -9,6 +9,7 @@ import TicketBooking from "@/components/TicketBooking";
 import eventApi from "@/api/eventApi";
 import bookingApi from "@/api/bookingApi";
 import courseApi from "@/api/courseApi";
+import wishlistApi from "@/api/wishlistApi";
 
 function BookingPageContent() {
   const searchParams = useSearchParams();
@@ -19,6 +20,8 @@ function BookingPageContent() {
   const [bookingItem, setBookingItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [bookingType, setBookingType] = useState(null);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,6 +32,7 @@ function BookingPageContent() {
           if (response.status && response.data?.event) {
             const evt = response.data.event;
             setBookingType("EVENT");
+            setIsWishlisted(evt.isWishlisted || false);
             setBookingItem({
               _id: evt._id,
               title: evt.eventTitle,
@@ -49,6 +53,7 @@ function BookingPageContent() {
           if (response && response.data) {
             const course = response.data;
             setBookingType("COURSE");
+            setIsWishlisted(course.isWishlisted || false);
             setBookingItem({
               _id: course._id,
               title: course.courseTitle,
@@ -77,6 +82,41 @@ function BookingPageContent() {
       fetchData();
     }
   }, [eventId, courseId]);
+
+  const handleWishlistToggle = async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+
+    if (wishlistLoading || !bookingItem) return;
+    setWishlistLoading(true);
+
+    try {
+      const entityId = bookingItem._id;
+      const entityModel = bookingType === "COURSE" ? "Course" : "Event";
+
+      if (isWishlisted) {
+        const response = await wishlistApi.removeFromWishlist({ entityId });
+        if (response.status) {
+          setIsWishlisted(false);
+        }
+      } else {
+        const response = await wishlistApi.addToWishlist({
+          entityId,
+          entityModel
+        });
+        if (response.status) {
+          setIsWishlisted(true);
+        }
+      }
+    } catch (error) {
+      console.error("Wishlist toggle error:", error);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -118,8 +158,11 @@ function BookingPageContent() {
                     : ""}
                   {bookingItem.status}
                 </p>
-                <Button className="book_mark_icon">
-                  <img src="/img/bookmark_icon.svg" />
+                <Button className="book_mark_icon" onClick={handleWishlistToggle} disabled={wishlistLoading}>
+                  <img
+                    src={isWishlisted ? "/img/bookmark_filled_icon.svg" : "/img/bookmark_icon.svg"}
+                    alt="Bookmark"
+                  />
                 </Button>
               </div>
             </Col>

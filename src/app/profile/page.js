@@ -147,10 +147,12 @@ function ProfileContent() {
                           {userProfile?.totalEventsHosted || 0} Events Hosted
                         </span>
                       )}
-                      <span className="me-3">
-                        <img src="/img/user_icon.svg" />{" "}
-                        {userProfile?.totalFollowers || 0} Followers
-                      </span>
+                      {userProfile?.role !== "CUSTOMER" && (
+                        <span className="me-3">
+                          <img src="/img/user_icon.svg" />{" "}
+                          {userProfile?.totalFollowers || 0} Followers
+                        </span>
+                      )}
                       {/* <span>
                         <img src="/img/star-icon.svg" /> 4/5 Rating
                       </span> */}
