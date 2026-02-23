@@ -2,8 +2,8 @@
 const nextConfig = {
   /* config options here */
   reactCompiler: true,
-  basePath: '/bondyUser',
-  assetPrefix: '/bondyUser/',
+  // basePath: '/bondyUser',
+  // assetPrefix: '/bondyUser/',
 
 };
 
