@@ -10,7 +10,7 @@ const eventApi = {
         return apiClient.get("/event/organizer/list", { params, skipToast: true });
     },
     createEvent: (data) => apiClient.post("/event/create", data),
-    getEventDetails: (eventId) => apiClient.get(`/event/details/${eventId}`),
+    getEventDetails: (eventId) => apiClient.get(`/event/details/${eventId}`, { skipToast: true }),
     getAllAttendees: (eventId, search) => apiClient.get(`/event/attendees/${eventId}`, { params: { search }, skipToast: true }),
     getOrganizerStats: () => apiClient.get("/event/organizer/stats", { skipToast: true }),
     updateEvent: (eventId, data) => apiClient.post(`/event/edit/${eventId}`, data),
