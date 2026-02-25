@@ -56,10 +56,15 @@ function MessageContent() {
     const msgEndRef = useRef(null);
     const messagesAreaRef = useRef(null);
     const chatListRef = useRef(null);
+    const fileInputRef = useRef(null);
     const hasAutoSelected = useRef(false);
     const chatsLoaded = useRef(false);
     const activeChatRef = useRef(activeChat);
     useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
+
+    // ─── File Upload State ─────────────────────────────────────
+    const [isUploading, setIsUploading] = useState(false);
+    const [stagedFile, setStagedFile] = useState(null); // { fileUrl, fileType, localUrl, name }
 
     // ─── Helper ────────────────────────────────────────────────
     const getMyId = useCallback(() => {
@@ -350,16 +355,24 @@ function MessageContent() {
     // 9. Send Message
     // ══════════════════════════════════════════════════════════
     const sendMessage = useCallback(() => {
-        if (!message.trim() || !activeChat || !socket) return;
+        const hasText = message.trim();
+        if (!hasText && !stagedFile) return;
+        if (!activeChat || !socket) return;
 
         const payload = activeChat.isVirtual
             ? { receiverId: activeChat.receiverId, content: message }
             : { chatId: activeChat._id, content: message };
 
+        if (stagedFile) {
+            payload.fileUrl = stagedFile.fileUrl;
+            payload.fileType = stagedFile.fileType;
+        }
+
         socket.emit("send_message", payload, (response) => {
             if (response.status === "ok") {
                 setMessages((prev) => [...prev, response.data]);
                 setMessage("");
+                setStagedFile(null);
                 setTimeout(() => {
                     msgEndRef.current?.scrollIntoView({ behavior: "smooth" });
                 }, 100);
@@ -375,11 +388,42 @@ function MessageContent() {
                 toast.error(response.message || "Failed to send message");
             }
         });
-    }, [socket, activeChat, message]);
+    }, [socket, activeChat, message, stagedFile]);
 
     const handleKeyPress = (e) => {
         if (e.key === "Enter") sendMessage();
     };
+
+    // ══════════════════════════════════════════════════════════
+    // 10. Handle File Select (upload only, send via sendMessage)
+    // ══════════════════════════════════════════════════════════
+    const handleFileSelect = useCallback(async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsUploading(true);
+        try {
+            const localUrl = URL.createObjectURL(file);
+            const formData = new FormData();
+            formData.append("files", file);
+            const res = await authApi.uploadFile(formData);
+            const fileUrl = res?.data?.files?.[0] || res?.files?.[0];
+            if (!fileUrl) throw new Error("No file URL returned");
+            const fileType = file.type.startsWith("image/")
+                ? "image"
+                : file.type.startsWith("video/")
+                    ? "video"
+                    : file.type.startsWith("audio/")
+                        ? "audio"
+                        : "document";
+            setStagedFile({ fileUrl, fileType, localUrl, name: file.name });
+        } catch (err) {
+            console.error("File upload error:", err);
+            toast.error("File upload failed");
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    }, []);
 
     // ── Filter chats by search ──────────────────────────────
     const filteredChats = chats.filter((chat) => {
@@ -585,7 +629,45 @@ function MessageContent() {
                                                                     )}
                                                                 </span>
                                                             </div>
-                                                            <div className="msg-text">{m.content}</div>
+                                                            <div className="msg-text">
+                                                                {(() => {
+                                                                    const isImage =
+                                                                        m.fileType === "image" ||
+                                                                        (!m.fileType && m.fileUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(m.fileUrl));
+                                                                    return (
+                                                                        <>
+                                                                            {m.fileUrl && isImage && (
+                                                                                <img
+                                                                                    src={m.fileUrl}
+                                                                                    alt="attachment"
+                                                                                    className="chat-image"
+                                                                                    style={{
+                                                                                        maxWidth: "220px",
+                                                                                        borderRadius: "8px",
+                                                                                        display: "block",
+                                                                                        marginBottom: m.content ? "6px" : 0,
+                                                                                        cursor: "pointer",
+                                                                                    }}
+                                                                                    onClick={() => window.open(m.fileUrl, "_blank")}
+                                                                                    onError={(e) => (e.target.style.display = "none")}
+                                                                                />
+                                                                            )}
+                                                                            {m.fileUrl && !isImage && (
+                                                                                <a
+                                                                                    href={m.fileUrl}
+                                                                                    target="_blank"
+                                                                                    rel="noreferrer"
+                                                                                    className="chat-file-link"
+                                                                                    style={{ display: "block", marginBottom: m.content ? "4px" : 0 }}
+                                                                                >
+                                                                                    📎 Download file
+                                                                                </a>
+                                                                            )}
+                                                                            {m.content}
+                                                                        </>
+                                                                    );
+                                                                })()}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 );
@@ -595,21 +677,79 @@ function MessageContent() {
                                         </div>
 
                                         {/* MESSAGE INPUT */}
-                                        <div className="message-input">
-                                            <div className="icon-input-box">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Your message..."
-                                                    value={message}
-                                                    onChange={(e) => setMessage(e.target.value)}
-                                                    onKeyPress={handleKeyPress}
-                                                />
-                                                <div className="action-icon-chat"></div>
-                                            </div>
-                                            <div className="icons">
-                                                <button onClick={sendMessage} className="send-btn">
-                                                    <img src="/img/send_chat.svg" alt="Send" />
-                                                </button>
+                                        <div className="message-input" style={{ flexDirection: "column", alignItems: "stretch" }}>
+                                            {/* Staged file preview */}
+                                            {stagedFile && (
+                                                <div style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "8px",
+                                                    padding: "6px 12px",
+                                                    background: "#222",
+                                                    borderRadius: "10px",
+                                                    marginBottom: "6px",
+                                                    border: "1px solid #3c3c3c",
+                                                }}>
+                                                    {stagedFile.fileType === "image" ? (
+                                                        <img
+                                                            src={stagedFile.localUrl}
+                                                            alt="preview"
+                                                            style={{ height: "48px", width: "48px", objectFit: "cover", borderRadius: "6px" }}
+                                                        />
+                                                    ) : (
+                                                        <span style={{ fontSize: "22px" }}>📄</span>
+                                                    )}
+                                                    <span style={{ flex: 1, fontSize: "13px", color: "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                        {stagedFile.name}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => setStagedFile(null)}
+                                                        style={{ background: "none", border: "none", color: "#ff5555", fontSize: "18px", cursor: "pointer", padding: "0 4px", lineHeight: 1 }}
+                                                        title="Remove attachment"
+                                                    >✕</button>
+                                                </div>
+                                            )}
+                                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                <div className="icon-input-box">
+                                                    {/* Hidden file input */}
+                                                    <input
+                                                        ref={fileInputRef}
+                                                        type="file"
+                                                        accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                                                        style={{ display: "none" }}
+                                                        onChange={handleFileSelect}
+                                                    />
+                                                    <button
+                                                        className="clip-btn"
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                        disabled={isUploading}
+                                                        title="Attach file"
+                                                        style={{
+                                                            background: "none",
+                                                            border: "none",
+                                                            cursor: isUploading ? "not-allowed" : "pointer",
+                                                            fontSize: "18px",
+                                                            padding: "0 8px",
+                                                            opacity: isUploading ? 0.5 : 1,
+                                                            flexShrink: 0,
+                                                        }}
+                                                    >
+                                                        {isUploading ? "⏳" : "📎"}
+                                                    </button>
+                                                    <input
+                                                        type="text"
+                                                        placeholder={stagedFile ? "Add a caption..." : "Your message..."}
+                                                        value={message}
+                                                        onChange={(e) => setMessage(e.target.value)}
+                                                        onKeyPress={handleKeyPress}
+                                                    />
+                                                    <div className="action-icon-chat"></div>
+                                                </div>
+                                                <div className="icons">
+                                                    <button onClick={sendMessage} className="send-btn" disabled={isUploading}>
+                                                        <img src="/img/send_chat.svg" alt="Send" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
