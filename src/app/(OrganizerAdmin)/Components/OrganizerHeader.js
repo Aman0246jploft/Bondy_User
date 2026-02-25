@@ -46,10 +46,10 @@ function OrganizerHeader() {
 
           <div className="avatar">
             <Link href="/OrganizerPersonalInfo">
-              {console.log(
+              {/* {console.log(
                 "Rendering profile image with data:",
                 profile?.profileImage,
-              )}
+              )} */}
               <img
                 src={
                   profile?.profileImage

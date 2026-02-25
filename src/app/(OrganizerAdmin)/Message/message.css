@@ -507,3 +507,44 @@
   outline: none;
   border: 0;
 }
+
+/* ---------------------- CONNECTION STATUS DOT ---------------------- */
+.connection-status {
+  font-size: 14px;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.connection-status.online {
+  color: #22c55e;
+  animation: pulse-green 1.8s ease-in-out infinite;
+}
+
+.connection-status.offline {
+  color: #ef4444;
+  opacity: 0.7;
+}
+
+@keyframes pulse-green {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ---------------------- ONLINE BADGE (chat list dot) ---------------------- */
+.online-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid #1a1a1a;
+}
