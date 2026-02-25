@@ -220,7 +220,7 @@ function page() {
 
 
 
-                    <Link href={`/EventDetails/${event._id}`}>
+                    <Link href={`/EventDetailOrganiser/${event._id}`}>
                       Event Details{" "}
                       <img src="/img/Arrow-Right.svg" alt="arrow" />
                     </Link>
