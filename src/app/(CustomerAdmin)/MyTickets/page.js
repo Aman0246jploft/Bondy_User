@@ -192,9 +192,9 @@ function page() {
             <Tab eventKey="past" title="Past">
               {activeTab === "past" && renderTicketList()}
             </Tab>
-            <Tab eventKey="canceled" title="Canceled">
+            {/* <Tab eventKey="canceled" title="Canceled">
               {activeTab === "canceled" && renderTicketList()}
-            </Tab>
+            </Tab> */}
           </Tabs>
         </div>
       </div>
