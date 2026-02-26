@@ -3,8 +3,9 @@
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { Col, Container, Form, Row } from "react-bootstrap";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import contactApi from "@/api/contactApi";
+import categoryApi from "@/api/categoryApi";
 import { toast } from "react-hot-toast";
 
 export default function Page() {
@@ -16,6 +17,24 @@ export default function Page() {
     message: "",
   });
   const [loading, setLoading] = useState(false);
+  const [topics, setTopics] = useState([]);
+
+  useEffect(() => {
+    const fetchTopics = async () => {
+      try {
+        const { data } = await categoryApi.getCategories({ type: "support_ticket", limit: 1000 });
+        if (data?.categories) {
+          setTopics(data.categories);
+        } else if (Array.isArray(data)) {
+          setTopics(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch topics:", err);
+      }
+    };
+    fetchTopics();
+  }, []);
+        console.log("Fetched topics:1111111", topics);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -125,10 +144,11 @@ export default function Page() {
                         onChange={handleChange}
                       >
                         <option value="">Select Topic</option>
-                        <option value="General">General Inquiry</option>
-                        <option value="Support">Support</option>
-                        <option value="Feedback">Feedback</option>
-                        <option value="Other">Other</option>
+                        {topics.map((t) => (
+                          <option key={t._id} value={t.name}>
+                            {t.name}
+                          </option>
+                        ))}
                       </Form.Select>
                     </Form.Group>
                   </Col>
