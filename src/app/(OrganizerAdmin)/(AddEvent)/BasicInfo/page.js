@@ -7,6 +7,7 @@ import authApi from "@/api/authApi";
 import eventApi from "@/api/eventApi";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { getFullImageUrl } from "@/utils/imageHelper";
 
 function BasicInfoContent() {
   const { eventData, updateEventData, loadEventForEdit } = useEventContext();
@@ -220,11 +221,12 @@ function BasicInfoContent() {
                   </div>
                   {eventData.posterImage &&
                     eventData.posterImage.length > 0 && (
+                      
                       <div className="mt-3">
                         <div className="d-flex align-items-start gap-3">
                           <div style={{ position: "relative" }}>
                             <img
-                              src={eventData.posterImage[0]}
+                              src={getFullImageUrl(eventData.posterImage[0])}
                               alt="Event Poster"
                               style={{
                                 width: "150px",
