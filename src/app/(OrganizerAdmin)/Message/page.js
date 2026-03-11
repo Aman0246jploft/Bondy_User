@@ -242,6 +242,9 @@ function MessageContent() {
                             c._id === activeChat._id ? { ...c, unreadCount: 0 } : c,
                         ),
                     );
+                    setTimeout(() => {
+                        if (messagesAreaRef.current) messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
+                    }, 100);
                 } else {
                     toast.error(response.message || "Failed to load messages");
                 }
@@ -306,7 +309,7 @@ function MessageContent() {
             if (chat && newMessage.chat === chat._id) {
                 setMessages((prev) => [...prev, newMessage]);
                 setTimeout(() => {
-                    msgEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                    if (messagesAreaRef.current) messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
                 }, 100);
             }
         };
@@ -347,7 +350,7 @@ function MessageContent() {
     // ══════════════════════════════════════════════════════════
     useEffect(() => {
         if (activeChat && !msgLoading) {
-            msgEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            if (messagesAreaRef.current) messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
         }
     }, [activeChat?._id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -374,7 +377,7 @@ function MessageContent() {
                 setMessage("");
                 setStagedFile(null);
                 setTimeout(() => {
-                    msgEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                    if (messagesAreaRef.current) messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
                 }, 100);
 
                 if (activeChat.isVirtual && response.chatId) {

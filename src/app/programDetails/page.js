@@ -7,6 +7,7 @@ import Map from "@/components/Map";
 import Reviews from "@/components/Reviews";
 import Header from "@/components/Header";
 import FAQ from "@/components/FAQ";
+import CommentsSection from "@/components/CommentsSection";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -295,6 +296,7 @@ function ProgramDetailsContent() {
                 </div>
               </div>
               <Reviews />
+              {id && <CommentsSection entityId={id} entityModel="Course" />}
             </Container>
           </Col>
           <Col lg={4}>

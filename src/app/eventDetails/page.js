@@ -11,6 +11,7 @@ import Map from "@/components/Map";
 import Reviews from "@/components/Reviews";
 import Header from "@/components/Header";
 import FAQ from "@/components/FAQ";
+import CommentsSection from "@/components/CommentsSection";
 import Footer from "@/components/Footer";
 import EventSection from "@/components/EventSection";
 import Link from "next/link";
@@ -313,6 +314,7 @@ function EventDetailsContent() {
                 </div>
               </div>
               <Reviews />
+              {eventId && <CommentsSection entityId={eventId} entityModel="Event" />}
             </Container>
           </Col>
           <Col lg={4}>

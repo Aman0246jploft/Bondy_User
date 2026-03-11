@@ -1,11 +1,38 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Col, Row, Form } from "react-bootstrap";
 import TicketDistributionChart from "../Components/TicketDistributionChart";
 import GenderRatioChart from "../Components/GenderRatioChart";
 import Link from "next/link";
+import organizerApi from "../../../api/organizerApi";
 
 function page() {
+  const [stats, setStats] = useState({
+    totalDraftEvents: 0,
+    totalPendingEvents: 0,
+    totalLiveEvents: 0,
+    totalCompletedEvents: 0,
+    totalTicketsSold: 0,
+    netRevenue: 0,
+    totalAttendees: 0,
+  });
+
+  const fetchDashboardStats = async () => {
+    try {
+      const response = await organizerApi.getDashboardData();
+      console.log("21211111555", response)
+      if (response && response.status === true) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
   return (
     <div>
       <div className="cards">
@@ -13,48 +40,48 @@ function page() {
           <div>
             <h2 className="card-title">Dashboard</h2>
             <p className="card-desc">
-              Welcome back, Alex! Here's a snapshot of your events and tasks.
+              Welcome back! Here's a snapshot of your events and tasks.
             </p>
           </div>
         </div>
         <div className="dashbord-card-grid">
           <div className="dashboard-counter">
             <h5>Drafts Events</h5>
-            <span className="counter">2</span>
+            <span className="counter">{stats.totalDraftEvents || 0}</span>
           </div>
 
           <div className="dashboard-counter">
             <h5>Pending Events</h5>
-            <span className="counter pending">2</span>
+            <span className="counter pending">{stats.totalPendingEvents || 0}</span>
           </div>
 
           <div className="dashboard-counter">
             <h5>Live Events</h5>
-            <span className="counter live">1</span>
+            <span className="counter live">{stats.totalLiveEvents || 0}</span>
           </div>
 
           <div className="dashboard-counter">
             <h5>Total Ticket</h5>
-            <span className="counter live">50</span>
+            <span className="counter live">{stats.totalTicketsSold || 0}</span>
           </div>
           <div className="dashboard-counter">
             <h5>Completed Events</h5>
-            <span className="counter completed">10</span>
+            <span className="counter completed">{stats.totalCompletedEvents || 0}</span>
           </div>
         </div>
         <Row>
           <Col sm={12} md={4}>
             <div className="card-varticl mb-3">
               <span>Net Revenue</span>
-              <h3>₮15,2400</h3>
+              <h3>₮{stats.netRevenue || 0}</h3>
             </div>
             <div className="card-varticl mb-3">
               <span>Total Tickets Sold</span>
-              <h3>240</h3>
+              <h3>{stats.totalTicketsSold || 0}</h3>
             </div>
             <div className="card-varticl mb-3">
               <span>Total Attendees</span>
-              <h3>231</h3>
+              <h3>{stats.totalAttendees || 0}</h3>
             </div>
           </Col>
           <Col md={8} sm={12}>
