@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { Col, Row, Tabs, Tab, Form, Pagination } from "react-bootstrap";
+import { Col, Row, Tabs, Tab, Form, Pagination, Modal, Spinner } from "react-bootstrap";
 import { useEventContext } from "@/context/EventContext";
 import eventApi from "@/api/eventApi";
+import promotionsApi from "@/api/promotionsApi";
+import toast from "react-hot-toast";
 
 function page() {
   const { clearEventData } = useEventContext();
@@ -16,6 +18,14 @@ function page() {
     total: 0,
   });
   const [stats, setStats] = useState({ totalRevenue: 0, totalAttendees: 0 });
+
+  // Promotion modal state
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [promoPackages, setPromoPackages] = useState([]);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [loadingPackages, setLoadingPackages] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   const fetchStats = async () => {
     try {
@@ -72,6 +82,57 @@ function page() {
 
   const totalPages = Math.ceil(pagination.total / pagination.limit);
 
+  // ---- Promotion Modal Handlers ----
+  const isFeaturedActive = (event) =>
+    event.isFeatured && event.featuredExpiry && new Date(event.featuredExpiry) > new Date();
+
+  const openPromoModal = async (event) => {
+    setSelectedEvent(event);
+    setSelectedPackage(null);
+    setShowPromoModal(true);
+    setLoadingPackages(true);
+    try {
+      const res = await promotionsApi.getEventPackages();
+      if (res?.status) {
+        setPromoPackages(res.data || []);
+      }
+    } catch (err) {
+      toast.error("Failed to load promotion packages");
+    } finally {
+      setLoadingPackages(false);
+    }
+  };
+
+  const closePromoModal = () => {
+    setShowPromoModal(false);
+    setSelectedEvent(null);
+    setSelectedPackage(null);
+    setPromoPackages([]);
+  };
+
+  const handleCheckout = async () => {
+    if (!selectedPackage) {
+      toast.error("Please select a promotion package first.");
+      return;
+    }
+    setCheckingOut(true);
+    try {
+      const res = await promotionsApi.checkoutEventPromotion({
+        eventId: selectedEvent._id,
+        packageId: selectedPackage._id,
+      });
+      if (res?.status) {
+        toast.success("Promotion activated successfully! 🎉");
+        closePromoModal();
+        fetchEvents();
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Checkout failed. Please try again.");
+    } finally {
+      setCheckingOut(false);
+    }
+  };
+
   return (
     <div>
       <div className="cards">
@@ -79,7 +140,7 @@ function page() {
           <div>
             <h2 className="card-title">Program Management</h2>
             <p className="card-desc">
-              Welcome back, Alex! Here's a snapshot of your events and tasks.
+              Welcome back! Here's a snapshot of your events and tasks.
             </p>
           </div>
 
@@ -157,10 +218,36 @@ function page() {
                           }}
                         />
                         <div>
-                          <h5>{event.eventTitle}</h5>
+                          <h5 className="d-flex align-items-center gap-2 flex-wrap">
+                            {event.eventTitle}
+                            {isFeaturedActive(event) && (
+                              <span
+                                style={{
+                                  background: "linear-gradient(135deg, #f6d365, #fda085)",
+                                  color: "#fff",
+                                  fontSize: "11px",
+                                  fontWeight: 600,
+                                  padding: "2px 10px",
+                                  borderRadius: "20px",
+                                  letterSpacing: "0.5px",
+                                }}>
+                                ⭐ Featured
+                              </span>
+                            )}
+                          </h5>
                           <p className="ref">
                             {event.eventCategory?.name || "General"}
                           </p>
+                          {isFeaturedActive(event) && (
+                            <p style={{ fontSize: "11px", color: "#fda085", margin: 0 }}>
+                              Featured until{" "}
+                              {new Date(event.featuredExpiry).toLocaleDateString("en-GB", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -211,19 +298,30 @@ function page() {
                       <span>{event.totalTickets || 0} tickets</span>
                     </p>
 
-
                     <Link href={`/BasicInfo?eventId=${event._id}`}>
                       Edit{" "}
                       <img src="/img/Arrow-Right.svg" alt="arrow" />
                     </Link>
 
-
-
-
                     <Link href={`/EventDetailOrganiser/${event._id}`}>
                       Event Details{" "}
                       <img src="/img/Arrow-Right.svg" alt="arrow" />
                     </Link>
+
+                    {/* Promote button — shows "Active Promotion" if already featured */}
+                    {isFeaturedActive(event) ? (
+                      <span style={{ color: "#fda085", fontSize: "13px", fontWeight: 500 }}>
+                        ⭐ Active Promotion
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="custom-btn"
+                        style={{ padding: "8px 16px", fontSize: "13px" }}
+                        onClick={() => openPromoModal(event)}>
+                        🚀 Promote
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
@@ -264,6 +362,122 @@ function page() {
           )}
         </div>
       </div>
+
+      {/* ---- Promotion Modal ---- */}
+      <Modal show={showPromoModal} onHide={closePromoModal} centered size="lg">
+        <Modal.Header closeButton style={{ background: "#1a1a1a", border: "1px solid #333" }}>
+          <Modal.Title style={{ color: "#fff" }}>
+            🚀 Promote:{" "}
+            <span style={{ color: "#23ada4" }}>{selectedEvent?.eventTitle}</span>
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ background: "#1a1a1a", padding: "24px" }}>
+          {loadingPackages ? (
+            <div className="text-center py-5">
+              <Spinner animation="border" variant="primary" />
+              <p className="mt-3" style={{ color: "#999" }}>Loading packages...</p>
+            </div>
+          ) : promoPackages.length === 0 ? (
+            <p className="text-center py-4" style={{ color: "#999" }}>
+              No active promotion packages available at the moment.
+            </p>
+          ) : (
+            <>
+              <p style={{ color: "#999", marginBottom: "20px" }}>
+                Select a plan to boost visibility on the Discover Feed and Homepage.
+              </p>
+              <Row className="gx-3 gy-3">
+                {promoPackages.map((pkg) => {
+                  const isSelected = selectedPackage?._id === pkg._id;
+                  return (
+                    <Col md={4} xs={12} key={pkg._id}>
+                      <div
+                        onClick={() => setSelectedPackage(pkg)}
+                        style={{
+                          background: isSelected ? "rgba(35,173,164,0.12)" : "#242424",
+                          border: `2px solid ${isSelected ? "#23ada4" : "#333"}`,
+                          borderRadius: "16px",
+                          padding: "20px",
+                          cursor: "pointer",
+                          transition: "all 0.25s ease",
+                          height: "100%",
+                        }}>
+                        <h5 style={{ color: "#fff", marginBottom: "4px" }}>{pkg.name}</h5>
+                        <h3 style={{ color: "#23ada4", margin: "8px 0" }}>
+                          ₮{pkg.price?.toLocaleString()}
+                        </h3>
+                        <p style={{ color: "#999", fontSize: "13px", marginBottom: "12px" }}>
+                          {pkg.durationInDays} day{pkg.durationInDays > 1 ? "s" : ""}
+                        </p>
+                        {pkg.placements?.length > 0 && (
+                          <ul style={{ paddingLeft: "16px", margin: 0 }}>
+                            {pkg.placements.map((p, i) => (
+                              <li key={i} style={{ color: "#ccc", fontSize: "12px", marginBottom: "4px" }}>
+                                {p}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {isSelected && (
+                          <div style={{ marginTop: "12px", color: "#23ada4", fontWeight: 600, fontSize: "13px" }}>
+                            ✓ Selected
+                          </div>
+                        )}
+                      </div>
+                    </Col>
+                  );
+                })}
+              </Row>
+
+              {selectedPackage && (
+                <div
+                  style={{
+                    background: "#242424",
+                    border: "1px solid #333",
+                    borderRadius: "12px",
+                    padding: "16px 20px",
+                    marginTop: "24px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}>
+                  <div>
+                    <p style={{ color: "#999", margin: 0, fontSize: "13px" }}>Selected Plan</p>
+                    <p style={{ color: "#fff", margin: 0, fontWeight: 600 }}>
+                      {selectedPackage.name} — {selectedPackage.durationInDays} days
+                    </p>
+                  </div>
+                  <h4 style={{ color: "#23ada4", margin: 0 }}>
+                    ₮{selectedPackage.price?.toLocaleString()}
+                  </h4>
+                </div>
+              )}
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer style={{ background: "#1a1a1a", border: "1px solid #333", gap: "12px" }}>
+          <button
+            className="outline-btn"
+            onClick={closePromoModal}
+            style={{ padding: "10px 24px" }}>
+            Cancel
+          </button>
+          <button
+            className="custom-btn"
+            onClick={handleCheckout}
+            disabled={!selectedPackage || checkingOut}
+            style={{ minWidth: "140px" }}>
+            {checkingOut ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Processing...
+              </>
+            ) : (
+              "Confirm & Pay"
+            )}
+          </button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
