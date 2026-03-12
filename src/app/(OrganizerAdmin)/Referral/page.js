@@ -159,7 +159,8 @@ function page() {
               </div>
 
               {/* Invite by email */}
-              <h6 className="mb-2 mt-4">Invite via Email</h6>
+
+              {/* <h6 className="mb-2 mt-4">Invite via Email</h6>
               <form onSubmit={handleInvite} className="d-flex gap-2">
                 <input
                   type="email"
@@ -178,7 +179,7 @@ function page() {
                     </>
                   )}
                 </button>
-              </form>
+              </form> */}
             </div>
           </Col>
 
