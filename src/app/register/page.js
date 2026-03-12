@@ -1,15 +1,16 @@
 "use client";
 import Link from "next/link";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Col, Container, Form, Nav, Row, Tab } from "react-bootstrap";
 import PhoneInput, { parsePhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import authApi from "@/api/authApi";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 
 export default function Page() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedTab, setSelectedTab] = useState("Customer");
   const [show2, setShow2] = useState(false);
   const [show, setShow] = useState(false);
@@ -38,7 +39,17 @@ export default function Page() {
     businessType: "",
     acceptTerms: false,
     documents: [],
+    referralCode: "",
   });
+
+  // Pre-fill referral code from URL param (?ref=CODE)
+  useEffect(() => {
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      setOrganizerData((prev) => ({ ...prev, referralCode: refCode }));
+      setSelectedTab("Organizer"); // Jump to Organizer tab if referral link used
+    }
+  }, [searchParams]);
 
   const handleCustomerChange = (e) => {
     const { name, value } = e.target;
@@ -498,6 +509,16 @@ export default function Page() {
                                   onChange={handleFileChange}
                                 />
                               </div>
+
+                              <Form.Group className="mb-3">
+                                <Form.Control
+                                  type="text"
+                                  name="referralCode"
+                                  placeholder="Referral Code (optional)"
+                                  value={organizerData.referralCode}
+                                  onChange={handleOrganizerChange}
+                                />
+                              </Form.Group>
 
                               <Form.Group className="mb-3">
                                 <div className="custom-checkbox">
