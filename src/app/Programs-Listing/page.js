@@ -19,6 +19,9 @@ export default function Page() {
     const fetchPrograms = async () => {
       try {
         const response = await courseApi.getCourses();
+
+        console.log("55555555555111111111---->>",response)
+
         if (response.status && response.data.courses) {
           setPrograms(response.data.courses || []);
           setPagination(response.data.pagination || {});
