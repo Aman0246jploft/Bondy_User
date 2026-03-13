@@ -59,7 +59,9 @@ function page() {
   // Payout Modal
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState("");
+  const [payoutReference, setPayoutReference] = useState("");
   const [payoutLoading, setPayoutLoading] = useState(false);
+  const MIN_PAYOUT = 1000;
 
   const fetchEarnings = useCallback(async () => {
     try {
@@ -102,17 +104,26 @@ function page() {
       toast.error("Enter a valid amount");
       return;
     }
+    if (amount < MIN_PAYOUT) {
+      toast.error(`Minimum payout amount is ₮${MIN_PAYOUT.toLocaleString()}`);
+      return;
+    }
     if (amount > earnings.payoutBalance) {
       toast.error("Amount exceeds available balance");
       return;
     }
+    if (!payoutReference.trim()) {
+      toast.error("Payment reference / bank account details are required");
+      return;
+    }
     setPayoutLoading(true);
     try {
-      const res = await organizerApi.requestPayout(amount);
+      const res = await organizerApi.requestPayout(amount, payoutReference.trim());
       if (res?.status) {
         toast.success("Payout request submitted!");
         setShowPayoutModal(false);
         setPayoutAmount("");
+        setPayoutReference("");
         fetchEarnings();
       }
     } catch (err) {
@@ -353,7 +364,7 @@ function page() {
       </div>
 
       {/* ─── Payout Request Modal ──────────────────────────────────────────── */}
-      <Modal show={showPayoutModal} onHide={() => setShowPayoutModal(false)} centered>
+      <Modal show={showPayoutModal} onHide={() => { setShowPayoutModal(false); setPayoutAmount(""); setPayoutReference(""); }} centered>
         <Modal.Header closeButton>
           <Modal.Title>Request Payout</Modal.Title>
         </Modal.Header>
@@ -362,33 +373,64 @@ function page() {
             <p style={{ color: "#999", fontSize: 14 }}>
               Available Balance:{" "}
               <strong style={{ color: "#fff" }}>₮{earnings.payoutBalance.toLocaleString()}</strong>
+              <span style={{ marginLeft: 12, color: "#aaa" }}>
+                Minimum: <strong style={{ color: "#fff" }}>₮{MIN_PAYOUT.toLocaleString()}</strong>
+              </span>
             </p>
+
+            {/* Amount */}
             <Form.Group className="mb-3">
               <Form.Label>Amount (₮)</Form.Label>
               <Form.Control
                 type="number"
-                min="1"
+                min={MIN_PAYOUT}
                 max={earnings.payoutBalance}
-                placeholder="Enter amount"
+                placeholder={`Min ₮${MIN_PAYOUT.toLocaleString()}`}
                 value={payoutAmount}
                 onChange={(e) => setPayoutAmount(e.target.value)}
                 required
               />
+              {Number(payoutAmount) > 0 && Number(payoutAmount) < MIN_PAYOUT && (
+                <Form.Text style={{ color: "#e74c3c" }}>
+                  Minimum payout is ₮{MIN_PAYOUT.toLocaleString()}
+                </Form.Text>
+              )}
               {Number(payoutAmount) > earnings.payoutBalance && (
                 <Form.Text style={{ color: "#e74c3c" }}>
                   Amount exceeds available balance
                 </Form.Text>
               )}
             </Form.Group>
+
+            {/* Payment Reference */}
+            <Form.Group className="mb-3">
+              <Form.Label>Payment Reference <span style={{ color: "#e74c3c" }}>*</span></Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="e.g. Bank account no., bank name, or wire reference"
+                value={payoutReference}
+                onChange={(e) => setPayoutReference(e.target.value)}
+                required
+              />
+              <Form.Text style={{ color: "#888" }}>
+                Provide your bank account details or payment reference so the admin can process your payout.
+              </Form.Text>
+            </Form.Group>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowPayoutModal(false)}>
+            <Button variant="secondary" onClick={() => { setShowPayoutModal(false); setPayoutAmount(""); setPayoutReference(""); }}>
               Cancel
             </Button>
             <Button
               type="submit"
               className="common_btn"
-              disabled={payoutLoading || !payoutAmount || Number(payoutAmount) > earnings.payoutBalance}
+              disabled={
+                payoutLoading ||
+                !payoutAmount ||
+                !payoutReference.trim() ||
+                Number(payoutAmount) < MIN_PAYOUT ||
+                Number(payoutAmount) > earnings.payoutBalance
+              }
             >
               {payoutLoading ? <Spinner animation="border" size="sm" /> : "Submit Request"}
             </Button>

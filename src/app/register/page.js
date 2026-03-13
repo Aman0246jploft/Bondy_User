@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useEffect, useRef, useState, Suspense  } from "react";
+import React, { useEffect, useRef, useState, Suspense } from "react";
 import { Col, Container, Form, Nav, Row, Tab } from "react-bootstrap";
 import PhoneInput, { parsePhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
@@ -8,7 +8,7 @@ import authApi from "@/api/authApi";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 
- function RegisterForm() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedTab, setSelectedTab] = useState("Customer");
