@@ -14,8 +14,8 @@ const availableLanguages = [
   {
     code: "mn",
     label: "Mon",
-    name: "Mongolian",
-    flag: "/img/india.svg", // Fallback flag placeholder
+    name: "Mongolian (MN)",
+    flag: "/img/Flag_of_Mongolia.svg.png", // Fallback flag placeholder
   }
 ];
 
@@ -80,9 +80,8 @@ export default function LanguageSelector() {
           {availableLanguages.map((lang) => (
             <div
               key={lang.code}
-              className={`lang-option ${
-                selectedLang.code === lang.code ? "active" : ""
-              }`}
+              className={`lang-option ${selectedLang.code === lang.code ? "active" : ""
+                }`}
               onClick={() => handleSelect(lang.code)}
             >
               <Image src={lang.flag} alt={lang.name} width={24} height={16} />
