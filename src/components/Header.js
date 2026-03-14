@@ -6,8 +6,10 @@ import LanguageSelector from "./LanguageSelector";
 import Link from "next/link";
 import authApi from "@/api/authApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function BondyHeader() {
+  const { t } = useLanguage();
   const [isAnimating, setIsAnimating] = useState(true);
   const [showContent, setShowContent] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -72,19 +74,19 @@ export default function BondyHeader() {
                 }}>
                 <ul className="desktop-menu">
                   <li>
-                    <Link href="/">Home</Link>
+                    <Link href="/">{t("home")}</Link>
                   </li>
                   <li>
-                    <Link href="/Explore">Explore</Link>
+                    <Link href="/Explore">{t("explore")}</Link>
                   </li>
                   <li>
-                    <Link href="/Programs-Listing">Course</Link>
+                    <Link href="/Programs-Listing">{t("course")}</Link>
                   </li>
                   <li>
-                    <Link href="/Organizers">Organizers</Link>
+                    <Link href="/Organizers">{t("organizers")}</Link>
                   </li>
                   <li>
-                    <Link href="/contact-us">Contact Us</Link>
+                    <Link href="/contact-us">{t("contactUs")}</Link>
                   </li>
                 </ul>
               </motion.div>
@@ -123,7 +125,7 @@ export default function BondyHeader() {
                   </Link>
                 ) : (
                   <Link href="/login" className="signup-btn">
-                    Sign Up
+                    {t("signUp")}
                   </Link>
                 )}
 
@@ -178,29 +180,29 @@ export default function BondyHeader() {
               <ul className="sidebar-links">
                 <li>
                   <Link href="/" onClick={() => setIsMenuOpen(false)}>
-                    Home
+                    {t("home")}
                   </Link>
                 </li>
                 <li>
                   <Link href="/Explore" onClick={() => setIsMenuOpen(false)}>
-                    Explore
+                    {t("explore")}
                   </Link>
                 </li>
                 <li>
                   <Link
                     href="/Programs-Listing"
                     onClick={() => setIsMenuOpen(false)}>
-                    Course
+                    {t("course")}
                   </Link>
                 </li>
                 <li>
                   <Link href="/Organizers" onClick={() => setIsMenuOpen(false)}>
-                    Organizers
+                    {t("organizers")}
                   </Link>
                 </li>
                 <li>
                   <Link href="/contact-us" onClick={() => setIsMenuOpen(false)}>
-                    Contact Us
+                    {t("contactUs")}
                   </Link>
                 </li>
               </ul>
@@ -236,7 +238,7 @@ export default function BondyHeader() {
                           border: "2px solid #fff",
                         }}
                       />
-                      <span>{userProfile.firstName || "Profile"}</span>
+                      <span>{userProfile.firstName || t("profile")}</span>
                     </div>
                   </Link>
                 ) : (
@@ -244,7 +246,7 @@ export default function BondyHeader() {
                     href="/login"
                     className="signup-btn d-inline-block"
                     onClick={() => setIsMenuOpen(false)}>
-                    Sign Up
+                    {t("signUp")}
                   </Link>
                 )}
               </div>

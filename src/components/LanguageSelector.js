@@ -2,36 +2,33 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import { useLanguage } from "@/context/LanguageContext";
 
-const languages = [
+const availableLanguages = [
   {
-    code: "en-us",
+    code: "en",
     label: "Eng",
     name: "English (US)",
     flag: "/img/usflag.svg",
   },
   {
-    code: "hi-in",
-    label: "Hin",
-    name: "Hindi (IN)",
-    flag: "/img/india.svg",
-  },
-  {
-    code: "en-uk",
-    label: "Eng",
-    name: "English (UK)",
-    flag: "/img/usflag.svg",
-  },
+    code: "mn",
+    label: "Mon",
+    name: "Mongolian",
+    flag: "/img/india.svg", // Fallback flag placeholder
+  }
 ];
 
 export default function LanguageSelector() {
   const [open, setOpen] = useState(false);
-  const [selectedLang, setSelectedLang] = useState(languages[0]);
+  const { language, changeLanguage } = useLanguage();
 
   const wrapperRef = useRef(null);
 
-  const handleSelect = (lang) => {
-    setSelectedLang(lang);
+  const selectedLang = availableLanguages.find((l) => l.code === language) || availableLanguages[0];
+
+  const handleSelect = (langCode) => {
+    changeLanguage(langCode);
     setOpen(false);
   };
 
@@ -80,13 +77,13 @@ export default function LanguageSelector() {
 
       {open && (
         <div className="lang-dropdown">
-          {languages.map((lang) => (
+          {availableLanguages.map((lang) => (
             <div
               key={lang.code}
               className={`lang-option ${
                 selectedLang.code === lang.code ? "active" : ""
               }`}
-              onClick={() => handleSelect(lang)}
+              onClick={() => handleSelect(lang.code)}
             >
               <Image src={lang.flag} alt={lang.name} width={24} height={16} />
               <span>{lang.name}</span>

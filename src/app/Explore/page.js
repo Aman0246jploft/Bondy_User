@@ -7,8 +7,10 @@ import Field from "../../components/Field";
 import { Col, Container, Row, Nav, Tab } from "react-bootstrap";
 import ExploreItem from "@/components/ExploreItem";
 import categoryApi from "@/api/categoryApi";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Page() {
+  const { t } = useLanguage();
   const [selected, setSelected] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeTab, setActiveTab] = useState("Events");
@@ -60,8 +62,8 @@ export default function Page() {
       <div className="listing_page">
         <Header />
         <div className="breadcrumb_text text-center py-5">
-          <h1>Explore</h1>
-          <p>"A Night to Remember: Adele Live with Her Greatest Hits " 🎶✨</p>
+          <h1>{t("explorePageTitle")}</h1>
+          <p>{t("explorePageSubtitle")}</p>
         </div>
       </div>
 
@@ -73,7 +75,7 @@ export default function Page() {
           {/* Categories/Multi-Select Filters */}
           <div className="MUiltiSelect mb-4">
             {loading ? (
-              <div>Loading categories...</div>
+              <div>{t("loadingCategories")}</div>
             ) : categories.length > 0 ? (
               categories.map((cat) => (
                 <div key={cat._id} className="d-inline-block me-2">
@@ -90,7 +92,7 @@ export default function Page() {
                 </div>
               ))
             ) : (
-              <div>No categories found</div>
+              <div>{t("noCategoriesFound")}</div>
             )}
           </div>
 
@@ -106,10 +108,10 @@ export default function Page() {
                 <Col sm={12} className="mb-4">
                   <Nav variant="pills" className="custom-nav-pills">
                     <Nav.Item>
-                      <Nav.Link eventKey="Events">Events</Nav.Link>
+                      <Nav.Link eventKey="Events">{t("eventsTab")}</Nav.Link>
                     </Nav.Item>
                     <Nav.Item>
-                      <Nav.Link eventKey="Program">Program</Nav.Link>
+                      <Nav.Link eventKey="Program">{t("programTab")}</Nav.Link>
                     </Nav.Item>
                   </Nav>
                 </Col>

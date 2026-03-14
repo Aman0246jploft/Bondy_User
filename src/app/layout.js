@@ -20,6 +20,7 @@ export const metadata = {
 import { Toaster } from "react-hot-toast";
 import LocationManager from "@/components/LocationManager";
 import { SocketProvider } from "@/context/SocketContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 export default function RootLayout({ children }) {
   return (
@@ -27,7 +28,9 @@ export default function RootLayout({ children }) {
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Toaster position="top-right" reverseOrder={false} />
         <LocationManager />
-        <SocketProvider>{children}</SocketProvider>
+        <LanguageProvider>
+          <SocketProvider>{children}</SocketProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

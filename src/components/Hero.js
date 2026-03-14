@@ -9,8 +9,10 @@ import "swiper/css";
 import "swiper/css/effect-fade";
 import "swiper/css/navigation";
 import HeroSearchFilter from "./HeroSearchFilter";
+import { useLanguage } from "@/context/LanguageContext";
 
 const HeroSlider = ({ setView }) => {
+  const { t } = useLanguage();
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -91,13 +93,12 @@ const HeroSlider = ({ setView }) => {
             initial="hidden"
             animate="visible">
             <motion.h1 variants={itemVariants}>
-              Discover Events, Workshops, Courses <br />
-              <span>& Experiences in Ulaanbaatar</span>
+              {t("heroTitle1")} <br />
+              <span>{t("heroTitle2")}</span>
             </motion.h1>
 
             <motion.p variants={itemVariants}>
-              Explore a world of concerts, movies, and events tailored just for
-              you!
+              {t("heroSubtitle")}
             </motion.p>
 
             {/* ---------- SEARCH CARD ---------- */}
@@ -110,8 +111,8 @@ const HeroSlider = ({ setView }) => {
                 <div className="search-field one_field">
                   <img src="/img/event_icon.svg" />
                   <div>
-                    <small>Event Type</small>
-                    <input type="text" placeholder="exp: music event" />
+                    <small>{t("eventType")}</small>
+                    <input type="text" placeholder={t("eventTypePlaceholder")} />
                   </div>
                 </div>
 
@@ -120,8 +121,8 @@ const HeroSlider = ({ setView }) => {
                 <div className="search-field two_field">
                   <img src="/img/loc_icon.svg" />
                   <div>
-                    <small>Where</small>
-                    <input type="text" placeholder="Location" />
+                    <small>{t("where")}</small>
+                    <input type="text" placeholder={t("locationPlaceholder")} />
                   </div>
                 </div>
 
