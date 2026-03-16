@@ -103,7 +103,7 @@ export default function BondyHeader() {
                   <Link
                     href={
                       userProfile.role === "ORGANIZER" ||
-                      userProfile.role === "ORGANIZER"
+                        userProfile.role === "ORGANIZER"
                         ? "/OrganizerPersonalInfo"
                         : userProfile.role === "CUSTOMER"
                           ? "/Personalinfo"
@@ -212,7 +212,7 @@ export default function BondyHeader() {
                   <Link
                     href={
                       userProfile.role === "ORGANIZER" ||
-                      userProfile.role === "ORGANIZER"
+                        userProfile.role === "ORGANIZER"
                         ? "/Dashboard"
                         : userProfile.role === "CUSTOMER"
                           ? "/Personalinfo"

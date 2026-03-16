@@ -69,9 +69,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
 
         <Link
           href="/EventsManagement"
-          className={`menu-item ${
-            isActive("/EventsManagement") ? "active" : ""
-          }`}>
+          className={`menu-item ${isActive("/EventsManagement") ? "active" : ""
+            }`}>
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-02.svg" alt="" />
           </span>
@@ -124,9 +123,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
         </Link>
         <Link
           href="/SubscriptionBilling"
-          className={`menu-item ${
-            isActive("/SubscriptionBilling") ? "active" : ""
-          }`}>
+          className={`menu-item ${isActive("/SubscriptionBilling") ? "active" : ""
+            }`}>
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-06.svg" alt="" />
           </span>
@@ -189,7 +187,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
 
       {/* Footer */}
       <div className="sidebar-footer">
-        <Link href="" className="menu-item">
+        <Link href="/Settings" className={`menu-item ${isActive("/Settings") ? "active" : ""}`}>
           <span className="icon">
             <img src="/img/cogs-icon.svg" alt="" />
           </span>
