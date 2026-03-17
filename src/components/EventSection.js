@@ -153,10 +153,7 @@ const EventSection = ({
                         <span>
                           <img src="/img/loc_icon.svg" alt="location" />{" "}
                           {item.venueAddress
-                            ? item.venueAddress.address
-                              ? item.venueAddress.address.substring(0, 20) +
-                              "..."
-                              : "Location"
+                            ? item.venueAddress.city || "Location"
                             : "Online"}
                         </span>
                       </div>
@@ -165,7 +162,7 @@ const EventSection = ({
                         from {item.minPrice ? `$${item.minPrice}` : "Free"}
                       </div> */}
                       <div className="price-tag">
-                        from{" "}
+                        {/* from{" "} */}
                         {item.ticketPrice ? `$${item.ticketPrice}` : "Free"}
                       </div>
                     </div>

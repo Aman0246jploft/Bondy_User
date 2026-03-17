@@ -12,9 +12,18 @@ function page() {
   const [loading, setLoading] = useState(true);
 
   const languages = [
-    { code: "en", dbLabel: "English", label: "English", flag: "/img/usflag.svg" },
-    { code: "mn", dbLabel: "Mongolian", label: "Mongolian", flag: "/img/Flag_of_Mongolia.svg.png" },
-
+    {
+      code: "en",
+      dbLabel: "English",
+      label: "English",
+      flag: "/img/usflag.svg",
+    },
+    {
+      code: "mn",
+      dbLabel: "Mongolian",
+      label: "Mongolian",
+      flag: "/img/Flag_of_Mongolia.svg.png",
+    },
   ];
 
   const [settings, setSettings] = useState({
@@ -24,7 +33,7 @@ function page() {
     smsNotification: true,
     whatsappNotification: true,
     appTheme: "dark",
-    language: "English"
+    language: "English",
   });
 
   const [currentLang, setCurrentLang] = useState(languages[0]);
@@ -41,7 +50,9 @@ function page() {
         setSettings(res.data);
 
         // Find matching language from choices
-        const matchedLang = languages.find(l => l.dbLabel === res.data.language);
+        const matchedLang = languages.find(
+          (l) => l.dbLabel === res.data.language,
+        );
         if (matchedLang) {
           setCurrentLang(matchedLang);
           if (changeLanguage) changeLanguage(matchedLang.code);
@@ -58,7 +69,7 @@ function page() {
     const newValue = !settings[field];
 
     // Optimistic update
-    setSettings(prev => ({ ...prev, [field]: newValue }));
+    setSettings((prev) => ({ ...prev, [field]: newValue }));
 
     try {
       await userSettingApi.updateUserSetting({ [field]: newValue });
@@ -67,10 +78,9 @@ function page() {
       console.error("Failed to update setting:", error);
       toast.error("Failed to update settings");
       // Revert on failure
-      setSettings(prev => ({ ...prev, [field]: !newValue }));
+      setSettings((prev) => ({ ...prev, [field]: !newValue }));
     }
   };
-
 
   const handleLanguageChange = async (lang) => {
     setCurrentLang(lang);
@@ -121,7 +131,10 @@ function page() {
         <div className="setting-info">
           <div className="setting-info-lft">
             <h5>Push Notifications</h5>
-            <p>Receive push-notifications on your device for important events and offers.</p>
+            <p>
+              Receive push-notifications on your device for important events and
+              offers.
+            </p>
           </div>
           <div className="setting-info-rgt">
             <div className="form-check form-switch">
@@ -141,7 +154,9 @@ function page() {
         <div className="setting-info">
           <div className="setting-info-lft">
             <h5>Email Notifications</h5>
-            <p>Stay updated with event news and updates directly to your email.</p>
+            <p>
+              Stay updated with event news and updates directly to your email.
+            </p>
           </div>
           <div className="setting-info-rgt">
             <div className="form-check form-switch">
@@ -181,7 +196,9 @@ function page() {
         <div className="setting-info">
           <div className="setting-info-lft">
             <h5>SMS Notifications</h5>
-            <p>Get text messages for ticket availability and critical alerts.</p>
+            <p>
+              Get text messages for ticket availability and critical alerts.
+            </p>
           </div>
           <div className="setting-info-rgt">
             <div className="form-check form-switch">
@@ -196,7 +213,6 @@ function page() {
             </div>
           </div>
         </div>
-
 
         {/* Language Selection */}
         <div className="language-wrapper">

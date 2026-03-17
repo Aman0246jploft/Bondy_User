@@ -1155,6 +1155,9 @@ select:-webkit-autofill {
   margin-bottom: 10px;
   display: block;
   text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .event-meta {
@@ -1177,6 +1180,10 @@ select:-webkit-autofill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 48%;
 }
 
 .event-meta span img {
@@ -1201,6 +1208,9 @@ select:-webkit-autofill {
   -webkit-text-fill-color: transparent;
   margin-top: 10px;
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 991px) {
@@ -2556,6 +2566,9 @@ footer .social_icon img {
   display: flex;
   align-items: center;
   gap: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* listing page css end */

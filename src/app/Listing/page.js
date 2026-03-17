@@ -60,7 +60,7 @@ function ListingContent() {
         if (meta.filter === "nearYou") {
           try {
             const pos = await new Promise((resolve, reject) =>
-              navigator.geolocation.getCurrentPosition(resolve, reject)
+              navigator.geolocation.getCurrentPosition(resolve, reject),
             );
             params.latitude = pos.coords.latitude;
             params.longitude = pos.coords.longitude;
@@ -142,7 +142,7 @@ function ListingContent() {
                       <div className="card-overlay">
                         <div className="overlay-content">
                           {/* timer for first 2 cards */}
-                          {index < 2 && (
+                          {/* {index < 2 && (
                             <div className="time_main">
                               <div className="timing_box">
                                 <span>
@@ -152,11 +152,9 @@ function ListingContent() {
                                 <span>06:34:15</span>
                               </div>
                             </div>
-                          )}
+                          )} */}
 
-                          <span className="artist-name">
-                            {item.eventTitle}
-                          </span>
+                          <span className="artist-name">{item.eventTitle}</span>
 
                           <div className="event-meta">
                             <span>
@@ -168,19 +166,19 @@ function ListingContent() {
                             <span>
                               <img src="/img/loc_icon.svg" alt="location" />{" "}
                               {item.venueAddress
-                                ? item.venueAddress.address
-                                  ? item.venueAddress.address.substring(0, 20) +
-                                  "..."
+                                ? item.venueAddress.city
+                                  ? item.venueAddress.city.length > 20
+                                    ? item.venueAddress.city.substring(0, 20) +
+                                      "..."
+                                    : item.venueAddress.city
                                   : "Location"
                                 : "Online"}
                             </span>
                           </div>
 
                           <div className="price-tag">
-                            from{" "}
-                            {item.ticketPrice
-                              ? `$${item.ticketPrice}`
-                              : "Free"}
+                            {/* from{" "} */}
+                            {item.ticketPrice ? `$${item.ticketPrice}` : "Free"}
                           </div>
                         </div>
                       </div>
