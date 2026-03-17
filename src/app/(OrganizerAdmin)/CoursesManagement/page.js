@@ -223,7 +223,9 @@ function CoursesManagement() {
                                                 />
                                                 <div>
                                                     <h5 className="d-flex align-items-center gap-2 flex-wrap">
-                                                        {course.courseTitle}
+                                                        <span className="text-truncate-1" style={{ maxWidth: "250px" }}>
+                                                            {course.courseTitle}
+                                                        </span>
                                                         {isFeaturedActive(course) && (
                                                             <span
                                                                 style={{
@@ -239,7 +241,7 @@ function CoursesManagement() {
                                                             </span>
                                                         )}
                                                     </h5>
-                                                    <p className="ref">
+                                                    <p className="ref text-truncate-1" style={{ maxWidth: "300px" }}>
                                                         {course.courseCategory?.name || "General"}
                                                     </p>
                                                     {isFeaturedActive(course) && (
@@ -259,7 +261,7 @@ function CoursesManagement() {
                                             <span className="status-badge">
                                                 {course.enrollmentType || "Ongoing"}
                                             </span>
-                                            <p>
+                                            <p className="text-truncate-1" style={{ maxWidth: "200px" }}>
                                                 Duration <span>{course.duration || "N/A"}</span>
                                             </p>
                                         </div>
@@ -349,7 +351,7 @@ function CoursesManagement() {
                 <Modal.Header closeButton style={{ background: "#1a1a1a", border: "1px solid #333" }}>
                     <Modal.Title style={{ color: "#fff" }}>
                         🚀 Promote:{" "}
-                        <span style={{ color: "#23ada4" }}>{selectedCourse?.courseTitle}</span>
+                        <span className="text-truncate-1" style={{ color: "#23ada4", maxWidth: "400px", display: "inline-block", verticalAlign: "bottom" }}>{selectedCourse?.courseTitle}</span>
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body style={{ background: "#1a1a1a", padding: "24px" }}>
@@ -383,7 +385,7 @@ function CoursesManagement() {
                                                     transition: "all 0.25s ease",
                                                     height: "100%",
                                                 }}>
-                                                <h5 style={{ color: "#fff", marginBottom: "4px" }}>{pkg.name}</h5>
+                                                <h5 className="text-truncate-1" style={{ color: "#fff", marginBottom: "4px" }}>{pkg.name}</h5>
                                                 <h3 style={{ color: "#23ada4", margin: "8px 0" }}>
                                                     ₮{pkg.price?.toLocaleString()}
                                                 </h3>

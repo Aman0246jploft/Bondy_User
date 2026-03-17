@@ -182,7 +182,7 @@ function page() {
               <Tab eventKey="ongoing" title="Ongoing" />
               <Tab eventKey="past" title="Past" />
             </Tabs>
-            <div className="dashboard-filter">
+            {/* <div className="dashboard-filter">
               <div>
                 <select className="form-select">
                   <option>Sort by</option>
@@ -190,7 +190,7 @@ function page() {
                   <option>Soonest</option>
                 </select>
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="ticket-listing">
@@ -219,7 +219,9 @@ function page() {
                         />
                         <div>
                           <h5 className="d-flex align-items-center gap-2 flex-wrap">
-                            {event.eventTitle}
+                            <span className="text-truncate-1" style={{ maxWidth: "250px" }}>
+                              {event.eventTitle}
+                            </span>
                             {isFeaturedActive(event) && (
                               <span
                                 style={{
@@ -235,7 +237,7 @@ function page() {
                               </span>
                             )}
                           </h5>
-                          <p className="ref">
+                          <p className="ref text-truncate-1" style={{ maxWidth: "300px" }}>
                             {event.eventCategory?.name || "General"}
                           </p>
                           {isFeaturedActive(event) && (
@@ -256,7 +258,7 @@ function page() {
                         className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}>
                         {event.status || "Upcoming"}
                       </span>
-                      <p>
+                      <p className="text-truncate-1" style={{ maxWidth: "200px" }}>
                         Venue <span>{event.venueName || "TBD"}</span>
                       </p>
                     </div>
@@ -368,7 +370,7 @@ function page() {
         <Modal.Header closeButton style={{ background: "#1a1a1a", border: "1px solid #333" }}>
           <Modal.Title style={{ color: "#fff" }}>
             🚀 Promote:{" "}
-            <span style={{ color: "#23ada4" }}>{selectedEvent?.eventTitle}</span>
+            <span className="text-truncate-1" style={{ color: "#23ada4", maxWidth: "400px", display: "inline-block", verticalAlign: "bottom" }}>{selectedEvent?.eventTitle}</span>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ background: "#1a1a1a", padding: "24px" }}>
@@ -402,7 +404,7 @@ function page() {
                           transition: "all 0.25s ease",
                           height: "100%",
                         }}>
-                        <h5 style={{ color: "#fff", marginBottom: "4px" }}>{pkg.name}</h5>
+                        <h5 className="text-truncate-1" style={{ color: "#fff", marginBottom: "4px" }}>{pkg.name}</h5>
                         <h3 style={{ color: "#23ada4", margin: "8px 0" }}>
                           ₮{pkg.price?.toLocaleString()}
                         </h3>

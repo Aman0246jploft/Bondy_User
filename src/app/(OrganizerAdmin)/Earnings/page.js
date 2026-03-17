@@ -61,7 +61,7 @@ function page() {
   const [payoutAmount, setPayoutAmount] = useState("");
   const [payoutReference, setPayoutReference] = useState("");
   const [payoutLoading, setPayoutLoading] = useState(false);
-  const MIN_PAYOUT = 1000;
+  const [minPayout, setMinPayout] = useState(1000); // Default fallback
 
   const fetchEarnings = useCallback(async () => {
     try {
@@ -74,6 +74,7 @@ function page() {
           walletHistory: res.data.walletHistory || [],
           payoutHistory: res.data.payoutHistory || [],
         });
+        if (res.data.minPayout) setMinPayout(res.data.minPayout);
       }
     } catch (err) {
       toast.error("Failed to load earnings");
@@ -104,8 +105,8 @@ function page() {
       toast.error("Enter a valid amount");
       return;
     }
-    if (amount < MIN_PAYOUT) {
-      toast.error(`Minimum payout amount is ₮${MIN_PAYOUT.toLocaleString()}`);
+    if (amount < minPayout) {
+      toast.error(`Minimum payout amount is ₮${minPayout.toLocaleString()}`);
       return;
     }
     if (amount > earnings.payoutBalance) {
@@ -374,7 +375,7 @@ function page() {
               Available Balance:{" "}
               <strong style={{ color: "#fff" }}>₮{earnings.payoutBalance.toLocaleString()}</strong>
               <span style={{ marginLeft: 12, color: "#aaa" }}>
-                Minimum: <strong style={{ color: "#fff" }}>₮{MIN_PAYOUT.toLocaleString()}</strong>
+                Minimum: <strong style={{ color: "#fff" }}>₮{minPayout.toLocaleString()}</strong>
               </span>
             </p>
 
@@ -383,16 +384,16 @@ function page() {
               <Form.Label>Amount (₮)</Form.Label>
               <Form.Control
                 type="number"
-                min={MIN_PAYOUT}
+                min={minPayout}
                 max={earnings.payoutBalance}
-                placeholder={`Min ₮${MIN_PAYOUT.toLocaleString()}`}
+                placeholder={`Min ₮${minPayout.toLocaleString()}`}
                 value={payoutAmount}
                 onChange={(e) => setPayoutAmount(e.target.value)}
                 required
               />
-              {Number(payoutAmount) > 0 && Number(payoutAmount) < MIN_PAYOUT && (
+              {Number(payoutAmount) > 0 && Number(payoutAmount) < minPayout && (
                 <Form.Text style={{ color: "#e74c3c" }}>
-                  Minimum payout is ₮{MIN_PAYOUT.toLocaleString()}
+                  Minimum payout is ₮{minPayout.toLocaleString()}
                 </Form.Text>
               )}
               {Number(payoutAmount) > earnings.payoutBalance && (
@@ -428,7 +429,7 @@ function page() {
                 payoutLoading ||
                 !payoutAmount ||
                 !payoutReference.trim() ||
-                Number(payoutAmount) < MIN_PAYOUT ||
+                Number(payoutAmount) < minPayout ||
                 Number(payoutAmount) > earnings.payoutBalance
               }
             >

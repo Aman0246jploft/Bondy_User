@@ -107,7 +107,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
         }
       } else {
         toast.error(res.message || "Invalid promo code");
-        setAppliedPromoCode(""); 
+        setAppliedPromoCode("");
         setPriceBreakdown(prev => ({
           ...prev,
           promoApplied: false,
@@ -223,11 +223,10 @@ export default function TicketBooking({ item, type, scheduleId }) {
             </div>
             {priceBreakdown?.promoMessage && (
               <div
-                className={`mb-4 ${
-                  priceBreakdown?.promoApplied 
+                className={`mb-4 ${priceBreakdown?.promoApplied
                     ? "text-success"
                     : "text-danger"
-                }`}
+                  }`}
               >
                 {priceBreakdown?.promoMessage}
               </div>
@@ -294,9 +293,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 >
                   <div className="method_left">
                     <div
-                      className={`radio_outer ${
-                        selectedMethod === "card" ? "active_radio" : ""
-                      }`}
+                      className={`radio_outer ${selectedMethod === "card" ? "active_radio" : ""
+                        }`}
                     >
                       {selectedMethod === "card" && (
                         <div className="radio_inner"></div>
@@ -331,9 +329,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 >
                   <div className="method_left">
                     <div
-                      className={`radio_outer ${
-                        selectedMethod === "qpay" ? "active_radio" : ""
-                      }`}
+                      className={`radio_outer ${selectedMethod === "qpay" ? "active_radio" : ""
+                        }`}
                     >
                       {selectedMethod === "qpay" && (
                         <div className="radio_inner"></div>
@@ -355,9 +352,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 >
                   <div className="method_left">
                     <div
-                      className={`radio_outer ${
-                        selectedMethod === "social" ? "active_radio" : ""
-                      }`}
+                      className={`radio_outer ${selectedMethod === "social" ? "active_radio" : ""
+                        }`}
                     >
                       {selectedMethod === "social" && (
                         <div className="radio_inner"></div>
