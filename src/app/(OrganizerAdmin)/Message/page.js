@@ -452,10 +452,9 @@ function MessageContent() {
                                 <div className="d-flex align-items-center justify-content-between mb-3">
                                     <h4 className="title m-0">Messages</h4>
                                     <div
-                                        className={`connection-status ${isSocketConnected ? "online" : "offline"}`}
+                                        className={`status-dot ${isSocketConnected ? "online" : "offline"}`}
                                         title={isSocketConnected ? "Connected" : "Disconnected"}
                                     >
-                                        ●
                                     </div>
                                 </div>
 
@@ -557,7 +556,7 @@ function MessageContent() {
                                                     {getOtherUser(activeChat).firstName}{" "}
                                                     {getOtherUser(activeChat).lastName}
                                                 </h5>
-                                                <small>
+                                                <small className={onlineUsers.has(getOtherUser(activeChat)._id) ? "online" : "offline"}>
                                                     {onlineUsers.has(getOtherUser(activeChat)._id) ? "Online" : "Offline"}
                                                 </small>
                                             </div>
@@ -680,79 +679,73 @@ function MessageContent() {
                                         </div>
 
                                         {/* MESSAGE INPUT */}
-                                        <div className="message-input" style={{ flexDirection: "column", alignItems: "stretch" }}>
+                                        <div className="message-input">
                                             {/* Staged file preview */}
                                             {stagedFile && (
                                                 <div style={{
                                                     display: "flex",
                                                     alignItems: "center",
-                                                    gap: "8px",
-                                                    padding: "6px 12px",
-                                                    background: "#222",
-                                                    borderRadius: "10px",
-                                                    marginBottom: "6px",
-                                                    border: "1px solid #3c3c3c",
+                                                    gap: "12px",
+                                                    padding: "10px 16px",
+                                                    background: "rgba(255, 255, 255, 0.05)",
+                                                    borderRadius: "16px",
+                                                    marginBottom: "12px",
+                                                    border: "1px solid var(--border-color)",
                                                 }}>
                                                     {stagedFile.fileType === "image" ? (
                                                         <img
                                                             src={stagedFile.localUrl}
                                                             alt="preview"
-                                                            style={{ height: "48px", width: "48px", objectFit: "cover", borderRadius: "6px" }}
+                                                            style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "8px" }}
                                                         />
                                                     ) : (
-                                                        <span style={{ fontSize: "22px" }}>📄</span>
+                                                        <span style={{ fontSize: "20px" }}>📄</span>
                                                     )}
-                                                    <span style={{ flex: 1, fontSize: "13px", color: "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                    <span style={{ flex: 1, fontSize: "13px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                         {stagedFile.name}
                                                     </span>
                                                     <button
                                                         onClick={() => setStagedFile(null)}
-                                                        style={{ background: "none", border: "none", color: "#ff5555", fontSize: "18px", cursor: "pointer", padding: "0 4px", lineHeight: 1 }}
+                                                        style={{ background: "none", border: "none", color: "#ff5555", fontSize: "16px", cursor: "pointer", padding: "4px" }}
                                                         title="Remove attachment"
                                                     >✕</button>
                                                 </div>
                                             )}
-                                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                <div className="icon-input-box">
-                                                    {/* Hidden file input */}
-                                                    <input
-                                                        ref={fileInputRef}
-                                                        type="file"
-                                                        accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
-                                                        style={{ display: "none" }}
-                                                        onChange={handleFileSelect}
-                                                    />
-                                                    <button
-                                                        className="clip-btn"
-                                                        onClick={() => fileInputRef.current?.click()}
-                                                        disabled={isUploading}
-                                                        title="Attach file"
-                                                        style={{
-                                                            background: "none",
-                                                            border: "none",
-                                                            cursor: isUploading ? "not-allowed" : "pointer",
-                                                            fontSize: "18px",
-                                                            padding: "0 8px",
-                                                            opacity: isUploading ? 0.5 : 1,
-                                                            flexShrink: 0,
-                                                        }}
-                                                    >
-                                                        {isUploading ? "⏳" : "📎"}
-                                                    </button>
-                                                    <input
-                                                        type="text"
-                                                        placeholder={stagedFile ? "Add a caption..." : "Your message..."}
-                                                        value={message}
-                                                        onChange={(e) => setMessage(e.target.value)}
-                                                        onKeyPress={handleKeyPress}
-                                                    />
-                                                    <div className="action-icon-chat"></div>
-                                                </div>
-                                                <div className="icons">
-                                                    <button onClick={sendMessage} className="send-btn" disabled={isUploading}>
-                                                        <img src="/img/send_chat.svg" alt="Send" />
-                                                    </button>
-                                                </div>
+                                            
+                                            <div className="input-container">
+                                                {/* Hidden file input */}
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                                                    style={{ display: "none" }}
+                                                    onChange={handleFileSelect}
+                                                />
+                                                
+                                                <button
+                                                    className="clip-btn"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    disabled={isUploading}
+                                                    title="Attach file"
+                                                >
+                                                    {isUploading ? "⏳" : "📎"}
+                                                </button>
+
+                                                <input
+                                                    type="text"
+                                                    placeholder={stagedFile ? "Add a caption..." : "Your message..."}
+                                                    value={message}
+                                                    onChange={(e) => setMessage(e.target.value)}
+                                                    onKeyPress={handleKeyPress}
+                                                />
+
+                                                <button 
+                                                    onClick={sendMessage} 
+                                                    className="send-btn" 
+                                                    disabled={isUploading || (!message.trim() && !stagedFile)}
+                                                >
+                                                    <img src="/img/send_chat.svg" alt="Send" />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
