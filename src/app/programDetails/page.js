@@ -8,6 +8,7 @@ import Reviews from "@/components/Reviews";
 import Header from "@/components/Header";
 import FAQ from "@/components/FAQ";
 import CommentsSection from "@/components/CommentsSection";
+import ExpandableText from "@/components/ExpandableText";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -138,7 +139,9 @@ function ProgramDetailsContent() {
             </Col>
 
             <Col lg={5} className="">
-              <p className="event-desc mb-4">{shortdesc}</p>
+              <div className="mb-4">
+                <ExpandableText text={shortdesc} limit={150} className="event-desc" />
+              </div>
               <div className="onwards_sec">
                 <h4 className="mb-0">
                   <span className="price-text">${price}</span> onwards
@@ -233,15 +236,12 @@ function ProgramDetailsContent() {
                 {/* Text Content Sections */}
                 <div className="content-section">
                   <h2 className="section-heading">Description</h2>
-                  <p className="section-text">{shortdesc}</p>
+                  <ExpandableText text={shortdesc} limit={300} />
                 </div>
-
-
-
 
                 <div className="content-section">
                   <h2 className="section-heading">What You Will Learn</h2>
-                  <p className="section-text">{whatYouWillLearn}</p>
+                  <ExpandableText text={whatYouWillLearn} limit={300} />
                 </div>
 
                 <div className="organization_profile">
@@ -363,7 +363,7 @@ function ProgramDetailsContent() {
           </Col>
         </Row>
 
-        <div className="recommended-section program_page">
+        {/* <div className="recommended-section program_page">
           <Row className="gy-5">
             <div className="fz_32">
               <h2>Event You May like</h2>
@@ -550,7 +550,7 @@ function ProgramDetailsContent() {
               </div>
             </Col>
           </Row>
-        </div>
+        </div> */}
       </Container>
 
       <FAQ />

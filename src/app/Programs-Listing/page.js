@@ -8,40 +8,50 @@ import { Container } from "react-bootstrap";
 import ProgramCart from "@/components/ProgramCart";
 import { useState, useEffect } from "react";
 import courseApi from "@/api/courseApi";
+import PaginationComponent from "@/components/PaginationComponent";
 
 export default function Page() {
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({});
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCourses: 0,
+    coursesPerPage: 10
+  });
 
+  const fetchPrograms = async (page = 1) => {
+    try {
+      setLoading(true);
+      const response = await courseApi.getCourses({ page, limit: 12 });
+
+      if (response.status && response.data) {
+        const data = response.data.data || response.data;
+        if (data.courses) {
+          setPrograms(data.courses);
+          setPagination({
+            currentPage: data.currentPage || 1,
+            totalPages: data.totalPages || 1,
+            totalCourses: data.totalCourses || 0,
+            coursesPerPage: data.coursesPerPage || 10,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching programs:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPrograms = async () => {
-      try {
-        const response = await courseApi.getCourses();
+    fetchPrograms(pagination.currentPage);
+  }, [pagination.currentPage]);
 
-
-
-        if (response.status && response.data.courses) {
-          setPrograms(response.data.courses || []);
-          setPagination(response.data.pagination || {});
-        } else if (
-          response.data &&
-          response.data.data &&
-          response.data.data.courses
-        ) {
-          setPrograms(response.data.data.courses || []);
-          setPagination(response.data.data.pagination || {});
-        }
-      } catch (error) {
-        console.error("Error fetching programs:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPrograms();
-  }, []);
+  const handlePageChange = (newPage) => {
+    setPagination(prev => ({ ...prev, currentPage: newPage }));
+    window.scrollTo(0, 0);
+  };
 
 
 
@@ -50,7 +60,20 @@ export default function Page() {
       <div className="listing_page">
         <div className="breadcrumb_text">
           <h1>Course</h1>
-          <p>"A Night to Remember: Adele Live with Her Greatest Hits " 🎶✨</p>
+          <p
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              wordBreak: 'break-word',
+              maxWidth: '800px',
+              margin: '0 auto'
+            }}
+          >
+            "A Night to Remember: Adele Live with Her Greatest Hits " 🎶✨
+          </p>
         </div>
         <Header />
       </div>
@@ -79,9 +102,15 @@ export default function Page() {
 
       <ProgramCart programsArray={programs} pagination={pagination} />
 
-      <div className="ms-auto me-auto mt-4 text-center mb-5 mt-5">
+      <PaginationComponent
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        onPageChange={handlePageChange}
+      />
+
+      {/* <div className="ms-auto me-auto mt-4 text-center mb-5 mt-5">
         <button className="common_btn">View More Concerts</button>
-      </div>
+      </div> */}
 
       <FAQ />
       <Footer />

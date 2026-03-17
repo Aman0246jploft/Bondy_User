@@ -5511,6 +5511,7 @@ a.view-map {
   padding: 6px 15px;
   font-size: 12px;
   transition: all 0.3s;
+  text-transform: capitalize;
 }
 
 .MUiltiSelect .category-checkbox:checked + .category-label {
@@ -5592,6 +5593,10 @@ a.view-map {
   font-weight: 700;
   line-height: normal;
   text-transform: capitalize;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .Explore_sec .description {
@@ -5601,6 +5606,13 @@ a.view-map {
   font-weight: 510;
   line-height: normal;
   margin-bottom: 25px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 38px;
 }
 
 .Explore_sec .info-list {
@@ -5619,6 +5631,10 @@ a.view-map {
   gap: 12px;
   color: #cfcfcf;
   font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
 
 .Explore_sec .info-icon {

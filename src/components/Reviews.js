@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { Container, Row, Col, Button } from 'react-bootstrap';
+import ExpandableText from './ExpandableText';
 
 const reviewData = [
   {
@@ -40,7 +41,7 @@ export default function Reviews() {
                     <img src={review.img} alt={review.name} className="review-avatar" />
                     <div>
                       <h6 className="review-name">{review.name}</h6>
-                      <p className="review-text">{review.text}</p>
+                      <ExpandableText text={review.text} limit={200} className="review-text" />
                     </div>
                   </div>
                   <span className="review-date">{review.date}</span>

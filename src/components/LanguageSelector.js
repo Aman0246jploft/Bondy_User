@@ -15,7 +15,7 @@ const availableLanguages = [
     code: "mn",
     label: "Mon",
     name: "Mongolian (MN)",
-    flag: "/img/Flag_of_Mongolia.svg.png", // Fallback flag placeholder
+    flag: "/img/Flag_of_Mongolia.svg.png",
   }
 ];
 

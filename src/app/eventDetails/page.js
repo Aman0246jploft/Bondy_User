@@ -12,6 +12,7 @@ import Reviews from "@/components/Reviews";
 import Header from "@/components/Header";
 import FAQ from "@/components/FAQ";
 import CommentsSection from "@/components/CommentsSection";
+import ExpandableText from "@/components/ExpandableText";
 import Footer from "@/components/Footer";
 import EventSection from "@/components/EventSection";
 import Link from "next/link";
@@ -132,7 +133,9 @@ function EventDetailsContent() {
             </Col>
 
             <Col lg={5} className="">
-              <p className="event-desc mb-4">{event?.shortdesc}</p>
+              <div className="mb-4">
+                <ExpandableText text={event?.shortdesc} limit={150} className="event-desc" />
+              </div>
               <div className="onwards_sec">
                 <h4 className="mb-0">
                   <span className="price-text">${event?.ticketPrice} </span>
@@ -252,12 +255,12 @@ function EventDetailsContent() {
                 {/* Text Content Sections */}
                 <div className="content-section">
                   <h2 className="section-heading">{event?.eventTitle}</h2>
-                  <p className="section-text">{event?.shortdesc}</p>
+                  <ExpandableText text={event?.shortdesc} limit={300} />
                 </div>
 
                 <div className="content-section">
                   <h3 className="section-heading">What to expect</h3>
-                  <p className="section-text">{event?.longdesc}</p>
+                  <ExpandableText text={event?.longdesc} limit={300} />
                 </div>
 
                 {/* Event Gallery Section */}

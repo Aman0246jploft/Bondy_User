@@ -4,6 +4,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import eventApi from "@/api/eventApi";
 import courseApi from "@/api/courseApi";
 import ProgramCart from './ProgramCart';
+import PaginationComponent from './PaginationComponent';
 
 const categories = [
   { label: "Upcoming", value: "upcoming" },
@@ -34,13 +35,12 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
             page: currentPage,
             categoryId: categoryId
           });
-          console.log(`Events for ${filter} cat=${categoryId}:`, response);
-          if (response?.data?.events) {
-            setItems(response.data.events);
-            setTotalPages(response.data.totalPages || 1);
-          } else if (response?.data?.data?.events) {
-            setItems(response.data.data.events);
-            setTotalPages(response.data.data.totalPages || 1);
+          const eventData = response?.data?.data || response?.data || response;
+          if (eventData?.events) {
+            setItems(eventData.events);
+            // Calculate totalPages for events: data.total / data.limit
+            const tPages = eventData.totalPages || (eventData.total ? Math.ceil(eventData.total / (eventData.limit || limit)) : 1);
+            setTotalPages(tPages);
           } else {
             setItems([]);
             setTotalPages(1);
@@ -52,13 +52,10 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
             page: currentPage,
             categoryId: categoryId
           });
-          console.log(`Courses for ${filter} cat=${categoryId}:`, response);
-          if (response?.status && response?.data?.courses) {
-            setItems(response.data.courses);
-            setTotalPages(response.data.totalPages || 1);
-          } else if (response?.data?.data?.courses) {
-            setItems(response.data.data.courses);
-            setTotalPages(response.data.data.totalPages || 1);
+          const courseData = response?.data?.data || response?.data || response;
+          if (courseData?.courses) {
+            setItems(courseData.courses);
+            setTotalPages(courseData.totalPages || 1);
           } else {
             setItems([]);
             setTotalPages(1);
@@ -115,7 +112,7 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
               const isEvent = type === "Events";
               const linkHref = isEvent
                 ? `/eventDetails?id=${item._id}`
-                : `/courseDetails?id=${item._id}`;
+                : `/programDetails?id=${item._id}`;
               const image = isEvent
                 ? (item.posterImage?.[0] || "/img/image_explore.png")
                 : (item.posterImage?.[0] || "/img/image_explore.png");
@@ -141,22 +138,47 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
 
                       <Col md={7}>
                         <div className="content-box">
-                          <h2 className="title">{title}</h2>
-                          <p className="description">{description}</p>
+                          <h2 className="title"
+                            title={title}
+                            style={{
+                              display: '-webkit-box',
+                              WebkitLineClamp: 1,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              wordBreak: 'break-word'
+                            }}
+                          >
+                            {title}
+                          </h2>
+                          <p className="description"
+                            title={description}
+                            style={{
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              wordBreak: 'break-word',
+                              minHeight: '3em'
+                            }}
+                          >
+                            {description}
+                          </p>
 
                           <div className="info-list">
-                            <div className="info-item">
+                            <div className="info-item" title={item.venueAddress?.city} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
                               <img src="/img/locationEX_icon.svg" className='info-icon' alt="icon" />
                               {item.venueAddress?.city || "Location not available"}
                             </div>
-                            <div className="info-item">
+                            <div className="info-item" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
                               <img src="/img/DateEX_icon.svg" className='info-icon' alt="icon" />
                               {isEvent
                                 ? new Date(item.startDate).toLocaleDateString()
                                 : (item.currentSchedule ? new Date(item.currentSchedule.startDate).toLocaleDateString() : "Date N/A")
                               }
                             </div>
-                            <div className="info-item">
+                            <div className="info-item" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
                               <img src="/img/UserEX_icon.svg" className='info-icon' alt="icon" />
                               {isEvent ? item.totalAttendees : item.acquiredSeats || 0} attendees
                             </div>
@@ -169,28 +191,11 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
               );
             })}
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="d-flex justify-content-center align-items-center mt-4 mb-5">
-                <button
-                  className="btn btn-outline-primary me-3"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </button>
-                <span className="mx-3 fw-bold">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  className="btn btn-outline-primary ms-3"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </button>
-              </div>
-            )}
+            <PaginationComponent
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </>
         ) : (
           <div className="text-center py-5">

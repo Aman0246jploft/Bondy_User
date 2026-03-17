@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button, Form, Spinner } from "react-bootstrap";
 import commentApi from "../api/commentApi";
 import { getFullImageUrl } from "../utils/imageHelper";
+import ExpandableText from "./ExpandableText";
 
 const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }) => {
     const [showReplyForm, setShowReplyForm] = useState(false);
@@ -78,21 +79,20 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
                 height={depth > 0 ? "40" : "48"}
             />
             <div className="flex-grow-1">
-                <div className="bg-light p-3 rounded-3 shadow-sm">
-                    <h6 className="mb-1 text-dark fw-bold" style={{ fontSize: depth > 0 ? "0.9rem" : "1rem" }}>
+                <div className="p-3 rounded-3 shadow-sm" style={{ backgroundColor: "#1e1e1e", border: "1px solid #333" }}>
+                    <h6 className="mb-1 fw-bold" style={{ fontSize: depth > 0 ? "0.9rem" : "1rem", color: "var(--white, #fff)" }}>
                         {comment.user?.firstName} {comment.user?.lastName}
                     </h6>
-                    <p className="mb-0 text-secondary" style={{ fontSize: depth > 0 ? "0.9rem" : "0.95rem" }}>
-                        {comment.content}
-                    </p>
+                    <ExpandableText text={comment.content} limit={depth > 0 ? 150 : 250} className="mb-0" />
                 </div>
 
                 <div className="d-flex align-items-center mt-2 ms-2" style={{ fontSize: "0.85rem" }}>
-                    <span className="text-muted me-3">
+                    <span className="me-3" style={{ color: "#777" }}>
                         {new Date(comment.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                     <button
-                        className="btn btn-link p-0 text-decoration-none text-muted fw-semibold me-3"
+                        className="btn btn-link p-0 text-decoration-none fw-semibold me-3"
+                        style={{ color: "#999" }}
                         onClick={() => setShowReplyForm(!showReplyForm)}
                     >
                         Reply
@@ -100,7 +100,8 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
 
                     {comment.totalReplies > 0 && (
                         <button
-                            className="btn btn-link p-0 text-decoration-none text-primary fw-semibold"
+                            className="btn btn-link p-0 text-decoration-none fw-semibold"
+                            style={{ color: "var(--primary-teal, #23ada4)" }}
                             onClick={handleToggleReplies}
                         >
                             {showReplies ? "Hide Replies" : `View ${comment.totalReplies} Replies`}
@@ -118,13 +119,20 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
                             onChange={(e) => setReplyContent(e.target.value)}
                             className="me-2"
                             onKeyPress={(e) => { if (e.key === 'Enter') handleReplySubmit(e); }}
+                            style={{ 
+                                backgroundColor: "#111", 
+                                color: "#fff", 
+                                border: "1px solid #444", 
+                                borderRadius: "20px",
+                                paddingLeft: "15px"
+                            }}
                         />
                         <Button
                             variant="primary"
                             size="sm"
                             disabled={!replyContent.trim() || submitting}
                             onClick={handleReplySubmit}
-                            style={{ backgroundColor: "#26a69a", borderColor: "#26a69a", whiteSpace: "nowrap" }}
+                            style={{ backgroundColor: "var(--primary-teal, #23ada4)", borderColor: "var(--primary-teal, #23ada4)", whiteSpace: "nowrap" }}
                         >
                             {submitting ? <Spinner animation="border" size="sm" /> : "Post"}
                         </Button>
@@ -237,8 +245,8 @@ export default function CommentsSection({ entityId, entityModel }) {
     }
 
     return (
-        <div className="comments-section mt-5 pt-4 border-top">
-            <h3 className="mb-4">Comments ({total})</h3>
+        <div className="comments-section mt-5 pt-4" style={{ borderTop: "1px solid #333" }}>
+            <h3 className="mb-4" style={{ color: "var(--white, #fff)" }}>Comments ({total})</h3>
 
             <div className="mb-5 d-flex align-items-start">
 
@@ -256,10 +264,10 @@ export default function CommentsSection({ entityId, entityModel }) {
                 </div>
                 <div className="d-flex align-items-end h-100 mt-2">
                     <Button
-                        className="common_btn mt-"
+                        className="common_btn"
                         disabled={!newComment.trim() || submitting}
                         onClick={handleCommentSubmit}
-                        style={{ backgroundColor: "#26a69a", border: "none" }}
+                        style={{ border: "none" }}
                     >
                         {submitting ? <Spinner animation="border" size="sm" /> : "Add Comment"}
                     </Button>
@@ -286,7 +294,7 @@ export default function CommentsSection({ entityId, entityModel }) {
                                 <Button
                                     variant="outline-secondary"
                                     onClick={loadMore}
-                                    style={{ borderRadius: "20px" }}
+                                    style={{ borderRadius: "20px", color: "#999", borderColor: "#444" }}
                                 >
                                     Load More Comments
                                 </Button>
@@ -297,6 +305,13 @@ export default function CommentsSection({ entityId, entityModel }) {
                     <p className="text-muted text-center py-4">No comments yet. Be the first to comment!</p>
                 )}
             </div>
+            <style jsx>{`
+                .comments-section textarea::placeholder,
+                .comments-section :global(.form-control::placeholder) {
+                    color: #777 !important;
+                    opacity: 1;
+                }
+            `}</style>
         </div>
     );
 }

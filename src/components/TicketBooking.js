@@ -19,11 +19,12 @@ export default function TicketBooking({ item, type, scheduleId }) {
     taxes: 0,
     discount: 0,
     totalAmount: 0,
+    promoApplied: false,
+    promoMessage: null,
   });
 
   const [promoCode, setPromoCode] = useState(""); // Input value
   const [appliedPromoCode, setAppliedPromoCode] = useState(""); // Validated/Applied value
-  const [promoMessage, setPromoMessage] = useState(null); // { type: 'success' | 'error', text: '' }
   const [transactionId, setTransactionId] = useState(null); // Store initiated transaction ID
 
   // Calculate booking details when qty or appliedPromoCode changes
@@ -45,6 +46,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
         }
 
         const res = await bookingApi.calculateBooking(payload);
+        console.log("Booking breakdown response:", res);
 
         if (res.status) {
           setPriceBreakdown({
@@ -52,6 +54,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
             taxes: res.data.breakdown.taxAmount,
             discount: res.data.breakdown.discountAmount,
             totalAmount: res.data.breakdown.totalAmount,
+            promoMessage: res.data.breakdown.promoMessage || null,
+            promoApplied: res.data.breakdown.promoApplied || false,
           });
         }
       } catch (error) {
@@ -63,7 +67,6 @@ export default function TicketBooking({ item, type, scheduleId }) {
   }, [item, qty, appliedPromoCode, type, scheduleId]);
 
   const handleApplyPromo = async () => {
-    setPromoMessage(null);
     if (!promoCode.trim()) {
       toast.error("Please enter a promo code");
       return;
@@ -86,29 +89,41 @@ export default function TicketBooking({ item, type, scheduleId }) {
       const res = await bookingApi.calculateBooking(payload);
 
       if (res.status) {
-        setAppliedPromoCode(promoCode);
         setPriceBreakdown({
           basePrice: res.data.breakdown.basePrice,
           taxes: res.data.breakdown.taxAmount,
           discount: res.data.breakdown.discountAmount,
           totalAmount: res.data.breakdown.totalAmount,
+          promoMessage: res.data.breakdown.promoMessage || null,
+          promoApplied: res.data.breakdown.promoApplied || false,
         });
-        setPromoMessage({ type: "success", text: "Promo code applied!" });
-        toast.success("Promo code applied!");
+
+        if (res.data.breakdown.promoApplied) {
+          setAppliedPromoCode(promoCode);
+          toast.success(res.data.breakdown.promoMessage || "Promo code applied!");
+        } else {
+          setAppliedPromoCode("");
+          toast.error(res.data.breakdown.promoMessage || "Invalid promo code");
+        }
       } else {
         toast.error(res.message || "Invalid promo code");
-        setAppliedPromoCode(""); // Reset if invalid
-        setPromoMessage({
-          type: "error",
-          text: res.message || "Invalid promo code",
-        });
+        setAppliedPromoCode(""); 
+        setPriceBreakdown(prev => ({
+          ...prev,
+          promoApplied: false,
+          promoMessage: res.message || "Invalid promo code"
+        }));
       }
     } catch (error) {
       console.error("Promo code error:", error);
       const msg = error?.response?.data?.message || "Invalid promo code";
       toast.error(msg);
       setAppliedPromoCode("");
-      setPromoMessage({ type: "error", text: msg });
+      setPriceBreakdown(prev => ({
+        ...prev,
+        promoApplied: false,
+        promoMessage: msg
+      }));
     }
   };
 
@@ -206,14 +221,15 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 APPLY
               </button>
             </div>
-            {promoMessage && (
+            {priceBreakdown?.promoMessage && (
               <div
-                className={`mb-4 ${promoMessage.type === "success"
-                  ? "text-success"
-                  : "text-danger"
-                  }`}
+                className={`mb-4 ${
+                  priceBreakdown?.promoApplied 
+                    ? "text-success"
+                    : "text-danger"
+                }`}
               >
-                {promoMessage.text}
+                {priceBreakdown?.promoMessage}
               </div>
             )}
 
@@ -278,8 +294,9 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 >
                   <div className="method_left">
                     <div
-                      className={`radio_outer ${selectedMethod === "card" ? "active_radio" : ""
-                        }`}
+                      className={`radio_outer ${
+                        selectedMethod === "card" ? "active_radio" : ""
+                      }`}
                     >
                       {selectedMethod === "card" && (
                         <div className="radio_inner"></div>
@@ -314,8 +331,9 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 >
                   <div className="method_left">
                     <div
-                      className={`radio_outer ${selectedMethod === "qpay" ? "active_radio" : ""
-                        }`}
+                      className={`radio_outer ${
+                        selectedMethod === "qpay" ? "active_radio" : ""
+                      }`}
                     >
                       {selectedMethod === "qpay" && (
                         <div className="radio_inner"></div>
@@ -337,8 +355,9 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 >
                   <div className="method_left">
                     <div
-                      className={`radio_outer ${selectedMethod === "social" ? "active_radio" : ""
-                        }`}
+                      className={`radio_outer ${
+                        selectedMethod === "social" ? "active_radio" : ""
+                      }`}
                     >
                       {selectedMethod === "social" && (
                         <div className="radio_inner"></div>

@@ -63,8 +63,31 @@ const ProgramCart = ({ programsArray, pagination }) => {
                     <div className="program_cart_inner">
                       <Link href={`/programDetails?id=${program?._id}`}>
                         <div className="program_cart_cntent">
-                          <h4>{program?.courseTitle}</h4>
-                          <span>{program?.courseCategory?.categoryName}</span>
+                          <h4
+                            title={program?.courseTitle}
+                            style={{
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              wordBreak: 'break-word',
+                              minHeight: '2.8em' // Optional: maintain consistent height
+                            }}
+                          >
+                            {program?.courseTitle}
+                          </h4>
+                          <span
+                            title={program?.courseCategory?.categoryName}
+                            style={{
+                              display: 'block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {program?.courseCategory?.categoryName}
+                          </span>
                         </div>
                       </Link>
                       <Link href="/profile">
@@ -76,25 +99,45 @@ const ProgramCart = ({ programsArray, pagination }) => {
                         />
                       </Link>
                     </div>
-                    <ul className="program_time">
-                      <li>
-                        <img src="/img/session_icon.svg" /> {program?.duration}
-                      </li>
-                      <li>
-                        <img src="/img/time_icon.svg" />
+                    <div
+                      className="program_time_grid"
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '12px 10px',
+                        marginBottom: '15px'
+                      }}
+                    >
+                      <div title={program?.duration} style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
+                        <img src="/img/session_icon.svg" style={{ width: '16px', height: '16px' }} /> {program?.duration}
+                      </div>
+                      <div title={`${program?.schedules?.length} sessions`} style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
+                        <img src="/img/time_icon.svg" style={{ width: '16px', height: '16px' }} />
                         {program?.schedules?.length} sessions
-                      </li>
+                      </div>
 
-                      <li>
-                        <img src="/img/0date_icon.svg" />{" "}
+                      <div
+                        title={`${formatDate(program?.currentSchedule?.startDate)} – ${formatDate(program?.currentSchedule?.endDate)}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          gridColumn: 'span 2',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          color: 'var(--white, #fff)'
+                        }}
+                      >
+                        <img src="/img/0date_icon.svg" style={{ width: '16px', height: '16px' }} />{" "}
                         {formatDate(program?.currentSchedule?.startDate)} –{" "}
                         {formatDate(program?.currentSchedule?.endDate)}
-                      </li>
-                    </ul>
-                    <div className="price_align">
+                      </div>
+                    </div>
+                    <div className="price_align" style={{ marginTop: 'auto' }}>
                       {!program?.currentSchedule?.isFull ? (
                         <>
-                          <span>${program?.price}</span>
+                          <span style={{ fontWeight: '700' }}>${program?.price}</span>
                           <Link
                             href={
                               program?.currentSchedule?._id
@@ -108,7 +151,7 @@ const ProgramCart = ({ programsArray, pagination }) => {
                         </>
                       ) : (
                         <>
-                          <span className="redText">Seats Full</span>
+                          <span className="redText" style={{ fontWeight: '700' }}>Seats Full</span>
                           <Link href="" className="common_btn">
                             Join Waitlist
                           </Link>
