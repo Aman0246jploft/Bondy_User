@@ -94,7 +94,7 @@ function page() {
     try {
       const res = await promotionsApi.getEventPackages();
       if (res?.status) {
-        setPromoPackages(res.data || []);
+        setPromoPackages(res?.data?.packages || []);
       }
     } catch (err) {
       toast.error("Failed to load promotion packages");
@@ -199,134 +199,139 @@ function page() {
             ) : events.length === 0 ? (
               <p className="text-center py-5">No events found.</p>
             ) : (
-              events.map((event) => (
-                <div className="ticket-cards" key={event._id}>
-                  <div className="ticket-inner">
-                    <div className="ticket-lft">
-                      <Form.Check />
-                      <div className="event-info-box-img">
-                        <img
-                          src={
-                            event.posterImage?.[0] || "/img/details_img02.png"
-                          }
-                          alt={event.eventTitle}
-                          style={{
-                            width: "80px",
-                            height: "80px",
-                            objectFit: "cover",
-                            borderRadius: "8px",
-                          }}
-                        />
-                        <div>
-                          <h5 className="d-flex align-items-center gap-2 flex-wrap">
-                            <span className="text-truncate-1" style={{ maxWidth: "250px" }}>
-                              {event.eventTitle}
-                            </span>
-                            {isFeaturedActive(event) && (
-                              <span
-                                style={{
-                                  background: "linear-gradient(135deg, #f6d365, #fda085)",
-                                  color: "#fff",
-                                  fontSize: "11px",
-                                  fontWeight: 600,
-                                  padding: "2px 10px",
-                                  borderRadius: "20px",
-                                  letterSpacing: "0.5px",
-                                }}>
-                                ⭐ Featured
+              events.map((event) => {
+                const status = event.status?.toLowerCase();
+                const isPastOrEnded =
+                  status === "past" || new Date(event.endDate) < new Date();
+
+                return (
+                  <div className="ticket-cards" key={event._id}>
+                    <div className="ticket-inner">
+                      <div className="ticket-lft">
+                        <Form.Check />
+                        <div className="event-info-box-img">
+                          <img
+                            src={
+                              event.posterImage?.[0] || "/img/details_img02.png"
+                            }
+                            alt={event.eventTitle}
+                            style={{
+                              width: "80px",
+                              height: "80px",
+                              objectFit: "cover",
+                              borderRadius: "8px",
+                            }}
+                          />
+                          <div>
+                            <h5 className="d-flex align-items-center gap-2 flex-wrap">
+                              <span className="text-truncate-1" style={{ maxWidth: "250px" }}>
+                                {event.eventTitle}
                               </span>
-                            )}
-                          </h5>
-                          <p className="ref text-truncate-1" style={{ maxWidth: "300px" }}>
-                            {event.eventCategory?.name || "General"}
-                          </p>
-                          {isFeaturedActive(event) && (
-                            <p style={{ fontSize: "11px", color: "#fda085", margin: 0 }}>
-                              Featured until{" "}
-                              {new Date(event.featuredExpiry).toLocaleDateString("en-GB", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              })}
+                              {isFeaturedActive(event) && (
+                                <span
+                                  style={{
+                                    background: "linear-gradient(135deg, #f6d365, #fda085)",
+                                    color: "#fff",
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    padding: "2px 10px",
+                                    borderRadius: "20px",
+                                    letterSpacing: "0.5px",
+                                  }}>
+                                  ⭐ Featured
+                                </span>
+                              )}
+                            </h5>
+                            <p className="ref text-truncate-1" style={{ maxWidth: "300px" }}>
+                              {event.eventCategory?.name || "General"}
                             </p>
-                          )}
+                            {isFeaturedActive(event) && (
+                              <p style={{ fontSize: "11px", color: "#fda085", margin: 0 }}>
+                                Featured until{" "}
+                                {new Date(event.featuredExpiry).toLocaleDateString("en-GB", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
+                      <div className="ticket-rgt">
+                        <span
+                          className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}>
+                          {event.status || "Upcoming"}
+                        </span>
+                        <p className="text-truncate-1" style={{ maxWidth: "200px" }}>
+                          Venue <span>{event.venueName || "TBD"}</span>
+                        </p>
+                      </div>
                     </div>
-                    <div className="ticket-rgt">
-                      <span
-                        className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}>
-                        {event.status || "Upcoming"}
-                      </span>
-                      <p className="text-truncate-1" style={{ maxWidth: "200px" }}>
-                        Venue <span>{event.venueName || "TBD"}</span>
+                    <div className="ticket-bottom">
+                      <p>
+                        Create Date{" "}
+                        <span>
+                          {new Date(event.createdAt).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </span>{" "}
+                        <span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="4"
+                            height="4"
+                            viewBox="0 0 4 4"
+                            fill="none">
+                            <circle cx="2" cy="2" r="2" fill="#999999" />
+                          </svg>
+                        </span>{" "}
+                        <span>
+                          {new Date(event.startDate).toLocaleTimeString("en-US", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
+                        </span>
                       </p>
+                      <p>
+                        Total Booking Revenue{" "}
+                        <span>${event.totalRevenue?.toLocaleString() || 0}</span>
+                      </p>
+                      <p>
+                        <span>
+                          <img src="/img/ticket-white.svg" alt="ticket" />
+                        </span>{" "}
+                        <span>{event.totalTickets || 0} tickets</span>
+                      </p>
+                      {!isPastOrEnded && (
+                        <Link href={`/BasicInfo?eventId=${event._id}`}>
+                          Edit <img src="/img/Arrow-Right.svg" alt="arrow" />
+                        </Link>
+                      )}
+                      <Link href={`/EventDetailOrganiser?eventId=${event._id}`}>
+                        Event Details{" "}
+                        <img src="/img/Arrow-Right.svg" alt="arrow" />
+                      </Link>
+                      {!isPastOrEnded && (
+                        isFeaturedActive(event) ? (
+                          <span style={{ color: "#fda085", fontSize: "13px", fontWeight: 500 }}>
+                            ⭐ Active Promotion
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="custom-btn"
+                            style={{ padding: "8px 16px", fontSize: "13px" }}
+                            onClick={() => openPromoModal(event)}>
+                            🚀 Promote
+                          </button>
+                        )
+                      )}
                     </div>
                   </div>
-                  <div className="ticket-bottom">
-                    <p>
-                      Create Date{" "}
-                      <span>
-                        {new Date(event.createdAt).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </span>{" "}
-                      <span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="4"
-                          height="4"
-                          viewBox="0 0 4 4"
-                          fill="none">
-                          <circle cx="2" cy="2" r="2" fill="#999999" />
-                        </svg>
-                      </span>{" "}
-                      <span>
-                        {new Date(event.startDate).toLocaleTimeString("en-US", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </p>
-                    <p>
-                      Total Booking Revenue{" "}
-                      <span>${event.totalRevenue?.toLocaleString() || 0}</span>
-                    </p>
-                    <p>
-                      <span>
-                        <img src="/img/ticket-white.svg" alt="ticket" />
-                      </span>{" "}
-                      <span>{event.totalTickets || 0} tickets</span>
-                    </p>
-
-                    <Link href={`/BasicInfo?eventId=${event._id}`}>
-                      Edit{" "}
-                      <img src="/img/Arrow-Right.svg" alt="arrow" />
-                    </Link>
-
-                    <Link href={`/EventDetailOrganiser/${event._id}`}>
-                      Event Details{" "}
-                      <img src="/img/Arrow-Right.svg" alt="arrow" />
-                    </Link>
-
-                    {/* Promote button — shows "Active Promotion" if already featured */}
-                    {isFeaturedActive(event) ? (
-                      <span style={{ color: "#fda085", fontSize: "13px", fontWeight: 500 }}>
-                        ⭐ Active Promotion
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        className="custom-btn"
-                        style={{ padding: "8px 16px", fontSize: "13px" }}
-                        onClick={() => openPromoModal(event)}>
-                        🚀 Promote
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 

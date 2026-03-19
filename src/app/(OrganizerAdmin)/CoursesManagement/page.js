@@ -116,7 +116,7 @@ function CoursesManagement() {
         try {
             const res = await promotionsApi.getCoursePackages();
             if (res?.status) {
-                setPromoPackages(res.data || []);
+                setPromoPackages(res?.data?.packages || []);
             }
         } catch (err) {
             toast.error("Failed to load promotion packages");
@@ -203,110 +203,116 @@ function CoursesManagement() {
                         ) : courses.length === 0 ? (
                             <p className="text-center py-5">No courses found.</p>
                         ) : (
-                            courses.map((course) => (
-                                <div className="ticket-cards" key={course._id}>
-                                    <div className="ticket-inner">
-                                        <div className="ticket-lft">
-                                            <Form.Check />
-                                            <div className="event-info-box-img">
-                                                <img
-                                                    src={
-                                                        course.posterImage?.[0] || "/img/details_img02.png"
-                                                    }
-                                                    alt={course.courseTitle}
-                                                    style={{
-                                                        width: "80px",
-                                                        height: "80px",
-                                                        objectFit: "cover",
-                                                        borderRadius: "8px",
-                                                    }}
-                                                />
-                                                <div>
-                                                    <h5 className="d-flex align-items-center gap-2 flex-wrap">
-                                                        <span className="text-truncate-1" style={{ maxWidth: "250px" }}>
-                                                            {course.courseTitle}
-                                                        </span>
-                                                        {isFeaturedActive(course) && (
-                                                            <span
-                                                                style={{
-                                                                    background: "linear-gradient(135deg, #f6d365, #fda085)",
-                                                                    color: "#fff",
-                                                                    fontSize: "11px",
-                                                                    fontWeight: 600,
-                                                                    padding: "2px 10px",
-                                                                    borderRadius: "20px",
-                                                                    letterSpacing: "0.5px",
-                                                                }}>
-                                                                ⭐ Featured
+                            courses.map((course) => {
+                                const isPast = course.status?.toLowerCase() === "past";
+                                return (
+                                    <div className="ticket-cards" key={course._id}>
+                                        <div className="ticket-inner">
+                                            <div className="ticket-lft">
+                                                <Form.Check />
+                                                <div className="event-info-box-img">
+                                                    <img
+                                                        src={
+                                                            course.posterImage?.[0] || "/img/details_img02.png"
+                                                        }
+                                                        alt={course.courseTitle}
+                                                        style={{
+                                                            width: "80px",
+                                                            height: "80px",
+                                                            objectFit: "cover",
+                                                            borderRadius: "8px",
+                                                        }}
+                                                    />
+                                                    <div>
+                                                        <h5 className="d-flex align-items-center gap-2 flex-wrap">
+                                                            <span className="text-truncate-1" style={{ maxWidth: "250px" }}>
+                                                                {course.courseTitle}
                                                             </span>
-                                                        )}
-                                                    </h5>
-                                                    <p className="ref text-truncate-1" style={{ maxWidth: "300px" }}>
-                                                        {course.courseCategory?.name || "General"}
-                                                    </p>
-                                                    {isFeaturedActive(course) && (
-                                                        <p style={{ fontSize: "11px", color: "#fda085", margin: 0 }}>
-                                                            Featured until{" "}
-                                                            {new Date(course.featuredExpiry).toLocaleDateString("en-GB", {
-                                                                day: "numeric",
-                                                                month: "short",
-                                                                year: "numeric",
-                                                            })}
+                                                            {isFeaturedActive(course) && (
+                                                                <span
+                                                                    style={{
+                                                                        background: "linear-gradient(135deg, #f6d365, #fda085)",
+                                                                        color: "#fff",
+                                                                        fontSize: "11px",
+                                                                        fontWeight: 600,
+                                                                        padding: "2px 10px",
+                                                                        borderRadius: "20px",
+                                                                        letterSpacing: "0.5px",
+                                                                    }}>
+                                                                    ⭐ Featured
+                                                                </span>
+                                                            )}
+                                                        </h5>
+                                                        <p className="ref text-truncate-1" style={{ maxWidth: "300px" }}>
+                                                            {course.courseCategory?.name || "General"}
                                                         </p>
-                                                    )}
+                                                        {isFeaturedActive(course) && (
+                                                            <p style={{ fontSize: "11px", color: "#fda085", margin: 0 }}>
+                                                                Featured until{" "}
+                                                                {new Date(course.featuredExpiry).toLocaleDateString("en-GB", {
+                                                                    day: "numeric",
+                                                                    month: "short",
+                                                                    year: "numeric",
+                                                                })}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <div className="ticket-rgt">
+                                                <span className="status-badge">
+                                                    {course.enrollmentType || "Ongoing"}
+                                                </span>
+                                                <p className="text-truncate-1" style={{ maxWidth: "200px" }}>
+                                                    Duration <span>{course.duration || "N/A"}</span>
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="ticket-rgt">
-                                            <span className="status-badge">
-                                                {course.enrollmentType || "Ongoing"}
-                                            </span>
-                                            <p className="text-truncate-1" style={{ maxWidth: "200px" }}>
-                                                Duration <span>{course.duration || "N/A"}</span>
+                                        <div className="ticket-bottom">
+                                            <p>
+                                                Price <span>${course.price?.toFixed(2) || 0}</span>
                                             </p>
+                                            <p>
+                                                Total Revenue{" "}
+                                                <span>${course.totalRevenue?.toLocaleString() || 0}</span>
+                                            </p>
+                                            <p>
+                                                Seats{" "}
+                                                <span>
+                                                    {course.totalEnrollments || 0}/{course.totalSeats || 0}
+                                                </span>
+                                            </p>
+
+                                            {!isPast && (
+                                                <Link href={`/AddProgram?courseId=${course._id}`}>
+                                                    Edit <img src="/img/Arrow-Right.svg" alt="arrow" />
+                                                </Link>
+                                            )}
+
+                                            <Link href={`/course-details/${course._id}`}>
+                                                View Details{" "}
+                                                <img src="/img/Arrow-Right.svg" alt="arrow" />
+                                            </Link>
+
+                                            {!isPast && (
+                                                isFeaturedActive(course) ? (
+                                                    <span style={{ color: "#fda085", fontSize: "13px", fontWeight: 500 }}>
+                                                        ⭐ Active Promotion
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className="custom-btn"
+                                                        style={{ padding: "8px 16px", fontSize: "13px" }}
+                                                        onClick={() => openPromoModal(course)}>
+                                                        🚀 Promote
+                                                    </button>
+                                                )
+                                            )}
                                         </div>
                                     </div>
-                                    <div className="ticket-bottom">
-                                        <p>
-                                            Price <span>${course.price?.toFixed(2) || 0}</span>
-                                        </p>
-                                        <p>
-                                            Total Revenue{" "}
-                                            <span>${course.totalRevenue?.toLocaleString() || 0}</span>
-                                        </p>
-                                        <p>
-                                            Seats{" "}
-                                            <span>
-                                                {course.totalEnrollments || 0}/{course.totalSeats || 0}
-                                            </span>
-                                        </p>
-
-                                        <Link href={`/AddProgram?courseId=${course._id}`}>
-                                            Edit <img src="/img/Arrow-Right.svg" alt="arrow" />
-                                        </Link>
-
-                                        <Link href={`/course-details/${course._id}`}>
-                                            View Details{" "}
-                                            <img src="/img/Arrow-Right.svg" alt="arrow" />
-                                        </Link>
-
-                                        {/* Promote button */}
-                                        {isFeaturedActive(course) ? (
-                                            <span style={{ color: "#fda085", fontSize: "13px", fontWeight: 500 }}>
-                                                ⭐ Active Promotion
-                                            </span>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                className="custom-btn"
-                                                style={{ padding: "8px 16px", fontSize: "13px" }}
-                                                onClick={() => openPromoModal(course)}>
-                                                🚀 Promote
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
 

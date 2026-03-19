@@ -247,14 +247,14 @@ function page() {
           <Link href="/Gallery" className="outline-btn">
             Back
           </Link>
-          <button
+          {/* <button
             type="button"
             className="custom-btn"
             onClick={() => handlePublish(true)}
             disabled={publishing}
           >
             {publishing ? "Saving..." : "Save / Draft"}
-          </button>
+          </button> */}
           <button
             type="button"
             className="custom-btn publish-btn"

@@ -22,10 +22,10 @@ export default function PromotionsPage() {
       ]);
 
       if (eventRes?.status) {
-        setEventPackages(eventRes.data || []);
+        setEventPackages(eventRes?.data?.packages || []);
       }
       if (courseRes?.status) {
-        setCoursePackages(courseRes.data || []);
+        setCoursePackages(courseRes?.data || []);
       }
     } catch (error) {
       console.error("Error fetching promotion packages:", error);

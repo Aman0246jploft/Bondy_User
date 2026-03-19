@@ -34,7 +34,6 @@ function PersonalInfoContent() {
         const response = await authApi.getSelfProfile();
         if (response.status) {
           const profile = response.data.user;
-          console.log("Profile Data:", profile);
           setProfileData({
             firstName: profile.firstName || "",
             lastName: profile.lastName || "",
