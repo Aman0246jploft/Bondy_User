@@ -43,7 +43,7 @@ export default function Page() {
       setLoading(false);
     }
   };
-
+   
   useEffect(() => {
     fetchPrograms(pagination.currentPage);
   }, [pagination.currentPage]);

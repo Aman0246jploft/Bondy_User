@@ -43,7 +43,7 @@ const TopEvents = () => {
           <h2>Top Events</h2>
           <p>
             Find the singers you're looking for quickly.{" "}
-            <a href="#" className="text-theme-color text-decoration-underline">
+            <a href="/Explore" className="text-theme-color text-decoration-underline">
               You can see more.
             </a>
           </p>

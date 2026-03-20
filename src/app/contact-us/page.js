@@ -34,7 +34,7 @@ export default function Page() {
     };
     fetchTopics();
   }, []);
-        console.log("Fetched topics:1111111", topics);
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

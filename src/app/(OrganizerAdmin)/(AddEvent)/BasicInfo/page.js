@@ -221,7 +221,7 @@ function BasicInfoContent() {
                   </div>
                   {eventData.posterImage &&
                     eventData.posterImage.length > 0 && (
-                      
+
                       <div className="mt-3">
                         <div className="d-flex align-items-start gap-3">
                           <div style={{ position: "relative" }}>

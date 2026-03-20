@@ -295,7 +295,7 @@ function page() {
                 </Col>
 
                 {/* Feature Event - Only show during creation, not during edit */}
-                {!eventData._id && (
+                {/* {!eventData._id && (
                   <>
                     <Col md={12}>
                       <div className="event-frm-bx d-flex justify-content-between align-items-center">
@@ -319,7 +319,7 @@ function page() {
                       </div>
                     </Col>
                   </>
-                )}
+                )} */}
               </Row>
 
               <div className="d-flex gap-2 justify-content-end mt-4">

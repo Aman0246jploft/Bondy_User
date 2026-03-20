@@ -20,7 +20,7 @@ function page() {
   const fetchDashboardStats = async () => {
     try {
       const response = await organizerApi.getDashboardData();
-      console.log("21211111555", response)
+
       if (response && response.status === true) {
         setStats(response.data);
       }

@@ -54,7 +54,7 @@ function Page() {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get('courseId');
-      console.log("CourseId from URL:", id);
+
       setCourseId(id);
     }
   }, []);
@@ -71,12 +71,9 @@ function Page() {
 
         // If editing, fetch course details
         if (courseId) {
-          console.log("Fetching course details for ID:", courseId);
           try {
             const courseRes = await courseApi.getCourseDetails(courseId);
-            console.log("Course API Response:", courseRes);
             if (courseRes.data && courseRes.data) {
-              console.log("Loading course for edit:", courseRes.data);
               loadCourseForEdit(courseRes.data);
             }
           } catch (error) {
@@ -114,7 +111,7 @@ function Page() {
 
   // Load course data for editing
   const loadCourseForEdit = (course) => {
-    console.log("loadCourseForEdit called with:", course);
+
     const transformedCourse = { ...course };
 
     // Transform GeoJSON venueAddress to flat structure
@@ -161,9 +158,9 @@ function Page() {
     ];
     fieldsToRemove.forEach(field => delete transformedCourse[field]);
 
-    console.log("Transformed course data:", transformedCourse);
+
     setFormData(transformedCourse);
-    console.log("FormData updated");
+
   };
 
   const handleChange = (e) => {
@@ -362,8 +359,6 @@ function Page() {
       const fieldsToRemove = ['_id', 'createdAt', 'updatedAt', '__v', 'createdBy', 'totalRevenue', 'totalEnrollments', 'leftSeats', 'duration'];
       fieldsToRemove.forEach(field => delete payload[field]);
 
-      console.log("Submitting payload:", payload);
-
       if (isEditMode) {
         // Update existing course
         const res = await courseApi.updateCourse(courseId, payload);
@@ -523,7 +518,7 @@ function Page() {
                   </div>
                 </Col>
 
-                <Col md={12}>
+                {/* <Col md={12}>
                   <div className="event-frm-bx">
                     <div className="form-check">
                       <input
@@ -538,7 +533,7 @@ function Page() {
                       </label>
                     </div>
                   </div>
-                </Col>
+                </Col> */}
 
                 <Col md={12}>
                   <div className="event-frm-bx upload">
