@@ -89,7 +89,11 @@ export default function Page() {
 
       <div className="listing_bannr_field">
         <Container>
-          <Field onSearch={handleSearch} />
+          <Field
+            onSearch={handleSearch}
+            label="Course Name/Type"
+            placeholder="e.g. music course"
+          />
           <div className="book_mark_list">
             <ul>
               <li>

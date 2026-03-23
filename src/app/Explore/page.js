@@ -16,6 +16,7 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("Events");
   const [activeFilter, setActiveFilter] = useState("upcoming");
   const [loading, setLoading] = useState(false);
+  const [searchParams, setSearchParams] = useState({});
 
   const fetchCategories = async (type) => {
     try {
@@ -57,6 +58,13 @@ export default function Page() {
     }
   };
 
+  const handleSearch = (params) => {
+    setSearchParams(params);
+    if (params.filter && params.filter !== "all") {
+      setActiveFilter(params.filter);
+    }
+  };
+
   return (
     <>
       <div className="listing_page">
@@ -70,7 +78,11 @@ export default function Page() {
       <div className="listing_bannr_field">
         <Container>
           {/* Search Field Component */}
-          <Field />
+          <Field
+            onSearch={handleSearch}
+            label={activeTab === "Events" ? "Event Name/Type" : "Course Name/Type"}
+            placeholder={activeTab === "Events" ? "e.g. music festival" : "e.g. guitar course"}
+          />
 
           {/* Categories/Multi-Select Filters */}
           <div className="MUiltiSelect mb-4">
@@ -124,6 +136,9 @@ export default function Page() {
                         filter={activeFilter}
                         onFilterChange={setActiveFilter}
                         categoryId={selected.join(",")}
+                        search={searchParams.search}
+                        latitude={searchParams.latitude}
+                        longitude={searchParams.longitude}
                       />
                     </Tab.Pane>
                     <Tab.Pane eventKey="Program">
@@ -132,6 +147,9 @@ export default function Page() {
                         filter={activeFilter}
                         onFilterChange={setActiveFilter}
                         categoryId={selected.join(",")}
+                        search={searchParams.search}
+                        latitude={searchParams.latitude}
+                        longitude={searchParams.longitude}
                       />
                     </Tab.Pane>
                   </Tab.Content>

@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import VenueAutocomplete from "../app/(OrganizerAdmin)/Components/VenueAutocomplete";
 
-export default function Field({ onSearch }) {
+export default function Field({ onSearch, label = "Search", placeholder = "Search here..." }) {
   const [isReady, setIsReady] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState(null);
@@ -79,10 +79,10 @@ export default function Field({ onSearch }) {
             <div className="search-field one_field">
               <img src="/img/event_icon.svg" alt="event" />
               <div>
-                <small>Course Name/Type</small>
+                <small>{label}</small>
                 <input
                   type="text"
-                  placeholder="e.g. music course"
+                  placeholder={placeholder}
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}
