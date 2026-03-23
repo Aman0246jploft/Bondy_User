@@ -20,10 +20,12 @@ export default function Page() {
     coursesPerPage: 10
   });
 
-  const fetchPrograms = async (page = 1) => {
+  const [filters, setFilters] = useState({});
+
+  const fetchPrograms = async (page = 1, currentFilters = {}) => {
     try {
       setLoading(true);
-      const response = await courseApi.getCourses({ page, limit: 12 });
+      const response = await courseApi.getCourses({ page, limit: 12, ...currentFilters });
 
       if (response.status && response.data) {
         const data = response.data.data || response.data;
@@ -43,10 +45,17 @@ export default function Page() {
       setLoading(false);
     }
   };
-   
+
   useEffect(() => {
-    fetchPrograms(pagination.currentPage);
-  }, [pagination.currentPage]);
+    fetchPrograms(pagination.currentPage, filters);
+  }, [pagination.currentPage, filters]);
+
+  const handleSearch = (searchParams) => {
+    setFilters(searchParams);
+    if (pagination.currentPage !== 1) {
+      setPagination(prev => ({ ...prev, currentPage: 1 }));
+    }
+  };
 
   const handlePageChange = (newPage) => {
     setPagination(prev => ({ ...prev, currentPage: newPage }));
@@ -80,7 +89,7 @@ export default function Page() {
 
       <div className="listing_bannr_field">
         <Container>
-          <Field />
+          <Field onSearch={handleSearch} />
           <div className="book_mark_list">
             <ul>
               <li>
