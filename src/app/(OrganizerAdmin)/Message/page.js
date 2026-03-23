@@ -484,9 +484,9 @@ function MessageContent() {
                                             >
                                                 <div className="position-relative">
                                                     <img
-                                                        src={other.profileImage || "/img/user_placeholder.png"}
+                                                        src={other.profileImage || "/img/sidebar-logo.svg"}
                                                         className="user-img"
-                                                        onError={(e) => (e.target.src = "/img/user_placeholder.png")}
+                                                        onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
                                                         alt="User"
                                                     />
                                                     {isOnline && <span className="online-badge"></span>}
@@ -545,9 +545,9 @@ function MessageContent() {
                                             <span className="back-btn" onClick={() => setActiveChat(null)}>←</span>
 
                                             <img
-                                                src={getOtherUser(activeChat).profileImage || "/img/user_placeholder.png"}
+                                                src={getOtherUser(activeChat).profileImage || "/img/sidebar-logo.svg"}
                                                 className="header-img"
-                                                onError={(e) => (e.target.src = "/img/user_placeholder.png")}
+                                                onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
                                                 alt="User"
                                             />
 
@@ -606,9 +606,9 @@ function MessageContent() {
                                                     >
                                                         {!isMyMessage && (
                                                             <img
-                                                                src={m.sender?.profileImage || "/img/user_placeholder.png"}
+                                                                src={m.sender?.profileImage || "/img/sidebar-logo.svg"}
                                                                 className="msg-user-img"
-                                                                onError={(e) => (e.target.src = "/img/user_placeholder.png")}
+                                                                onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
                                                                 alt="User"
                                                             />
                                                         )}
@@ -711,7 +711,7 @@ function MessageContent() {
                                                     >✕</button>
                                                 </div>
                                             )}
-                                            
+
                                             <div className="input-container">
                                                 {/* Hidden file input */}
                                                 <input
@@ -721,7 +721,7 @@ function MessageContent() {
                                                     style={{ display: "none" }}
                                                     onChange={handleFileSelect}
                                                 />
-                                                
+
                                                 <button
                                                     className="clip-btn"
                                                     onClick={() => fileInputRef.current?.click()}
@@ -739,9 +739,9 @@ function MessageContent() {
                                                     onKeyPress={handleKeyPress}
                                                 />
 
-                                                <button 
-                                                    onClick={sendMessage} 
-                                                    className="send-btn" 
+                                                <button
+                                                    onClick={sendMessage}
+                                                    className="send-btn"
                                                     disabled={isUploading || (!message.trim() && !stagedFile)}
                                                 >
                                                     <img src="/img/send_chat.svg" alt="Send" />

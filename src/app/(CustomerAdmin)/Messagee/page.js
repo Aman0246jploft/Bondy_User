@@ -500,9 +500,9 @@ function MessageeContent() {
                       >
                         <div className="position-relative">
                           <img
-                            src={other.profileImage || "/img/user_placeholder.png"}
+                            src={other.profileImage || "/img/sidebar-logo.svg"}
                             className="user-img"
-                            onError={(e) => (e.target.src = "/img/user_placeholder.png")}
+                            onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
                             alt="User"
                           />
                           {isOnline && <span className="online-badge"></span>}
@@ -561,9 +561,9 @@ function MessageeContent() {
                       <span className="back-btn" onClick={() => setActiveChat(null)}>←</span>
 
                       <img
-                        src={getOtherUser(activeChat).profileImage || "/img/user_placeholder.png"}
+                        src={getOtherUser(activeChat).profileImage || "/img/sidebar-logo.svg"}
                         className="header-img"
-                        onError={(e) => (e.target.src = "/img/user_placeholder.png")}
+                        onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
                         alt="User"
                       />
 
@@ -622,9 +622,9 @@ function MessageeContent() {
                           >
                             {!isMyMessage && (
                               <img
-                                src={m.sender?.profileImage || "/img/user_placeholder.png"}
+                                src={m.sender?.profileImage || "/img/sidebar-logo.svg"}
                                 className="msg-user-img"
-                                onError={(e) => (e.target.src = "/img/user_placeholder.png")}
+                                onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
                                 alt="User"
                               />
                             )}
