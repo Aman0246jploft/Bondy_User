@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-export default function HeroSearchFilter() {
+export default function HeroSearchFilter({ onDateChange }) {
   const wrapperRef = useRef(null);
   const [open, setOpen] = useState(false);
 
@@ -91,8 +91,10 @@ export default function HeroSearchFilter() {
                   <button
                     key={date}
                     onClick={() => {
+                      const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
                       setSelectedDate(`${date}/${month + 1}/${year}`);
                       setOpen(false);
+                      if (onDateChange) onDateChange(formattedDate);
                     }}>
                     {date}
                   </button>

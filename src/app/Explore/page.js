@@ -1,5 +1,6 @@
-"use client";
+'use client'
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "../../components/Header";
 import FAQ from "../../components/FAQ";
 import Footer from "../../components/Footer";
@@ -38,6 +39,27 @@ export default function Page() {
       setLoading(false);
     }
   };
+
+  const searchParams_url = useSearchParams();
+
+  useEffect(() => {
+    const search = searchParams_url.get("search") || "";
+    const lat = searchParams_url.get("latitude");
+    const lng = searchParams_url.get("longitude");
+    const filter = searchParams_url.get("filter") || "upcoming";
+    const date = searchParams_url.get("date");
+
+    const newParams = { ...searchParams };
+    if (search) newParams.search = search;
+    if (lat && lng) {
+      newParams.latitude = lat;
+      newParams.longitude = lng;
+    }
+    if (date) newParams.date = date;
+
+    setSearchParams(newParams);
+    setActiveFilter(filter);
+  }, [searchParams_url]);
 
   useEffect(() => {
     fetchCategories(activeTab);
@@ -139,6 +161,7 @@ export default function Page() {
                         search={searchParams.search}
                         latitude={searchParams.latitude}
                         longitude={searchParams.longitude}
+                        date={searchParams.date}
                       />
                     </Tab.Pane>
                     <Tab.Pane eventKey="Program">
@@ -150,6 +173,7 @@ export default function Page() {
                         search={searchParams.search}
                         latitude={searchParams.latitude}
                         longitude={searchParams.longitude}
+                        date={searchParams.date}
                       />
                     </Tab.Pane>
                   </Tab.Content>

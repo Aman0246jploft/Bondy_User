@@ -13,7 +13,7 @@ const categories = [
   { label: "Next Week", value: "nextWeek" }
 ];
 
-export default function ExploreItem({ type = "Events", filter = "upcoming", onFilterChange, categoryId, search, latitude, longitude }) {
+export default function ExploreItem({ type = "Events", filter = "upcoming", onFilterChange, categoryId, search, latitude, longitude, date }) {
   const [items, setItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -22,7 +22,7 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
   useEffect(() => {
     // Reset to page 1 if type, filter, category, or search params change
     setCurrentPage(1);
-  }, [type, filter, categoryId, search, latitude, longitude]);
+  }, [type, filter, categoryId, search, latitude, longitude, date]);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -36,7 +36,8 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
             categoryId: categoryId,
             search: search,
             latitude: latitude,
-            longitude: longitude
+            longitude: longitude,
+            date: date
           });
           const eventData = response?.data?.data || response?.data || response;
           if (eventData?.events) {
@@ -56,7 +57,8 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
             categoryId: categoryId,
             search: search,
             latitude: latitude,
-            longitude: longitude
+            longitude: longitude,
+            date: date
           });
           const courseData = response?.data?.data || response?.data || response;
           if (courseData?.courses) {
@@ -75,7 +77,7 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
     };
 
     fetchItems();
-  }, [filter, type, categoryId, currentPage, limit, search, latitude, longitude]);
+  }, [filter, type, categoryId, currentPage, limit, search, latitude, longitude, date]);
 
   const handleToggle = (value) => {
     if (onFilterChange) {

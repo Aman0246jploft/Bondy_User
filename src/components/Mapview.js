@@ -75,6 +75,9 @@ export default function Mapview() {
     <div className="main-wrapper">
       <div className="container-fluid">
         <Row className="gy-4">
+
+
+
           {/* Side Cards List */}
           <Col lg={7} xl={6} xxl={5}>
             <div className="card_map_view">

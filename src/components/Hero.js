@@ -8,12 +8,16 @@ import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import "swiper/css";
 import "swiper/css/effect-fade";
 import "swiper/css/navigation";
-import HeroSearchFilter from "./HeroSearchFilter";
+// import HeroSearchFilter from "./HeroSearchFilter";
 import { useLanguage } from "@/context/LanguageContext";
-
-const HeroSlider = ({ setView }) => {
+import VenueAutocomplete from "../app/(OrganizerAdmin)/Components/VenueAutocomplete";
+const HeroSlider = ({ setView, onSearch }) => {
   const { t } = useLanguage();
   const [isReady, setIsReady] = useState(false);
+  const [keyword, setKeyword] = useState("");
+  const [location, setLocation] = useState(null);
+  const [dateFilter, setDateFilter] = useState("all");
+  const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsReady(true), 2000);
@@ -46,6 +50,43 @@ const HeroSlider = ({ setView }) => {
     "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070",
     "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=2070",
   ];
+
+  const handleSearchClick = () => {
+    const params = {};
+    if (keyword.trim()) params.search = keyword.trim();
+    if (location) {
+      params.filter = "nearYou";
+      params.latitude = location.latitude;
+      params.longitude = location.longitude;
+    }
+    if (dateFilter !== "all") params.filter = dateFilter;
+
+    if (onSearch) {
+      onSearch(params);
+    }
+  };
+
+  const handleReset = () => {
+    setKeyword("");
+    setLocation(null);
+    setDateFilter("all");
+    setResetKey((prev) => prev + 1);
+
+    if (onSearch) {
+      onSearch(null);
+    }
+  };
+
+  const handleVenueSelected = (venueData) => {
+    if (venueData && venueData.latitude && venueData.longitude) {
+      setLocation({
+        latitude: venueData.latitude,
+        longitude: venueData.longitude,
+      });
+    } else {
+      setLocation(null);
+    }
+  };
 
   return (
     <div className="hero-wrapper">
@@ -112,7 +153,13 @@ const HeroSlider = ({ setView }) => {
                   <img src="/img/event_icon.svg" />
                   <div>
                     <small>{t("eventType")}</small>
-                    <input type="text" placeholder={t("eventTypePlaceholder")} />
+                    <input
+                      type="text"
+                      placeholder={t("eventTypePlaceholder")}
+                      value={keyword}
+                      onChange={(e) => setKeyword(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}
+                    />
                   </div>
                 </div>
 
@@ -120,20 +167,58 @@ const HeroSlider = ({ setView }) => {
 
                 <div className="search-field two_field">
                   <img src="/img/loc_icon.svg" />
-                  <div>
+                  <div style={{ width: "100%", overflow: "hidden" }}>
                     <small>{t("where")}</small>
-                    <input type="text" placeholder={t("locationPlaceholder")} />
+                    <div onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}>
+                      <VenueAutocomplete
+                        key={resetKey}
+                        onPlaceSelected={handleVenueSelected}
+                        placeholder={t("locationPlaceholder")}
+                        className="border-0 shadow-none p-0 bg-transparent w-100 text-white"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <div className="divider" />
-                <HeroSearchFilter />
+                <div className="search-field three_field">
+                  <img src="/img/date_icon.svg" alt="date" />
+                  <div style={{ width: "100%" }}>
+                    <small>When</small>
+                    <select
+                      className="border-0 shadow-none p-0 bg-transparent text-secondary w-100 placeholder-styled-select mt-1"
+                      value={dateFilter}
+                      onChange={(e) => setDateFilter(e.target.value)}
+                      style={{ outline: "none", cursor: "pointer", appearance: "none", backgroundColor: "transparent", color: "#fff !important" }}
+                    >
+                      <option value="all">All Dates</option>
+                      <option value="today">Today</option>
+                      <option value="thisWeek">This Week</option>
+                      <option value="thisWeekend">This Weekend</option>
+                      <option value="nextWeek">Next Week</option>
+                      <option value="thisYear">This Year</option>
+                      <option value="upcoming">Upcoming</option>
+                      <option value="past">Past</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
-              <div className="search-actions">
-                <button className="icon-btn teal">
+              <div className="search-actions" style={{ display: 'flex', gap: '8px' }}>
+                <button className="icon-btn teal" onClick={handleSearchClick}>
                   <Search size={18} />
                 </button>
+
+                {(keyword || location || dateFilter !== "all") && (
+                  <button
+                    className="icon-btn bg-danger text-white border-0"
+                    onClick={handleReset}
+                    title="Reset Filters"
+                    style={{ backgroundColor: '#dc3545', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <span style={{ fontSize: '18px', fontWeight: 'bold' }}>×</span>
+                  </button>
+                )}
 
                 {/* 👇 SWITCH TO GRID VIEW */}
                 <button
@@ -143,6 +228,7 @@ const HeroSlider = ({ setView }) => {
                 </button>
               </div>
             </motion.div>
+
           </motion.div>
         )}
       </AnimatePresence>

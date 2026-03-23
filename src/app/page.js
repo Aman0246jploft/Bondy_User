@@ -14,18 +14,19 @@ import TopEvents from "../components/TopEvents";
 export default function HomePage() {
 
   const [view, setView] = useState("hero"); // hero | grid
+  const [searchParams, setSearchParams] = useState(null);
 
   return (
     <>
       <Header />
-      {view === "hero" && <Hero setView={setView} />}
+      {view === "hero" && <Hero setView={setView} onSearch={setSearchParams} />}
       {view === "grid" && <GridSystem setView={setView} />}
       <TopEvents />
 
       <div className="event_bg">
-        <EventSection type="recommended" />
-        <EventSection type="nearYou" />
-        <EventSection type="week" />
+        <EventSection type="recommended" extraParams={searchParams} />
+        <EventSection type="nearYou" extraParams={searchParams} />
+        <EventSection type="week" extraParams={searchParams} />
       </div>
 
       <Categories />

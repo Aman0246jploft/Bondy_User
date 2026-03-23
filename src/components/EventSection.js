@@ -11,6 +11,7 @@ const EventSection = ({
   hideHeader = false,
   isListing = false,
   customTitle = "",
+  extraParams = null,
 }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +42,7 @@ const EventSection = ({
           limit,
           page: 1,
           filter,
+          ...extraParams,
         };
 
         // Handle Geolocation for 'near' type
@@ -72,7 +74,7 @@ const EventSection = ({
     };
 
     fetchEvents();
-  }, [type, limit, customTitle]);
+  }, [type, limit, customTitle, extraParams]);
 
   if (loading) {
     return (
