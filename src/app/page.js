@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import GridSystem from "@/components/GridSystem";
 import Categories from "../components/Categories";
 import CTASections from "../components/CTASections";
@@ -15,6 +15,23 @@ export default function HomePage() {
 
   const [view, setView] = useState("hero"); // hero | grid
   const [searchParams, setSearchParams] = useState(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setSearchParams({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            filter: "nearYou"
+          });
+        },
+        (error) => {
+          console.warn("Initial geolocation failed or denied:", error);
+        }
+      );
+    }
+  }, []);
 
   return (
     <>

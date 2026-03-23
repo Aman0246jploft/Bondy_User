@@ -23,6 +23,7 @@ const EventSection = ({
       case "recommended":
         return { filter: "recommended", defaultTitle: "Recommended" };
       case "near":
+      case "nearYou":
         return { filter: "nearYou", defaultTitle: "Near You" };
       case "week":
         return { filter: "thisWeek", defaultTitle: "Happening Soon" };
@@ -47,18 +48,23 @@ const EventSection = ({
 
         // Handle Geolocation for 'near' type
         if (filter === "nearYou") {
-          try {
-            const position = await new Promise((resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(resolve, reject);
-            });
-            params.latitude = position.coords.latitude;
-            params.longitude = position.coords.longitude;
-          } catch (error) {
-            console.warn("Location access denied or failed", error);
-            // If location fails, we might want to fallback or not show anything?
-            // For now, let's just return to avoid fetching with missing lat/long which API might reject
-            setLoading(false);
-            return;
+          // If we already have coords from props (extraParams), use them
+          if (extraParams?.latitude && extraParams?.longitude) {
+            params.latitude = extraParams.latitude;
+            params.longitude = extraParams.longitude;
+          } else {
+            // Otherwise try to get them manually
+            try {
+              const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+              });
+              params.latitude = position.coords.latitude;
+              params.longitude = position.coords.longitude;
+            } catch (error) {
+              console.warn("Location access denied or failed", error);
+              setLoading(false);
+              return;
+            }
           }
         }
 

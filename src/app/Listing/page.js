@@ -47,6 +47,12 @@ function ListingContent() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [filterParams, setFilterParams] = useState({
+    search: "",
+    latitude: null,
+    longitude: null,
+    date: ""
+  });
 
   const totalPages = Math.ceil(total / LIMIT);
 
@@ -54,10 +60,18 @@ function ListingContent() {
     const fetchEvents = async () => {
       setLoading(true);
       try {
-        let params = { limit: LIMIT, page, filter: meta.filter };
+        let params = {
+          limit: LIMIT,
+          page,
+          filter: meta.filter,
+          search: filterParams.search,
+          latitude: filterParams.latitude,
+          longitude: filterParams.longitude,
+          date: filterParams.date
+        };
 
-        // geolocation for "nearYou"
-        if (meta.filter === "nearYou") {
+        // geolocation for "nearYou" ONLY if no manual location is provided
+        if (meta.filter === "nearYou" && !params.latitude) {
           try {
             const pos = await new Promise((resolve, reject) =>
               navigator.geolocation.getCurrentPosition(resolve, reject),
@@ -84,7 +98,17 @@ function ListingContent() {
     };
 
     fetchEvents();
-  }, [page, type]);
+  }, [page, type, filterParams]);
+
+  const handleSearch = (newFilters) => {
+    setFilterParams({
+      search: newFilters.search || "",
+      latitude: newFilters.latitude || null,
+      longitude: newFilters.longitude || null,
+      date: newFilters.date || ""
+    });
+    setPage(1); // Reset to first page on search
+  };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -107,7 +131,11 @@ function ListingContent() {
       {/* ── Search field ───────────────────────── */}
       <div className="listing_bannr_field">
         <Container>
-          <Field />
+          <Field
+            onSearch={handleSearch}
+            label="Event Name/Type"
+            placeholder="e.g. music festival"
+          />
         </Container>
       </div>
 
@@ -169,7 +197,7 @@ function ListingContent() {
                                 ? item.venueAddress.city
                                   ? item.venueAddress.city.length > 20
                                     ? item.venueAddress.city.substring(0, 20) +
-                                      "..."
+                                    "..."
                                     : item.venueAddress.city
                                   : "Location"
                                 : "Online"}
