@@ -1,158 +1,179 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
+import React, { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Calendar, MapPin } from "lucide-react";
-import "leaflet/dist/leaflet.css";
 import { Col, Row } from "react-bootstrap";
+import Link from "next/link";
+import eventApi from "../api/eventApi";
 
-// Dynamic imports
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((m) => m.MapContainer),
-  { ssr: false },
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((m) => m.TileLayer),
-  { ssr: false },
-);
-const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), {
-  ssr: false,
-});
-const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), {
-  ssr: false,
-});
+export default function Mapview({ searchParams }) {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const mapRef = useRef(null);
+  const googleMapRef = useRef(null);
+  const markersRef = useRef([]);
 
-const eventData = [
-  {
-    id: 1,
-    title: "Kanazawa Grand Inn Hotel",
-    date: "May 6, 2025",
-    loc: "San Jose South",
-    price: "$48",
-    pos: [37.33, -121.88],
-    img: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=400",
-  },
-  {
-    id: 2,
-    title: "Mardi Gras (New Orleans)",
-    date: "4 March 2025",
-    loc: "San Jose South",
-    price: "$18",
-    pos: [37.35, -121.9],
-    img: "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400",
-  },
-  {
-    id: 3,
-    title: "Masters Golf Tournament",
-    date: "7-13 April 2025",
-    loc: "San Jose South",
-    price: "$12",
-    pos: [37.31, -121.85],
-    img: "https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400",
-  },
-];
-
-export default function Mapview() {
-  const [customIcon, setCustomIcon] = useState(null);
-
+  // 1. Load Google Maps script (similar to VenueAutocomplete)
   useEffect(() => {
-    // Leaflet Icon Setup (Client side only)
-    const L = require("leaflet");
-    const icon = new L.Icon({
-      iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-      shadowUrl:
-        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41],
-    });
-    setCustomIcon(icon);
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+    if (!apiKey) return;
+
+    if (window.google && window.google.maps) {
+      setIsLoaded(true);
+      return;
+    }
+
+    const scriptId = "google-maps-script";
+    if (document.getElementById(scriptId)) return;
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.onload = () => setIsLoaded(true);
+    document.head.appendChild(script);
   }, []);
+
+  // 2. Fetch Events
+  useEffect(() => {
+    const fetchEventData = async () => {
+      setLoading(true);
+      try {
+        let currentParams = { limit: 20, page: 1, ...searchParams };
+
+        // Try Near You first
+        const nearRes = await eventApi.getEvents({ ...currentParams, filter: "nearYou" });
+        if (nearRes.data?.events?.length > 0) {
+          setEvents(nearRes.data.events);
+        } else {
+          // Fallback to Recommended
+          const recommendedRes = await eventApi.getEvents({ ...currentParams, filter: "recommended" });
+          setEvents(recommendedRes.data?.events || []);
+        }
+      } catch (error) {
+        console.error("Error fetching map events:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEventData();
+  }, [searchParams]);
+
+  // 3. Initialize & Update Map
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return;
+
+    const center = events.length > 0 && events[0].venueAddress?.coordinates
+      ? { lat: events[0].venueAddress.coordinates[1], lng: events[0].venueAddress.coordinates[0] }
+      : { lat: 37.33, lng: -121.88 };
+
+    // Initialize Map if not already done
+    if (!googleMapRef.current) {
+      googleMapRef.current = new window.google.maps.Map(mapRef.current, {
+        center,
+        zoom: 12,
+        styles: [
+          { "featureType": "poi", "stylers": [{ "visibility": "off" }] } // Cleaner map
+        ],
+        mapTypeControl: false,
+        streetViewControl: false,
+      });
+    } else {
+      googleMapRef.current.setCenter(center);
+    }
+
+    // Clear old markers
+    markersRef.current.forEach(m => m.setMap(null));
+    markersRef.current = [];
+
+    // Add new markers
+    const infoWindow = new window.google.maps.InfoWindow();
+
+    events.forEach((event) => {
+      const coords = event.venueAddress?.coordinates;
+      if (!coords || coords.length < 2) return;
+
+      const marker = new window.google.maps.Marker({
+        position: { lat: coords[1], lng: coords[0] },
+        map: googleMapRef.current,
+        title: event.eventTitle,
+        icon: {
+          url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+        }
+      });
+
+      marker.addListener("click", () => {
+        const content = `
+          <div style="width: 200px; font-family: sans-serif;">
+            <img src="${event.posterImage?.[0] || "/img/no-image.png"}" style="width:100%; height:100px; object-fit:cover; border-radius:8px;" />
+            <h6 style="margin: 8px 0 4px; font-weight: bold;">${event.eventTitle}</h6>
+            <p style="margin: 0; font-size: 12px; color: #666;">${event.venueAddress?.city || "Location"}</p>
+            <p style="margin: 4px 0 8px; font-size: 12px; color: #666;">${new Date(event.startDate).toLocaleDateString()}</p>
+            <a href="/eventDetails?id=${event._id}" style="display:block; text-align:center; background:#18a0a0; color:white; padding:6px; border-radius:4px; text-decoration:none; font-size:12px;">Details</a>
+          </div>
+        `;
+        infoWindow.setContent(content);
+        infoWindow.open(googleMapRef.current, marker);
+      });
+
+      markersRef.current.push(marker);
+    });
+
+  }, [isLoaded, events]);
 
   return (
     <div className="main-wrapper">
       <div className="container-fluid">
         <Row className="gy-4">
-
-
-
-          {/* Side Cards List */}
           <Col lg={7} xl={6} xxl={5}>
             <div className="card_map_view">
-              {eventData.map((event, i) => (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="event-card shadow">
-                  <div className="img-container">
-                    <img src={event.img} alt="hotel" />
-                  </div>
-                  <div className="card-content flex-grow-1">
-                    <div>
-                      <h6>{event.title}</h6>
-                      <div className="text-muted-custom mb-2">
-                        <span>
-                          <img src="/img/date_icon.svg" /> {event.date}
-                        </span>
-                        <span>
-                          <img src="/img/loc_icon.svg" /> {event.loc}
-                        </span>
-                      </div>
+              {loading ? (
+                <div className="text-center py-5"><p>Loading events...</p></div>
+              ) : events.length === 0 ? (
+                <div className="text-center py-5"><p>No events found.</p></div>
+              ) : (
+                events.map((event, i) => (
+                  <motion.div
+                    key={event._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="event-card shadow"
+                  >
+                    <div className="img-container">
+                      <img 
+                        src={event.posterImage?.[0] || "/img/no-image.png"} 
+                        alt={event.eventTitle} 
+                        onError={(e) => { e.target.src = "/img/no-image.png"; }}
+                      />
                     </div>
-                    <div className="price-section ">
+                    <div className="card-content flex-grow-1">
                       <div>
-                        <h5 className="m-0 fw-bold">{event.price}</h5>
-                        <small>28% less than usual</small>
+                        <h6>{event.eventTitle}</h6>
+                        <div className="text-muted-custom mb-2">
+                          <span><img src="/img/date_icon.svg" alt="date" /> {new Date(event.startDate).toLocaleDateString()}</span>
+                          <span><img src="/img/loc_icon.svg" alt="loc" /> {event.venueAddress?.city || "Location"}</span>
+                        </div>
                       </div>
-                      <button className="common_btn">Book Now</button>
+                      <div className="price-section">
+                        <div><h5 className="m-0 fw-bold">{event.ticketPrice ? `$${event.ticketPrice}` : "Free"}</h5></div>
+                        <Link href={`/eventDetails?id=${event._id}`} className="common_btn text-decoration-none text-white text-center">
+                          View Details
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))
+              )}
             </div>
           </Col>
 
-          {/* Map View */}
           <Col lg={5} xl={6} xxl={7}>
-            <div className="map-box">
-              {typeof window !== "undefined" && customIcon && (
-                <MapContainer
-                  center={[37.33, -121.88]}
-                  zoom={12}
-                  style={{ height: "100%", width: "100%" }}>
-                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
-                  {/* North Carolina Glass Center (Highlighted Popup) */}
-                  <Marker position={[37.33, -121.88]} icon={customIcon}>
-                    <Popup className="custom-popup">
-                      <img src="/img/Card.png" className="popup-inner-img" />
-                      <div className="popup-text">
-                        <h6 className="m-0 fw-bold">
-                          North Carolina Glass Center
-                        </h6>
-                        <ul className="map_list">
-                          <li>
-                            <img src="/img/location_map.svg" />
-                            Nirwana Plot
-                          </li>
-                          <li>
-                            <img src="/img/datemap.svg" />
-                            20.12.2022
-                          </li>
-                        </ul>
-                      </div>
-                    </Popup>
-                  </Marker>
-
-                  {/* Other pins */}
-                  <Marker position={[37.35, -121.9]} icon={customIcon} />
-                  <Marker position={[37.31, -121.85]} icon={customIcon} />
-                </MapContainer>
-              )}
+            <div 
+              ref={mapRef} 
+              className="map-box" 
+              style={{ borderRadius: '15px', height: '600px', background: '#eee' }}
+            >
+              {!isLoaded && <div className="d-flex align-items-center justify-content-center h-100"><p>Loading Google Maps...</p></div>}
             </div>
           </Col>
         </Row>

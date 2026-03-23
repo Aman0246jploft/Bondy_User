@@ -37,7 +37,13 @@ export default function HomePage() {
     <>
       <Header />
       {view === "hero" && <Hero setView={setView} onSearch={setSearchParams} />}
-      {view === "grid" && <GridSystem setView={setView} />}
+      {view === "grid" && (
+        <GridSystem
+          setView={setView}
+          searchParams={searchParams}
+          onSearch={setSearchParams}
+        />
+      )}
       <TopEvents />
 
       <div className="event_bg">

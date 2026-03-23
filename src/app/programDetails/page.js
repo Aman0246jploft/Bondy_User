@@ -230,7 +230,11 @@ function ProgramDetailsContent() {
                   </Link>
                 </div>
                 <div className="map-container">
-                  <Map />
+                  <Map
+                    latitude={courseDetails.venueAddress?.latitude}
+                    longitude={courseDetails.venueAddress?.longitude}
+                    title={courseTitle}
+                  />
                 </div>
 
                 {/* Text Content Sections */}

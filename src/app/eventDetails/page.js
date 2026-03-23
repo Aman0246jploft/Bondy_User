@@ -249,7 +249,11 @@ function EventDetailsContent() {
                   </div> */}
                 </div>
                 <div className="map-container">
-                  <Map />
+                  <Map
+                    latitude={event?.venueAddress?.latitude}
+                    longitude={event?.venueAddress?.longitude}
+                    title={event?.eventTitle}
+                  />
                 </div>
 
                 {/* Text Content Sections */}

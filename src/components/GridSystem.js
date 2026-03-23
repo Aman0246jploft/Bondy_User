@@ -5,13 +5,27 @@ import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import Mapview from "./Mapview";
 import HeroSearchFilter from "./HeroSearchFilter";
+import VenueAutocomplete from "@/app/(OrganizerAdmin)/Components/VenueAutocomplete";
 
-export default function GridSystem({ setView }) {
+export default function GridSystem({ setView, searchParams, onSearch }) {
   const [isReady, setIsReady] = useState(false);
+  const [keyword, setKeyword] = useState(searchParams?.search || "");
+  const [location, setLocation] = useState(null); // VenueAutocomplete handles this
 
   useEffect(() => {
     setIsReady(true);
   }, []);
+
+  const handleSearchClick = () => {
+    if (onSearch) {
+      onSearch({
+        ...searchParams,
+        search: keyword,
+        latitude: location?.latitude || searchParams?.latitude,
+        longitude: location?.longitude || searchParams?.longitude,
+      });
+    }
+  };
 
   return (
     <>
@@ -29,7 +43,12 @@ export default function GridSystem({ setView }) {
                   <img src="/img/event_icon.svg" alt="event" />
                   <div>
                     <small>Event Type</small>
-                    <input type="text" placeholder="exp: music event" />
+                    <input
+                      type="text"
+                      placeholder="exp: music event"
+                      value={keyword}
+                      onChange={(e) => setKeyword(e.target.value)}
+                    />
                   </div>
                 </div>
 
@@ -37,9 +56,12 @@ export default function GridSystem({ setView }) {
 
                 <div className="search-field two_field">
                   <img src="/img/loc_icon.svg" alt="location" />
-                  <div>
+                  <div style={{ width: "100%" }}>
                     <small>Where</small>
-                    <input type="text" placeholder="Location" />
+                    <VenueAutocomplete
+                      onPlaceSelected={(place) => setLocation(place)}
+                      placeholder="Location"
+                    />
                   </div>
                 </div>
 
@@ -49,7 +71,7 @@ export default function GridSystem({ setView }) {
               </div>
 
               <div className="search-actions">
-                <button className="icon-btn teal">
+                <button className="icon-btn teal" onClick={handleSearchClick}>
                   <Search size={18} />
                 </button>
                 <button
@@ -64,7 +86,7 @@ export default function GridSystem({ setView }) {
       </div>
 
       <div className="">
-        <Mapview />
+        <Mapview searchParams={searchParams} />
       </div>
     </>
   );
