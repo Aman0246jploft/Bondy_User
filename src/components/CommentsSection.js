@@ -33,7 +33,7 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
         setShowReplies(!showReplies);
     };
 
- 
+
 
     const handleReplySubmit = async (e) => {
         if (e) e.preventDefault();
@@ -83,7 +83,9 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
                     <h6 className="mb-1 fw-bold" style={{ fontSize: depth > 0 ? "0.9rem" : "1rem", color: "var(--white, #fff)" }}>
                         {comment.user?.firstName} {comment.user?.lastName}
                     </h6>
-                    <ExpandableText text={comment.content} limit={depth > 0 ? 150 : 250} className="mb-0" />
+                    <div style={{ color: "rgba(255, 255, 255, 0.9)" }}>
+                        <ExpandableText text={comment.content} limit={depth > 0 ? 150 : 250} className="mb-0" />
+                    </div>
                 </div>
 
                 <div className="d-flex align-items-center mt-2 ms-2" style={{ fontSize: "0.85rem" }}>
@@ -119,10 +121,10 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
                             onChange={(e) => setReplyContent(e.target.value)}
                             className="me-2"
                             onKeyPress={(e) => { if (e.key === 'Enter') handleReplySubmit(e); }}
-                            style={{ 
-                                backgroundColor: "#111", 
-                                color: "#fff", 
-                                border: "1px solid #444", 
+                            style={{
+                                backgroundColor: "#111",
+                                color: "#fff",
+                                border: "1px solid #444",
                                 borderRadius: "20px",
                                 paddingLeft: "15px"
                             }}
@@ -259,7 +261,15 @@ export default function CommentsSection({ entityId, entityModel }) {
                         placeholder="Add a comment..."
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
-                        style={{ resize: "none" }}
+                        style={{
+                            resize: "none",
+                            width: "100%",
+                            backgroundColor: "transparent",
+                            color: "#fff",
+                            border: "1px solid #444",
+                            borderRadius: "8px",
+                            padding: "8px 12px"
+                        }}
                     />
                 </div>
                 <div className="d-flex align-items-end h-100 mt-2">
