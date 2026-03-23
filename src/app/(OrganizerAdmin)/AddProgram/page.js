@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import LocationMap from "../Components/LocationMap";
+import VenueAutocomplete from "../Components/VenueAutocomplete";
 import apiClient from "../../../api/apiClient";
 import courseApi from "../../../api/courseApi";
 import { fetchCurrentLocation, formatLocationForApi } from "../../../utils/locationHelper";
@@ -182,6 +183,16 @@ function Page() {
     setFormData((prev) => ({
       ...prev,
       venueAddress: { ...prev.venueAddress, address: value },
+    }));
+  };
+
+  const handleVenueSelected = (venueAddressData) => {
+    setFormData((prev) => ({
+      ...prev,
+      venueAddress: {
+        ...prev.venueAddress,
+        ...venueAddressData,
+      },
     }));
   };
 
@@ -478,18 +489,15 @@ function Page() {
                 <Col md={12}>
                   <div className="event-frm-bx">
                     <label className="form-label">Venue Address</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Enter address"
-                      value={formData.venueAddress.address}
-                      onChange={handleAddressChange}
+                    <VenueAutocomplete
+                      defaultValue={formData.venueAddress?.address}
+                      onPlaceSelected={handleVenueSelected}
                     />
                   </div>
                 </Col>
-                <Col md={12}>
+                {/* <Col md={12}>
                   <LocationMap />
-                </Col>
+                </Col> */}
 
                 <Col md={12}>
                   <div className="event-frm-bx">

@@ -3,6 +3,7 @@ import Link from "next/link";
 import React, { useRef } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import LocationMap from "../../Components/LocationMap"; // Assuming this component exists
+import VenueAutocomplete from "../../Components/VenueAutocomplete";
 import { useEventContext } from "@/context/EventContext";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -31,6 +32,12 @@ function page() {
         },
       });
     }
+  };
+
+  const handleVenueSelected = (venueAddressData) => {
+    updateEventData({
+      venueAddress: venueAddressData,
+    });
   };
 
   const today = new Date().toISOString().split("T")[0];
@@ -149,13 +156,9 @@ function page() {
                 <Col md={12}>
                   <div className="event-frm-bx">
                     <label className="form-label">Venue Address</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="address"
-                      value={eventData.venueAddress.address}
-                      onChange={handleInputChange}
-                      placeholder="Street Address"
+                    <VenueAutocomplete
+                      defaultValue={eventData.venueAddress && eventData.venueAddress.address}
+                      onPlaceSelected={handleVenueSelected}
                     />
                   </div>
                 </Col>
@@ -166,9 +169,10 @@ function page() {
                       type="text"
                       className="form-control"
                       name="city"
-                      value={eventData.venueAddress.city}
+                      value={eventData.venueAddress && eventData.venueAddress.city}
                       onChange={handleInputChange}
                       placeholder="City"
+                      readOnly
                     />
                   </div>
                 </Col>
@@ -179,9 +183,10 @@ function page() {
                       type="text"
                       className="form-control"
                       name="country"
-                      value={eventData.venueAddress.country}
+                      value={eventData.venueAddress && eventData.venueAddress.country}
                       onChange={handleInputChange}
                       placeholder="Country"
+                      readOnly
                     />
                   </div>
                 </Col>
