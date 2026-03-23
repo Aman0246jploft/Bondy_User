@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, EffectFade, Navigation } from "swiper/modules";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +18,32 @@ const HeroSlider = ({ setView, onSearch }) => {
   const [location, setLocation] = useState(null);
   const [dateFilter, setDateFilter] = useState("all");
   const [resetKey, setResetKey] = useState(0);
+
+  // Custom Date Dropdown State
+  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close custom dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDateDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const dateOptions = [
+    { value: "all", label: "All Dates" },
+    { value: "today", label: "Today" },
+    { value: "thisWeek", label: "This Week" },
+    { value: "thisWeekend", label: "This Weekend" },
+    { value: "nextWeek", label: "Next Week" },
+    { value: "thisYear", label: "This Year" },
+    { value: "upcoming", label: "Upcoming" },
+    { value: "past", label: "Past" },
+  ];
 
   useEffect(() => {
     const timer = setTimeout(() => setIsReady(true), 2000);
@@ -186,19 +212,23 @@ const HeroSlider = ({ setView, onSearch }) => {
                   <div style={{ width: "100%" }}>
                     <small>When</small>
                     <select
-                      className="border-0 shadow-none p-0 bg-transparent text-secondary w-100 placeholder-styled-select mt-1"
+                      className="border-0 shadow-none p-0 bg-transparent w-100 mt-1"
                       value={dateFilter}
                       onChange={(e) => setDateFilter(e.target.value)}
-                      style={{ outline: "none", cursor: "pointer", appearance: "none", backgroundColor: "transparent", color: "#fff !important" }}
+                      style={{
+                        outline: "none",
+                        cursor: "pointer",
+                        color: dateFilter === "all" ? "rgba(255, 255, 255, 0.6)" : "#ffffff"
+                      }}
                     >
-                      <option value="all">All Dates</option>
-                      <option value="today">Today</option>
-                      <option value="thisWeek">This Week</option>
-                      <option value="thisWeekend">This Weekend</option>
-                      <option value="nextWeek">Next Week</option>
-                      <option value="thisYear">This Year</option>
-                      <option value="upcoming">Upcoming</option>
-                      <option value="past">Past</option>
+                      <option value="all" style={{ backgroundColor: "#222", color: "#fff" }}>All Dates</option>
+                      <option value="today" style={{ backgroundColor: "#222", color: "#fff" }}>Today</option>
+                      <option value="thisWeek" style={{ backgroundColor: "#222", color: "#fff" }}>This Week</option>
+                      <option value="thisWeekend" style={{ backgroundColor: "#222", color: "#fff" }}>This Weekend</option>
+                      <option value="nextWeek" style={{ backgroundColor: "#222", color: "#fff" }}>Next Week</option>
+                      <option value="thisYear" style={{ backgroundColor: "#222", color: "#fff" }}>This Year</option>
+                      <option value="upcoming" style={{ backgroundColor: "#222", color: "#fff" }}>Upcoming</option>
+                      <option value="past" style={{ backgroundColor: "#222", color: "#fff" }}>Past</option>
                     </select>
                   </div>
                 </div>

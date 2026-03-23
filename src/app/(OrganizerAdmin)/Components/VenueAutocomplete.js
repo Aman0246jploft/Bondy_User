@@ -299,7 +299,8 @@ const VenueAutocomplete = ({
         type="text"
         value={inputValue}
         onChange={handleInputChange}
-        placeholder={`${placeholder} (min ${minLength} characters)`}
+        // placeholder={`${placeholder} (min ${minLength} characters)`}
+        placeholder={`${placeholder}`}
         className={className}
         disabled={disabled || !isLoaded}
       />
