@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "../../components/Header";
 import FAQ from "../../components/FAQ";
@@ -10,7 +10,7 @@ import ExploreItem from "@/components/ExploreItem";
 import categoryApi from "@/api/categoryApi";
 import { useLanguage } from "@/context/LanguageContext";
 
-export default function Page() {
+function ExploreContent() {
   const { t } = useLanguage();
   const [selected, setSelected] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -188,3 +188,12 @@ export default function Page() {
     </>
   );
 }
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ExploreContent />
+    </Suspense>
+  );
+}
+
