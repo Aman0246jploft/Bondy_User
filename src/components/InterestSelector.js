@@ -20,7 +20,7 @@ const InterestSelector = ({ categories = [], selectedIds = [], onToggle }) => {
               <div style={{ width: "24px", height: "24px", background: "#eee", borderRadius: "50%" }} />
             )}
           </span>
-          <span>{item.name}</span>
+          <span>{item.name?.charAt(0).toUpperCase() + item.name?.slice(1)}</span>
         </div>
       ))}
     </div>

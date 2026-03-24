@@ -166,6 +166,16 @@ function Page() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const limits = {
+      courseTitle: 100,
+      shortdesc: 250,
+      whatYouWillLearn: 1000,
+    };
+
+    if (limits[name] && value.length > limits[name]) {
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -227,8 +237,19 @@ function Page() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
     const uploadData = new FormData();
     for (let i = 0; i < files.length; i++) {
+      if (files[i].size > maxSize) {
+        toast.error(`Image ${files[i].name} exceeds 5MB limit`);
+        return;
+      }
+      if (!allowedTypes.includes(files[i].type)) {
+        toast.error(`Invalid format for ${files[i].name}. Only JPG, PNG, WEBP are allowed.`);
+        return;
+      }
       uploadData.append("files", files[i]);
     }
 
@@ -240,9 +261,10 @@ function Page() {
       });
 
       if (response.status && response.data && response.data.files) {
+        // Enforce single image: replace instead of append
         setFormData(prev => ({
           ...prev,
-          posterImage: [...prev.posterImage, ...response.data.files]
+          posterImage: [response.data.files[0]]
         }));
         toast.success("Image uploaded successfully");
       }
@@ -258,8 +280,19 @@ function Page() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
     const uploadData = new FormData();
     for (let i = 0; i < files.length; i++) {
+      if (files[i].size > maxSize) {
+        toast.error(`Gallery image ${files[i].name} exceeds 5MB limit`);
+        return;
+      }
+      if (!allowedTypes.includes(files[i].type)) {
+        toast.error(`Invalid format for ${files[i].name}. Only JPG, PNG, WEBP are allowed.`);
+        return;
+      }
       uploadData.append("files", files[i]);
     }
 
@@ -270,10 +303,20 @@ function Page() {
       });
 
       if (response.status && response.data && response.data.files) {
-        setFormData(prev => ({
-          ...prev,
-          galleryImages: [...prev.galleryImages, ...response.data.files]
-        }));
+        setFormData(prev => {
+          const combined = [...prev.galleryImages, ...response.data.files];
+          if (combined.length > 5) {
+            toast.error("Maximum 5 gallery images allowed. Extra images were ignored.");
+            return {
+              ...prev,
+              galleryImages: combined.slice(0, 5)
+            };
+          }
+          return {
+            ...prev,
+            galleryImages: combined
+          };
+        });
         toast.success("Gallery images uploaded successfully");
       }
     } catch (error) {
@@ -286,8 +329,8 @@ function Page() {
 
   const handleSubmit = async () => {
     // Validation 1: Required fields
-    if (!formData.courseTitle || !formData.courseCategory || !formData.totalSeats || !formData.price) {
-      toast.error("Please fill all required fields: Course Name, Category, Seats, and Price");
+    if (!formData.courseTitle || !formData.courseCategory || !formData.totalSeats || !formData.price || !formData.shortdesc || !formData.whatYouWillLearn || !formData.venueAddress?.address) {
+      toast.error("Please fill all required fields: Name, Category, Seats, Price, Descriptions, and Address");
       return;
     }
 
@@ -407,10 +450,10 @@ function Page() {
                 <Col md={12}>
                   <div className="event-frm-bx upload">
                     <div>
-                      <h5>Upload Image</h5>
-                      <p>Drag and drop or browse to upload an image or video</p>
+                      <h5>Upload Image <span className="text-danger">*</span></h5>
+                      <p>Max 5MB, JPG/PNG/WEBP, Single Image only</p>
                     </div>
-                    <input type="file" id="upload" className="d-none" multiple onChange={handleImageUpload} />
+                    <input type="file" id="upload" className="d-none" onChange={handleImageUpload} />
                     <label htmlFor="upload">
                       {loading ? "Uploading..." : "Upload"}
                     </label>
@@ -454,6 +497,11 @@ function Page() {
                       onChange={handleChange}
                       required
                     />
+                    <div className="text-end mt-1">
+                      <small className="text-white">
+                        {(formData.courseTitle?.length || 0)}/100
+                      </small>
+                    </div>
                   </div>
                 </Col>
                 <Col md={6}>
@@ -468,7 +516,9 @@ function Page() {
                     >
                       <option value="">Select Course Category</option>
                       {categories.map((cat) => (
-                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                        <option key={cat._id} value={cat._id}>
+                          {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -488,7 +538,7 @@ function Page() {
                 </Col>
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Venue Address</label>
+                    <label className="form-label">Venue Address <span className="text-danger">*</span></label>
                     <VenueAutocomplete
                       defaultValue={formData.venueAddress?.address}
                       onPlaceSelected={handleVenueSelected}
@@ -501,7 +551,7 @@ function Page() {
 
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Short Description</label>
+                    <label className="form-label">Short Description <span className="text-danger">*</span></label>
                     <textarea
                       className="form-control"
                       name="shortdesc"
@@ -509,12 +559,17 @@ function Page() {
                       value={formData.shortdesc}
                       onChange={handleChange}
                     ></textarea>
+                    <div className="text-end mt-1">
+                      <small className="text-white">
+                        {(formData.shortdesc?.length || 0)}/250
+                      </small>
+                    </div>
                   </div>
                 </Col>
 
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="form-label">What You Will Learn</label>
+                    <label className="form-label">What You Will Learn <span className="text-danger">*</span></label>
                     <textarea
                       className="form-control"
                       name="whatYouWillLearn"
@@ -523,6 +578,11 @@ function Page() {
                       onChange={handleChange}
                       placeholder="Describe what students will learn in this course..."
                     ></textarea>
+                    <div className="text-end mt-1">
+                      <small className="text-white">
+                        {(formData.whatYouWillLearn?.length || 0)}/1000
+                      </small>
+                    </div>
                   </div>
                 </Col>
 
@@ -547,7 +607,7 @@ function Page() {
                   <div className="event-frm-bx upload">
                     <div>
                       <h5>Upload Gallery Images (Optional)</h5>
-                      <p>Add additional images to showcase your course</p>
+                      <p>Add additional images (Max 5 images allowed)</p>
                     </div>
                     <input type="file" id="gallery-upload" className="d-none" multiple onChange={handleGalleryUpload} />
                     <label htmlFor="gallery-upload">
@@ -656,7 +716,7 @@ function Page() {
                   <Row>
                     <Col md={6}>
                       <div className="event-frm-bx">
-                        <label className="form-label">Start Date</label>
+                        <label className="form-label">Start Date <span className="text-danger">*</span></label>
                         <div className="date-input-wrapper">
                           <input
                             type="date"
@@ -670,7 +730,7 @@ function Page() {
                     </Col>
                     <Col md={6}>
                       <div className="event-frm-bx">
-                        <label className="form-label">End Date</label>
+                        <label className="form-label">End Date <span className="text-danger">*</span></label>
                         <div className="date-input-wrapper">
                           <input
                             type="date"
@@ -684,7 +744,7 @@ function Page() {
                     </Col>
                     <Col md={6}>
                       <div className="event-frm-bx">
-                        <label className="form-label">Start Time</label>
+                        <label className="form-label">Start Time <span className="text-danger">*</span></label>
                         <div className="date-input-wrapper">
                           <input
                             type="time"
@@ -697,7 +757,7 @@ function Page() {
                     </Col>
                     <Col md={6}>
                       <div className="event-frm-bx">
-                        <label className="form-label">End Time</label>
+                        <label className="form-label">End Time <span className="text-danger">*</span></label>
                         <div className="date-input-wrapper">
                           <input
                             type="time"

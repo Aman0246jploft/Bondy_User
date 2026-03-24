@@ -135,7 +135,7 @@ export default function ResetPasswordPage() {
             return;
         }
 
-        setLoading(true);   
+        setLoading(true);
         try {
             const response = await authApi.resetPassword({
                 newPassword: formData.newPassword,

@@ -17,6 +17,12 @@ function page() {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
+    const currentImageCount = eventData.mediaLinks.length;
+    if (currentImageCount + files.length > 5) {
+      toast.error(`You can only upload a maximum of 5 images. You currently have ${currentImageCount} images.`);
+      return;
+    }
+
     setUploading(true);
     try {
       // Upload one by one or loop
@@ -55,6 +61,12 @@ function page() {
   const handleVideoUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+
+    const currentVideoCount = (eventData.shortTeaserVideo || []).length;
+    if (currentVideoCount + files.length > 1) {
+      toast.error("Only one video is allowed as a teaser.");
+      return;
+    }
 
     setUploading(true);
     try {
@@ -165,9 +177,9 @@ function page() {
                     <div>
                       <h5>Media & Gallery</h5>
                       <p>
-                        Upload images, promotional videos, or short teaser clips
-                        to showcase <br /> your event. Drag and drop files or
-                        click to browse.
+                        Upload images (max 5), promotional videos, or short
+                        teaser clips to showcase <br /> your event. Drag and
+                        drop files or click to browse.
                       </p>
                     </div>
                     <input
@@ -203,7 +215,8 @@ function page() {
                     <div>
                       <h5>Short Teaser Clips</h5>
                       <p>
-                        Upload short video clips to tease your event. <br />
+                        Upload a short video clip (max 1) to tease your event.{" "}
+                        <br />
                         Drag and drop files or click to browse.
                       </p>
                     </div>

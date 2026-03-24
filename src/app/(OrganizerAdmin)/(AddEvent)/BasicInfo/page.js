@@ -59,19 +59,54 @@ function BasicInfoContent() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    const limits = {
+      eventTitle: 100,
+      shortdesc: 250,
+      longdesc: 2000,
+    };
+
+    if (limits[name] && value.length > limits[name]) {
+      return;
+    }
     updateEventData({ [name]: value });
   };
 
   const handleTagsChange = (e) => {
     const value = e.target.value;
     // Simple comma separated tags
-    const tagsArray = value.split(",").map((tag) => tag.trim());
+    let tagsArray = value.split(",").map((tag) => tag.trim());
+
+    // Limit to 5 tags
+    if (tagsArray.length > 5) {
+      tagsArray = tagsArray.slice(0, 5);
+      toast.error("Maximum 5 tags allowed");
+    }
+
+    // Limit each tag to 20 characters
+    tagsArray = tagsArray.map((tag) =>
+      tag.length > 20 ? tag.substring(0, 20) : tag
+    );
+
     updateEventData({ tags: tagsArray });
   };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Validation: Check file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast.error("Image size must be less than 5MB");
+      return;
+    }
+
+    // Validation: Check file type
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Only JPG, JPEG, PNG, and WEBP formats are allowed");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("files", file);
@@ -97,10 +132,51 @@ function BasicInfoContent() {
 
   const handleNext = (e) => {
     e.preventDefault();
-    if (!eventData.eventTitle || !eventData.eventCategory) {
-      toast.error("Please fill in required fields (Title, Category)");
+    if (!eventData.eventTitle) {
+      toast.error("Event title is required");
       return;
     }
+
+    if (eventData.eventTitle.length < 5) {
+      toast.error("Event title must be at least 5 characters long");
+      return;
+    }
+
+    if (!eventData.eventCategory) {
+      toast.error("Event category is required");
+      return;
+    }
+
+    if (!eventData.posterImage || eventData.posterImage.length === 0) {
+      toast.error("Please upload an event poster image");
+      return;
+    }
+
+    if (!eventData.shortdesc || eventData.shortdesc.trim() === "") {
+      toast.error("Short description is required");
+      return;
+    }
+
+    if (eventData.shortdesc.length < 10) {
+      toast.error("Short description must be at least 10 characters long");
+      return;
+    }
+
+    if (!eventData.longdesc || eventData.longdesc.trim() === "") {
+      toast.error("Detailed description is required");
+      return;
+    }
+
+    if (eventData.longdesc.length < 50) {
+      toast.error("Detailed description must be at least 50 characters long");
+      return;
+    }
+
+    if (!eventData.tags || eventData.tags.length === 0 || (eventData.tags.length === 1 && eventData.tags[0] === "")) {
+      toast.error("At least one tag is required");
+      return;
+    }
+
     router.push("/DateTime");
   };
 
@@ -177,10 +253,15 @@ function BasicInfoContent() {
                       type="text"
                       className="form-control"
                       name="eventTitle"
-                      value={eventData.eventTitle}
+                      value={eventData.eventTitle || ""}
                       onChange={handleInputChange}
                       placeholder="Enter event title"
                     />
+                    <div className="text-end mt-1">
+                      <small className="text-white">
+                        {(eventData.eventTitle?.length || 0)}/100
+                      </small>
+                    </div>
                   </div>
                 </Col>
                 <Col md={6}>
@@ -196,7 +277,7 @@ function BasicInfoContent() {
                       <option value="">Select Event Category</option>
                       {categories.map((cat) => (
                         <option key={cat._id} value={cat._id}>
-                          {cat.name}
+                          {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
                         </option>
                       ))}
                     </select>
@@ -205,8 +286,8 @@ function BasicInfoContent() {
                 <Col md={12}>
                   <div className="event-frm-bx upload">
                     <div>
-                      <h5>Upload Event Poster</h5>
-                      <p>Drag and drop or browse to upload an image</p>
+                      <h5>Upload Event Poster <span className="text-danger">*</span></h5>
+                      <p>Drag and drop or browse to upload (Max 5MB, JPG/PNG/WEBP)</p>
                     </div>
                     <input
                       type="file"
@@ -269,7 +350,7 @@ function BasicInfoContent() {
                             <p className="text-success mb-1">
                               ✓ Event poster uploaded successfully
                             </p>
-                            <p className="text-muted" style={{ fontSize: "14px" }}>
+                            <p className="text-white" style={{ fontSize: "14px" }}>
                               Click the × button to remove and upload a different image
                             </p>
                           </div>
@@ -281,25 +362,35 @@ function BasicInfoContent() {
             </div>
             <div className="event-form-card">
               <div className="event-frm-bx">
-                <label className="form-label">Short Description</label>
+                <label className="form-label">Short Description <span className="text-danger">*</span></label>
                 <textarea
                   name="shortdesc"
-                  value={eventData.shortdesc}
+                  value={eventData.shortdesc || ""}
                   onChange={handleInputChange}
                   placeholder="Brief summary"></textarea>
+                <div className="text-end mt-1">
+                  <small className="text-white">
+                    {(eventData.shortdesc?.length || 0)}/250
+                  </small>
+                </div>
               </div>
               <div className="event-frm-bx">
                 <label className="form-label">
-                  Detailed Description/Highlights
+                  Detailed Description/Highlights <span className="text-danger">*</span>
                 </label>
                 <textarea
                   name="longdesc"
-                  value={eventData.longdesc}
+                  value={eventData.longdesc || ""}
                   onChange={handleInputChange}
                   placeholder="Full details about the event"></textarea>
+                <div className="text-end mt-1">
+                  <small className="text-white">
+                    {(eventData.longdesc?.length || 0)}/2000
+                  </small>
+                </div>
               </div>
               <div className="event-frm-bx">
-                <label className="form-label">Tags</label>
+                <label className="form-label">Tags <span className="text-danger">*</span></label>
                 <input
                   type="text"
                   className="form-control"
