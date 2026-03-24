@@ -49,6 +49,11 @@ function page() {
       return;
     }
 
+    if (Number(eventData.totalTickets) < Number(eventData.ticketQtyAvailable)) {
+      toast.error("Total tickets must be greater than or equal to Quantity Available");
+      return;
+    }
+
     if (!eventData.ticketSelesStartDate) {
       toast.error("Sales start date is required");
       return;
