@@ -359,13 +359,12 @@ function page() {
                             </td>
                             <td>
                               <span
-                                className={`badge ${
-                                  doc.status === "approved"
-                                    ? "bg-success"
-                                    : doc.status === "rejected"
-                                      ? "bg-danger"
-                                      : "bg-warning"
-                                }`}>
+                                className={`badge ${doc.status === "approved"
+                                  ? "bg-success"
+                                  : doc.status === "rejected"
+                                    ? "bg-danger"
+                                    : "bg-warning"
+                                  }`}>
                                 {doc.status.toUpperCase()}
                               </span>
                             </td>

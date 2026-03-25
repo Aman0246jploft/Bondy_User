@@ -119,6 +119,9 @@ const EventSection = ({
               <Link href={`/eventDetails?id=${item._id}`}>
                 <div className="event_main_cart">
                   <div className="recommended-card">
+                    {(item.isFeatured || item.fetcherEvent) && (
+                      <span className="event-badge">Featured Event</span>
+                    )}
                     <img
                       src={
                         item.posterImage && item.posterImage[0]

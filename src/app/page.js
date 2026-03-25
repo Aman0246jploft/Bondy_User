@@ -47,9 +47,9 @@ export default function HomePage() {
       <TopEvents />
 
       <div className="event_bg">
-        <EventSection type="recommended" extraParams={searchParams} />
-        <EventSection type="nearYou" extraParams={searchParams} />
-        <EventSection type="week" extraParams={searchParams} />
+        <EventSection type="recommended" extraParams={{ ...searchParams, placement: "homePage" }} />
+        <EventSection type="nearYou" extraParams={{ ...searchParams, placement: "homePage" }} />
+        <EventSection type="week" extraParams={{ ...searchParams, placement: "homePage" }} />
       </div>
 
       <Categories />

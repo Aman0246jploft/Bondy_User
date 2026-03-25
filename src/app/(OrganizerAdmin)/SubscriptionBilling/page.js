@@ -88,6 +88,7 @@ function page() {
               </div>
             </div>
           </Col>
+
           <Col md={5}>
             <div className="analytics-chart payment-cards h-100">
               <h3 className="section-title">Payment Methods</h3>
@@ -125,6 +126,7 @@ function page() {
             <div>
               <h5 className="table-title">Billing History</h5>
             </div>
+
             <div className="table-search">
               <input
                 type="text"

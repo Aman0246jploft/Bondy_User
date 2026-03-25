@@ -1092,6 +1092,7 @@ select:-webkit-autofill {
 }
 
 .recommended-card {
+  position: relative;
   overflow: hidden;
   height: 400px;
   border-radius: 20px;
@@ -5571,7 +5572,7 @@ a.view-map {
   border-radius: 0 30px 30px 0px;
 }
 
-.Explore_sec .event-badge {
+.event-badge {
   position: absolute;
   top: 15px;
   left: 15px;
@@ -5580,6 +5581,7 @@ a.view-map {
   padding: 5px 15px;
   border-radius: 20px;
   font-size: 13px;
+  z-index: 10;
 }
 
 .Explore_sec .content-box {

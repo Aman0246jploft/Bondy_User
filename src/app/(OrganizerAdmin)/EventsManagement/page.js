@@ -187,7 +187,7 @@ function page() {
                 <select className="form-select">
                   <option>Sort by</option>
                   <option>Latest</option>
-                  <option>Soonest</option>
+                  <option>Soonest</option>  
                 </select>
               </div>
             </div> */}

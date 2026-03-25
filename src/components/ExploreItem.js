@@ -13,7 +13,7 @@ const categories = [
   { label: "Next Week", value: "nextWeek" }
 ];
 
-export default function ExploreItem({ type = "Events", filter = "upcoming", onFilterChange, categoryId, search, latitude, longitude, date }) {
+export default function ExploreItem({ type = "Events", filter = "upcoming", onFilterChange, categoryId, search, latitude, longitude, date, placement }) {
   const [items, setItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -22,7 +22,7 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
   useEffect(() => {
     // Reset to page 1 if type, filter, category, or search params change
     setCurrentPage(1);
-  }, [type, filter, categoryId, search, latitude, longitude, date]);
+  }, [type, filter, categoryId, search, latitude, longitude, date, placement]);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -37,7 +37,8 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
             search: search,
             latitude: latitude,
             longitude: longitude,
-            date: date
+            date: date,
+            placement: placement
           });
           const eventData = response?.data?.data || response?.data || response;
           if (eventData?.events) {
@@ -77,7 +78,7 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
     };
 
     fetchItems();
-  }, [filter, type, categoryId, currentPage, limit, search, latitude, longitude, date]);
+  }, [filter, type, categoryId, currentPage, limit, search, latitude, longitude, date, placement]);
 
   const handleToggle = (value) => {
     if (onFilterChange) {
@@ -133,7 +134,7 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
                     <Row className="g-0 align-items-center">
                       <Col md={5}>
                         <div className="img-box">
-                          {item.isFeatured && (
+                          {(item.isFeatured || item.fetcherEvent) && (
                             <span className="event-badge">Featured {isEvent ? "Event" : "Course"}</span>
                           )}
                           <img

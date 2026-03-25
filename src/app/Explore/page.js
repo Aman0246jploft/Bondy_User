@@ -155,6 +155,7 @@ function ExploreContent() {
                     <Tab.Pane eventKey="Events">
                       <ExploreItem
                         type="Events"
+                        placement="explorePage"
                         filter={activeFilter}
                         onFilterChange={setActiveFilter}
                         categoryId={selected.join(",")}

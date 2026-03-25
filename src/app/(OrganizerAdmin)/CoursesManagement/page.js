@@ -39,7 +39,7 @@ function CoursesManagement() {
             console.error("Failed to fetch categories", error);
         }
     };
-   
+
     const fetchCourses = async () => {
         try {
             setLoading(true);
