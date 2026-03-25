@@ -115,8 +115,9 @@ function CoursesManagement() {
         setLoadingPackages(true);
         try {
             const res = await promotionsApi.getCoursePackages();
+            console.log("resresresresres>>>", res)
             if (res?.status) {
-                setPromoPackages(res?.data?.packages || []);
+                setPromoPackages(res?.data || []);
             }
         } catch (err) {
             toast.error("Failed to load promotion packages");

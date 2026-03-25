@@ -299,7 +299,7 @@ function ProgramDetailsContent() {
                   </div>
                 </div>
               </div>
-              <Reviews />
+              {/* <Reviews /> */}
               {id && <CommentsSection entityId={id} entityModel="Course" />}
             </Container>
           </Col>

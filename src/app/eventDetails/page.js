@@ -320,7 +320,7 @@ function EventDetailsContent() {
                   </div>
                 </div>
               </div>
-              <Reviews />
+              {/* <Reviews /> */}
               {eventId && <CommentsSection entityId={eventId} entityModel="Event" />}
             </Container>
           </Col>
