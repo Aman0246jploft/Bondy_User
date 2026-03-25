@@ -28,8 +28,8 @@ export default function Footer() {
                   {/* <Link href="#">FAQ</Link> */}
                 </div>
                 <div>
-                  <Link href="#">Terms & Conditions</Link>
-                  <Link href="#">Privacy Policy</Link>
+                  <Link href="/terms">Terms & Conditions</Link>
+                  <Link href="/privacy-policy">Privacy Policy</Link>
                   {/* <Link href="#">Cookie Policy</Link> */}
                 </div>
               </div>

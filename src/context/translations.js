@@ -20,7 +20,9 @@ export const translations = {
     loadingCategories: "Loading categories...",
     noCategoriesFound: "No categories found",
     eventsTab: "Events",
-    programTab: "Program"
+    programTab: "Program",
+    privacyPolicy: "Privacy Policy",
+    termsConditions: "Terms & Conditions"
   },
   mn: {
     home: "Нүүр",
@@ -43,6 +45,8 @@ export const translations = {
     loadingCategories: "Ангиллуудыг уншиж байна...",
     noCategoriesFound: "Ангилал олдсонгүй",
     eventsTab: "Арга хэмжээ",
-    programTab: "Хөтөлбөр"
+    programTab: "Хөтөлбөр",
+    privacyPolicy: "Нууцлалын бодлого",
+    termsConditions: "Үйлчилгээний нөхцөл"
   }
 };
