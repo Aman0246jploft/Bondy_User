@@ -105,7 +105,7 @@ function EventAttendeesContent() {
                       border: "2px solid #e94560",
                     }}
                     onError={(e) => {
-                      e.target.src = "/img/default-user.png";
+                      e.target.src = "/img/sidebar-logo.svg";
                     }}
                   />
                   <div className="flex-grow-1">
@@ -163,7 +163,7 @@ function EventAttendeesContent() {
                           border: "2px solid #444",
                         }}
                         onError={(e) => {
-                          e.target.src = "/img/default-user.png";
+                          e.target.src = "/img/sidebar-logo.svg";
                         }}
                       />
                       <div className="flex-grow-1">

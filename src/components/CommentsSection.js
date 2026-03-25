@@ -72,7 +72,7 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
     return (
         <div className={`d-flex mb-4 ${depth > 0 ? "ms-4 border-start ps-3 border-2 border-light" : ""}`}>
             <img
-                src={comment.user?.profileImage ? getFullImageUrl(comment.user.profileImage) : "/img/default-user.png"}
+                src={comment.user?.profileImage ? getFullImageUrl(comment.user.profileImage) : "/img/sidebar-logo.svg"}
                 alt="User"
                 className="rounded-circle me-3 flex-shrink-0 object-fit-cover"
                 width={depth > 0 ? "40" : "48"}

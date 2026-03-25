@@ -350,7 +350,7 @@ function EventDetailsContent() {
                                 src={
                                   user.profileImage
                                     ? getFullImageUrl(user.profileImage)
-                                    : "/img/default-user.png"
+                                    : "/img/sidebar-logo.svg"
                                 }
                                 className="avatar-img"
                                 alt={`${user.firstName} ${user.lastName}`}
@@ -424,7 +424,7 @@ function EventDetailsContent() {
                     src={
                       event?.createdBy?.profileImage
                         ? getFullImageUrl(event?.createdBy?.profileImage)
-                        : "/img/default-user.png"
+                        : "/img/sidebar-logo.svg"
                     }
                     className="sponsor-img"
                     alt="Sponsor"

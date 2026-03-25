@@ -35,9 +35,9 @@ const SessionCart = ({ type, title, events }) => {
       <div className="container">
         <div className="main_title align_title position-relative z-2 border-bottm">
           <h2>{displayTitle}</h2>
-          <Link href="/Listing" className="see-all">
+          {/* <Link href="/Listing" className="see-all">
             See all
-          </Link>
+          </Link> */}
         </div>
 
         <div className="row gy-5">
@@ -81,7 +81,7 @@ const SessionCart = ({ type, title, events }) => {
               <div key={id} className="col-lg-3 col-md-6 col-sm-12">
                 <div className="event_main_cart">
                   <div className="recommended-card">
-                    <img src={img} alt={name} onError={(e) => e.target.src = "/img/event_img.png"} />
+                    <img src={img} alt={name} onError={(e) => e.target.src = "/img/sidebar-logo.svg"} />
                   </div>
 
                   <div className="card-overlay">

@@ -1,6 +1,6 @@
 export const getFullImageUrl = (path) => {
     // console.log("getFullImageUrl called with path:", path);
-    if (!path) return "/img/default-user.png";
+    if (!path) return "/img/sidebar-logo.svg";
     if (path.startsWith("http")) return path;
 
     // Ensure we don't have double slashes if path starts with /

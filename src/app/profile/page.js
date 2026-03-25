@@ -100,7 +100,7 @@ function ProfileContent() {
       <div className="profile-page">
         <div className="profile_cover">
           <img
-            src="/img/profile_cover.png"
+            src="/img/sidebar-logo.svg"
             alt="Background"
             className="banner-img"
           />
@@ -115,7 +115,7 @@ function ProfileContent() {
                     src={
                       userProfile?.profileImage
                         ? userProfile.profileImage
-                        : "/img/default-user.png"
+                        : "/img/sidebar-logo.svg"
                     }
                     alt={userProfile?.firstName}
                     className="object-fit-cover"

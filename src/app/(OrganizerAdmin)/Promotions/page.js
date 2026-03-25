@@ -48,14 +48,14 @@ export default function PromotionsPage() {
       <Row className="gx-5 mt-4">
         {packages.map((pkg) => (
           <Col lg={4} xs={12} key={pkg._id} className="mb-4">
-            <div className="pricing-cards h-100 d-flex flex-column">
+            <div style={{ textTransform: "capitalize" }} className="pricing-cards h-100 d-flex flex-column">
               <div>
                 <h5>{pkg.name}</h5>
                 <h2>
                   ₮{pkg.price?.toLocaleString()} <span>{pkg.durationInDays} days</span>
                 </h2>
               </div>
-              <div className="flex-grow-1 mt-3">
+              <div className="  flex-grow-1 mt-3">
                 {pkg.placements && pkg.placements.length > 0 ? (
                   pkg.placements.map((placement, index) => (
                     <p key={index}>
