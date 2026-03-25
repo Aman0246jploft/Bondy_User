@@ -162,7 +162,7 @@ function PersonalInfoContent() {
                     objectFit: "cover",
                     borderRadius: "50%",
                   }}
-                  src={preview || "/img/avtar.png"}
+                  src={preview || "/img/sidebar-logo.svg"}
                   alt="Profile"
                 />
                 <input

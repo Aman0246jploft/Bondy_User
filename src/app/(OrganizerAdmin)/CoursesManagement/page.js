@@ -176,7 +176,7 @@ function CoursesManagement() {
                     <Col md={4}>
                         <div className="event-cards">
                             <h5>Total Revenue</h5>
-                            <h3>${stats.totalRevenue?.toLocaleString() || 0}</h3>
+                            <h3>₮{stats.totalRevenue?.toLocaleString() || 0}</h3>
                             <p>From all courses</p>
                         </div>
                     </Col>

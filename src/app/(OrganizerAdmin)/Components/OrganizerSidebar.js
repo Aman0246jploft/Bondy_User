@@ -121,7 +121,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </span>
           <span className="text">Earnings</span>
         </Link>
-        <Link
+        {/* <Link
           href="/SubscriptionBilling"
           className={`menu-item ${isActive("/SubscriptionBilling") ? "active" : ""
             }`}>
@@ -129,7 +129,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
             <img src="/img/org-img/sidebar-icon-06.svg" alt="" />
           </span>
           <span className="text">Subscription & Billing</span>
-        </Link>
+        </Link> */}
         <Link
           href="/Referral"
           className={`menu-item ${isActive("/Referral") ? "active" : ""}`}>

@@ -25,7 +25,7 @@ function OrganizerHeader() {
     <div>
       <header className="topbar">
         {/* Search */}
-        <div className="topbar-search">
+        <div style={{ visibility: "hidden" }} className="topbar-search">
           <input
             type="text"
             className="form-control"
@@ -54,7 +54,7 @@ function OrganizerHeader() {
                 src={
                   profile?.profileImage
                     ? getFullImageUrl(profile.profileImage)
-                    : "/img/avtar.png"
+                    : "/img/sidebar-logo.svg"
                 }
                 alt="User"
               />

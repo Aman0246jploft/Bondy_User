@@ -155,24 +155,24 @@ function page() {
           <Col lg={4} xs={6}>
             <div className="event-cards">
               <h5>Total Revenue</h5>
-              <h3>${stats.totalRevenue?.toLocaleString() || 0}</h3>
-              <p>+15%</p>
+              <h3>₮{stats.totalRevenue?.toLocaleString() || 0}</h3>
+              {/* <p>+15%</p> */}
             </div>
           </Col>
           <Col lg={4} xs={6}>
             <div className="event-cards">
               <h5>Total Attendees</h5>
               <h3>{stats.totalAttendees?.toLocaleString() || 0}</h3>
-              <p>+10%</p>
+              {/* <p>+10%</p> */}
             </div>
           </Col>
-          <Col lg={4} xs={6}>
+          {/* <Col lg={4} xs={6}>
             <div className="event-cards">
               <h5>Average Rating</h5>
               <h3>1300</h3>
               <p>+10%</p>
             </div>
-          </Col>
+          </Col> */}
         </Row>
         <div className="ticket-tabs">
           <div className="d-flex mb-3 justify-content-between align-items-center flex-wrap">
