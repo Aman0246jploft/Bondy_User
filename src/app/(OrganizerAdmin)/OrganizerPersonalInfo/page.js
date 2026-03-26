@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Col, Form, Row, Button } from "react-bootstrap";
-import PhoneInput, { parsePhoneNumber } from "react-phone-number-input";
-import "react-phone-number-input/style.css";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { parsePhoneNumber } from "react-phone-number-input";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import { getFullImageUrl } from "@/utils/imageHelper";
@@ -310,11 +311,13 @@ function PersonalInfoContent() {
             <Col md={6}>
               <div className="custom-tel-input custom-floting">
                 <PhoneInput
-                  defaultCountry="US"
-                  international
-                  countryCallingCodeEditable={false}
+                  country={"us"}
                   value={profileData.contactNumber}
-                  onChange={handlePhoneChange}
+                  onChange={(phone) => handlePhoneChange("+" + phone)}
+                  inputClass="form-control w-100"
+                  containerClass="phone_input"
+                  dropdownClass="phone_input_dropdown"
+                  buttonClass="phone_input_button"
                 />
               </div>
             </Col>

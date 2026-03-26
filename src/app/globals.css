@@ -153,6 +153,62 @@ select:-webkit-autofill {
   margin-left: 10px;
 }
 
+/* react-phone-input-2 custom styles */
+.phone_input .form-control {
+  background-color: #1a1a1a !important;
+  color: #b3b3b3 !important;
+  border: 1px solid #737373 !important;
+  border-radius: 50px !important;
+  height: 56px !important;
+  width: 100% !important;
+  padding-left: 60px !important;
+  font-size: 16px !important;
+}
+
+.phone_input .flag-dropdown {
+  background-color: #1a1a1a !important;
+  border: 1px solid #737373 !important;
+  border-right: none !important;
+  border-radius: 50px 0 0 50px !important;
+}
+
+.phone_input .flag-dropdown.open .selected-flag {
+  background-color: #1a1a1a !important;
+  border-radius: 50px 0 0 0 !important;
+}
+
+.phone_input .selected-flag:hover,
+.phone_input .selected-flag:focus {
+  background-color: #1a1a1a !important;
+}
+
+.phone_input_dropdown {
+  background-color: #1a1a1a !important;
+  color: #b3b3b3 !important;
+  border: 1px solid #737373 !important;
+  border-radius: 8px !important;
+  margin-top: 5px !important;
+}
+
+.phone_input_dropdown .country:hover {
+  background-color: #333 !important;
+}
+
+.phone_input_dropdown .country.highlight {
+  background-color: #333 !important;
+}
+
+.phone_input_dropdown .search {
+  background-color: #1a1a1a !important;
+  color: #fff !important;
+}
+
+.phone_input_dropdown .search-box {
+  background-color: #1a1a1a !important;
+  color: #fff !important;
+  border: 1px solid #737373 !important;
+}
+
 .status-badge {
   padding: 8px 16px;
   display: inline-block;
@@ -4426,10 +4482,10 @@ a.view-map {
 }
 
 .phone_input {
-  background: #1f1f1f;
+  /* background: #1f1f1f;
   border: 1px solid #737373;
   border-radius: 29px;
-  padding: 0 15px;
+  padding: 0 15px; */
 }
 
 .common_field .form-control::placeholder {

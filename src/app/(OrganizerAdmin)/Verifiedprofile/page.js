@@ -3,8 +3,9 @@ import Link from "next/link";
 import React, { useState, useRef, useEffect } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import "react-datepicker/dist/react-datepicker.css";
-import PhoneInput, { parsePhoneNumber } from "react-phone-number-input";
-import "react-phone-number-input/style.css";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { parsePhoneNumber } from "react-phone-number-input";
 import apiClient from "../../../api/apiClient";
 // import authApi from "../../../api/authApi"; // authApi uses apiClient internally
 import authApi from "../../../api/authApi";
@@ -255,12 +256,13 @@ function page() {
                     <label className="text-white mb-1">Contact Number</label>
                     <div className="d-flex gap-2 phone-input-profile">
                       <PhoneInput
-                        defaultCountry="US"
-                        international
-                        countryCallingCodeEditable={false}
+                        country={"us"}
                         value={contactNumber}
-                        onChange={setContactNumber}
-                        className="form-control"
+                        onChange={(phone) => setContactNumber("+" + phone)}
+                        inputClass="form-control w-100"
+                        containerClass="phone_input"
+                        dropdownClass="phone_input_dropdown"
+                        buttonClass="phone_input_button"
                       />
                       <button
                         type="button"

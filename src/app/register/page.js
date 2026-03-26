@@ -2,8 +2,9 @@
 import Link from "next/link";
 import React, { useEffect, useRef, useState, Suspense } from "react";
 import { Col, Container, Form, Nav, Row, Tab } from "react-bootstrap";
-import PhoneInput, { parsePhoneNumber } from "react-phone-number-input";
-import "react-phone-number-input/style.css";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { parsePhoneNumber } from "react-phone-number-input";
 import authApi from "@/api/authApi";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
@@ -246,14 +247,15 @@ function RegisterForm() {
 
                               <Form.Group className="mb-3">
                                 <PhoneInput
-                                  defaultCountry="US"
-                                  international
-                                  countryCallingCodeEditable={false}
+                                  country={"us"}
                                   value={customerData.contactNumber}
-                                  onChange={(val) =>
-                                    handlePhoneChange(val, "Customer")
+                                  onChange={(phone) =>
+                                    handlePhoneChange("+" + phone, "Customer")
                                   }
-                                  className="phone_input"
+                                  inputClass="form-control w-100"
+                                  containerClass="phone_input"
+                                  dropdownClass="phone_input_dropdown"
+                                  buttonClass="phone_input_button"
                                 />
                               </Form.Group>
 
@@ -394,14 +396,15 @@ function RegisterForm() {
 
                               <Form.Group className="mb-3">
                                 <PhoneInput
-                                  defaultCountry="US"
-                                  international
-                                  countryCallingCodeEditable={false}
+                                  country={"us"}
                                   value={organizerData.contactNumber}
-                                  onChange={(val) =>
-                                    handlePhoneChange(val, "Organizer")
+                                  onChange={(phone) =>
+                                    handlePhoneChange("+" + phone, "Organizer")
                                   }
-                                  className="phone_input"
+                                  inputClass="form-control w-100"
+                                  containerClass="phone_input"
+                                  dropdownClass="phone_input_dropdown"
+                                  buttonClass="phone_input_button"
                                 />
                               </Form.Group>
 
