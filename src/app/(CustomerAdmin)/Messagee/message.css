@@ -251,6 +251,14 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+.options-dropdown a.clear-chat {
+  color: #ff5555;
+}
+
+.options-dropdown a.clear-chat:hover {
+  background: rgba(255, 85, 85, 0.1);
+}
+
 /* MESSAGES */
 .messages-area {
   flex: 1;
@@ -338,6 +346,27 @@
 .msg-time {
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.delete-msg-btn {
+  background: none;
+  border: none;
+  padding: 0 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.message:hover .delete-msg-btn {
+  opacity: 0.6;
+}
+
+.delete-msg-btn:hover {
+  opacity: 1 !important;
+  transform: scale(1.1);
 }
 
 .read-status {

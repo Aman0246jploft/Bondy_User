@@ -393,6 +393,37 @@ function MessageContent() {
         });
     }, [socket, activeChat, message, stagedFile]);
 
+    // 11. Delete Message (for me)
+    const deleteMessage = useCallback((messageId) => {
+        if (!socket || !messageId) return;
+        if (!window.confirm("Delete this message for you?")) return;
+
+        socket.emit("delete_message", { messageId, deleteType: "me" }, (response) => {
+            if (response.status === "ok") {
+                setMessages((prev) => prev.filter((m) => m._id !== messageId));
+                toast.success("Message deleted");
+            } else {
+                toast.error(response.message || "Failed to delete message");
+            }
+        });
+    }, [socket]);
+
+    // 12. Clear Chat (for me)
+    const clearChat = useCallback(() => {
+        if (!socket || !activeChat || activeChat.isVirtual) return;
+        if (!window.confirm("Clear all messages in this chat for you?")) return;
+
+        socket.emit("clear_chat", { chatId: activeChat._id }, (response) => {
+            if (response.status === "ok") {
+                setMessages([]);
+                setShowDropdown(false);
+                toast.success("Chat cleared");
+            } else {
+                toast.error(response.message || "Failed to clear chat");
+            }
+        });
+    }, [socket, activeChat]);
+
     const handleKeyPress = (e) => {
         if (e.key === "Enter") sendMessage();
     };
@@ -569,6 +600,10 @@ function MessageContent() {
                                                         <img src="/img/user-white.svg" className="me-2" alt="" />
                                                         User Profile
                                                     </Link>
+                                                    <a href="#" className="clear-chat" onClick={(e) => { e.preventDefault(); clearChat(); }}>
+                                                        <img src="/img/delete.svg" className="me-2" style={{ filter: "invert(40%) sepia(91%) saturate(3452%) hue-rotate(346deg) brightness(103%) contrast(106%)" }} alt="" />
+                                                        Clear Chat
+                                                    </a>
                                                 </div>
                                             )}
                                         </div>
@@ -629,6 +664,13 @@ function MessageContent() {
                                                                             )}
                                                                         </span>
                                                                     )}
+                                                                    {/* <button
+                                                                        className="delete-msg-btn"
+                                                                        onClick={() => deleteMessage(m._id)}
+                                                                        title="Delete for me"
+                                                                    >
+                                                                        🗑️
+                                                                    </button> */}
                                                                 </span>
                                                             </div>
                                                             <div className="msg-text">

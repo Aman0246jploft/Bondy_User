@@ -72,7 +72,23 @@ export default function Mapview({ searchParams }) {
         center,
         zoom: 12,
         styles: [
-          { "featureType": "poi", "stylers": [{ "visibility": "off" }] } // Cleaner map
+          { "elementType": "geometry", "stylers": [{ "color": "#121212" }] },
+          { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
+          { "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+          { "elementType": "labels.text.stroke", "stylers": [{ "color": "#121212" }] },
+          { "featureType": "administrative", "elementType": "geometry", "stylers": [{ "color": "#757575" }] },
+          { "featureType": "administrative.country", "elementType": "labels.text.fill", "stylers": [{ "color": "#9e9e9e" }] },
+          { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#bdbdbd" }] },
+          { "featureType": "poi", "stylers": [{ "visibility": "off" }] },
+          { "featureType": "road", "elementType": "geometry.fill", "stylers": [{ "color": "#2c2c2c" }] },
+          { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#8a8a8a" }] },
+          { "featureType": "road.arterial", "elementType": "geometry", "stylers": [{ "color": "#373737" }] },
+          { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#3c3c3c" }] },
+          { "featureType": "road.highway.controlled_access", "elementType": "geometry", "stylers": [{ "color": "#4e4e4e" }] },
+          { "featureType": "road.local", "elementType": "labels.text.fill", "stylers": [{ "color": "#616161" }] },
+          { "featureType": "transit", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+          { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#000000" }] },
+          { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#3d3d3d" }] }
         ],
         mapTypeControl: false,
         streetViewControl: false,
@@ -101,18 +117,32 @@ export default function Mapview({ searchParams }) {
         }
       });
 
-      marker.addListener("click", () => {
+      marker.addListener("mouseover", () => {
         const content = `
-          <div style="width: 200px; font-family: sans-serif;">
-            <img src="${event.posterImage?.[0] || "/img/no-image.png"}" style="width:100%; height:100px; object-fit:cover; border-radius:8px;" />
-            <h6 style="margin: 8px 0 4px; font-weight: bold;">${event.eventTitle}</h6>
-            <p style="margin: 0; font-size: 12px; color: #666;">${event.venueAddress?.city || "Location"}</p>
-            <p style="margin: 4px 0 8px; font-size: 12px; color: #666;">${new Date(event.startDate).toLocaleDateString()}</p>
-            <a href="/eventDetails?id=${event._id}" style="display:block; text-align:center; background:#18a0a0; color:white; padding:6px; border-radius:4px; text-decoration:none; font-size:12px;">Details</a>
+          <div style="width: 200px; padding: 0; background: #fff; overflow: hidden;">
+            <img src="${event.posterImage?.[0] || "/img/no-image.png"}" style="width:100%; height:110px; object-fit:cover; border-radius: 8px 8px 0 0;" />
+            <div style="padding: 10px;">
+              <h6 style="margin: 0 0 5px; font-weight: 700; color: #333; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${event.eventTitle}</h6>
+              <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                <img src="/img/loc_icon.svg" style="width: 10px; opacity: 0.7;" />
+                <span style="font-size: 11px; color: #666;">${event.venueAddress?.city || "Location"}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 10px;">
+                <img src="/img/date_icon.svg" style="width: 10px; opacity: 0.7;" />
+                <span style="font-size: 11px; color: #666;">${new Date(event.startDate).toLocaleDateString()}</span>
+              </div>
+              <a href="/eventDetails?id=${event._id}" style="display:block; text-align:center; background:#18a0a0; color:white; padding:7px; border-radius:6px; text-decoration:none; font-size:12px; font-weight: 600;">
+                View Details
+              </a>
+            </div>
           </div>
         `;
         infoWindow.setContent(content);
         infoWindow.open(googleMapRef.current, marker);
+      });
+
+      marker.addListener("click", () => {
+        window.location.href = `/eventDetails?id=${event._id}`;
       });
 
       markersRef.current.push(marker);
@@ -140,9 +170,9 @@ export default function Mapview({ searchParams }) {
                     className="event-card shadow"
                   >
                     <div className="img-container">
-                      <img 
-                        src={event.posterImage?.[0] || "/img/no-image.png"} 
-                        alt={event.eventTitle} 
+                      <img
+                        src={event.posterImage?.[0] || "/img/no-image.png"}
+                        alt={event.eventTitle}
                         onError={(e) => { e.target.src = "/img/no-image.png"; }}
                       />
                     </div>
@@ -168,10 +198,10 @@ export default function Mapview({ searchParams }) {
           </Col>
 
           <Col lg={5} xl={6} xxl={7}>
-            <div 
-              ref={mapRef} 
-              className="map-box" 
-              style={{ borderRadius: '15px', height: '600px', background: '#eee' }}
+            <div
+              ref={mapRef}
+              className="map-box"
+              style={{ borderRadius: '15px', height: '600px', background: '#1a1a1a' }}
             >
               {!isLoaded && <div className="d-flex align-items-center justify-content-center h-100"><p>Loading Google Maps...</p></div>}
             </div>
