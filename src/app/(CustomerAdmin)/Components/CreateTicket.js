@@ -6,15 +6,16 @@ import authApi from "../../../api/authApi";
 import supportTicketApi from "../../../api/supportTicketApi";
 import toast from "react-hot-toast";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 export default function CreateTicket(props) {
+  const { t } = useLanguage();
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     category: "",
     subject: "",
     description: "",
-    priority: "Open", // Default as per UI, though backend might not use it directly or maps it differently.
-    // Backend model has: status (default Pending), priority is NOT in model shown.
-    // We will send subject, description, category.
+    priority: "Open",
   });
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +38,6 @@ export default function CreateTicket(props) {
     }
   };
 
-  console.log("8878888888", categories)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -48,21 +48,19 @@ export default function CreateTicket(props) {
 
   const handleSubmit = async () => {
     if (!formData.category || !formData.subject || !formData.description) {
-      toast.error("Please fill all required fields");
+      toast.error(t("fillRequiredFields") || "Please fill all required fields");
       return;
     }
 
     setLoading(true);
     try {
-      // Find the selected category object to send its name
       const selectedCategory = categories.find(cat => cat._id === formData.category);
       if (!selectedCategory) {
-        toast.error("Invalid Category Selected");
+        toast.error(t("invalidCategorySelected") || "Invalid Category Selected");
         setLoading(false);
         return;
       }
 
-      // API expects: category (string name), subject, description
       const payload = {
         category: selectedCategory.name,
         subject: formData.subject,
@@ -71,9 +69,8 @@ export default function CreateTicket(props) {
 
       const response = await supportTicketApi.createTicket(payload);
       if (response.status === 201 || response.status === 200) {
-        toast.success("Ticket created successfully");
+        toast.success(t("ticketCreatedSuccessfully") || "Ticket created successfully");
         props.onHide();
-        // Reset form
         setFormData({
           category: "",
           subject: "",
@@ -84,7 +81,7 @@ export default function CreateTicket(props) {
       }
     } catch (error) {
       console.error("Error creating ticket:", error);
-      toast.error(error.response?.data?.message || "Error creating ticket");
+      toast.error(error.response?.data?.message || t("errorCreatingTicket") || "Error creating ticket");
     } finally {
       setLoading(false);
     }
@@ -101,21 +98,21 @@ export default function CreateTicket(props) {
         className="common_modal gradientsSc create-ticket-modal"
       >
         <Modal.Header closeButton>
-          <Modal.Title>Create Tickets</Modal.Title>
+          <Modal.Title>{t("createTicketsModalTitle") || "Create Tickets"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
             <Row>
               <Col md={12}>
                 <div className="event-frm-bx">
-                  <label className="form-label">Ticket Category</label>
+                  <label className="form-label">{t("ticketCategory") || "Ticket Category"}</label>
                   <select
                     className="form-select"
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
                   >
-                    <option value="">Select Category</option>
+                    <option value="">{t("selectCategory") || "Select Category"}</option>
                     {categories.map((cat) => (
                       <option key={cat._id} value={cat._id}>
                         {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
@@ -126,7 +123,7 @@ export default function CreateTicket(props) {
               </Col>
               <Col md={6}>
                 <div className="event-frm-bx">
-                  <label className="form-label">Subject</label>
+                  <label className="form-label">{t("subject") || "Subject"}</label>
                   <input
                     type="text"
                     className="form-control"
@@ -136,24 +133,9 @@ export default function CreateTicket(props) {
                   />
                 </div>
               </Col>
-              {/* <Col md={6}>
-                <div className="event-frm-bx">
-                  <label className="form-label">Priority (Optional)</label>
-                  <select
-                    className="form-select"
-                    name="priority" // Note: Priority is not in the backend model shown, just keeping UI logic
-                    value={formData.priority}
-                    onChange={handleChange}
-                  >
-                    <option value="Open">Open</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Resolved">Resolved</option>
-                  </select>
-                </div>
-              </Col> */}
               <Col md={12}>
                 <div className="event-frm-bx">
-                  <label className="form-label">Description</label>
+                  <label className="form-label">{t("description") || "Description"}</label>
                   <textarea
                     className="form-control"
                     name="description"
@@ -170,7 +152,7 @@ export default function CreateTicket(props) {
                 onClick={handleSubmit}
                 disabled={loading}
               >
-                {loading ? "Submitting..." : "Submit Ticket"}
+                {loading ? t("submitting") : t("submitTicket")}
               </button>
             </div>
           </Form>

@@ -6,8 +6,10 @@ import courseApi from "@/api/courseApi";
 import authApi from "@/api/authApi";
 import promotionsApi from "@/api/promotionsApi";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 function CoursesManagement() {
+    const { t } = useLanguage();
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [categories, setCategories] = useState([]);
@@ -120,7 +122,7 @@ function CoursesManagement() {
                 setPromoPackages(res?.data || []);
             }
         } catch (err) {
-            toast.error("Failed to load promotion packages");
+            toast.error(t("failedToLoadPackages") || "Failed to load promotion packages");
         } finally {
             setLoadingPackages(false);
         }
@@ -135,7 +137,7 @@ function CoursesManagement() {
 
     const handleCheckout = async () => {
         if (!selectedPackage) {
-            toast.error("Please select a promotion package first.");
+            toast.error(t("selectPackageFirst") || "Please select a promotion package first.");
             return;
         }
         setCheckingOut(true);
@@ -145,12 +147,12 @@ function CoursesManagement() {
                 packageId: selectedPackage._id,
             });
             if (res?.status) {
-                toast.success("Promotion activated successfully! 🎉");
+                toast.success(t("promotionActivated") || "Promotion activated successfully! 🎉");
                 closePromoModal();
                 fetchCourses();
             }
         } catch (err) {
-            toast.error(err?.response?.data?.message || "Checkout failed. Please try again.");
+            toast.error(err?.response?.data?.message || t("checkoutFailed") || "Checkout failed. Please try again.");
         } finally {
             setCheckingOut(false);
         }
@@ -161,37 +163,37 @@ function CoursesManagement() {
             <div className="cards">
                 <div className="card-header">
                     <div>
-                        <h2 className="card-title">Courses Management</h2>
+                        <h2 className="card-title">{t("coursesManagement")}</h2>
                         <p className="card-desc">
-                            Manage your courses, track enrollments and revenue.
+                            {t("manageCoursesDesc")}
                         </p>
                     </div>
 
                     <Link href="/AddProgram" className="custom-btn">
-                        Create New Course
+                        {t("createNewCourse")}
                     </Link>
                 </div>
 
                 <Row>
                     <Col md={4}>
                         <div className="event-cards">
-                            <h5>Total Revenue</h5>
+                            <h5>{t("totalRevenue")}</h5>
                             <h3>₮{stats.totalRevenue?.toLocaleString() || 0}</h3>
-                            <p>From all courses</p>
+                            <p>{t("fromAllCourses")}</p>
                         </div>
                     </Col>
                     <Col md={4}>
                         <div className="event-cards">
-                            <h5>Total Enrollments</h5>
+                            <h5>{t("totalEnrollments")}</h5>
                             <h3>{stats.totalEnrollments?.toLocaleString() || 0}</h3>
-                            <p>Active students</p>
+                            <p>{t("activeStudents")}</p>
                         </div>
                     </Col>
                     <Col md={4}>
                         <div className="event-cards">
-                            <h5>Total Courses</h5>
+                            <h5>{t("totalCourses")}</h5>
                             <h3>{pagination.total || 0}</h3>
-                            <p>Published courses</p>
+                            <p>{t("publishedCourses")}</p>
                         </div>
                     </Col>
                 </Row>
@@ -200,9 +202,9 @@ function CoursesManagement() {
                 <div className="ticket-tabs">
                     <div className="ticket-listing">
                         {loading ? (
-                            <p className="text-center py-5">Loading courses...</p>
+                            <p className="text-center py-5">{t("loadingCourses")}</p>
                         ) : courses.length === 0 ? (
-                            <p className="text-center py-5">No courses found.</p>
+                            <p className="text-center py-5">{t("noCoursesFound")}</p>
                         ) : (
                             courses.map((course) => {
                                 const isPast = course.status?.toLowerCase() === "past";
@@ -240,7 +242,7 @@ function CoursesManagement() {
                                                                         borderRadius: "20px",
                                                                         letterSpacing: "0.5px",
                                                                     }}>
-                                                                    ⭐ Featured
+                                                                    ⭐ {t("featured")}
                                                                 </span>
                                                             )}
                                                         </h5>
@@ -249,7 +251,7 @@ function CoursesManagement() {
                                                         </p>
                                                         {isFeaturedActive(course) && (
                                                             <p style={{ fontSize: "11px", color: "#fda085", margin: 0 }}>
-                                                                Featured until{" "}
+                                                                {t("featuredUntil")}{" "}
                                                                 {new Date(course.featuredExpiry).toLocaleDateString("en-GB", {
                                                                     day: "numeric",
                                                                     month: "short",
@@ -262,23 +264,23 @@ function CoursesManagement() {
                                             </div>
                                             <div className="ticket-rgt">
                                                 <span className="status-badge">
-                                                    {course.enrollmentType || "Ongoing"}
+                                                    {t(course.enrollmentType?.toLowerCase()) || course.enrollmentType || t("ongoing")}
                                                 </span>
                                                 <p className="text-truncate-1" style={{ maxWidth: "200px" }}>
-                                                    Duration <span>{course.duration || "N/A"}</span>
+                                                    {t("duration")} <span>{course.duration || "N/A"}</span>
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="ticket-bottom">
                                             <p>
-                                                Price <span>${course.price?.toFixed(2) || 0}</span>
+                                                {t("price")} <span>₮{course.price?.toLocaleString() || 0}</span>
                                             </p>
                                             <p>
-                                                Total Revenue{" "}
-                                                <span>${course.totalRevenue?.toLocaleString() || 0}</span>
+                                                {t("totalRevenue")}{" "}
+                                                <span>₮{course.totalRevenue?.toLocaleString() || 0}</span>
                                             </p>
                                             <p>
-                                                Seats{" "}
+                                                {t("seats")}{" "}
                                                 <span>
                                                     {course.totalEnrollments || 0}/{course.totalSeats || 0}
                                                 </span>
@@ -286,19 +288,19 @@ function CoursesManagement() {
 
                                             {!isPast && (
                                                 <Link href={`/AddProgram?courseId=${course._id}`}>
-                                                    Edit <img src="/img/Arrow-Right.svg" alt="arrow" />
+                                                    {t("edit")} <img src="/img/Arrow-Right.svg" alt="arrow" />
                                                 </Link>
                                             )}
 
                                             <Link href={`/course-details/${course._id}`}>
-                                                View Details{" "}
+                                                {t("viewDetails")}{" "}
                                                 <img src="/img/Arrow-Right.svg" alt="arrow" />
                                             </Link>
 
                                             {!isPast && (
                                                 isFeaturedActive(course) ? (
                                                     <span style={{ color: "#fda085", fontSize: "13px", fontWeight: 500 }}>
-                                                        ⭐ Active Promotion
+                                                        ⭐ {t("activePromotion") || "Active Promotion"}
                                                     </span>
                                                 ) : (
                                                     <button
@@ -306,7 +308,7 @@ function CoursesManagement() {
                                                         className="custom-btn"
                                                         style={{ padding: "8px 16px", fontSize: "13px" }}
                                                         onClick={() => openPromoModal(course)}>
-                                                        🚀 Promote
+                                                        🚀 {t("promote")}
                                                     </button>
                                                 )
                                             )}

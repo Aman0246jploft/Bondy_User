@@ -6,8 +6,10 @@ import { useEventContext } from "@/context/EventContext";
 import eventApi from "@/api/eventApi";
 import promotionsApi from "@/api/promotionsApi";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 function page() {
+  const { t } = useLanguage();
   const { clearEventData } = useEventContext();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,9 +140,9 @@ function page() {
       <div className="cards">
         <div className="card-header">
           <div>
-            <h2 className="card-title">Program Management</h2>
+            <h2 className="card-title">{t("programManagement")}</h2>
             <p className="card-desc">
-              Welcome back! Here's a snapshot of your events and tasks.
+              {t("heyUser")}, {t("welcomeBackSnapshot")}
             </p>
           </div>
 
@@ -148,20 +150,20 @@ function page() {
             href="/BasicInfo"
             className="custom-btn"
             onClick={() => clearEventData()}>
-            Create New
+            {t("createNew")}
           </Link>
         </div>
         <Row>
           <Col lg={4} xs={6}>
             <div className="event-cards">
-              <h5>Total Revenue</h5>
+              <h5>{t("totalRevenue")}</h5>
               <h3>₮{stats.totalRevenue?.toLocaleString() || 0}</h3>
               {/* <p>+15%</p> */}
             </div>
           </Col>
           <Col lg={4} xs={6}>
             <div className="event-cards">
-              <h5>Total Attendees</h5>
+              <h5>{t("totalAttendees")}</h5>
               <h3>{stats.totalAttendees?.toLocaleString() || 0}</h3>
               {/* <p>+10%</p> */}
             </div>
@@ -177,10 +179,10 @@ function page() {
         <div className="ticket-tabs">
           <div className="d-flex mb-3 justify-content-between align-items-center flex-wrap">
             <Tabs activeKey={activeTab} onSelect={handleTabSelect} className="">
-              <Tab eventKey="all" title="All" />
-              <Tab eventKey="upcoming" title="Upcoming" />
-              <Tab eventKey="ongoing" title="Ongoing" />
-              <Tab eventKey="past" title="Past" />
+              <Tab eventKey="all" title={t("all")} />
+              <Tab eventKey="upcoming" title={t("upcoming")} />
+              <Tab eventKey="ongoing" title={t("ongoing")} />
+              <Tab eventKey="past" title={t("past")} />
             </Tabs>
             {/* <div className="dashboard-filter">
               <div>
@@ -195,9 +197,9 @@ function page() {
 
           <div className="ticket-listing">
             {loading ? (
-              <p className="text-center py-5">Loading events...</p>
+              <p className="text-center py-5">{t("loadingTickets")}</p>
             ) : events.length === 0 ? (
-              <p className="text-center py-5">No events found.</p>
+              <p className="text-center py-5">{t("noTicketsFound")}</p>
             ) : (
               events.map((event) => {
                 const status = event.status?.toLowerCase();
@@ -238,7 +240,7 @@ function page() {
                                     borderRadius: "20px",
                                     letterSpacing: "0.5px",
                                   }}>
-                                  ⭐ Featured
+                                  ⭐ {t("featured")}
                                 </span>
                               )}
                             </h5>
@@ -247,7 +249,7 @@ function page() {
                             </p>
                             {isFeaturedActive(event) && (
                               <p style={{ fontSize: "11px", color: "#fda085", margin: 0 }}>
-                                Featured until{" "}
+                                {t("featuredUntil")}{" "}
                                 {new Date(event.featuredExpiry).toLocaleDateString("en-GB", {
                                   day: "numeric",
                                   month: "short",
@@ -261,16 +263,16 @@ function page() {
                       <div className="ticket-rgt">
                         <span
                           className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}>
-                          {event.status || "Upcoming"}
+                          {t(event.status?.toLowerCase()) || event.status || t("upcoming")}
                         </span>
                         <p className="text-truncate-1" style={{ maxWidth: "200px" }}>
-                          Venue <span>{event.venueName || "TBD"}</span>
+                          {t("venue")} <span>{event.venueName || "TBD"}</span>
                         </p>
                       </div>
                     </div>
                     <div className="ticket-bottom">
                       <p>
-                        Create Date{" "}
+                        {t("createDate")}{" "}
                         <span>
                           {new Date(event.createdAt).toLocaleDateString("en-GB", {
                             day: "numeric",
@@ -295,28 +297,28 @@ function page() {
                         </span>
                       </p>
                       <p>
-                        Total Booking Revenue{" "}
-                        <span>${event.totalRevenue?.toLocaleString() || 0}</span>
+                        {t("totalBookingRevenue")}{" "}
+                        <span>₮{event.totalRevenue?.toLocaleString() || 0}</span>
                       </p>
                       <p>
                         <span>
                           <img src="/img/ticket-white.svg" alt="ticket" />
                         </span>{" "}
-                        <span>{event.totalTickets || 0} tickets</span>
+                        <span>{event.totalTickets || 0} {t("ticketsSuffix")}</span>
                       </p>
                       {!isPastOrEnded && (
                         <Link href={`/BasicInfo?eventId=${event._id}`}>
-                          Edit <img src="/img/Arrow-Right.svg" alt="arrow" />
+                          {t("edit")} <img src="/img/Arrow-Right.svg" alt="arrow" />
                         </Link>
                       )}
                       <Link href={`/EventDetailOrganiser?eventId=${event._id}`}>
-                        Event Details{" "}
+                        {t("ticketDetails")}{" "}
                         <img src="/img/Arrow-Right.svg" alt="arrow" />
                       </Link>
                       {!isPastOrEnded && (
                         isFeaturedActive(event) ? (
                           <span style={{ color: "#fda085", fontSize: "13px", fontWeight: 500 }}>
-                            ⭐ Active Promotion
+                            ⭐ {t("activePromotion") || "Active Promotion"}
                           </span>
                         ) : (
                           <button
@@ -324,7 +326,7 @@ function page() {
                             className="custom-btn"
                             style={{ padding: "8px 16px", fontSize: "13px" }}
                             onClick={() => openPromoModal(event)}>
-                            🚀 Promote
+                            🚀 {t("promote")}
                           </button>
                         )
                       )}
@@ -374,7 +376,7 @@ function page() {
       <Modal show={showPromoModal} onHide={closePromoModal} centered size="lg">
         <Modal.Header closeButton style={{ background: "#1a1a1a", border: "1px solid #333" }}>
           <Modal.Title style={{ color: "#fff" }}>
-            🚀 Promote:{" "}
+            🚀 {t("promote")}:{" "}
             <span className="text-truncate-1" style={{ color: "#23ada4", maxWidth: "400px", display: "inline-block", verticalAlign: "bottom" }}>{selectedEvent?.eventTitle}</span>
           </Modal.Title>
         </Modal.Header>
@@ -382,16 +384,16 @@ function page() {
           {loadingPackages ? (
             <div className="text-center py-5">
               <Spinner animation="border" variant="primary" />
-              <p className="mt-3" style={{ color: "#999" }}>Loading packages...</p>
+              <p className="mt-3" style={{ color: "#999" }}>{t("loading") || "Loading packages..."}</p>
             </div>
           ) : promoPackages.length === 0 ? (
             <p className="text-center py-4" style={{ color: "#999" }}>
-              No active promotion packages available at the moment.
+              {t("noPackagesAvailable") || "No active promotion packages available at the moment."}
             </p>
           ) : (
             <>
               <p style={{ color: "#999", marginBottom: "20px" }}>
-                Select a plan to boost visibility on the Discover Feed and Homepage.
+                {t("selectPlanBoost") || "Select a plan to boost visibility on the Discover Feed and Homepage."}
               </p>
               <Row className="gx-3 gy-3">
                 {promoPackages.map((pkg) => {
@@ -414,7 +416,7 @@ function page() {
                           ₮{pkg.price?.toLocaleString()}
                         </h3>
                         <p style={{ color: "#999", fontSize: "13px", marginBottom: "12px" }}>
-                          {pkg.durationInDays} day{pkg.durationInDays > 1 ? "s" : ""}
+                          {pkg.durationInDays} {t("daysSuffix") || "days"}
                         </p>
                         {pkg.placements?.length > 0 && (
                           <ul style={{ paddingLeft: "16px", margin: 0 }}>
@@ -427,7 +429,7 @@ function page() {
                         )}
                         {isSelected && (
                           <div style={{ marginTop: "12px", color: "#23ada4", fontWeight: 600, fontSize: "13px" }}>
-                            ✓ Selected
+                            ✓ {t("selected") || "Selected"}
                           </div>
                         )}
                       </div>
@@ -449,9 +451,9 @@ function page() {
                     alignItems: "center",
                   }}>
                   <div>
-                    <p style={{ color: "#999", margin: 0, fontSize: "13px" }}>Selected Plan</p>
+                    <p style={{ color: "#999", margin: 0, fontSize: "13px" }}>{t("selectedPlan") || "Selected Plan"}</p>
                     <p style={{ color: "#fff", margin: 0, fontWeight: 600 }}>
-                      {selectedPackage.name} — {selectedPackage.durationInDays} days
+                      {selectedPackage.name} — {selectedPackage.durationInDays} {t("daysSuffix") || "days"}
                     </p>
                   </div>
                   <h4 style={{ color: "#23ada4", margin: 0 }}>
@@ -467,7 +469,7 @@ function page() {
             className="outline-btn"
             onClick={closePromoModal}
             style={{ padding: "10px 24px" }}>
-            Cancel
+            {t("discard") || "Cancel"}
           </button>
           <button
             className="custom-btn"
@@ -477,10 +479,10 @@ function page() {
             {checkingOut ? (
               <>
                 <Spinner animation="border" size="sm" className="me-2" />
-                Processing...
+                {t("submitting")}
               </>
             ) : (
-              "Confirm & Pay"
+              t("confirmPay") || "Confirm & Pay"
             )}
           </button>
         </Modal.Footer>

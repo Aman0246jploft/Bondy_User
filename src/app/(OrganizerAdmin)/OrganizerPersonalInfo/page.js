@@ -9,8 +9,10 @@ import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useLanguage } from "@/context/LanguageContext";
 
 function PersonalInfoContent() {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const fileRef = useRef(null);
   const [profileData, setProfileData] = useState({
@@ -90,11 +92,11 @@ function PersonalInfoContent() {
         const filePath = response.data.files[0];
         setProfileData((prev) => ({ ...prev, profileImage: filePath }));
         setPreview(getFullImageUrl(filePath));
-        toast.success("Image uploaded successfully");
+        toast.success(t("imageUploadSuccess") || "Image uploaded successfully");
       }
     } catch (error) {
       console.error("Upload failed:", error);
-      toast.error("Image upload failed");
+      toast.error(t("imageUploadFailed") || "Image upload failed");
     } finally {
       setLoading(false);
     }
@@ -137,11 +139,11 @@ function PersonalInfoContent() {
 
       const response = await authApi.updateProfile(updatePayload);
       if (response.status) {
-        toast.success("Profile updated successfully");
+        toast.success(t("profileUpdateSuccess") || "Profile updated successfully");
       }
     } catch (error) {
       console.error("Update failed:", error);
-      toast.error(error.message || "Failed to update profile");
+      toast.error(error.message || t("profileUpdateFailed") || "Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -177,7 +179,7 @@ function PersonalInfoContent() {
                 />
               </div>
               <div className="personal-profile-info">
-                <h4>Hey {profileData.firstName || "User"}!</h4>
+                <h4>{t("heyUser")}, {profileData.firstName || "User"}!</h4>
                 <p>{profileData.email}</p>
               </div>
             </div>
@@ -188,7 +190,7 @@ function PersonalInfoContent() {
                 onClick={() => fileRef.current.click()}
               >
                 <img src="/img/edit-icon.svg" alt="Edit" />
-                <span>Edit</span>
+                <span>{t("edit")}</span>
               </button>
             </div>
           </div>
@@ -199,11 +201,11 @@ function PersonalInfoContent() {
                   type="text"
                   className="form-control"
                   id="firstName"
-                  placeholder="First Name"
+                  placeholder={t("firstName")}
                   value={profileData.firstName}
                   onChange={handleChange}
                 />
-                <label htmlFor="firstName">First Name</label>
+                <label htmlFor="firstName">{t("firstName")}</label>
                 <span className="form-icon">
                   <img src="/img/form-user.svg" alt="" />
                 </span>
@@ -215,11 +217,11 @@ function PersonalInfoContent() {
                   type="text"
                   className="form-control"
                   id="lastName"
-                  placeholder="Last Name"
+                  placeholder={t("lastName")}
                   value={profileData.lastName}
                   onChange={handleChange}
                 />
-                <label htmlFor="lastName">Last Name</label>
+                <label htmlFor="lastName">{t("lastName")}</label>
                 <span className="form-icon">
                   <img src="/img/form-user.svg" alt="" />
                 </span>
@@ -231,11 +233,11 @@ function PersonalInfoContent() {
                   type="email"
                   className="form-control"
                   id="email"
-                  placeholder="Email"
+                  placeholder={t("email")}
                   value={profileData.email}
                   disabled
                 />
-                <label htmlFor="email">Email</label>
+                <label htmlFor="email">{t("email")}</label>
                 <span className="form-icon">
                   <img src="/img/form-email.svg" alt="" />
                 </span>
@@ -254,7 +256,7 @@ function PersonalInfoContent() {
                   <option value="CA">California</option>
                   <option value="NY">New York</option>
                 </select>
-                <label htmlFor="state">State</label>
+                <label htmlFor="state">{t("state")}</label>
                 <span className="form-icon">
                   <img src="/img/form-globe.svg" alt="" />
                 </span>
@@ -266,11 +268,11 @@ function PersonalInfoContent() {
                   type="text"
                   className="form-control"
                   id="country"
-                  placeholder="Country"
+                  placeholder={t("country")}
                   value={profileData.country}
                   onChange={handleChange}
                 />
-                <label htmlFor="country">Country</label>
+                <label htmlFor="country">{t("country")}</label>
                 <span className="form-icon">
                   <img src="/img/form-globe.svg" alt="" />
                 </span>
@@ -282,11 +284,11 @@ function PersonalInfoContent() {
                   type="text"
                   className="form-control"
                   id="city"
-                  placeholder="City"
+                  placeholder={t("city")}
                   value={profileData.city}
                   onChange={handleChange}
                 />
-                <label htmlFor="city">City</label>
+                <label htmlFor="city">{t("city")}</label>
                 <span className="form-icon">
                   <img src="/img/form-mark.svg" alt="" />
                 </span>
@@ -302,7 +304,7 @@ function PersonalInfoContent() {
                   onChange={handleChange}
                   max={new Date().toISOString().split("T")[0]}
                 />
-                <label htmlFor="dob">Date of birth</label>
+                <label htmlFor="dob">{t("dob")}</label>
                 <span className="form-icon">
                   <img src="/img/form-calendar.svg" alt="" />
                 </span>
@@ -345,10 +347,10 @@ function PersonalInfoContent() {
                   type="button"
                   onClick={() => window.location.reload()}
                 >
-                  Discard
+                  {t("discard")}
                 </button>
                 <button className="custom-btn" type="submit" disabled={loading}>
-                  {loading ? "Saving..." : "Save Changes"}
+                  {loading ? t("saving") || "Saving..." : t("saveChanges") || "Save Changes"}
                 </button>
               </div>
             </Col>

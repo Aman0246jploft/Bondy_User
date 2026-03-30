@@ -1,10 +1,13 @@
+"use client";
 import LanguageSelector from "@/components/LanguageSelector";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import authApi from "@/api/authApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { useLanguage } from "@/context/LanguageContext";
 
 function OrganizerHeader() {
+  const { t } = useLanguage();
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
@@ -29,7 +32,7 @@ function OrganizerHeader() {
           <input
             type="text"
             className="form-control"
-            placeholder="Placeholder "
+            placeholder={t("searchPlaceholder") || "Search..."}
           />
           <span className="search-icon">
             <img src="/img/search.svg" alt="Search" />

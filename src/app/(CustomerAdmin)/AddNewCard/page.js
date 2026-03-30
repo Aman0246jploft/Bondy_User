@@ -4,13 +4,16 @@ import React from "react";
 import { Col, Form, Image, Row } from "react-bootstrap";
 import { useState } from "react";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 function page() {
+  const { t } = useLanguage();
   const [showCvv, setShowCvv] = useState(false);
   return (
     <div>
       <div className="cards">
         <div className="card-title">
-          <h3>Payment methods</h3>
+          <h3>{t("paymentMethods") || "Payment methods"}</h3>
         </div>
         <Row className="justify-content-between">
           <Col md={6}>
@@ -29,7 +32,7 @@ function page() {
               </button>
             </div>
             <p className="txt">
-              This credit card will be used by default for billing.
+              {t("cardBillingText") || "This credit card will be used by default for billing."}
             </p>
             <div className="add-card-form">
               <Form>
@@ -40,8 +43,9 @@ function page() {
                         type="text"
                         className="form-control"
                         id="name-card"
+                        placeholder={t("nameOnCard") || "Name on card"}
                       />
-                      <label htmlFor="name-card">Name on card</label>
+                      <label htmlFor="name-card">{t("nameOnCard") || "Name on card"}</label>
                     </div>
                   </Col>
                   <Col md={12}>
@@ -50,9 +54,10 @@ function page() {
                         type="text"
                         className="form-control"
                         id="card-number"
-                        value="9870 8890 8890 8890"
+                        placeholder={t("cardNumber") || "Card number"}
+                        defaultValue="9870 8890 8890 8890"
                       />
-                      <label htmlFor="card-number">Card number</label>
+                      <label htmlFor="card-number">{t("cardNumber") || "Card number"}</label>
                       <span className="success-icn">
                         <img src="/img/success-icon.svg" alt="" />
                       </span>
@@ -64,9 +69,10 @@ function page() {
                         type="text"
                         className="form-control"
                         id="expiry"
-                        value="16 / 26"
+                        placeholder={t("expiry") || "Expiry"}
+                        defaultValue="16 / 26"
                       />
-                      <label htmlFor="expiry">Expiry</label>
+                      <label htmlFor="expiry">{t("expiry") || "Expiry"}</label>
                     </div>
                   </Col>
                   <Col md={6}>
@@ -75,11 +81,12 @@ function page() {
                         type={showCvv ? "text" : "password"}
                         className="form-control"
                         id="cvv"
-                        value="123"
+                        placeholder={t("cvc_cvv") || "CVC / CVV"}
+                        defaultValue="123"
                         readOnly
                       />
 
-                      <label htmlFor="cvv">CVC / CVV</label>
+                      <label htmlFor="cvv">{t("cvc_cvv") || "CVC / CVV"}</label>
 
                       <span
                         className="eye-button"
@@ -96,7 +103,7 @@ function page() {
                   </Col>
                   <Col md={12}>
                     <button className="custom-btn w-100" type="button">
-                      Add Card
+                      {t("addCard") || "Add Card"}
                     </button>
                   </Col>
                 </Row>
@@ -108,7 +115,7 @@ function page() {
               <div className="credit-card">
                 {/* Top Row */}
                 <div className="d-flex justify-content-between align-items-start">
-                  <h6 className="credit-card-title">Credit Card</h6>
+                  <h6 className="credit-card-title">{t("creditCard") || "Credit Card"}</h6>
 
                   <img src="/img/wifi.svg" alt="Visa Logo" />
                 </div>
@@ -127,12 +134,12 @@ function page() {
                 {/* Bottom */}
                 <div className="d-flex justify-content-between mt-4">
                   <div>
-                    <span className="label">CardHolder Name</span>
+                    <span className="label">{t("cardHolderName") || "CardHolder Name"}</span>
                     <p className="value">Negar Khosravi</p>
                   </div>
 
                   <div className="text-end">
-                    <span className="label">Expiry date</span>
+                    <span className="label">{t("expiryDate") || "Expiry date"}</span>
                     <p className="value">08 / 25</p>
                   </div>
                 </div>
@@ -143,7 +150,7 @@ function page() {
               <Link href="#">
                 <img src="/img/Add-Circle.svg" alt="" />
               </Link>
-              <h6>Add payment method</h6>
+              <h6>{t("addPaymentMethod") || "Add payment method"}</h6>
             </div>
           </Col>
         </Row>

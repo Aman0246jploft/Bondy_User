@@ -3,11 +3,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Sidebar({ toggleSidebar }) {
+  const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+
+
+  console.log("000000022111")
+  console.log("444444555", t)
 
   const isActive = (path) => pathname === path;
 
@@ -48,7 +54,7 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/user-icon.svg" alt="" />
           </span>
-          <span className="text">Personal info</span>
+          <span className="text">{t("personalInfo")}</span>
         </Link>
 
         <Link
@@ -57,7 +63,7 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/ticket-icon.svg" alt="" />
           </span>
-          <span className="text">Tickets</span>
+          <span className="text">{t("tickets")}</span>
         </Link>
 
         <Link
@@ -66,16 +72,16 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/wallet-icon.svg" alt="" />
           </span>
-          <span className="text">Payment</span>
+          <span className="text">{t("payment")}</span>
         </Link>
 
         <Link
           href="/Messagee"
-          className={`menu-item ${isActive("/Message") ? "active" : ""}`}>
+          className={`menu-item ${isActive("/Messagee") ? "active" : ""}`}>
           <span className="icon">
             <img src="/img/message-icon.svg" alt="" />
           </span>
-          <span className="text">Messages</span>
+          <span className="text">{t("messages")}</span>
         </Link>
 
         <Link
@@ -84,7 +90,7 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/bell-icon.svg" alt="" />
           </span>
-          <span className="text">Notification</span>
+          <span className="text">{t("notification")}</span>
         </Link>
 
         <Link
@@ -93,7 +99,7 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/favorite-icon.svg" alt="" />
           </span>
-          <span className="text">My Favorites</span>
+          <span className="text">{t("myFavorite")}</span>
         </Link>
         <Link
           href="/SupportTicketsC"
@@ -101,7 +107,7 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/favorite-icon.svg" alt="" />
           </span>
-          <span className="text">Support Tickets</span>
+          <span className="text">{t("supportTickets")}</span>
         </Link>
       </nav>
 
@@ -111,13 +117,13 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/cogs-icon.svg" alt="" />
           </span>
-          <span className="text">Settings</span>
+          <span className="text">{t("settings")}</span>
         </Link>
         <Link href="#" className="menu-item" onClick={handleLogout}>
           <span className="icon">
             <img src="/img/logout-icon.svg" alt="" />
           </span>
-          <span className="text">Logout</span>
+          <span className="text">{t("logout")}</span>
         </Link>
       </div>
     </aside>

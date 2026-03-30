@@ -1,6 +1,6 @@
-import Link from "next/link";
-import React from "react";
-import { Col, Row } from "react-bootstrap";
+"use client";
+import { useLanguage } from "@/context/LanguageContext";
+import { Row, Col } from "react-bootstrap";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 function UserDetailsCustomer() {
@@ -12,6 +12,7 @@ function UserDetailsCustomer() {
 }
 
 function UserDetailsCustomerContent() {
+  const { t } = useLanguage();
   return (
     <div>
       <div className="cards ticket-details">
@@ -27,19 +28,19 @@ function UserDetailsCustomerContent() {
           <Col md={10}>
             <div className="ticket-dtl-main">
               <div className="tickt-dtl-info">
-                <h4>User Details</h4>
+                <h4>{t("userProfile") || "User Details"}</h4>
               </div>
               <div className="event-dtl-innr">
                 <div>
                   <h6>
                     <img src="/img/Map-Point.svg" alt="" />
-                    Location
+                    {t("city") || "Location"}
                   </h6>
                   <p>American Airlines Center Dallas,Texas,USA</p>
                 </div>
                 <div>
                   <h6>
-                    <img src="/img/white-calendar.svg" alt="" /> Event Date
+                    <img src="/img/white-calendar.svg" alt="" /> {t("eventDate") || "Event Date"}
                   </h6>
                   <p>
                     <span>Tue 30 Sep</span>{" "}
@@ -88,36 +89,36 @@ function UserDetailsCustomerContent() {
 
         <div className="payment-dtl">
           <h4 className="line-title">
-            <span>Payment</span>
+            <span>{t("payment") || "Payment"}</span>
           </h4>
           <ul className="payment-dtl-innr">
             <li>
               <div>
-                <h6>Ticket count</h6>
-                <p>2 tickets</p>
+                <h6>{t("ticketCount") || "Ticket count"}</h6>
+                <p>2 {t("ticketsSuffix") || "tickets"}</p>
               </div>
               <div>
-                <h6>Paid by</h6>
+                <h6>{t("paidBy") || "Paid by"}</h6>
                 <p>Negar khosravi</p>
               </div>
             </li>
             <li>
               <div>
-                <h6>Transaction costs</h6>
+                <h6>{t("transactionCosts") || "Transaction costs"}</h6>
                 <p>$20</p>
               </div>
               <div>
-                <h6>Payment method</h6>
+                <h6>{t("paymentMethod") || "Payment method"}</h6>
                 <p>Stripe</p>
               </div>
             </li>
             <li>
               <div>
-                <h6>Total paid</h6>
+                <h6>{t("totalPaid") || "Total paid"}</h6>
                 <p>$260</p>
               </div>
               <div>
-                <h6>Transaction ID</h6>
+                <h6>{t("transactionID") || "Transaction ID"}</h6>
                 <p>7984-KJD8-3827</p>
               </div>
             </li>

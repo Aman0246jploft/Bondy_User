@@ -4,7 +4,10 @@ import CreateTicket from "../Components/CreateTicket";
 import authApi from "../../../api/authApi";
 import supportTicketApi from "../../../api/supportTicketApi";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 function page() {
+  const { t } = useLanguage();
   const [modalShow, setModalShow] = useState(false);
   const [tickets, setTickets] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -24,8 +27,6 @@ function page() {
       console.error("Error fetching categories:", error);
     }
   };
-
-
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -65,19 +66,28 @@ function page() {
     }
   };
 
+  const translateStatus = (status) => {
+    switch (status) {
+      case "Open": return t("open") || "Open";
+      case "Pending": return t("pending") || "Pending";
+      case "Resolved": return t("resolved") || "Resolved";
+      default: return status;
+    }
+  };
+
   return (
     <div>
       <div className="cards">
         <div className="card-header">
           <div>
-            <h2 className="card-title">Support Tickets</h2>
+            <h2 className="card-title">{t("supportTickets") || "Support Tickets"}</h2>
           </div>
           <div>
             <button
               className="custom-btn"
               type="button"
               onClick={() => setModalShow(true)}>
-              Create Ticket
+              {t("createTicket") || "Create Ticket"}
             </button>
           </div>
         </div>
@@ -85,14 +95,14 @@ function page() {
         <div className="custom-table-cards billing-history">
           <div className="card-header">
             <div>
-              <h5 className="table-title">Ticket List</h5>
+              <h5 className="table-title">{t("supportTicketList") || "Ticket List"}</h5>
             </div>
             <div className="dashboard-filter table-search d-flex gap-2">
               <select
                 className="form-select w-auto"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}>
-                <option value="">All Categories</option>
+                <option value="">{t("allCategories") || "All Categories"}</option>
                 {categories.map((cat) => (
                   <option key={cat._id} value={cat.name}>
                     {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
@@ -103,7 +113,7 @@ function page() {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search Ticket ..."
+                  placeholder={t("searchTicketPlaceholder") || "Search Ticket ..."}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -119,11 +129,11 @@ function page() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Ticket ID</th>
-                  <th>Category</th>
-                  <th>Subject</th>
-                  <th>Status</th>
-                  <th>Last update date</th>
+                  <th>{t("ticketID") || "Ticket ID"}</th>
+                  <th>{t("category") || "Category"}</th>
+                  <th>{t("subject") || "Subject"}</th>
+                  <th>{t("status") || "Status"}</th>
+                  <th>{t("lastUpdateDate") || "Last update date"}</th>
                 </tr>
               </thead>
               <tbody>
@@ -143,7 +153,7 @@ function page() {
                           className={`status-badge ${getStatusBadge(
                             ticket.status,
                           )}`}>
-                          {ticket.status}
+                          {translateStatus(ticket.status)}
                         </span>
                       </td>
                       <td>
@@ -163,7 +173,7 @@ function page() {
                 ) : (
                   <tr>
                     <td colSpan="5" className="text-center">
-                      No tickets found
+                      {t("noTicketsFound") || "No tickets found"}
                     </td>
                   </tr>
                 )}

@@ -5,8 +5,10 @@ import TicketDistributionChart from "../Components/TicketDistributionChart";
 import GenderRatioChart from "../Components/GenderRatioChart";
 import Link from "next/link";
 import organizerApi from "../../../api/organizerApi";
+import { useLanguage } from "@/context/LanguageContext";
 
 function page() {
+  const { t } = useLanguage();
   const [stats, setStats] = useState({
     totalDraftEvents: 0,
     totalPendingEvents: 0,
@@ -38,103 +40,103 @@ function page() {
       <div className="cards">
         <div className="card-header">
           <div>
-            <h2 className="card-title">Dashboard</h2>
+            <h2 className="card-title">{t("dashboard")}</h2>
             <p className="card-desc">
-              Welcome back! Here's a snapshot of your events and tasks.
+              {t("heyUser")}, {t("welcomeBackSnapshot") || "Welcome back! Here's a snapshot of your events and tasks."}
             </p>
           </div>
         </div>
         <div className="dashbord-card-grid">
           <div className="dashboard-counter">
-            <h5>Drafts Events</h5>
+            <h5>{t("draftEvents")}</h5>
             <span className="counter">{stats.totalDraftEvents || 0}</span>
           </div>
 
           <div className="dashboard-counter">
-            <h5>Pending Events</h5>
+            <h5>{t("pendingEvents")}</h5>
             <span className="counter pending">{stats.totalPendingEvents || 0}</span>
           </div>
 
           <div className="dashboard-counter">
-            <h5>Live Events</h5>
+            <h5>{t("liveEvents")}</h5>
             <span className="counter live">{stats.totalLiveEvents || 0}</span>
           </div>
 
           <div className="dashboard-counter">
-            <h5>Total Ticket</h5>
+            <h5>{t("totalTickets")}</h5>
             <span className="counter live">{stats.totalTicketsSold || 0}</span>
           </div>
           <div className="dashboard-counter">
-            <h5>Completed Events</h5>
+            <h5>{t("completedEvents")}</h5>
             <span className="counter completed">{stats.totalCompletedEvents || 0}</span>
           </div>
         </div>
         <Row>
           <Col sm={12} md={4}>
             <div className="card-varticl mb-3">
-              <span>Net Revenue</span>
+              <span>{t("netRevenue")}</span>
               <h3>₮{stats.netRevenue || 0}</h3>
             </div>
             <div className="card-varticl mb-3">
-              <span>Total Tickets Sold</span>
+              <span>{t("totalTicketsSold")}</span>
               <h3>{stats.totalTicketsSold || 0}</h3>
             </div>
             <div className="card-varticl mb-3">
-              <span>Total Attendees</span>
+              <span>{t("totalAttendees")}</span>
               <h3>{stats.totalAttendees || 0}</h3>
             </div>
           </Col>
           <Col md={8} sm={12}>
             <div className="analytics-chart">
-              <h4 className="mb-2">Needs Attention</h4>
+              <h4 className="mb-2">{t("needsAttention")}</h4>
               <div className="card-varticl-attention mb-2">
                 <div>
-                  <h3>Event starts in 24h - setup incomplete</h3>
+                  <h3>{t("setupIncomplete") || "Event starts in 24h - setup incomplete"}</h3>
                   <p>Dua Lipa Concert</p>
                 </div>
                 <div>
                   <button className="status-badge complete">
-                    Complete Setup
+                    {t("completeSetup") || "Complete Setup"}
                   </button>
                 </div>
               </div>
               <div className="card-varticl-attention mb-2">
                 <div>
-                  <h3>Low seats remaining (3 leff)</h3>
+                  <h3>{t("lowSeatsRemaining") || "Low seats remaining"} (3 {t("left") || "left"})</h3>
                   <p>Photography Basics Workshop</p>
                 </div>
                 <div>
                   <button className="status-badge pending">
-                    Promote Event
+                    {t("promoteEvent") || "Promote Event"}
                   </button>
                 </div>
               </div>
               <div className="card-varticl-attention mb-2">
                 <div>
-                  <h3>Pending event approval</h3>
+                  <h3>{t("pendingApproval") || "Pending event approval"}</h3>
                   <p>Intro to Coding Bootcamp</p>
                 </div>
                 <div>
                   <button className="status-badge cancel">
-                    Edit & Resubmit
+                    {t("editResubmit") || "Edit & Resubmit"}
                   </button>
                 </div>
               </div>
               <div className="card-varticl-attention">
                 <div>
-                  <h3>Payout blocked - verification required</h3>
-                  <p>$1,245 pending</p>
+                  <h3>{t("payoutBlocked") || "Payout blocked - verification required"}</h3>
+                  <p>₮1,245 {t("pending")}</p>
                 </div>
                 <div>
-                  <button className="status-badge pending">Resolve</button>
+                  <button className="status-badge pending">{t("resolved")}</button>
                 </div>
               </div>
             </div>
           </Col>
         </Row>
         <div className="recomanded-head">
-          <h5>Upcoming</h5>
-          <Link href="/EventsManagement">See all</Link>
+          <h5>{t("upcoming")}</h5>
+          <Link href="/EventsManagement">{t("seeAll")}</Link>
         </div>
         <div className="ticket-listing">
           <div className="ticket-cards">
@@ -150,15 +152,15 @@ function page() {
                 </div>
               </div>
               <div className="ticket-rgt">
-                <span className="status-badge ongoing">Ongoing</span>
+                <span className="status-badge ongoing">{t("ongoing")}</span>
                 <p>
-                  Venue <span>Arena Stadium</span>
+                  {t("venue")} <span>Arena Stadium</span>
                 </p>
               </div>
             </div>
             <div className="ticket-bottom">
               <p>
-                Create Date <span>Tue 30 Sep</span>{" "}
+                {t("createDate")} <span>Tue 30 Sep</span>{" "}
                 <span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -172,16 +174,16 @@ function page() {
                 <span>7:30 PM</span>
               </p>
               <p>
-                Total Booking Revenue <span>$200</span>
+                {t("totalBookingRevenue")} <span>₮200</span>
               </p>
               <p>
                 <span>
                   <img src="/img/ticket-white.svg" />
                 </span>{" "}
-                <span>2 tickets</span>
+                <span>2 {t("ticketsSuffix")}</span>
               </p>
               <Link href="/EventDetails">
-                Event Details <img src="/img/Arrow-Right.svg" />
+                {t("ticketDetails")} <img src="/img/Arrow-Right.svg" />
               </Link>
             </div>
           </div>
@@ -198,15 +200,15 @@ function page() {
                 </div>
               </div>
               <div className="ticket-rgt">
-                <span className="status-badge pending">Upcoming</span>
+                <span className="status-badge pending">{t("upcoming")}</span>
                 <p>
-                  Venue <span>Arena Stadium</span>
+                  {t("venue")} <span>Arena Stadium</span>
                 </p>
               </div>
             </div>
             <div className="ticket-bottom">
               <p>
-                Create Date <span>Tue 30 Sep</span>{" "}
+                {t("createDate")} <span>Tue 30 Sep</span>{" "}
                 <span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -220,16 +222,16 @@ function page() {
                 <span>7:30 PM</span>
               </p>
               <p>
-                Total Booking Revenue <span>$200</span>
+                {t("totalBookingRevenue")} <span>₮200</span>
               </p>
               <p>
                 <span>
                   <img src="/img/ticket-white.svg" />
                 </span>{" "}
-                <span>2 tickets</span>
+                <span>2 {t("ticketsSuffix")}</span>
               </p>
               <Link href="/EventDetails">
-                Event Details <img src="/img/Arrow-Right.svg" />
+                {t("ticketDetails")} <img src="/img/Arrow-Right.svg" />
               </Link>
             </div>
           </div>

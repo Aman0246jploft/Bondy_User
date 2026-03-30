@@ -4,7 +4,10 @@ import React, { useEffect, useState } from "react";
 import { Tabs, Tab, Form, Button } from "react-bootstrap";
 import bookingApi from "@/api/bookingApi";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 function page() {
+  const { t, language } = useLanguage();
   const [tickets, setTickets] = useState([]);
   const [pagination, setPagination] = useState({});
   const [activeTab, setActiveTab] = useState("all");
@@ -63,7 +66,7 @@ function page() {
 
   const getEventDetails = (ticket) => {
     const item = ticket.eventId || ticket.courseId;
-    if (!item) return { title: "Unknown Event", date: "N/A" };
+    if (!item) return { title: t("unknownEvent") || "Unknown Event", date: "N/A" };
 
     const title = ticket.bookingType === "EVENT" ? item.eventTitle : item.courseTitle;
     let dateStr = ticket.bookingType === "EVENT" ? item.startDate : item.createdAt;
@@ -71,8 +74,9 @@ function page() {
     try {
       if (dateStr) {
         const d = new Date(dateStr);
-        dateStr = d.toLocaleDateString("en-US", { weekday: 'short', day: 'numeric', month: 'short' }) +
-          " " + d.toLocaleTimeString("en-US", { hour: 'numeric', minute: '2-digit' });
+        const locale = language === "mn" ? "mn-MN" : "en-US";
+        dateStr = d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' }) +
+          " " + d.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
       }
     } catch (e) {
       dateStr = "N/A";
@@ -82,21 +86,23 @@ function page() {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case "PAID": return <span className="status-badge complete">Confirmed</span>;
-      case "PENDING": return <span className="status-badge pending">Pending</span>;
-      case "CANCELLED": return <span className="status-badge cancel">Canceled</span>;
-      case "FAILED": return <span className="status-badge cancel">Failed</span>;
-      case "REFUND_INITIATED": return <span className="status-badge cancel">Refunded</span>;
+      case "PAID": return <span className="status-badge complete">{t("confirmed")}</span>;
+      case "PENDING": return <span className="status-badge pending">{t("pending")}</span>;
+      case "CANCELLED": return <span className="status-badge cancel">{t("canceled")}</span>;
+      case "FAILED": return <span className="status-badge cancel">{t("failed")}</span>;
+      case "REFUND_INITIATED": return <span className="status-badge cancel">{t("refunded")}</span>;
       default: return <span className="status-badge pending">{status}</span>;
     }
   };
 
   const renderTicketList = () => {
-    if (loading) return <div className="text-center p-5">Loading tickets...</div>;
+    if (loading) return <div className="text-center p-5">{t("loadingTickets")}</div>;
 
     if (tickets.length === 0) {
-      return <div className="text-center p-5 text-muted">No tickets found.</div>;
+      return <div className="text-center p-5 text-muted">{t("noTicketsFound")}</div>;
     }
+
+    const locale = language === "mn" ? "mn-MN" : "en-US";
 
     return (
       <div className="ticket-listing">
@@ -118,7 +124,7 @@ function page() {
               </div>
               <div className="ticket-bottom">
                 <p>
-                  Booking Date <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>{" "}
+                  {t("bookingDate")} <span>{new Date(ticket.createdAt).toLocaleDateString(locale)}</span>{" "}
                   <span>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -130,19 +136,19 @@ function page() {
                       <circle cx="2" cy="2" r="2" fill="#999999" />
                     </svg>
                   </span>{" "}
-                  <span>{new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span>{new Date(ticket.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</span>
                 </p>
                 <p>
-                  Total paid <span>${ticket.totalAmount}</span>
+                  {t("totalPaid")} <span>${ticket.totalAmount}</span>
                 </p>
                 <p>
                   <span>
                     <img src="/img/ticket-white.svg" />
                   </span>{" "}
-                  <span>{ticket.qty} tickets</span>
+                  <span>{ticket.qty} {t("ticketsSuffix")}</span>
                 </p>
                 <Link href={`/TicketDetails?id=${ticket._id}`}>
-                  Ticket Details <img src="/img/Arrow-Right.svg" />
+                  {t("ticketDetails")} <img src="/img/Arrow-Right.svg" />
                 </Link>
               </div>
             </div>
@@ -155,15 +161,15 @@ function page() {
               onClick={handlePrevPage}
               disabled={currentPage === 1}
             >
-              Previous
+              {t("previous")}
             </Button>
-            <span>Page {currentPage} of {pagination.totalPages}</span>
+            <span>{t("pageOf")?.replace("{current}", currentPage).replace("{total}", pagination.totalPages) || `Page ${currentPage} of ${pagination.totalPages}`}</span>
             <Button
               variant="outline-secondary"
               onClick={handleNextPage}
               disabled={currentPage === pagination.totalPages}
             >
-              Next
+              {t("next")}
             </Button>
           </div>
         )}
@@ -175,7 +181,7 @@ function page() {
     <div>
       <div className="cards my-tickets">
         <div className="card-title">
-          <h3>My Tickets</h3>
+          <h3>{t("myTickets")}</h3>
         </div>
         <div className="ticket-tabs">
           <Tabs
@@ -183,13 +189,13 @@ function page() {
             onSelect={handleTabSelect}
             className="mb-3"
           >
-            <Tab eventKey="all" title="All">
+            <Tab eventKey="all" title={t("all")}>
               {activeTab === "all" && renderTicketList()}
             </Tab>
-            <Tab eventKey="upcoming" title="Upcoming">
+            <Tab eventKey="upcoming" title={t("upcoming")}>
               {activeTab === "upcoming" && renderTicketList()}
             </Tab>
-            <Tab eventKey="past" title="Past">
+            <Tab eventKey="past" title={t("past")}>
               {activeTab === "past" && renderTicketList()}
             </Tab>
             {/* <Tab eventKey="canceled" title="Canceled">

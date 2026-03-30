@@ -10,6 +10,7 @@ export default function RootLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
+  console.log("authorized state:", authorized)
 
   useEffect(() => {
     const checkAuth = async () => {

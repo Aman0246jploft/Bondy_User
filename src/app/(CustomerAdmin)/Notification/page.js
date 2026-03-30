@@ -4,7 +4,10 @@ import { Tabs, Tab, Spinner } from "react-bootstrap";
 import notificationApi from "@/api/notificationApi";
 import { toast } from "react-hot-toast";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 export default function NotificationPage() {
+  const { t } = useLanguage();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +21,7 @@ export default function NotificationPage() {
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
-      toast.error("Failed to load notifications");
+      toast.error(t("failedToLoadNotifications") || "Failed to load notifications");
     } finally {
       setLoading(false);
     }
@@ -32,13 +35,13 @@ export default function NotificationPage() {
     try {
       const res = await notificationApi.markAllAsRead();
       if (res?.status || res?.status === "SUCCESS") {
-        toast.success("All notifications marked as read");
+        toast.success(t("allNotificationsMarkedRead") || "All notifications marked as read");
         setNotifications((prev) =>
           prev.map((n) => ({ ...n, isRead: true }))
         );
       }
     } catch (error) {
-      toast.error("Failed to mark all as read");
+      toast.error(t("failedToMarkAllRead") || "Failed to mark all as read");
     }
   };
 
@@ -59,11 +62,11 @@ export default function NotificationPage() {
     try {
       const res = await notificationApi.deleteNotification(id);
       if (res?.status || res?.status === "SUCCESS") {
-        toast.success("Notification deleted");
+        toast.success(t("notificationDeleted") || "Notification deleted");
         setNotifications((prev) => prev.filter((n) => n._id !== id));
       }
     } catch (error) {
-      toast.error("Failed to delete notification");
+      toast.error(t("failedToDeleteNotification") || "Failed to delete notification");
     }
   };
 
@@ -75,9 +78,9 @@ export default function NotificationPage() {
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
     if (days === 0) {
-      return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `${t("todayAt")} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     } else if (days === 1) {
-      return `Yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `${t("yesterdayAt")} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     } else {
       return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
@@ -108,7 +111,7 @@ export default function NotificationPage() {
             e.stopPropagation();
             handleDelete(notif._id);
           }}
-          title="Delete"
+          title={t("delete") || "Delete"}
         >
           ✕
         </span>
@@ -121,10 +124,10 @@ export default function NotificationPage() {
     <div>
       <div className="cards notification-card">
         <div className="card-title">
-          <h3>Notifications</h3>
+          <h3>{t("notifications")}</h3>
           {unreadCount > 0 && (
             <p onClick={handleMarkAllRead} style={{ cursor: "pointer" }}>
-              Mark All as Read{" "}
+              {t("markAllRead")}{" "}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -156,25 +159,25 @@ export default function NotificationPage() {
         ) : (
           <div className="ticket-tabs">
             <Tabs defaultActiveKey="all">
-              <Tab eventKey="all" title={`All (${notifications.length})`}>
+              <Tab eventKey="all" title={`${t("all")} (${notifications.length})`}>
                 {notifications.length === 0 ? (
-                  <div className="text-center py-4 text-muted">No notifications</div>
+                  <div className="text-center py-4 text-muted">{t("noNotifications")}</div>
                 ) : (
                   notifications.map(renderNotificationCard)
                 )}
               </Tab>
 
-              <Tab eventKey="unread" title={`Unread (${unreadCount})`}>
+              <Tab eventKey="unread" title={`${t("unread")} (${unreadCount})`}>
                 {unreadCount === 0 ? (
-                  <div className="text-center py-4 text-muted">No unread notifications</div>
+                  <div className="text-center py-4 text-muted">{t("noUnreadNotifications") || "No unread notifications"}</div>
                 ) : (
                   notifications.filter(n => !n.isRead).map(renderNotificationCard)
                 )}
               </Tab>
 
-              <Tab eventKey="read" title={`Read (${readCount})`}>
+              <Tab eventKey="read" title={`${t("read")} (${readCount})`}>
                 {readCount === 0 ? (
-                  <div className="text-center py-4 text-muted">No read notifications</div>
+                  <div className="text-center py-4 text-muted">{t("noReadNotifications") || "No read notifications"}</div>
                 ) : (
                   notifications.filter(n => n.isRead).map(renderNotificationCard)
                 )}

@@ -4,8 +4,10 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useEventContext } from "@/context/EventContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function OrganizerSidebar({ toggleSidebar }) {
+  const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const pathname = usePathname();
@@ -55,7 +57,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/user-icon.svg" alt="" />
           </span>
-          <span className="text">PersonalInfo</span>
+          <span className="text">{t("personalInfo")}</span>
         </Link>
 
         <Link
@@ -64,7 +66,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-01.svg" alt="" />
           </span>
-          <span className="text">Dashboard</span>
+          <span className="text">{t("dashboard")}</span>
         </Link>
 
         <Link
@@ -74,7 +76,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-02.svg" alt="" />
           </span>
-          <span className="text">Program Management</span>
+          <span className="text">{t("programManagement")}</span>
         </Link>
 
         <Link
@@ -85,7 +87,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-02.svg" alt="" />
           </span>
-          <span className="text">Courses Management</span>
+          <span className="text">{t("coursesManagement")}</span>
         </Link>
 
         <Link
@@ -94,16 +96,8 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/message-icon.svg" alt="" />
           </span>
-          <span className="text">Messages</span>
+          <span className="text">{t("messages")}</span>
         </Link>
-        {/* <Link
-          href="/Analytics"
-          className={`menu-item ${isActive("/Analytics") ? "active" : ""}`}>
-          <span className="icon">
-            <img src="/img/org-img/sidebar-icon-03.svg" alt="" />
-          </span>
-          <span className="text">Analytics</span>
-        </Link> */}
 
         <Link
           href="/Promotions"
@@ -111,7 +105,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-04.svg" alt="" />
           </span>
-          <span className="text">Promotions</span>
+          <span className="text">{t("promotions")}</span>
         </Link>
         <Link
           href="/Earnings"
@@ -119,24 +113,15 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-05.svg" alt="" />
           </span>
-          <span className="text">Earnings</span>
+          <span className="text">{t("earnings")}</span>
         </Link>
-        {/* <Link
-          href="/SubscriptionBilling"
-          className={`menu-item ${isActive("/SubscriptionBilling") ? "active" : ""
-            }`}>
-          <span className="icon">
-            <img src="/img/org-img/sidebar-icon-06.svg" alt="" />
-          </span>
-          <span className="text">Subscription & Billing</span>
-        </Link> */}
         <Link
           href="/Referral"
           className={`menu-item ${isActive("/Referral") ? "active" : ""}`}>
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-07.svg" alt="" />
           </span>
-          <span className="text">Referral</span>
+          <span className="text">{t("referral")}</span>
         </Link>
         <Link
           href="/SupportTickets"
@@ -144,7 +129,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-08.svg" alt="" />
           </span>
-          <span className="text">Support Tickets</span>
+          <span className="text">{t("supportTickets")}</span>
         </Link>
         <div className="accordion-wrapper create_dropdwon">
           <div
@@ -156,7 +141,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
             </span>
             {!collapsed && (
               <>
-                <span className="text">Create</span>
+                <span className="text">{t("create")}</span>
               </>
             )}
           </div>
@@ -168,10 +153,10 @@ export default function OrganizerSidebar({ toggleSidebar }) {
               onClick={() => {
                 clearEventData();
               }}>
-              Create Event
+              {t("createEvent")}
             </Link>
             <Link href="/AddProgram" className="sub-item">
-              Create Program
+              {t("createProgram")}
             </Link>
           </div>
         </div>
@@ -181,7 +166,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/org-img/verifiedprofile.svg" alt="" />
           </span>
-          <span className="text">Verified Profile</span>
+          <span className="text">{t("verifiedProfile")}</span>
         </Link>
       </nav>
 
@@ -191,13 +176,13 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/cogs-icon.svg" alt="" />
           </span>
-          <span className="text">Settings</span>
+          <span className="text">{t("settings")}</span>
         </Link>
         <Link href="#" className="menu-item" onClick={handleLogout}>
           <span className="icon">
             <img src="/img/logout-icon.svg" alt="" />
           </span>
-          <span className="text">Logout</span>
+          <span className="text">{t("logout")}</span>
         </Link>
       </div>
     </aside>

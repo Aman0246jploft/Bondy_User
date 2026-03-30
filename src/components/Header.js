@@ -15,6 +15,7 @@ export default function BondyHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
 
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsAnimating(false);

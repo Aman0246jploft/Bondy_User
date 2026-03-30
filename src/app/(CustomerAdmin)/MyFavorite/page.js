@@ -7,10 +7,14 @@ import { formatDate } from "@/utils/dateFormater";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 function Page() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("Event");
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(false);
+
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -60,17 +64,17 @@ function Page() {
 
   const handleRemove = async (e, entityId) => {
     e.preventDefault(); // Prevent link navigation if wrapped
-    if (!confirm("Are you sure you want to remove this item?")) return;
+    if (!confirm(t("removeFavoriteConfirm") || "Are you sure you want to remove this item?")) return;
 
     try {
       const response = await wishlistApi.removeFromWishlist({ entityId });
       if (response.status) {
-        toast.success("Removed from wishlist");
+        toast.success(t("removedFromWishlist") || "Removed from wishlist");
         fetchWishlist(activeTab, pagination.page); // Refresh list
       }
     } catch (error) {
       console.error("Error removing item:", error);
-      toast.error("Failed to remove item");
+      toast.error(t("failedToRemoveItem") || "Failed to remove item");
     }
   };
 
@@ -82,15 +86,15 @@ function Page() {
     const title = isEvent ? entity.eventTitle || entity.title : entity.courseTitle || entity.title;
 
     // Date Logic: Check startDate on entity (Event) or first schedule (Course)
-    let date = "Date N/A";
+    let date = t("dateNA") || "Date N/A";
     if (entity.startDate) {
       date = formatDate(entity.startDate);
     } else if (entity.schedules && entity.schedules.length > 0 && entity.schedules[0].startDate) {
       date = formatDate(entity.schedules[0].startDate);
     }
 
-    const location = entity.venueAddress ? entity.venueAddress.city || entity.venueAddress.address : "Location N/A";
-    const price = entity.price ? `$${entity.price}` : "Free";
+    const location = entity.venueAddress ? entity.venueAddress.city || entity.venueAddress.address : t("locationNA") || "Location N/A";
+    const price = entity.price ? `$${entity.price}` : t("free") || "Free";
 
     const image = getFullImageUrl(
       entity.posterImage?.[0] || entity.posterImage || entity.galleryImages?.[0] || entity.image
@@ -138,7 +142,7 @@ function Page() {
     <div>
       <div className="cards">
         <div className="card-title mb-4">
-          <h3>My Favorites</h3>
+          <h3>{t("myFavorite")}</h3>
         </div>
 
         <Tabs
@@ -147,10 +151,10 @@ function Page() {
           onSelect={handleTabSelect}
           className="mb-4"
         >
-          <Tab eventKey="Event" title="Events">
+          <Tab eventKey="Event" title={t("events")}>
             {/* Content rendered below to share grid logic */}
           </Tab>
-          <Tab eventKey="Course" title="Courses">
+          <Tab eventKey="Course" title={t("courses")}>
             {/* Content rendered below */}
           </Tab>
         </Tabs>
@@ -158,7 +162,7 @@ function Page() {
         {loading ? (
           <div className="text-center my-5">
             <Spinner animation="border" role="status">
-              <span className="visually-hidden">Loading...</span>
+              <span className="visually-hidden">{t("loading")}</span>
             </Spinner>
           </div>
         ) : (
@@ -169,7 +173,7 @@ function Page() {
               </Row>
             ) : (
               <div className="text-center my-5">
-                <p>No {activeTab.toLowerCase()}s found in your wishlist.</p>
+                <p>{t("noItemsFound")?.replace("{type}", activeTab === "Event" ? t("events") : t("courses")) || `No ${activeTab.toLowerCase()}s found in your wishlist.`}</p>
               </div>
             )}
 
@@ -181,17 +185,17 @@ function Page() {
                   disabled={pagination.page === 1}
                   onClick={() => handlePageChange(pagination.page - 1)}
                 >
-                  Previous
+                  {t("previous")}
                 </button>
                 <span className="align-self-center">
-                  Page {pagination.page} of {pagination.totalPages}
+                  {t("pageOf")?.replace("{current}", pagination.page).replace("{total}", pagination.totalPages) || `Page ${pagination.page} of ${pagination.totalPages}`}
                 </span>
                 <button
                   className="btn btn-outline-primary ms-2"
                   disabled={pagination.page === pagination.totalPages}
                   onClick={() => handlePageChange(pagination.page + 1)}
                 >
-                  Next
+                  {t("next")}
                 </button>
               </div>
             )}

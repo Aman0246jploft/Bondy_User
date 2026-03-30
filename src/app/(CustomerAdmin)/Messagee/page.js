@@ -30,7 +30,10 @@ function parseJwt(token) {
   }
 }
 
+import { useLanguage } from "@/context/LanguageContext";
+
 function MessageeContent() {
+  const { t } = useLanguage();
   const { socket, isSocketConnected, onlineUsers } = useSocket();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("userId");
@@ -163,7 +166,7 @@ function MessageeContent() {
             setChatPage(nextPage);
             setChatHasMore(response.hasMore ?? false);
           } else {
-            toast.error(response.message || "Failed to load more chats");
+            toast.error(response.message || t("failedToLoadMoreChats") || "Failed to load more chats");
           }
         },
       );
@@ -210,11 +213,11 @@ function MessageeContent() {
             });
             hasAutoSelected.current = true;
           } else {
-            toast.error("Unable to load user information");
+            toast.error(t("unableToLoadUserInfo") || "Unable to load user information");
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
-          toast.error("Failed to load user information");
+          toast.error(t("failedToLoadUserInfo") || "Failed to load user information");
         }
       }
     };
@@ -258,7 +261,7 @@ function MessageeContent() {
             if (messagesAreaRef.current) messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
           }, 100);
         } else {
-          toast.error(response.message || "Failed to load messages");
+          toast.error(response.message || t("failedToLoadMessages") || "Failed to load messages");
         }
       },
     );
@@ -302,7 +305,7 @@ function MessageeContent() {
               }
             });
           } else {
-            toast.error(response.message || "Failed to load older messages");
+            toast.error(response.message || t("failedToLoadOlderMessages") || "Failed to load older messages");
           }
         },
       );
@@ -403,7 +406,7 @@ function MessageeContent() {
           }));
         }
       } else {
-        toast.error(response.message || "Failed to send message");
+        toast.error(response.message || t("failedToSendMessage") || "Failed to send message");
       }
     });
   }, [socket, activeChat, message, stagedFile]);
@@ -412,14 +415,14 @@ function MessageeContent() {
   const deleteMessage = useCallback((messageId) => {
     if (!socket || !messageId) return;
 
-    if (!window.confirm("Delete this message for you?")) return;
+    if (!window.confirm(t("deleteMessageConfirm") || "Delete this message for you?")) return;
 
     socket.emit("delete_message", { messageId, deleteType: "me" }, (response) => {
       if (response.status === "ok") {
         setMessages((prev) => prev.filter((m) => m._id !== messageId));
-        toast.success("Message deleted");
+        toast.success(t("messageDeleted") || "Message deleted");
       } else {
-        toast.error(response.message || "Failed to delete message");
+        toast.error(response.message || t("failedToDeleteMessage") || "Failed to delete message");
       }
     });
   }, [socket]);
@@ -428,15 +431,15 @@ function MessageeContent() {
   const clearChat = useCallback(() => {
     if (!socket || !activeChat || activeChat.isVirtual) return;
 
-    if (!window.confirm("Clear all messages in this chat for you?")) return;
+    if (!window.confirm(t("clearChatConfirm") || "Clear all messages in this chat for you?")) return;
 
     socket.emit("clear_chat", { chatId: activeChat._id }, (response) => {
       if (response.status === "ok") {
         setMessages([]);
         setShowDropdown(false);
-        toast.success("Chat cleared");
+        toast.success(t("chatCleared") || "Chat cleared");
       } else {
-        toast.error(response.message || "Failed to clear chat");
+        toast.error(response.message || t("failedToClearChat") || "Failed to clear chat");
       }
     });
   }, [socket, activeChat]);
@@ -470,7 +473,7 @@ function MessageeContent() {
       setStagedFile({ fileUrl, fileType, localUrl, name: file.name });
     } catch (err) {
       console.error("File upload error:", err);
-      toast.error("File upload failed");
+      toast.error(t("fileUploadFailed") || "File upload failed");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -499,10 +502,10 @@ function MessageeContent() {
                 className={`col-lg-3 col-md-4 chat-sidebar ${activeChat ? "mobile-hide" : ""}`}
               >
                 <div className="d-flex align-items-center justify-content-between mb-3">
-                  <h4 className="title m-0">Messages</h4>
+                  <h4 className="title m-0">{t("messages")}</h4>
                   <div
                     className={`status-dot ${isSocketConnected ? "online" : "offline"}`}
-                    title={isSocketConnected ? "Connected" : "Disconnected"}
+                    title={isSocketConnected ? t("connected") || "Connected" : t("disconnected") || "Disconnected"}
                   >
                   </div>
                 </div>
@@ -510,7 +513,7 @@ function MessageeContent() {
                 <div className="search-box">
                   <input
                     type="text"
-                    placeholder="Search"
+                    placeholder={t("search")}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -544,7 +547,7 @@ function MessageeContent() {
                         <div className="user-info">
                           <h5>{other.firstName} {other.lastName}</h5>
                           <p className="text-truncate" style={{ maxWidth: "150px" }}>
-                            {chat.lastMessage?.content || "No messages yet"}
+                            {chat.lastMessage?.content || t("noMessagesYet")}
                           </p>
                         </div>
 
@@ -568,16 +571,16 @@ function MessageeContent() {
                   {/* Chat list loader / end states */}
                   {chatListLoading && (
                     <div className="text-center py-2">
-                      <small className="text-muted">Loading chats…</small>
+                      <small className="text-muted">{t("loading")}…</small>
                     </div>
                   )}
                   {!chatListLoading && !chatHasMore && chats.length > 0 && (
                     <div className="text-center py-2">
-                      <small className="text-muted">No more chats</small>
+                      <small className="text-muted">{t("noMoreChats") || "No more chats"}</small>
                     </div>
                   )}
                   {!chatListLoading && filteredChats.length === 0 && (
-                    <div className="text-center mt-4 text-muted">No chats found</div>
+                    <div className="text-center mt-4 text-muted">{t("noChatsFound")}</div>
                   )}
                 </div>
               </div>
@@ -606,7 +609,7 @@ function MessageeContent() {
                           {getOtherUser(activeChat).lastName}
                         </h5>
                         <small className={onlineUsers.has(getOtherUser(activeChat)._id) ? "online" : "offline"}>
-                          {onlineUsers.has(getOtherUser(activeChat)._id) ? "Online" : "Offline"}
+                          {onlineUsers.has(getOtherUser(activeChat)._id) ? t("online") : t("offline")}
                         </small>
                       </div>
 
@@ -616,11 +619,11 @@ function MessageeContent() {
                         <div className="options-dropdown">
                           <Link href="#">
                             <img src="/img/user-white.svg" className="me-2" alt="" />
-                            User Profile
+                            {t("userProfile")}
                           </Link>
                           <a href="#" className="clear-chat" onClick={(e) => { e.preventDefault(); clearChat(); }}>
                             <img src="/img/delete.svg" className="me-2" style={{ filter: "invert(40%) sepia(91%) saturate(3452%) hue-rotate(346deg) brightness(103%) contrast(106%)" }} alt="" />
-                            Clear Chat
+                            {t("clearChat")}
                           </a>
                         </div>
                       )}
@@ -632,19 +635,19 @@ function MessageeContent() {
                       {/* Load-older indicator */}
                       {msgLoading && msgPage > 1 && (
                         <div className="text-center py-2">
-                          <small className="text-muted">Loading older messages…</small>
+                          <small className="text-muted">{t("loadingOlderMessages") || "Loading older messages"}…</small>
                         </div>
                       )}
                       {!msgHasMore && messages.length > 0 && (
                         <div className="text-center py-2">
-                          <small className="text-muted">Beginning of conversation</small>
+                          <small className="text-muted">{t("beginningOfConversation")}</small>
                         </div>
                       )}
 
                       {/* Initial load spinner */}
                       {msgLoading && msgPage === 1 && (
                         <div className="text-center py-4">
-                          <small className="text-muted">Loading messages…</small>
+                          <small className="text-muted">{t("loadingMessages") || "Loading messages"}…</small>
                         </div>
                       )}
 
@@ -684,13 +687,6 @@ function MessageeContent() {
                                       )}
                                     </span>
                                   )}
-                                  {/* <button
-                                    className="delete-msg-btn"
-                                    onClick={() => deleteMessage(m._id)}
-                                    title="Delete for me"
-                                  >
-                                    🗑️
-                                  </button> */}
                                 </span>
                               </div>
                               <div className="msg-text">
@@ -724,7 +720,7 @@ function MessageeContent() {
                                           className="chat-file-link"
                                           style={{ display: "block", marginBottom: m.content ? "4px" : 0 }}
                                         >
-                                          📎 Download file
+                                          📎 {t("downloadFile") || "Download file"}
                                         </a>
                                       )}
                                       {m.content}
@@ -769,7 +765,7 @@ function MessageeContent() {
                           <button
                             onClick={() => setStagedFile(null)}
                             style={{ background: "none", border: "none", color: "#ff5555", fontSize: "16px", cursor: "pointer", padding: "4px" }}
-                            title="Remove attachment"
+                            title={t("removeAttachment") || "Remove attachment"}
                           >✕</button>
                         </div>
                       )}
@@ -788,14 +784,14 @@ function MessageeContent() {
                           className="clip-btn"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={isUploading}
-                          title="Attach file"
+                          title={t("attachFile") || "Attach file"}
                         >
                           {isUploading ? "⏳" : "📎"}
                         </button>
 
                         <input
                           type="text"
-                          placeholder={stagedFile ? "Add a caption..." : "Your message..."}
+                          placeholder={stagedFile ? (t("addCaption") || "Add a caption...") : (t("yourMessagePlaceholder") || "Your message...")}
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}
                           onKeyPress={handleKeyPress}
@@ -814,7 +810,7 @@ function MessageeContent() {
                 ) : (
                   <div className="no-chat-selected">
                     <img src="/img/logo.svg" alt="Logo" />
-                    Select a chat to start messaging
+                    {t("selectChatToStart") || "Select a chat to start messaging"}
                   </div>
                 )}
               </div>
@@ -828,8 +824,9 @@ function MessageeContent() {
 }
 
 export default function Page() {
+  const { t } = useLanguage();
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t("loading")}...</div>}>
       <MessageeContent />
     </Suspense>
   );

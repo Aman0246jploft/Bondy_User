@@ -8,7 +8,10 @@ import bookingApi from "@/api/bookingApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import QRCode from "react-qr-code";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 function TicketDetails() {
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [ticketInfo, setTicketInfo] = useState(null);
@@ -68,15 +71,15 @@ function TicketDetails() {
   const getStatusBadge = (status) => {
     switch (status) {
       case "PAID":
-        return <span className="status-badge complete">Confirmed</span>;
+        return <span className="status-badge complete">{t("confirmed")}</span>;
       case "PENDING":
-        return <span className="status-badge pending">Pending</span>;
+        return <span className="status-badge pending">{t("pending")}</span>;
       case "CANCELLED":
-        return <span className="status-badge cancel">Canceled</span>;
+        return <span className="status-badge cancel">{t("canceled")}</span>;
       case "FAILED":
-        return <span className="status-badge cancel">Failed</span>;
+        return <span className="status-badge cancel">{t("failed")}</span>;
       case "REFUND_INITIATED":
-        return <span className="status-badge cancel">Refunded</span>;
+        return <span className="status-badge cancel">{t("refunded")}</span>;
       default:
         return <span className="status-badge pending">{status}</span>;
     }
@@ -88,11 +91,11 @@ function TicketDetails() {
         <div className="d-flex gap-3  align-items-center justify-content-between">
           <Link href="/MyTickets" className="back-btn">
             <img src="/img/arrow-left-white.svg" alt="Back" />
-            Back to ticket
+            {t("backToTicket") || "Back to ticket"}
           </Link>
           <button className="common_btn" type="button">
             <img src="/img/share-icon.svg" className="me-2" alt="" />
-            Share
+            {t("share") || "Share"}
           </button>
         </div>
         <div ref={ticketRef} style={{ padding: "20px 0" }}>
@@ -111,7 +114,7 @@ function TicketDetails() {
             <Col md={10}>
               <div className="ticket-dtl-main">
                 <div className="tickt-dtl-info">
-                  <h4>Ticket Details</h4>
+                  <h4>{t("ticketDetails") || "Ticket Details"}</h4>
                   <div
                     className="tickt-dtl-info-btns"
                     data-html2canvas-ignore="true">
@@ -128,17 +131,17 @@ function TicketDetails() {
                         className="me-2"
                         alt=""
                       />
-                      Download ticket
+                      {t("downloadTicket") || "Download ticket"}
                     </button>
                   </div>
                 </div>
                 <div className="tickt-dtl-bottom">
                   <div>
-                    <h6>Order Tracking Code</h6>
+                    <h6>{t("orderTrackingCode") || "Order Tracking Code"}</h6>
                     <p>{ticketInfo?.bookingId}</p>
                   </div>
                   <div>
-                    <h6>Order Date</h6>
+                    <h6>{t("orderDate") || "Order Date"}</h6>
                     <p>
                       {ticketInfo?.createdAt
                         ? new Date(ticketInfo.createdAt).toLocaleDateString(
@@ -159,13 +162,13 @@ function TicketDetails() {
           </Row>
           <div className="event-dtl">
             <h4 className="line-title">
-              <span>Event Details</span>
+              <span>{t("eventDetails") || "Event Details"}</span>
             </h4>
             <div className="event-dtl-innr">
               <div>
                 <h6>
                   <img src="/img/Map-Point.svg" alt="" />
-                  Location
+                  {t("city") || "Location"}
                 </h6>
                 <p>
                   {ticketInfo?.eventId?.venueAddress?.address},
@@ -177,7 +180,7 @@ function TicketDetails() {
 
               <div>
                 <h6>
-                  <img src="/img/white-calendar.svg" alt="" /> Event Date
+                  <img src="/img/white-calendar.svg" alt="" /> {t("eventDate") || "Event Date"}
                 </h6>
                 <p>
                   <span>
@@ -276,16 +279,16 @@ function TicketDetails() {
           </div>
           <div className="payment-dtl">
             <h4 className="line-title">
-              <span>Payment</span>
+              <span>{t("payment") || "Payment"}</span>
             </h4>
             <ul className="payment-dtl-innr">
               <li>
                 <div>
-                  <h6>Ticket count</h6>
-                  <p>{ticketInfo?.qty} tickets</p>
+                  <h6>{t("ticketCount") || "Ticket count"}</h6>
+                  <p>{ticketInfo?.qty} {t("ticketsSuffix") || "tickets"}</p>
                 </div>
                 <div>
-                  <h6>Paid by</h6>
+                  <h6>{t("paidBy") || "Paid by"}</h6>
                   <p>
                     {ticketInfo?.userId?.firstName}{" "}
                     {ticketInfo?.userId?.lastName}
@@ -294,21 +297,21 @@ function TicketDetails() {
               </li>
               <li>
                 <div>
-                  <h6>Transaction costs</h6>
+                  <h6>{t("transactionCosts") || "Transaction costs"}</h6>
                   <p>${ticketInfo?.eventId?.ticketPrice}</p>
                 </div>
                 <div>
-                  <h6>Payment method</h6>
+                  <h6>{t("paymentMethod") || "Payment method"}</h6>
                   <p>Stripe</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <h6>Total paid</h6>
+                  <h6>{t("totalPaid") || "Total paid"}</h6>
                   <p>${ticketInfoFull?.ticket?.totalAmount}</p>
                 </div>
                 <div>
-                  <h6>Transaction ID</h6>
+                  <h6>{t("transactionID") || "Transaction ID"}</h6>
                   <p>{ticketInfoFull?.ticket?._id}</p>
                 </div>
               </li>
@@ -344,8 +347,9 @@ function TicketDetails() {
 }
 
 export default function Page() {
+  const { t } = useLanguage();
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t("loading")}...</div>}>
       <TicketDetails />
     </Suspense>
   );

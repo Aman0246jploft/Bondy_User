@@ -6,42 +6,45 @@ import { Col, Row, Spinner, Modal, Button, Form } from "react-bootstrap";
 import { MoreVertical } from "lucide-react";
 import organizerApi from "@/api/organizerApi";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-const TYPE_LABEL = {
-  TICKET_SALE: "Ticket Sale",
-  PAYOUT_REQUEST: "Payout Request",
-  PAYOUT_REJECTED: "Payout Refunded",
-  REFUND: "Refund",
-  ADJUSTMENT: "Adjustment",
-  REFERRAL: "Referral Reward",
-};
-
-const TYPE_BADGE = {
-  TICKET_SALE: "complete",
-  PAYOUT_REQUEST: "pending",
-  PAYOUT_REJECTED: "cancel",
-  REFUND: "cancel",
-  ADJUSTMENT: "upcoming",
-  REFERRAL: "complete",
-};
-
-const formatAmount = (amount) => {
-  const abs = Math.abs(amount).toLocaleString();
-  return amount < 0 ? `-₮${abs}` : `+₮${abs}`;
-};
-
-const formatDate = (dateStr) =>
-  new Date(dateStr).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 function page() {
+  const { t } = useLanguage();
+
+  const TYPE_LABEL = {
+    TICKET_SALE: t("ticketSale"),
+    PAYOUT_REQUEST: t("payoutRequest"),
+    PAYOUT_REJECTED: t("payoutRejected"),
+    REFUND: t("refund"),
+    ADJUSTMENT: t("adjustment"),
+    REFERRAL: t("referralReward"),
+  };
+
+  const TYPE_BADGE = {
+    TICKET_SALE: "complete",
+    PAYOUT_REQUEST: "pending",
+    PAYOUT_REJECTED: "cancel",
+    REFUND: "cancel",
+    ADJUSTMENT: "upcoming",
+    REFERRAL: "complete",
+  };
+
+  const formatAmount = (amount) => {
+    const abs = Math.abs(amount).toLocaleString();
+    return amount < 0 ? `-₮${abs}` : `+₮${abs}`;
+  };
+
+  const formatDate = (dateStr) =>
+    new Date(dateStr).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
   const [loading, setLoading] = useState(true);
   const [earnings, setEarnings] = useState({
     totalEarnings: 0,
@@ -77,11 +80,11 @@ function page() {
         if (res.data.minPayout) setMinPayout(res.data.minPayout);
       }
     } catch (err) {
-      toast.error("Failed to load earnings");
+      toast.error(t("failedToLoadEarnings") || "Failed to load earnings");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchEarnings();
@@ -102,26 +105,26 @@ function page() {
     e.preventDefault();
     const amount = Number(payoutAmount);
     if (!amount || amount <= 0) {
-      toast.error("Enter a valid amount");
+      toast.error(t("enterValidAmount") || "Enter a valid amount");
       return;
     }
     if (amount < minPayout) {
-      toast.error(`Minimum payout amount is ₮${minPayout.toLocaleString()}`);
+      toast.error(t("minPayoutAmount", { amount: minPayout.toLocaleString() }) || `Minimum payout amount is ₮${minPayout.toLocaleString()}`);
       return;
     }
     if (amount > earnings.payoutBalance) {
-      toast.error("Amount exceeds available balance");
+      toast.error(t("amountExceedsBalance") || "Amount exceeds available balance");
       return;
     }
     if (!payoutReference.trim()) {
-      toast.error("Payment reference / bank account details are required");
+      toast.error(t("paymentRefRequired") || "Payment reference / bank account details are required");
       return;
     }
     setPayoutLoading(true);
     try {
       const res = await organizerApi.requestPayout(amount, payoutReference.trim());
       if (res?.status) {
-        toast.success("Payout request submitted!");
+        toast.success(t("payoutRequestSubmitted") || "Payout request submitted!");
         setShowPayoutModal(false);
         setPayoutAmount("");
         setPayoutReference("");
@@ -171,43 +174,43 @@ function page() {
         {/* Header */}
         <div className="card-header">
           <div>
-            <h2 className="card-title">Earnings</h2>
-            <p className="card-desc">Track your income and payout history</p>
+            <h2 className="card-title">{t("earnings")}</h2>
+            <p className="card-desc">{t("trackIncome")}</p>
           </div>
           <button
             className="common_btn"
             onClick={() => setShowPayoutModal(true)}
             disabled={earnings.payoutBalance <= 0}
           >
-            Request Payout
+            {t("requestPayout")}
           </button>
         </div>
 
         {/* Summary Cards */}
         {loading ? (
           <div className="text-center py-4">
-            <Spinner animation="border" size="sm" /> Loading...
+            <Spinner animation="border" size="sm" /> {t("loading")}...
           </div>
         ) : (
           <div className="dashbord-card-grid">
             <div className="earning-cards">
-              <h5>Total Earnings</h5>
+              <h5>{t("totalEarnings")}</h5>
               <h4>₮{earnings.totalEarnings.toLocaleString()}</h4>
             </div>
             <div className="earning-cards">
-              <h5>Available Balance</h5>
+              <h5>{t("availableBalance")}</h5>
               <h4>₮{earnings.payoutBalance.toLocaleString()}</h4>
             </div>
             <div className="earning-cards">
-              <h5>Total Paid Out</h5>
+              <h5>{t("totalPaidOut")}</h5>
               <h4>₮{totalPaidOut.toLocaleString()}</h4>
             </div>
             <div className="earning-cards">
-              <h5>Pending Payout</h5>
+              <h5>{t("pendingPayout")}</h5>
               <h4>₮{pendingPayouts.toLocaleString()}</h4>
             </div>
             <div className="earning-cards">
-              <h5>Referral Credits</h5>
+              <h5>{t("referralCredits")}</h5>
               <h4>
                 ₮{earnings.walletHistory
                   .filter((w) => w.type === "REFERRAL")
@@ -222,7 +225,7 @@ function page() {
         <div className="custom-table-cards transaction-history mt-4">
           <div className="card-header">
             <div>
-              <h5 className="table-title">Transaction History</h5>
+              <h5 className="table-title">{t("transactionHistory")}</h5>
             </div>
             <div className="d-flex gap-2 align-items-center">
               {/* Type filter */}
@@ -232,7 +235,7 @@ function page() {
                 value={typeFilter}
                 onChange={(e) => handleTypeFilter(e.target.value)}
               >
-                <option value="ALL">All Types</option>
+                <option value="ALL">{t("allTypes")}</option>
                 {Object.entries(TYPE_LABEL).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
                 ))}
@@ -242,7 +245,7 @@ function page() {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search transactions..."
+                  placeholder={t("searchTransactions")}
                   value={search}
                   onChange={(e) => handleSearch(e.target.value)}
                 />
@@ -257,27 +260,27 @@ function page() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Description</th>
-                  <th>Transaction ID</th>
-                  <th>Type</th>
-                  <th>Amount</th>
-                  <th>Balance After</th>
+                  <th>{t("orderDate")}</th>
+                  <th>{t("description")}</th>
+                  <th>{t("transactionID")}</th>
+                  <th>{t("transactionType")}</th>
+                  <th>{t("amount")}</th>
+                  <th>{t("balanceAfter")}</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
                     <td colSpan={6} className="text-center py-4">
-                      <Spinner animation="border" size="sm" /> Loading...
+                      <Spinner animation="border" size="sm" /> {t("loading")}...
                     </td>
                   </tr>
                 ) : paginatedHistory.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center py-4" style={{ color: "#999" }}>
                       {search || typeFilter !== "ALL"
-                        ? "No matching transactions."
-                        : "No transactions yet."}
+                        ? t("noMatchingTransactions")
+                        : t("noTransactionsYet")}
                     </td>
                   </tr>
                 ) : (
@@ -314,7 +317,11 @@ function page() {
           {!loading && filteredHistory.length > PAGE_SIZE && (
             <div className="d-flex justify-content-between align-items-center px-3 py-3" style={{ borderTop: "1px solid #2a2a2a" }}>
               <span style={{ color: "#888", fontSize: 13 }}>
-                Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, filteredHistory.length)}–{Math.min(currentPage * PAGE_SIZE, filteredHistory.length)} of {filteredHistory.length}
+                {t("showingTransactions", {
+                  start: Math.min((currentPage - 1) * PAGE_SIZE + 1, filteredHistory.length),
+                  end: Math.min(currentPage * PAGE_SIZE, filteredHistory.length),
+                  total: filteredHistory.length
+                })}
               </span>
               <div className="d-flex gap-2">
                 <button
@@ -323,7 +330,7 @@ function page() {
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => p - 1)}
                 >
-                  ← Prev
+                  ← {t("previous")}
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1)
                   .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
@@ -356,7 +363,7 @@ function page() {
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage((p) => p + 1)}
                 >
-                  Next →
+                  {t("next")} →
                 </button>
               </div>
             </div>
@@ -367,60 +374,60 @@ function page() {
       {/* ─── Payout Request Modal ──────────────────────────────────────────── */}
       <Modal show={showPayoutModal} onHide={() => { setShowPayoutModal(false); setPayoutAmount(""); setPayoutReference(""); }} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Request Payout</Modal.Title>
+          <Modal.Title>{t("requestPayout")}</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleRequestPayout}>
           <Modal.Body>
             <p style={{ color: "#999", fontSize: 14 }}>
-              Available Balance:{" "}
+              {t("availableBalance")}:{" "}
               <strong style={{ color: "#fff" }}>₮{earnings.payoutBalance.toLocaleString()}</strong>
               <span style={{ marginLeft: 12, color: "#aaa" }}>
-                Minimum: <strong style={{ color: "#fff" }}>₮{minPayout.toLocaleString()}</strong>
+                {t("min") || "Minimum"}: <strong style={{ color: "#fff" }}>₮{minPayout.toLocaleString()}</strong>
               </span>
             </p>
 
             {/* Amount */}
             <Form.Group className="mb-3">
-              <Form.Label>Amount (₮)</Form.Label>
+              <Form.Label>{t("payoutAmountLabel")}</Form.Label>
               <Form.Control
                 type="number"
                 min={minPayout}
                 max={earnings.payoutBalance}
-                placeholder={`Min ₮${minPayout.toLocaleString()}`}
+                placeholder={t("minPayoutAmount", { amount: minPayout.toLocaleString() })}
                 value={payoutAmount}
                 onChange={(e) => setPayoutAmount(e.target.value)}
                 required
               />
               {Number(payoutAmount) > 0 && Number(payoutAmount) < minPayout && (
                 <Form.Text style={{ color: "#e74c3c" }}>
-                  Minimum payout is ₮{minPayout.toLocaleString()}
+                  {t("minPayoutAmount", { amount: minPayout.toLocaleString() })}
                 </Form.Text>
               )}
               {Number(payoutAmount) > earnings.payoutBalance && (
                 <Form.Text style={{ color: "#e74c3c" }}>
-                  Amount exceeds available balance
+                  {t("amountExceedsBalance")}
                 </Form.Text>
               )}
             </Form.Group>
 
             {/* Payment Reference */}
             <Form.Group className="mb-3">
-              <Form.Label>Payment Reference <span style={{ color: "#e74c3c" }}>*</span></Form.Label>
+              <Form.Label>{t("payoutRefLabel")} <span style={{ color: "#e74c3c" }}>*</span></Form.Label>
               <Form.Control
                 type="text"
-                placeholder="e.g. Bank account no., bank name, or wire reference"
+                placeholder={t("payoutRefPlaceholder")}
                 value={payoutReference}
                 onChange={(e) => setPayoutReference(e.target.value)}
                 required
               />
               <Form.Text style={{ color: "#888" }}>
-                Provide your bank account details or payment reference so the admin can process your payout.
+                {t("payoutRefDesc")}
               </Form.Text>
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => { setShowPayoutModal(false); setPayoutAmount(""); setPayoutReference(""); }}>
-              Cancel
+              {t("discard")}
             </Button>
             <Button
               type="submit"
@@ -433,7 +440,7 @@ function page() {
                 Number(payoutAmount) > earnings.payoutBalance
               }
             >
-              {payoutLoading ? <Spinner animation="border" size="sm" /> : "Submit Request"}
+              {payoutLoading ? <Spinner animation="border" size="sm" /> : t("payoutRequestSubmitted") && t("submitTicket") /** Reusing submitTicket as Submit Request fallback */ || "Submit Request"}
             </Button>
           </Modal.Footer>
         </Form>
