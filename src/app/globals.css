@@ -354,6 +354,15 @@ select:-webkit-autofill {
   border: 1px solid #737373;
 }
 
+.img-placeholder {
+  background-color: #1a1a1a;
+  background-image: url("/img/sidebar-logo.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 40%;
+  /* Adjust size as needed */
+}
+
 /* 
 @font-face {
   font-family: "SF Pro Display";

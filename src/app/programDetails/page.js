@@ -17,8 +17,10 @@ import courseApi from "@/api/courseApi";
 import wishlistApi from "@/api/wishlistApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatDate } from "@/utils/dateFormater";
+import { useRouter } from "next/navigation";
 
 function ProgramDetailsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [courseDetails, setCourseDetails] = useState(null);
@@ -192,9 +194,12 @@ function ProgramDetailsContent() {
               >
                 {images.map((img, index) => (
                   <SwiperSlide key={index}>
-                    <div
-                      className="event-card-img"
-                      style={{ backgroundImage: `url(${img})` }}
+                    <img
+                      src={img || "/img/sidebar-logo.svg"}
+                      onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
+                      loading="lazy"
+                      className="event-card-img object-fit-cover img-placeholder"
+                      alt={`Gallery ${index}`}
                     />
                   </SwiperSlide>
                 ))}
@@ -250,12 +255,15 @@ function ProgramDetailsContent() {
 
                 <div className="organization_profile">
                   <h4>Organized By</h4>
+
                   <div className="item_org">
                     <img
-                      src={
-                        getFullImageUrl(createdBy?.profileImage) ||
-                        "/img/prfl.png"
-                      }
+                      style={{ cursor: "pointer" }}
+                      onClick={() => router.push(`/profile?id=${createdBy?._id}`)}
+                      src={getFullImageUrl(createdBy?.profileImage) || "/img/sidebar-logo.svg"}
+                      onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
+                      loading="lazy"
+                      className="img-placeholder"
                       alt="Organizer"
                     />
                     <span>
@@ -272,8 +280,10 @@ function ProgramDetailsContent() {
                         ?.map((img, idx) => (
                           <img
                             key={idx}
-                            src={img}
-                            className={`gallery-item ${idx === 0 ? "large-gallery-item" : ""
+                            src={img || "/img/sidebar-logo.svg"}
+                            onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
+                            loading="lazy"
+                            className={`gallery-item img-placeholder ${idx === 0 ? "large-gallery-item" : ""
                               }`}
                             alt={`Gallery ${idx}`}
                           />

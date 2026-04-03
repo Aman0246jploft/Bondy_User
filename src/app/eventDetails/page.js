@@ -204,10 +204,15 @@ function EventDetailsContent() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="event-card-img d-block"
-                        style={{
-                          backgroundImage: `url(${getFullImageUrl(item.url)})`,
-                        }}
-                      />
+                      >
+                        <img
+                          src={getFullImageUrl(item.url) || "/img/sidebar-logo.svg"}
+                          onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
+                          loading="lazy"
+                          className="w-100 h-100 object-fit-cover rounded-4 img-placeholder"
+                          alt={`Gallery item ${index + 1}`}
+                        />
+                      </a>
                     )}
                   </SwiperSlide>
                 ))}
@@ -293,8 +298,10 @@ function EventDetailsContent() {
                             />
                           ) : (
                             <img
-                              src={getFullImageUrl(item.url)}
-                              className="w-100 h-100 object-fit-cover"
+                              src={getFullImageUrl(item.url) || "/img/sidebar-logo.svg"}
+                              onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
+                              loading="lazy"
+                              className="w-100 h-100 object-fit-cover img-placeholder"
                               alt={`Gallery item ${index + 1}`}
                             />
                           )}
@@ -352,7 +359,9 @@ function EventDetailsContent() {
                                     ? getFullImageUrl(user.profileImage)
                                     : "/img/sidebar-logo.svg"
                                 }
-                                className="avatar-img"
+                                onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
+                                loading="lazy"
+                                className="avatar-img img-placeholder"
                                 alt={`${user.firstName} ${user.lastName}`}
                                 style={index === 0 ? { marginLeft: 0 } : {}}
                               />
@@ -426,7 +435,9 @@ function EventDetailsContent() {
                         ? getFullImageUrl(event?.createdBy?.profileImage)
                         : "/img/sidebar-logo.svg"
                     }
-                    className="sponsor-img"
+                    onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
+                    loading="lazy"
+                    className="sponsor-img img-placeholder"
                     alt="Sponsor"
                   />
                   <h5 className="mb-0 fw-semibold">

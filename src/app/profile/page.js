@@ -10,12 +10,15 @@ import { Container } from "react-bootstrap";
 import SessionCart from "@/components/SessionCart";
 import VerifyDropdwons from "@/components/VerifyDropdwons";
 import Footer from "@/components/Footer";
-import GiveRating from "@/components/Modal/GiveRating";
+import FollowListModal from "@/components/Modal/FollowListModal";
+import ReviewListModal from "@/components/Modal/ReviewListModal";
 import authApi from "@/api/authApi";
 
 function ProfileContent() {
-  const [modalShow, setModalShow] = useState(false);
   const searchParams = useSearchParams();
+  const [showFollowModal, setShowFollowModal] = useState(false);
+  const [followModalType, setFollowModalType] = useState("followers");
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const userId = searchParams.get("id");
   const router = useRouter();
 
@@ -148,23 +151,37 @@ function ProfileContent() {
                         </span>
                       )}
                       {userProfile?.role !== "CUSTOMER" && (
-                        <span className="me-3">
-                          <img src="/img/user_icon.svg" />{" "}
+                        <span 
+                          className="me-3" 
+                          style={{ cursor: "pointer" }}
+                          onClick={() => { setFollowModalType("followers"); setShowFollowModal(true); }}
+                        >
+                          <img src="/img/user_icon.svg" alt="followers" />{" "}
                           {userProfile?.totalFollowers || 0} Followers
                         </span>
                       )}
-                      {/* <span>
-                        <img src="/img/star-icon.svg" /> 4/5 Rating
-                      </span> */}
+                      {userProfile?.isMyProfile && (
+                        <span 
+                          className="me-3" 
+                          style={{ cursor: "pointer" }}
+                          onClick={() => { setFollowModalType("following"); setShowFollowModal(true); }}
+                        >
+                          <img src="/img/user_icon.svg" alt="following" />{" "}
+                          {userProfile?.totalFollowing || 0} Following
+                        </span>
+                      )}
+                      {userProfile?.role === "ORGANIZER" && (
+                        <span 
+                          style={{ cursor: "pointer" }}
+                          onClick={() => setShowReviewModal(true)}
+                        >
+                          <img src="/img/star-icon.svg" alt="star" /> {userProfile?.averageRating || 0}/5 Rating ({userProfile?.reviewCount || 0})
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="action-buttons">
-                    {/* <button
-                      className="btn-message"
-                      onClick={() => setModalShow(true)}>
-                      <img src="/img/star-icon.svg" /> Give Rating
-                    </button> */}
                     {userProfile?.role === "ORGANIZER" &&
                       !userProfile?.isFollowed &&
                       !userProfile?.isMyProfile && (
@@ -251,7 +268,18 @@ function ProfileContent() {
       </div>
 
       <Footer />
-      <GiveRating show={modalShow} onHide={() => setModalShow(false)} />
+      <FollowListModal 
+        show={showFollowModal} 
+        onHide={() => setShowFollowModal(false)} 
+        userId={userId} 
+        type={followModalType} 
+      />
+      <ReviewListModal
+        show={showReviewModal}
+        onHide={() => setShowReviewModal(false)}
+        entityId={userId}
+        entityModel="User"
+      />
     </>
   );
 }

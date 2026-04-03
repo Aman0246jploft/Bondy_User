@@ -60,6 +60,20 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="text">{t("personalInfo")}</span>
         </Link>
 
+
+
+        <Link
+          href="/MyTicketsOrganiser"
+          className={`menu-item ${isActive("/MyTicketsOrganiser") ? "active" : ""}`}>
+          <span className="icon">
+            <img src="/img/ticket-icon.svg" alt="" />
+          </span>
+          <span className="text">{t("tickets")}</span>
+        </Link>
+
+
+
+
         <Link
           href="/Dashboard"
           className={`menu-item ${isActive("/Dashboard") ? "active" : ""}`}>

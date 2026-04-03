@@ -224,8 +224,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
             {priceBreakdown?.promoMessage && (
               <div
                 className={`mb-4 ${priceBreakdown?.promoApplied
-                    ? "text-success"
-                    : "text-danger"
+                  ? "text-success"
+                  : "text-danger"
                   }`}
               >
                 {priceBreakdown?.promoMessage}

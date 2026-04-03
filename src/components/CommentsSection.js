@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button, Form, Spinner } from "react-bootstrap";
 import commentApi from "../api/commentApi";
 import { getFullImageUrl } from "../utils/imageHelper";
 import ExpandableText from "./ExpandableText";
 
 const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }) => {
+    const router = useRouter();
     const [showReplyForm, setShowReplyForm] = useState(false);
     const [replyContent, setReplyContent] = useState("");
     const [replies, setReplies] = useState([]);
@@ -74,13 +76,20 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
             <img
                 src={comment.user?.profileImage ? getFullImageUrl(comment.user.profileImage) : "/img/sidebar-logo.svg"}
                 alt="User"
-                className="rounded-circle me-3 flex-shrink-0 object-fit-cover"
+                className="rounded-circle me-3 flex-shrink-0 object-fit-cover img-placeholder"
                 width={depth > 0 ? "40" : "48"}
                 height={depth > 0 ? "40" : "48"}
+                style={{ cursor: "pointer" }}
+                onClick={() => router.push(`/profile?id=${comment.user?._id}`)}
+                onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
             />
             <div className="flex-grow-1">
                 <div className="p-3 rounded-3 shadow-sm" style={{ backgroundColor: "#1e1e1e", border: "1px solid #333" }}>
-                    <h6 className="mb-1 fw-bold" style={{ fontSize: depth > 0 ? "0.9rem" : "1rem", color: "var(--white, #fff)" }}>
+                    <h6
+                        className="mb-1 fw-bold"
+                        style={{ fontSize: depth > 0 ? "0.9rem" : "1rem", color: "var(--white, #fff)", cursor: "pointer" }}
+                        onClick={() => router.push(`/profile?id=${comment.user?._id}`)}
+                    >
                         {comment.user?.firstName} {comment.user?.lastName}
                     </h6>
                     <div style={{ color: "rgba(255, 255, 255, 0.9)" }}>
