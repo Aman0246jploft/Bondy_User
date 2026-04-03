@@ -78,3 +78,33 @@ export const formatLocationForApi = (locationObj) => {
 
     return null; // Invalid format
 };
+
+/**
+ * Fetches latitude and longitude for a given address string using Google Geocoding API.
+ * 
+ * @param {string} address - The full address string (e.g., "City, State, Country")
+ * @returns {Promise<{latitude: number, longitude: number}>}
+ */
+export const getCoordinatesFromAddress = async (address) => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+    if (!apiKey) {
+        throw new Error("Google Maps API key is not configured");
+    }
+
+    try {
+        const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`
+        );
+        const data = await response.json();
+
+        if (data.status === "OK" && data.results.length > 0) {
+            const { lat, lng } = data.results[0].geometry.location;
+            return { latitude: lat, longitude: lng };
+        } else {
+            throw new Error(data.error_message || `Geocoding failed: ${data.status}`);
+        }
+    } catch (error) {
+        console.error("Geocoding error:", error);
+        throw error;
+    }
+};

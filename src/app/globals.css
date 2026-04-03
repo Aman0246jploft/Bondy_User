@@ -61,13 +61,17 @@ textarea {
 
 .custom-floting .form-control,
 .custom-floting .form-select {
-  border-radius: 50px;
+  border-radius: 15px;
+  /* Matches the map and other premium elements */
   border: 1px solid #737373;
   background-color: #1a1a1a;
-  color: #b3b3b3;
+  color: #ffffff;
+  /* Brighter text for better visibility */
   box-shadow: none;
-  height: 56px;
-  padding: 30px 30px 30px 40px !important;
+  height: 60px;
+  /* Slightly taller for better spacing */
+  padding: 1.625rem 1rem 0.625rem 2.5rem !important;
+  /* Standardized floating label padding */
 }
 
 .form-select {
@@ -91,14 +95,14 @@ textarea {
 .custom-floting.form-floating>.form-control:focus~label,
 .custom-floting.form-floating>.form-control:not(:placeholder-shown)~label,
 .custom-floting.form-floating>.form-select:focus~label,
-.custom-floting.form-floating>.form-select:not([value=""])~label {
-  transform: scale(0.85) translateY(-1.8rem) translateX(0.4rem) !important;
-  color: #999;
+.custom-floting.form-floating>.form-select~label {
+  transform: scale(0.85) translateY(-1.2rem) translateX(0.1rem) !important;
+  color: var(--primary-teal);
+  /* Use theme color for the label when it floats */
   padding-left: 20px;
-  background-color: #1a1a1a;
+  background-color: transparent;
   height: auto;
-  padding-top: 0.4rem;
-  padding-bottom: 0.4rem;
+  opacity: 1;
 }
 
 .custom-floting.form-floating>.form-control-plaintext~label:after,
@@ -126,18 +130,17 @@ select:-webkit-autofill {
 
 .custom-floting .form-icon {
   position: absolute;
-  top: 16px;
-  left: 10px;
+  top: 18px;
+  left: 15px;
 }
 
 .custom-tel-input {
-  border-radius: 50px;
-  border: 1px solid #737373;
+  border-radius: 15px;
   background-color: #1a1a1a;
   color: #b3b3b3;
   box-shadow: none;
-
-  padding: 17px;
+  padding: 2px 10px;
+  /* Adjusted for better alignment */
 }
 
 .PhoneInputInput {
@@ -156,10 +159,10 @@ select:-webkit-autofill {
 /* react-phone-input-2 custom styles */
 .phone_input .form-control {
   background-color: #1a1a1a !important;
-  color: #b3b3b3 !important;
+  color: #ffffff !important;
   border: 1px solid #737373 !important;
-  border-radius: 50px !important;
-  height: 56px !important;
+  border-radius: 15px !important;
+  height: 60px !important;
   width: 100% !important;
   padding-left: 60px !important;
   font-size: 16px !important;
@@ -169,12 +172,12 @@ select:-webkit-autofill {
   background-color: #1a1a1a !important;
   border: 1px solid #737373 !important;
   border-right: none !important;
-  border-radius: 50px 0 0 50px !important;
+  border-radius: 15px 0 0 15px !important;
 }
 
 .phone_input .flag-dropdown.open .selected-flag {
   background-color: #1a1a1a !important;
-  border-radius: 50px 0 0 0 !important;
+  border-radius: 15px 0 0 0 !important;
 }
 
 .phone_input .selected-flag:hover,
