@@ -20,8 +20,8 @@ export default function Footer() {
     const fetchSocialLinks = async () => {
       try {
         const response = await globalSettingApi.getSocialLinks();
-        if (response.data?.status && response.data?.data?.value) {
-          const links = response.data.data.value;
+        if (response?.status && response?.data?.value) {
+          const links = response.data.value;
           setSocialLinks({
             facebook: links.facebook || "#",
             linkedin: links.linkedin || "#",
