@@ -46,9 +46,9 @@ export default function PrivacyPolicy() {
                             </div>
                         </div>
                     ) : (
-                        <div 
+                        <div
                             className="policy-content"
-                            dangerouslySetInnerHTML={{ __html: content }} 
+                            dangerouslySetInnerHTML={{ __html: content }}
                         />
                     )}
                 </div>

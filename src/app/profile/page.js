@@ -151,8 +151,8 @@ function ProfileContent() {
                         </span>
                       )}
                       {userProfile?.role !== "CUSTOMER" && (
-                        <span 
-                          className="me-3" 
+                        <span
+                          className="me-3"
                           style={{ cursor: "pointer" }}
                           onClick={() => { setFollowModalType("followers"); setShowFollowModal(true); }}
                         >
@@ -161,8 +161,8 @@ function ProfileContent() {
                         </span>
                       )}
                       {userProfile?.isMyProfile && (
-                        <span 
-                          className="me-3" 
+                        <span
+                          className="me-3"
                           style={{ cursor: "pointer" }}
                           onClick={() => { setFollowModalType("following"); setShowFollowModal(true); }}
                         >
@@ -171,7 +171,7 @@ function ProfileContent() {
                         </span>
                       )}
                       {userProfile?.role === "ORGANIZER" && (
-                        <span 
+                        <span
                           style={{ cursor: "pointer" }}
                           onClick={() => setShowReviewModal(true)}
                         >
@@ -268,11 +268,11 @@ function ProfileContent() {
       </div>
 
       <Footer />
-      <FollowListModal 
-        show={showFollowModal} 
-        onHide={() => setShowFollowModal(false)} 
-        userId={userId} 
-        type={followModalType} 
+      <FollowListModal
+        show={showFollowModal}
+        onHide={() => setShowFollowModal(false)}
+        userId={userId}
+        type={followModalType}
       />
       <ReviewListModal
         show={showReviewModal}

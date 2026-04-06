@@ -5,7 +5,7 @@ const EventGallery = () => {
     <section className=" organizations-event">
       <div className="container">
         <div className="row g-3">
-          
+
           {/* Card 1 - Large (6 columns) */}
           <div className="col-lg-6 col-md-12">
             <div className="organizations-event-card">
