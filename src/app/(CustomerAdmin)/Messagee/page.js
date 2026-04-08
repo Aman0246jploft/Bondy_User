@@ -69,6 +69,9 @@ function MessageeContent() {
   // ─── File Upload State ─────────────────────────────────────
   const [isUploading, setIsUploading] = useState(false);
   const [stagedFile, setStagedFile] = useState(null); // { fileUrl, fileType, localUrl, name }
+  const [typingUsers, setTypingUsers] = useState({}); // { userId: userName }
+  const [sidebarTyping, setSidebarTyping] = useState({}); // { chatId: boolean }
+  const typingTimeoutRef = useRef(null);
 
   // ─── Helper ────────────────────────────────────────────────
   const getMyId = useCallback(() => {
@@ -98,6 +101,10 @@ function MessageeContent() {
       setChatListLoading(false);
       if (response.status === "ok") {
         setChats(response.data);
+        // Join all rooms in the chat list to listen for updates (like typing)
+        response.data.forEach((chat) => {
+          socket.emit("join_chat", { chatId: chat._id });
+        });
         setChatPage(1);
         setChatHasMore(response.hasMore ?? false);
         chatsLoaded.current = true;
@@ -120,6 +127,8 @@ function MessageeContent() {
       setChats((prev) => {
         // Avoid duplicates
         if (prev.some((c) => c._id === newChat._id)) return prev;
+        // Join the new room immediately
+        socket.emit("join_chat", { chatId: newChat._id });
         return [newChat, ...prev];
       });
     };
@@ -345,12 +354,47 @@ function MessageeContent() {
       }
     };
 
+    const handleTyping = ({ chatId, userId, userName }) => {
+      // Update active chat typing state
+      const chat = activeChatRef.current;
+      if (chat && chatId === chat._id) {
+        setTypingUsers((prev) => ({ ...prev, [userId]: userName }));
+      }
+      // Update sidebar typing state (track specific users)
+      setSidebarTyping((prev) => ({
+        ...prev,
+        [chatId]: { ...(prev[chatId] || {}), [userId]: true }
+      }));
+    };
+
+    const handleStopTyping = ({ chatId, userId }) => {
+      // Update active chat typing state
+      const chat = activeChatRef.current;
+      if (chat && chatId === chat._id) {
+        setTypingUsers((prev) => {
+          const newState = { ...prev };
+          delete newState[userId];
+          return newState;
+        });
+      }
+      // Update sidebar typing state (remove specific user)
+      setSidebarTyping((prev) => {
+        const chatTyping = { ...(prev[chatId] || {}) };
+        delete chatTyping[userId];
+        return { ...prev, [chatId]: chatTyping };
+      });
+    };
+
     socket.on("receive_message", handleReceiveMessage);
     socket.on("messages_read_update", handleReadUpdate);
+    socket.on("typing", handleTyping);
+    socket.on("stop_typing", handleStopTyping);
 
     return () => {
       socket.off("receive_message", handleReceiveMessage);
       socket.off("messages_read_update", handleReadUpdate);
+      socket.off("typing", handleTyping);
+      socket.off("stop_typing", handleStopTyping);
     };
   }, [socket]);
 
@@ -359,8 +403,17 @@ function MessageeContent() {
   // ══════════════════════════════════════════════════════════
   useEffect(() => {
     if (!socket || !activeChat || activeChat.isVirtual) return;
+
+    // 1. Tell server to mark as read
     socket.emit("mark_messages_read", { chatId: activeChat._id });
-  }, [socket, activeChat, messages.length]);
+
+    // 2. Instantly reset unread count in Sidebar UI
+    setChats((prev) =>
+      prev.map((c) =>
+        c._id === activeChat._id ? { ...c, unreadCount: 0 } : c,
+      ),
+    );
+  }, [socket, activeChat?._id, messages.length]);
 
   // ══════════════════════════════════════════════════════════
   // 8. Auto-scroll to bottom on initial load
@@ -391,6 +444,15 @@ function MessageeContent() {
 
     socket.emit("send_message", payload, (response) => {
       if (response.status === "ok") {
+        // Stop typing when message is sent
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = null;
+          if (!activeChat.isVirtual) {
+            socket.emit("stop_typing", { chatId: activeChat._id });
+          }
+        }
+
         setMessages((prev) => [...prev, response.data]);
         setMessage("");
         setStagedFile(null);
@@ -446,6 +508,24 @@ function MessageeContent() {
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") sendMessage();
+  };
+
+  const handleInputChange = (e) => {
+    setMessage(e.target.value);
+
+    if (!socket || !activeChat || activeChat.isVirtual) return;
+
+    // Emit typing event
+    socket.emit("typing", { chatId: activeChat._id });
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    // Set new timeout to stop typing
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit("stop_typing", { chatId: activeChat._id });
+      typingTimeoutRef.current = null;
+    }, 3000);
   };
 
   // ══════════════════════════════════════════════════════════
@@ -547,7 +627,11 @@ function MessageeContent() {
                         <div className="user-info">
                           <h5>{other.firstName} {other.lastName}</h5>
                           <p className="text-truncate" style={{ maxWidth: "150px" }}>
-                            {chat.lastMessage?.content || t("noMessagesYet")}
+                            {sidebarTyping[chat._id] && Object.keys(sidebarTyping[chat._id]).length > 0 ? (
+                              <span style={{ color: "var(--primary-color)", fontWeight: "500" }}>{t("typing") || "Typing..."}</span>
+                            ) : (
+                              chat.lastMessage?.content || t("noMessagesYet")
+                            )}
                           </p>
                         </div>
 
@@ -733,6 +817,15 @@ function MessageeContent() {
                         );
                       })}
 
+                      {Object.values(typingUsers).length > 0 && (
+                        <div className="typing-indicator-container">
+                          <div className="typing-text">
+                            {Object.values(typingUsers).join(", ")} {Object.values(typingUsers).length > 1 ? t("typingPlural") || "are typing" : t("typingSingular") || "is typing"}
+                            <span className="dot-animation"><span>.</span><span>.</span><span>.</span></span>
+                          </div>
+                        </div>
+                      )}
+
                       <div ref={msgEndRef} />
                     </div>
 
@@ -793,7 +886,7 @@ function MessageeContent() {
                           type="text"
                           placeholder={stagedFile ? (t("addCaption") || "Add a caption...") : (t("yourMessagePlaceholder") || "Your message...")}
                           value={message}
-                          onChange={(e) => setMessage(e.target.value)}
+                          onChange={handleInputChange}
                           onKeyPress={handleKeyPress}
                         />
 
