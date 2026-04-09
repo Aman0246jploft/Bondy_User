@@ -61,6 +61,7 @@ textarea {
 
 .custom-floting .form-control,
 .custom-floting .form-select {
+  text-transform: capitalize;
   border-radius: 15px;
   /* Matches the map and other premium elements */
   border: 1px solid #737373;
@@ -72,6 +73,12 @@ textarea {
   /* Slightly taller for better spacing */
   padding: 1.625rem 1rem 0.625rem 2.5rem !important;
   /* Standardized floating label padding */
+}
+
+/* Exclude email fields from capitalization */
+.custom-floting .form-control[type="email"],
+.custom-floting .form-control[type="email"]::placeholder {
+  text-transform: none;
 }
 
 .form-select {
@@ -4498,6 +4505,7 @@ a.view-map {
   border: 1px solid #737373;
   border-radius: 29px;
   padding: 0 15px; */
+  display: block; /* Fixed empty ruleset lint */
 }
 
 .common_field .form-control::placeholder {

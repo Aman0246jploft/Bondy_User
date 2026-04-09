@@ -275,16 +275,9 @@ function PersonalInfoContent() {
             <div className="personal-profile-lft">
               <div
                 className="personal-profile-img"
-                style={{ cursor: "pointer" }}
                 onClick={() => fileRef.current.click()}
               >
                 <img
-                  style={{
-                    width: "95px",
-                    height: "95px",
-                    objectFit: "cover",
-                    borderRadius: "50%",
-                  }}
                   src={preview || "/img/sidebar-logo.svg"}
                   alt="Profile"
                 />
@@ -308,7 +301,7 @@ function PersonalInfoContent() {
                 onClick={() => fileRef.current.click()}
               >
                 <img src="/img/edit-icon.svg" alt="Edit" />
-                <span>{t("edit")}</span>
+                <span>{t("EditProfile") || t("Edit")}</span>
               </button>
             </div>
           </div>
@@ -475,16 +468,17 @@ function PersonalInfoContent() {
 
             {/* Row 5: Contact Number */}
             <Col md={6}>
-              <div className="custom-tel-input custom-floting">
+              <div className={`phone_input_wrapper custom-floting ${profileData.contactNumber ? 'has-value' : ''}`}>
                 <PhoneInput
                   country={"us"}
                   value={profileData.contactNumber}
                   onChange={(phone) => handlePhoneChange("+" + phone)}
-                  inputClass="form-control w-100"
+                  inputClass="form-control"
                   containerClass="phone_input"
                   dropdownClass="phone_input_dropdown"
                   buttonClass="phone_input_button"
                 />
+                <label className="phone-field-label">{t("contactNumber") || "Contact Number"}</label>
               </div>
             </Col>
 

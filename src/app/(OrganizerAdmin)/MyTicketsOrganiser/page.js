@@ -124,8 +124,8 @@ function page() {
                 <div className="ticket-lft">
                   <Form.Check />
                   <div>
-                    <h5>{title}</h5>
-                    <p className="ref"># {ticket.bookingId}</p>
+                    <h5 title={title}>{title}</h5>
+                    <p className="ref" title={`# ${ticket.bookingId}`}># {ticket.bookingId}</p>
                   </div>
                 </div>
                 <div className="ticket-rgt">
@@ -149,7 +149,7 @@ function page() {
                   <span>{new Date(ticket.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</span>
                 </p>
                 <p>
-                  {t("totalPaid")} <span>${ticket.totalAmount}</span>
+                  {t("totalPaid")} <span>₮{ticket.totalAmount}</span>
                 </p>
                 <p>
                   <span>

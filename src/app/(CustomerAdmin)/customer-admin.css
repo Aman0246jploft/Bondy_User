@@ -52,54 +52,151 @@ input[type="number"]::-webkit-outer-spin-button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
-  border-radius: 24px;
-  border: 1px solid rgba(35, 173, 164, 0.3);
-  background: #1a1a1a;
-  margin-bottom: 45px;
+  padding: 30px;
+  border-radius: 20px;
+  background: rgba(35, 173, 164, 0.05); /* Subtle tinted background for premium feel */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 40px;
 }
+
 .personal-profile-lft {
   display: flex;
   align-items: center;
-  gap: 20px;
-}
-.personal-profile-img {
-  padding: 5px;
-  height: 105px;
-  width: 105px;
-  border: 1px solid var(--primary-teal);
-  border-radius: 50%;
-}
-.personal-profile-img img {
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
+  gap: 24px;
 }
 
-.personal-profile-info h5 {
-  font-size: 20px;
+.personal-profile-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid var(--primary-teal);
+  padding: 4px;
+  background: #1a1a1a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.personal-profile-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.personal-profile-info h4 {
+  font-size: 24px;
   font-weight: 700;
   color: var(--white);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .personal-profile-info p {
-  font-size: 12px;
-  font-weight: 400;
-  color: #b3b3b3;
+  font-size: 14px;
+  color: #9ca3af;
   margin-bottom: 0;
 }
 
 .edit-profile-btn {
   display: flex;
-  height: 32px;
-  padding: 3px 16px;
-  justify-content: center;
   align-items: center;
-  gap: 8px;
-  color: #999;
+  gap: 10px;
+  padding: 10px 20px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.edit-profile-btn:hover {
+  background: var(--primary-teal);
+  border-color: var(--primary-teal);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(35, 173, 164, 0.3);
+}
+
+.edit-profile-btn img {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) invert(1);
+}
+
+/* Tel Input Alignment and Premium Style */
+.phone_input.react-tel-input .form-control {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  border: 1px solid #737373 !important;
+  border-radius: 15px !important;
+  height: 60px !important;
+  width: 100% !important;
+  padding-left: 60px !important;
+  font-size: 16px !important;
+  box-shadow: none !important;
+}
+
+.phone_input.react-tel-input .flag-dropdown {
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 15px 0 0 15px !important;
+  padding-left: 10px !important;
+}
+
+.phone_input.react-tel-input .selected-flag {
+  background-color: transparent !important;
+  width: 50px !important;
+  padding: 0 0 0 8px !important;
+}
+
+.phone_input.react-tel-input .selected-flag:hover {
+  background-color: rgba(35, 173, 164, 0.1) !important;
+  border-radius: 15px 0 0 15px !important;
+}
+
+.phone_input_wrapper {
+  position: relative;
+}
+
+.phone-field-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1rem 0.75rem 0 40px; /* Matches custom-floting label padding */
+  color: #9ca3af;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 10;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Float label when there is a value or focus */
+.phone_input_wrapper.has-value .phone-field-label,
+.phone_input_wrapper:focus-within .phone-field-label {
+  transform: scale(0.85) translateY(-1.2rem) translateX(0.1rem);
+  color: var(--primary-teal);
   background-color: transparent;
-  border: none;
+  padding-left: 20px;
+  height: auto;
+}
+
+/* DOB Calendar Icon visibility */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(100%) hue-rotate(130deg) brightness(1); /* Tinted to match primary teal */
+  cursor: pointer;
+  opacity: 0.8;
+  padding: 5px;
+}
+
+.custom-floting .form-icon img {
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.custom-floting .form-control:focus ~ .form-icon img {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px var(--primary-teal));
 }
 
 .ticket-cards {
@@ -121,7 +218,7 @@ input[type="number"]::-webkit-outer-spin-button {
 .ticket-lft {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
 }
 .ticket-lft .form-check-input {
   height: 20px;
@@ -130,6 +227,7 @@ input[type="number"]::-webkit-outer-spin-button {
   border-color: #737373;
   border-radius: 6px;
   box-shadow: none;
+  flex-shrink: 0;
 }
 .form-check-input:checked {
   border-color: var(--primary-teal);
@@ -141,12 +239,20 @@ input[type="number"]::-webkit-outer-spin-button {
   color: var(--white);
   margin-bottom: 8px;
   text-transform: capitalize;
+  max-width: 200px; /* Limits width to allow space for status badge */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .ticket-lft p {
   font-size: 16px;
   font-weight: 400;
   color: #737373;
   margin-bottom: 0;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ticket-bottom {
@@ -939,23 +1045,132 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 
-.qr-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  background: #fff;
-  border-radius: 24px;
-  margin-top: 30px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+/* Ticket Details Refinements */
+.ticket-details-wrapper {
+  padding: 20px 0;
 }
 
-.qr-section p {
-  color: #1a1a1a;
-  margin-top: 15px;
-  font-weight: 600;
+.ticket-dtl-card-img {
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 3/4;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 4px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+
+.ticket-dtl-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.ticket-dtl-card-img:hover img {
+  transform: scale(1.05);
+}
+
+.ticket-dtl-card h3 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-top: 1.5rem;
+  color: #fff;
+}
+
+.payment-dtl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 30px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.payment-item h6 {
+  color: #737373;
   font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.payment-item p {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.payment-item.highlight .price-text {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary-teal);
+  text-shadow: 0 0 20px rgba(35, 173, 164, 0.3);
+}
+
+.qr-container {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 40px;
+  border-radius: 30px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.qr-wrapper {
+  width: fit-content;
+}
+
+.qr-box {
+  background: #fff;
+  padding: 15px;
+  border-radius: 20px;
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.qr-wrapper p {
+  color: #9ca3af !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.info-box {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 24px;
+  border-radius: 20px;
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.info-box h6 {
+  color: #737373;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.info-box p {
+  color: #fff;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.btn-link-teal:hover {
+  color: #2ec4bc !important;
+  text-decoration: none !important;
+}
+
+@media (max-width: 991px) {
+  .ticket-dtl-card {
+    margin-bottom: 30px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -968,13 +1183,10 @@ input[type="number"]::-webkit-outer-spin-button {
     width: 100%;
     display: flex;
     gap: 10px;
+    margin-top: 15px;
   }
   
   .tickt-dtl-info-btns .common_btn {
     flex: 1;
-  }
-  
-  .payment-dtl-innr li {
-    flex-direction: column;
   }
 }

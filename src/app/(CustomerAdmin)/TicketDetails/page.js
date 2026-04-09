@@ -8,8 +8,38 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import QRCode from "react-qr-code";
 import { useLanguage } from "@/context/LanguageContext";
 
-function TicketDetailsContent() {
+const ExpandableText = ({ text, limit = 100 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useLanguage();
+
+  if (!text) return null;
+  if (text.length <= limit) return <p>{text}</p>;
+
+  return (
+    <div>
+      <p>
+        {isExpanded ? text : `${text.substring(0, limit)}...`}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="btn-link-teal ms-2"
+          style={{
+            background: "none",
+            border: "none",
+            color: "var(--primary-teal)",
+            fontSize: "0.875rem",
+            padding: 0,
+            textDecoration: "underline",
+          }}
+        >
+          {isExpanded ? t("viewLess") || "View Less" : t("viewMore") || "View More"}
+        </button>
+      </p>
+    </div>
+  );
+};
+
+function TicketDetailsContent() {
+  const { t, language } = useLanguage();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [ticketInfo, setTicketInfo] = useState(null);
@@ -79,7 +109,8 @@ function TicketDetailsContent() {
 
   const formatEventDate = (date) => {
     if (!date) return "N/A";
-    return new Date(date).toLocaleDateString("en-US", {
+    const locale = language === "mn" ? "mn-MN" : "en-US";
+    return new Date(date).toLocaleDateString(locale, {
       weekday: "short",
       day: "numeric",
       month: "short",
@@ -93,7 +124,8 @@ function TicketDetailsContent() {
       const [hours, minutes] = time.split(":");
       const date = new Date();
       date.setHours(parseInt(hours), parseInt(minutes));
-      return date.toLocaleTimeString("en-US", {
+      const locale = language === "mn" ? "mn-MN" : "en-US";
+      return date.toLocaleTimeString(locale, {
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
@@ -122,8 +154,20 @@ function TicketDetailsContent() {
     );
   }
 
+  const isEvent = ticketInfo.bookingType === "EVENT";
+  const item = isEvent ? ticketInfo.eventId : ticketInfo.courseId;
+  const title = isEvent ? item?.eventTitle : item?.courseTitle;
+  const selectedSchedule = !isEvent && item?.schedules?.find(s => s._id === ticketInfo.scheduleId);
+
+  const fullAddress = [
+    item?.venueAddress?.address,
+    item?.venueAddress?.city,
+    item?.venueAddress?.state,
+    item?.venueAddress?.country
+  ].filter(Boolean).join(", ");
+
   return (
-    <div className="ticket-details">
+    <div className="ticket-details-wrapper">
       <div className="d-flex gap-3 align-items-center justify-content-between mb-4">
         <Link href="/MyTickets" className="back-btn mb-0">
           <img src="/img/arrow-left-white.svg" alt="Back" className="me-2" />
@@ -135,136 +179,189 @@ function TicketDetailsContent() {
         </button>
       </div>
 
-      <div ref={ticketRef} className="cards">
-        <Row className="g-4">
-          <Col lg={4} xl={3}>
-            <div className="ticket-dtl-card">
-              <div className="ticket-dtl-card-img">
-                <img
-                  src={getFullImageUrl(ticketInfo?.eventId?.posterImage?.[0])}
-                  alt={ticketInfo?.eventId?.eventTitle}
-                />
-              </div>
-              <h3>{ticketInfo?.eventId?.eventTitle}</h3>
-              <div className="mt-3">
-                {getStatusBadge(ticketInfo?.status)}
-              </div>
-            </div>
-          </Col>
-
-          <Col lg={8} xl={9}>
-            <div className="ticket-dtl-main">
-              <div className="tickt-dtl-info">
-                <h4>{t("ticketDetails") || "Ticket Information"}</h4>
-                <div className="tickt-dtl-info-btns" data-html2canvas-ignore="true">
-                  <button
-                    className="common_btn d-flex align-items-center"
-                    type="button"
-                    onClick={handleDownloadTicket}
-                  >
-                    <img src="/img/download-arrow.svg" className="me-2" alt="" />
-                    {t("downloadTicket") || "Download PDF"}
-                  </button>
+      <div ref={ticketRef} className="cards p-0 overflow-hidden">
+        <div className="p-4 p-md-5">
+          <Row className="g-4">
+            <Col lg={4} xl={3}>
+              <div className="ticket-dtl-card text-center text-lg-start">
+                <div className="ticket-dtl-card-img mx-auto mx-lg-0 mb-4">
+                  <img
+                    src={getFullImageUrl(item?.posterImage?.[0])}
+                    alt={title}
+                    className="img-fluid"
+                    onError={(e) => {
+                      e.target.src = "/img/sidebar-logo.svg";
+                    }}
+                  />
+                </div>
+                <h3>{title}</h3>
+                <div className="mt-3">
+                  {getStatusBadge(ticketInfo?.status)}
                 </div>
               </div>
+            </Col>
 
-              <div className="tickt-dtl-bottom">
-                <div>
-                  <h6>{t("orderTrackingCode") || "Booking ID"}</h6>
-                  <p>{ticketInfo?.bookingId}</p>
+            <Col lg={8} xl={9}>
+              <div className="ticket-dtl-main h-100 d-flex flex-column">
+                <div className="tickt-dtl-info d-flex justify-content-between align-items-center mb-5">
+                  <h4 className="mb-0">{t("ticketDetails") || "Ticket Information"}</h4>
+                  <div className="tickt-dtl-info-btns" data-html2canvas-ignore="true">
+                    <button
+                      className="common_btn d-flex align-items-center"
+                      type="button"
+                      onClick={handleDownloadTicket}
+                    >
+                      <img src="/img/download-arrow.svg" className="me-2" alt="" />
+                      {t("downloadTicket") || "Download PDF"}
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <h6>{t("orderDate") || "Booking Date"}</h6>
-                  <p>{formatEventDate(ticketInfo?.createdAt)}</p>
-                </div>
-                <div>
-                    <h6>{t("ticketCount") || "Quantity"}</h6>
-                    <p>{ticketInfo?.qty} {t("ticketsSuffix") || "Tickets"}</p>
+
+                <div className="tickt-dtl-bottom mt-auto">
+                  <Row className="g-4">
+                    <Col md={3} sm={6}>
+                      <h6>{t("orderTrackingCode") || "Booking ID"}</h6>
+                      <p className="text-truncate" title={ticketInfo?.bookingId}>{ticketInfo?.bookingId}</p>
+                    </Col>
+                    <Col md={3} sm={6}>
+                      <h6>{t("orderDate") || "Booking Date"}</h6>
+                      <p>{formatEventDate(ticketInfo?.createdAt)}</p>
+                    </Col>
+                    <Col md={3} sm={6}>
+                      <h6>{t("ticketType") || "Ticket"}</h6>
+                      <p>{item?.ticketName || item?.enrollmentType || "General"}</p>
+                    </Col>
+                    <Col md={3} sm={6}>
+                      <h6>{t("quantity") || "Qty"}</h6>
+                      <p>{ticketInfo?.qty} {t("ticketsSuffix") || "Tickets"}</p>
+                    </Col>
+                  </Row>
                 </div>
               </div>
-            </div>
-          </Col>
-        </Row>
+            </Col>
+          </Row>
 
-        <div className="event-dtl mt-5">
-          <h4 className="line-title">
-            <span>{t("eventDetails") || "Event Details"}</span>
-          </h4>
-          <div className="event-dtl-innr">
-            <div>
-              <h6>
-                <img src="/img/Map-Point.svg" alt="" />
-                {t("location") || "Location"}
-              </h6>
-              <p>
-                {ticketInfo?.eventId?.venueAddress?.address && `${ticketInfo?.eventId?.venueAddress?.address}, `}
-                {ticketInfo?.eventId?.venueAddress?.city}, {ticketInfo?.eventId?.venueAddress?.state}
-                <br />
-                {ticketInfo?.eventId?.venueAddress?.country}
-              </p>
-            </div>
+          <div className="event-dtl mt-5 pt-4 border-top border-secondary">
+            <h4 className="line-title">
+              <span>{isEvent ? t("eventDetails") : t("courseDetails")}</span>
+            </h4>
+            <Row className="g-4 mt-2">
+              <Col md={6}>
+                <div className="info-box">
+                  <h6>
+                    <img src="/img/Map-Point.svg" alt="" className="me-2" />
+                    {t("location") || "Location"}
+                  </h6>
+                  <ExpandableText text={fullAddress} />
+                </div>
+              </Col>
 
-            <div>
-              <h6>
-                <img src="/img/white-calendar.svg" alt="" /> 
-                {t("eventTime") || "Date & Time"}
-              </h6>
-              <p>
-                <strong>{formatEventDate(ticketInfo?.eventId?.startDate)}</strong>
-                <br />
-                <span>{formatEventTime(ticketInfo?.eventId?.startTime)}</span>
-              </p>
-            </div>
+              <Col md={6}>
+                <div className="info-box">
+                  <h6>
+                    <img src="/img/white-calendar.svg" alt="" className="me-2" />
+                    {t("timeSlots") || "Time Slots"}
+                  </h6>
+                  {isEvent ? (
+                    <p>
+                      <strong>{formatEventDate(item?.startDate)}</strong>
+                      <br />
+                      <span>{formatEventTime(item?.startTime)} - {formatEventTime(item?.endTime)}</span>
+                    </p>
+                  ) : (
+                    <p>
+                      {selectedSchedule ? (
+                        <>
+                          <strong>{formatEventDate(selectedSchedule.startDate)} - {formatEventDate(selectedSchedule.endDate)}</strong>
+                          <br />
+                          <span>{formatEventTime(selectedSchedule.startTime)} - {formatEventTime(selectedSchedule.endTime)}</span>
+                        </>
+                      ) : (
+                        <span>{t("multipleSchedules") || "Check course schedule"}</span>
+                      )}
+                    </p>
+                  )}
+                </div>
+              </Col>
+
+              <Col md={12}>
+                <div className="info-box">
+                  <h6>{t("description") || "Description"}</h6>
+                  <ExpandableText text={item?.shortdesc || item?.longdesc} limit={200} />
+                </div>
+              </Col>
+
+              {isEvent && (
+                <>
+                  {item?.ageRestriction && (
+                    <Col md={6}>
+                      <div className="info-box">
+                        <h6>{t("ageRestriction") || "Age Restriction"}</h6>
+                        <p>{item.ageRestriction.type === "MIN_AGE" ? `${t("minAge") || "Min age"}: ${item.ageRestriction.minAge}+` : t("noRestriction")}</p>
+                      </div>
+                    </Col>
+                  )}
+                  {item?.dressCode && (
+                    <Col md={6}>
+                      <div className="info-box">
+                        <h6>{t("dressCode") || "Dress Code"}</h6>
+                        <p>{item.dressCode}</p>
+                      </div>
+                    </Col>
+                  )}
+                  {item?.addOns && (
+                    <Col md={12}>
+                      <div className="info-box">
+                        <h6>{t("addOns") || "Add-ons"}</h6>
+                        <ExpandableText text={item.addOns} limit={150} />
+                      </div>
+                    </Col>
+                  )}
+                </>
+              )}
+
+              {!isEvent && item?.whatYouWillLearn && (
+                <Col md={12}>
+                  <div className="info-box">
+                    <h6>{t("whatYouWillLearn") || "What you will learn"}</h6>
+                    <ExpandableText text={item.whatYouWillLearn} limit={200} />
+                  </div>
+                </Col>
+              )}
+            </Row>
           </div>
-        </div>
 
-        <div className="payment-dtl mt-5">
-          <h4 className="line-title">
-            <span>{t("paymentSummary") || "Payment Summary"}</span>
-          </h4>
-          <ul className="payment-dtl-innr">
-            <li>
-              <div>
-                <h6>{t("paidBy") || "Customer Name"}</h6>
-                <p>
-                  {ticketInfo?.userId?.firstName} {ticketInfo?.userId?.lastName}
-                </p>
-              </div>
-              <div>
-                <h6>{t("paymentMethod") || "Payment Method"}</h6>
-                <p>Stripe</p>
-              </div>
-            </li>
-            <li>
-              <div>
-                <h6>{t("ticketPrice") || "Price per Ticket"}</h6>
-                <p>${ticketInfo?.eventId?.ticketPrice}</p>
-              </div>
-              <div>
-                <h6>{t("totalPaid") || "Total Amount"}</h6>
-                <p className="text-primary-teal" style={{ color: "var(--primary-teal)", fontSize: "1.5rem" }}>
-                  ${ticketInfoFull?.ticket?.totalAmount}
-                </p>
-              </div>
-            </li>
-            <li className="justify-content-center border-0 bg-transparent">
-                {ticketInfoFull?.ticket?.qrCodeData ? (
-                  <div className="qr-section">
-                    <QRCode
-                      value={ticketInfoFull.ticket.qrCodeData}
-                      size={180}
-                      style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                      viewBox={`0 0 256 256`}
-                    />
-                    <p>{t("scanToVerify") || "Scan to Verify Ticket"}</p>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <img src="/img/barcode-ticket.svg" alt="Barcode" style={{ maxWidth: "300px" }} />
-                  </div>
-                )}
-            </li>
-          </ul>
+          {/* Simple Clean Footer instead of Receipt Rubbish */}
+          <div className="ticket-footer mt-5 pt-4 border-top border-secondary">
+            <Row className="align-items-center">
+              <Col md={6}>
+                <div className="customer-info-simple">
+                  <h6 className="text-secondary mb-1 text-uppercase small letter-spacing-1">{t("paidBy") || "Paid By"}</h6>
+                  <h4 className="mb-0">{ticketInfo?.userId?.firstName} {ticketInfo?.userId?.lastName}</h4>
+                  <p className="text-secondary small mt-1">{t("totalPaid") || "Total Paid"}: <span className="text-white fw-bold">₮{ticketInfo?.totalAmount}</span></p>
+                </div>
+              </Col>
+              <Col md={6} className="text-md-end mt-4 mt-md-0">
+                <div className="qr-container p-0 bg-transparent border-0 d-inline-block">
+                  {ticketInfo?.qrCodeData ? (
+                    <div className="qr-wrapper">
+                      <div className="qr-box p-2 bg-white rounded-3 shadow-lg" style={{ width: "140px", height: "140px" }}>
+                        <QRCode
+                          value={ticketInfo.qrCodeData}
+                          size={120}
+                          style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                          viewBox={`0 0 256 256`}
+                        />
+                      </div>
+                      <p className="mt-2 text-secondary small text-center">{t("scanToEntry") || "Scan for Entry"}</p>
+                    </div>
+                  ) : (
+                    <img src="/img/barcode-ticket.svg" alt="Barcode" className="img-fluid" style={{ maxWidth: "200px" }} />
+                  )}
+                </div>
+              </Col>
+            </Row>
+          </div>
         </div>
       </div>
     </div>

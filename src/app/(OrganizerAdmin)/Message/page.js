@@ -715,6 +715,14 @@ function MessageContent() {
                                             )}
 
                                             {messages.map((m, i) => {
+                                                if (m.isDateSeparator) {
+                                                    return (
+                                                        <div key={`sep-${i}`} className="date-separator">
+                                                            <span>{m.seperatorText}</span>
+                                                        </div>
+                                                    );
+                                                }
+
                                                 const myId = parseJwt(localStorage.getItem("token"))?.userId;
                                                 const isMyMessage = (m.sender?._id || m.sender) === myId;
 
