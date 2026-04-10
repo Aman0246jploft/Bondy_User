@@ -1,19 +1,29 @@
-import Link from 'next/link';
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
+import Link from "next/link";
+import React, { useState, useEffect } from "react";
+import { Container, Row, Col } from "react-bootstrap";
 import eventApi from "@/api/eventApi";
 import courseApi from "@/api/courseApi";
-import ProgramCart from './ProgramCart';
-import PaginationComponent from './PaginationComponent';
+import ProgramCart from "./ProgramCart";
+import PaginationComponent from "./PaginationComponent";
 
 const categories = [
   { label: "Upcoming", value: "upcoming" },
   { label: "Today", value: "today" },
   { label: "This Week", value: "thisWeek" },
-  { label: "Next Week", value: "nextWeek" }
+  { label: "Next Week", value: "nextWeek" },
 ];
 
-export default function ExploreItem({ type = "Events", filter = "upcoming", onFilterChange, categoryId, search, latitude, longitude, date, placement }) {
+export default function ExploreItem({
+  type = "Events",
+  filter = "upcoming",
+  onFilterChange,
+  categoryId,
+  search,
+  latitude,
+  longitude,
+  date,
+  placement,
+}) {
   const [items, setItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -38,13 +48,17 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
             latitude: latitude,
             longitude: longitude,
             date: date,
-            placement: placement
+            placement: placement,
           });
           const eventData = response?.data?.data || response?.data || response;
           if (eventData?.events) {
             setItems(eventData.events);
             // Calculate totalPages for events: data.total / data.limit
-            const tPages = eventData.totalPages || (eventData.total ? Math.ceil(eventData.total / (eventData.limit || limit)) : 1);
+            const tPages =
+              eventData.totalPages ||
+              (eventData.total
+                ? Math.ceil(eventData.total / (eventData.limit || limit))
+                : 1);
             setTotalPages(tPages);
           } else {
             setItems([]);
@@ -59,7 +73,7 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
             search: search,
             latitude: latitude,
             longitude: longitude,
-            date: date
+            date: date,
           });
           const courseData = response?.data?.data || response?.data || response;
           if (courseData?.courses) {
@@ -78,7 +92,18 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
     };
 
     fetchItems();
-  }, [filter, type, categoryId, currentPage, limit, search, latitude, longitude, date, placement]);
+  }, [
+    filter,
+    type,
+    categoryId,
+    currentPage,
+    limit,
+    search,
+    latitude,
+    longitude,
+    date,
+    placement,
+  ]);
 
   const handleToggle = (value) => {
     if (onFilterChange) {
@@ -94,8 +119,7 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
 
   return (
     <div className="Explore_sec">
-      <Container className='p-0'>
-
+      <Container className="p-0">
         {/* Multi-Select Filters */}
         <div className="MUiltiSelect upcoming_sc w-100 mb-4">
           {categories.map((item) => (
@@ -123,8 +147,8 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
                 ? `/eventDetails?id=${item._id}`
                 : `/programDetails?id=${item._id}`;
               const image = isEvent
-                ? (item.posterImage?.[0] || "/img/image_explore.png")
-                : (item.posterImage?.[0] || "/img/image_explore.png");
+                ? item.posterImage?.[0] || "/img/image_explore.png"
+                : item.posterImage?.[0] || "/img/image_explore.png";
               const title = isEvent ? item.eventTitle : item.courseTitle;
               const description = item.shortdesc || item.description;
 
@@ -135,7 +159,9 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
                       <Col md={5}>
                         <div className="img-box">
                           {(item.isFeatured || item.fetcherEvent) && (
-                            <span className="event-badge">Featured {isEvent ? "Event" : "Course"}</span>
+                            <span className="event-badge">
+                              Featured {isEvent ? "Event" : "Course"}
+                            </span>
                           )}
                           <img
                             src={image}
@@ -147,67 +173,118 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
 
                       <Col md={7}>
                         <div className="content-box">
-                          <h2 className="title"
+                          <h2
+                            className="title"
                             title={title}
                             style={{
-                              display: '-webkit-box',
+                              display: "-webkit-box",
                               WebkitLineClamp: 1,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              wordBreak: 'break-word'
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              wordBreak: "break-word",
                             }}
                           >
                             {title}
                           </h2>
-                          <p className="description"
+                          <p
+                            className="description"
                             title={description}
                             style={{
-                              display: '-webkit-box',
+                              display: "-webkit-box",
                               WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              wordBreak: 'break-word',
-                              minHeight: '3em'
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              wordBreak: "break-word",
+                              minHeight: "3em",
                             }}
                           >
                             {description}
                           </p>
 
                           <div className="info-list">
-                            <div className="info-item" title={item.venueAddress?.city} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
-                              <img src="/img/locationEX_icon.svg" className='info-icon' alt="icon" />
-                              {item.venueAddress?.city || "Location not available"}
-                            </div>
-                            <div className="info-item" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
-                              <img src="/img/DateEX_icon.svg" className='info-icon' alt="icon" />
-                              {isEvent
-                                ? new Date(item.startDate).toLocaleDateString()
-                                : (item.currentSchedule ? new Date(item.currentSchedule.startDate).toLocaleDateString() : "Date N/A")
-                              }
-                            </div>
-                            <div className="info-item" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
-                              <img src="/img/UserEX_icon.svg" className='info-icon' alt="icon" />
-                              {isEvent ? item.totalAttendees : item.acquiredSeats || 0} attendees
+                            <div
+                              className="info-item"
+                              title={item.venueAddress?.city}
+                              style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                color: "var(--white, #fff)",
+                              }}
+                            >
+                              <img
+                                src="/img/locationEX_icon.svg"
+                                className="info-icon"
+                                alt="icon"
+                              />
+                              {item.venueAddress?.city ||
+                                "Location not available"}
                             </div>
                             <div
-  className="info-item"
-  style={{
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    color: "var(--white, #fff)",
-  }}
->
-  <img src="/img/fi_992700.png" className="info-icon" alt="icon" />
-  {new Date(`1970-01-01T${item.startTime}`).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  })}
-</div>
-                            
+                              className="info-item"
+                              style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                color: "var(--white, #fff)",
+                              }}
+                            >
+                              <img
+                                src="/img/DateEX_icon.svg"
+                                className="info-icon"
+                                alt="icon"
+                              />
+                              {isEvent
+                                ? new Date(item.startDate).toLocaleDateString()
+                                : item.currentSchedule
+                                  ? new Date(
+                                      item.currentSchedule.startDate,
+                                    ).toLocaleDateString()
+                                  : "Date N/A"}
+                            </div>
+                            <div
+                              className="info-item"
+                              style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                color: "var(--white, #fff)",
+                              }}
+                            >
+                              <img
+                                src="/img/UserEX_icon.svg"
+                                className="info-icon"
+                                alt="icon"
+                              />
+                              {isEvent
+                                ? item.totalAttendees
+                                : item.acquiredSeats || 0}{" "}
+                              attendees
+                            </div>
+                            <div
+                              className="info-item"
+                              style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                color: "var(--white, #fff)",
+                              }}
+                            >
+                              <img
+                                src="/img/fi_992700.png"
+                                className="info-icon"
+                                alt="icon"
+                              />
+                              {new Date(
+                                `1970-01-01T${item.startTime}`,
+                              ).toLocaleTimeString("en-US", {
+                                hour: "numeric",
+                                minute: "2-digit",
+                                hour12: true,
+                              })}
+                            </div>
                           </div>
                         </div>
                       </Col>
@@ -228,7 +305,6 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
             <h4>No {type.toLowerCase()} found for this filter.</h4>
           </div>
         )}
-
       </Container>
     </div>
   );

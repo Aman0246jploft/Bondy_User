@@ -36,6 +36,7 @@ const authApi = {
     resetPassword: (data) => apiClient.post("/user/reset-password", data),
     getFollowers: (params) => apiClient.get("/follow/followers", { params, skipToast: true }),
     getFollowing: (params) => apiClient.get("/follow/following", { params, skipToast: true }),
+
 };
 
 export default authApi;

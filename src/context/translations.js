@@ -20,7 +20,7 @@ export const translations = {
     loadingCategories: "Loading categories...",
     noCategoriesFound: "No categories found",
     eventsTab: "Events",
-    programTab: "Course",
+    programTab: "Courses",
     privacyPolicy: "Privacy Policy",
     termsConditions: "Terms & Conditions",
     // Customer Admin
