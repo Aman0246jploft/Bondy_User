@@ -301,18 +301,26 @@ function ProgramDetailsContent() {
                       {createdBy?.firstName} {createdBy?.lastName}
                     </span> */}
 
-                   <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-  {createdBy?.firstName} {createdBy?.lastName}
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      {createdBy?.firstName} {createdBy?.lastName}
+                      {createdBy?.isVerified && (
+                        <span className="verified_tag">✓ VERIFIED</span>
+                      )}
 
-  {createdBy?.isVerified && (
-    <span className="verified_tag">
-      ✓ VERIFIED
-    </span>
-  )}
-</span>
-
+                        <span
+    className="view_details"
+    onClick={() => router.push(`/profile?id=${createdBy?._id}`)}
+  >
+    View Details
+  </span>
+                    </span>
                   </div>
-                  
                 </div>
 
                 <div className="content-section m-0">

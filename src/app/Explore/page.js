@@ -63,7 +63,7 @@ function ExploreContent() {
 
   useEffect(() => {
     fetchCategories(activeTab);
-    setSelected([]); // Reset selection on tab switch
+    setSelected([]);
   }, [activeTab]);
 
   const handleToggle = (categoryId) => {

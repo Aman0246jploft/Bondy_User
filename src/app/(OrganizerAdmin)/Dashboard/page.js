@@ -119,7 +119,7 @@ function page() {
         </div>
         <div className="dashbord-card-grid">
           <div className="dashboard-counter">
-            <h5>{t("totalEventsHosted") || "Total Events Hosted"}</h5>
+            <h5>{t("Total Events Hosted") || "Total Events Hosted"}</h5>
             <span className="counter">{userData?.totalEventsHosted || 0}</span>
           </div>
 
@@ -153,7 +153,7 @@ function page() {
               <h3>{userData?.totalTicketSold || 0}</h3>
             </div>
             <div className="card-varticl mb-3">
-              <span>{t("totalBookings") || "Total Bookings"}</span>
+              <span>{t("Total Bookings") || "Total Bookings"}</span>
               <h3>{analyticsData?.performance?.totalBookings || 0}</h3>
             </div>
           </Col>

@@ -8,6 +8,7 @@ import { FaSearch, FaArrowLeft } from "react-icons/fa";
 import Header from "@/components/Header";
 import { getFullImageUrl } from "@/utils/imageHelper";
 
+
 function EventAttendeesContent() {
   const searchParams = useSearchParams();
   const eventId = searchParams.get("id");
@@ -57,7 +58,7 @@ function EventAttendeesContent() {
             >
               <FaArrowLeft size={20} />
             </button>
-            <h2 className="mb-0 fw-bold">Event Attendees</h2>
+            <h2 className="mb-0 fw-bold" style={{ marginTop: "50px" }}>Event Attendees</h2>
           </div>
 
           <div className="mb-4">
