@@ -453,7 +453,7 @@ function Page() {
                 <Col md={12}>
                   <div className="event-frm-bx upload">
                     <div>
-                      <h5>Upload Image <span className="text-danger">*</span></h5>
+                      <h5>Upload Poster <span className="text-danger">*</span></h5>
                       <p>Max 5MB, JPG/PNG/WEBP, Single Image only</p>
                     </div>
                     <input type="file" id="upload" className="d-none" onChange={handleImageUpload} />

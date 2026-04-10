@@ -191,6 +191,23 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
                               <img src="/img/UserEX_icon.svg" className='info-icon' alt="icon" />
                               {isEvent ? item.totalAttendees : item.acquiredSeats || 0} attendees
                             </div>
+                            <div
+  className="info-item"
+  style={{
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    color: "var(--white, #fff)",
+  }}
+>
+  <img src="/img/fi_992700.png" className="info-icon" alt="icon" />
+  {new Date(`1970-01-01T${item.startTime}`).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })}
+</div>
+                            
                           </div>
                         </div>
                       </Col>
