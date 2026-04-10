@@ -282,7 +282,8 @@ export const translations = {
     duration: "Duration",
     price: "Price",
     seats: "Seats",
-    viewDetails: "View Details"
+    viewDetails: "View Details",
+    upcomingEventsCount:"Upcoming Events"
   },
   mn: {
     home: "Нүүр",
@@ -567,6 +568,10 @@ export const translations = {
     duration: "Үргэлжлэх хугацаа",
     price: "Үнэ",
     seats: "Суудал",
-    viewDetails: "Дэлгэрэнгүй үзэх"
+    viewDetails: "Дэлгэрэнгүй үзэх",
+    "Total Revenue": "Нийт орлого",
+    "Total Revenue":"Total Reven",
+    "Total Events Hosted": "Нийт зохион байгуулсан арга хэмжээ",
+    upcomingEventsCount:"Ирэх арга хэмжээ",
   }
 };

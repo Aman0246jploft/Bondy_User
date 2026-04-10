@@ -619,7 +619,7 @@ function MessageeContent() {
                             src={other.profileImage || "/img/sidebar-logo.svg"}
                             className="user-img"
                             onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
-                            alt="User"
+                            alt="Profile Image"
                           />
                           {isOnline && <span className="online-badge"></span>}
                         </div>

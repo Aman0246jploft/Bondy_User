@@ -27,13 +27,13 @@ function ProfileContent() {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-const [showReportModal, setShowReportModal] = useState(false);
-const [reportReason, setReportReason] = useState("");
-const [reportDescription, setReportDescription] = useState("");
-const [reportError, setReportError] = useState("");
-const [showMenu, setShowMenu] = useState(false);
-const [showConfirm, setShowConfirm] = useState(false);
-const [actionType, setActionType] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  const [reportError, setReportError] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [actionType, setActionType] = useState(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -107,53 +107,53 @@ const [actionType, setActionType] = useState(null);
     );
   }
 
- const handleAction = (type) => {
-  setActionType(type);
-  setShowMenu(false);
+  const handleAction = (type) => {
+    setActionType(type);
+    setShowMenu(false);
 
-  if (type === "report") {
-    setShowReportModal(true); 
-  } else {
-    setShowConfirm(true);
-  }
-};
-
-const handleConfirm = async () => {
-  try {
-    if (actionType === "block") {
-      await blockUserApi.blockUser({ toUser: userId });
-      setShowConfirm(false);
+    if (type === "report") {
+      setShowReportModal(true);
+    } else {
+      setShowConfirm(true);
     }
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
 
-const handleReportSubmit = async () => {
-  const reason = reportReason.trim();
-  const description = reportDescription.trim();
+  const handleConfirm = async () => {
+    try {
+      if (actionType === "block") {
+        await blockUserApi.blockUser({ toUser: userId });
+        setShowConfirm(false);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-  if (!reason) {
-    setReportError("Reason is required");
-    return;
-  }
+  const handleReportSubmit = async () => {
+    const reason = reportReason.trim();
+    const description = reportDescription.trim();
 
-  setReportError("");
+    if (!reason) {
+      setReportError("Reason is required");
+      return;
+    }
 
-  try {
-    await reportUserApi.reportUser({
-      toUser: userId,
-      reason,
-      description,
-    });
+    setReportError("");
 
-    setShowReportModal(false);
-    setReportReason("");
-    setReportDescription("");
-  } catch (error) {
-    console.error(error);
-  }
-};
+    try {
+      await reportUserApi.reportUser({
+        toUser: userId,
+        reason,
+        description,
+      });
+
+      setShowReportModal(false);
+      setReportReason("");
+      setReportDescription("");
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <>
@@ -181,36 +181,46 @@ const handleReportSubmit = async () => {
                     alt={userProfile?.firstName}
                     className="object-fit-cover"
                     style={{ width: "100%", height: "100%" }}
+                    onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
                   />
                 </div>
               </div>
 
               <div className="col">
                 <div className="user_profile_content">
-                  <div style={{ position: "absolute", right: "-20px", top: "10px" }}>
-  {!userProfile?.isMyProfile && (
-    <>
-      <div
-        onClick={() => setShowMenu(!showMenu)}
-        style={{ cursor: "pointer", fontSize: "20px", color: "#fff" }}
-      >
-        ⋮
-      </div>
+                  <div
+                    style={{
+                      position: "absolute",
+                      right: "-20px",
+                      top: "10px",
+                    }}
+                  >
+                    {!userProfile?.isMyProfile && (
+                      <>
+                        <div
+                          onClick={() => setShowMenu(!showMenu)}
+                          style={{
+                            cursor: "pointer",
+                            fontSize: "20px",
+                            color: "#fff",
+                          }}
+                        >
+                          ⋮
+                        </div>
 
-      {showMenu && (
-        <div className="menu_dropdown">
-         
-          <div onClick={() => handleAction("block")}>
-            Block
-          </div>
-          <div onClick={() => handleAction("report")}>
-            Report
-          </div>
-        </div>
-      )}
-    </>
-  )}
-</div>
+                        {showMenu && (
+                          <div className="menu_dropdown">
+                            <div onClick={() => handleAction("block")}>
+                              Block
+                            </div>
+                            <div onClick={() => handleAction("report")}>
+                              Report
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                   <div className="user-info">
                     <h2 className="user-name">
                       {userProfile?.firstName} {userProfile?.lastName}
@@ -236,7 +246,10 @@ const handleReportSubmit = async () => {
                         <span
                           className="me-3"
                           style={{ cursor: "pointer" }}
-                          onClick={() => { setFollowModalType("followers"); setShowFollowModal(true); }}
+                          onClick={() => {
+                            setFollowModalType("followers");
+                            setShowFollowModal(true);
+                          }}
                         >
                           <img src="/img/user_icon.svg" alt="followers" />{" "}
                           {userProfile?.totalFollowers || 0} Followers
@@ -246,7 +259,10 @@ const handleReportSubmit = async () => {
                         <span
                           className="me-3"
                           style={{ cursor: "pointer" }}
-                          onClick={() => { setFollowModalType("following"); setShowFollowModal(true); }}
+                          onClick={() => {
+                            setFollowModalType("following");
+                            setShowFollowModal(true);
+                          }}
                         >
                           <img src="/img/user_icon.svg" alt="following" />{" "}
                           {userProfile?.totalFollowing || 0} Following
@@ -257,7 +273,9 @@ const handleReportSubmit = async () => {
                           style={{ cursor: "pointer" }}
                           onClick={() => setShowReviewModal(true)}
                         >
-                          <img src="/img/star-icon.svg" alt="star" /> {userProfile?.averageRating || 0}/5 Rating ({userProfile?.reviewCount || 0})
+                          <img src="/img/star-icon.svg" alt="star" />{" "}
+                          {userProfile?.averageRating || 0}/5 Rating (
+                          {userProfile?.reviewCount || 0})
                         </span>
                       )}
                     </div>
@@ -280,18 +298,20 @@ const handleReportSubmit = async () => {
                         </button>
                       )}
 
-                    {!userProfile?.isMyProfile && <button
-                      className="btn-message"
-                      onClick={() => {
-                        if (userProfile?.role === "ORGANIZER") {
-                          router.push(`/Messagee?userId=${userId}`);
-                        } else {
-                          router.push(`/Message?userId=${userId}`);
-                        }
-                      }}
-                    >
-                      <img src="/img/message.svg" /> Messages
-                    </button>}
+                    {!userProfile?.isMyProfile && (
+                      <button
+                        className="btn-message"
+                        onClick={() => {
+                          if (userProfile?.role === "ORGANIZER") {
+                            router.push(`/Messagee?userId=${userId}`);
+                          } else {
+                            router.push(`/Message?userId=${userId}`);
+                          }
+                        }}
+                      >
+                        <img src="/img/message.svg" /> Messages
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -349,88 +369,89 @@ const handleReportSubmit = async () => {
         </Container>
       </div>
       {showConfirm && (
-  <div className="confirm_modal">
-    <div className="confirm_box">
-      <h4>
-        {actionType === "block"
-          ? "Are you sure you want to block this user?"
-          : "Are you sure you want to report this user?"}
-      </h4>
+        <div className="confirm_modal">
+          <div className="confirm_box">
+            <h4>
+              {actionType === "block"
+                ? "Are you sure you want to block this user?"
+                : "Are you sure you want to report this user?"}
+            </h4>
 
-      <p style={{ fontSize: "13px", color: "#aaa" }}>
-        {actionType === "block"
-          }
-      </p>
+            <p style={{ fontSize: "13px", color: "#aaa" }}>
+              {actionType === "block"}
+            </p>
 
-      <div className="btns">
-        <button
-          onClick={() => setShowConfirm(false)}
-          style={{ background: "#444", color: "#fff" }}
-        >
-          Cancel
-        </button>
+            <div className="btns">
+              <button
+                onClick={() => setShowConfirm(false)}
+                style={{ background: "#444", color: "#fff" }}
+              >
+                Cancel
+              </button>
 
-        <button
-          onClick={handleConfirm}
-          style={{
-            background: actionType === "block" ? "#e74c3c" : "#1abc9c",
-            color: "#fff",
-          }}
-        >
-          Yes, {actionType}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-{showReportModal && (
-  <div className="confirm_modal">
-    <div className="confirm_box">
-      <h4>Report User</h4>
-
-      <input
-        type="text"
-        placeholder="Enter reason *"
-        value={reportReason}
-        onChange={(e) => {
-          setReportReason(e.target.value);
-          setReportError("");
-        }}
-        className="report_input"
-      />
-
-      {reportError && (
-        <p style={{ color: "#e74c3c", fontSize: "12px", marginTop: "5px" }}>
-          {reportError}
-        </p>
+              <button
+                onClick={handleConfirm}
+                style={{
+                  background: actionType === "block" ? "#e74c3c" : "#1abc9c",
+                  color: "#fff",
+                }}
+              >
+                Yes, {actionType}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      <textarea
-        placeholder="Description "
-        value={reportDescription}
-        onChange={(e) => setReportDescription(e.target.value)}
-        className="report_input"
-      />
+      {showReportModal && (
+        <div className="confirm_modal">
+          <div className="confirm_box">
+            <h4>Report User</h4>
 
-      <div className="btns">
-        <button
-          onClick={() => setShowReportModal(false)}
-          style={{ background: "#444", color: "#fff" }}
-        >
-          Cancel
-        </button>
+            <input
+              type="text"
+              placeholder="Enter reason *"
+              value={reportReason}
+              onChange={(e) => {
+                setReportReason(e.target.value);
+                setReportError("");
+              }}
+              className="report_input"
+            />
 
-        <button
-          onClick={handleReportSubmit}
-          style={{ background: "#1abc9c", color: "#fff" }}
-        >
-          Submit
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+            {reportError && (
+              <p
+                style={{ color: "#e74c3c", fontSize: "12px", marginTop: "5px" }}
+              >
+                {reportError}
+              </p>
+            )}
+
+            <textarea
+              placeholder="Description "
+              value={reportDescription}
+              onChange={(e) => setReportDescription(e.target.value)}
+              className="report_input"
+            />
+
+            <div className="btns">
+              <button
+                onClick={() => setShowReportModal(false)}
+                style={{ background: "#444", color: "#fff" }}
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleReportSubmit}
+                style={{ background: "#1abc9c", color: "#fff" }}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
       <FollowListModal
