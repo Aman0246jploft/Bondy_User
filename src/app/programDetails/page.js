@@ -45,7 +45,8 @@ function ProgramDetailsContent() {
   }, [id]);
 
   const handleWishlistToggle = async () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) {
       window.location.href = "/login";
       return;
@@ -63,7 +64,7 @@ function ProgramDetailsContent() {
       } else {
         const response = await wishlistApi.addToWishlist({
           entityId: id,
-          entityModel: "Course"
+          entityModel: "Course",
         });
         if (response.status) {
           setIsWishlisted(true);
@@ -100,13 +101,15 @@ function ProgramDetailsContent() {
     createdBy,
     enrollmentType,
     whatYouWillLearn,
-    galleryImages
+    galleryImages,
   } = courseDetails;
 
   const images = [
     ...(Array.isArray(posterImage) ? posterImage : [posterImage]),
-    ...(galleryImages || [])
-  ].filter(Boolean).map(getFullImageUrl);
+    ...(galleryImages || []),
+  ]
+    .filter(Boolean)
+    .map(getFullImageUrl);
 
   const locationString = venueAddress
     ? `${venueAddress.address}, ${venueAddress.city}, ${venueAddress.state}`
@@ -125,8 +128,8 @@ function ProgramDetailsContent() {
                   {duration || "N/A"} •{" "}
                   {currentSchedule
                     ? `${formatDate(currentSchedule.startDate)} – ${formatDate(
-                      currentSchedule.endDate,
-                    )}`
+                        currentSchedule.endDate,
+                      )}`
                     : "Dates N/A"}{" "}
                   • {schedules?.length || 0} sessions
                 </p>
@@ -135,14 +138,25 @@ function ProgramDetailsContent() {
                   onClick={handleWishlistToggle}
                   disabled={wishlistLoading}
                 >
-                  <img src={isWishlisted ? "/img/bookmark_filled_icon.svg" : "/img/bookmark_icon.svg"} alt="Bookmark" />
+                  <img
+                    src={
+                      isWishlisted
+                        ? "/img/bookmark_filled_icon.svg"
+                        : "/img/bookmark_icon.svg"
+                    }
+                    alt="Bookmark"
+                  />
                 </Button>
               </div>
             </Col>
 
             <Col lg={5} className="">
               <div className="mb-4">
-                <ExpandableText text={shortdesc} limit={150} className="event-desc" />
+                <ExpandableText
+                  text={shortdesc}
+                  limit={150}
+                  className="event-desc"
+                />
               </div>
               <div className="onwards_sec">
                 <h4 className="mb-0">
@@ -220,8 +234,8 @@ function ProgramDetailsContent() {
                     <span>
                       {currentSchedule
                         ? `${formatDate(
-                          currentSchedule.startDate,
-                        )} at ${currentSchedule.startTime} to ${currentSchedule.endTime}`
+                            currentSchedule.startDate,
+                          )} at ${currentSchedule.startTime} to ${currentSchedule.endTime}`
                         : "Detailed timing not available"}
                     </span>
                   </div>
@@ -256,38 +270,69 @@ function ProgramDetailsContent() {
                 <div className="organization_profile">
                   <h4>Organized By</h4>
 
-                  <div className="item_org">
-                    <img
-                      style={{ cursor: "pointer" }}
-                      onClick={() => router.push(`/profile?id=${createdBy?._id}`)}
-                      src={getFullImageUrl(createdBy?.profileImage) || "/img/sidebar-logo.svg"}
-                      onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
-                      loading="lazy"
-                      className="img-placeholder"
-                      alt="Organizer"
-                    />
-                    <span>
+                  <div
+                    className="item_org"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <div style={{ position: "relative" }}>
+                      <img
+                        style={{ cursor: "pointer" }}
+                        onClick={() =>
+                          router.push(`/profile?id=${createdBy?._id}`)
+                        }
+                        src={
+                          getFullImageUrl(createdBy?.profileImage) ||
+                          "/img/sidebar-logo.svg"
+                        }
+                        onError={(e) =>
+                          (e.target.src = "/img/sidebar-logo.svg")
+                        }
+                        loading="lazy"
+                        className="img-placeholder"
+                        alt="Organizer"
+                      />
+                    </div>
+
+                    {/* <span>
                       {createdBy?.firstName} {createdBy?.lastName}
-                    </span>
+                    </span> */}
+
+                   <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+  {createdBy?.firstName} {createdBy?.lastName}
+
+  {createdBy?.isVerified && (
+    <span className="verified_tag">
+      ✓ VERIFIED
+    </span>
+  )}
+</span>
+
                   </div>
+                  
                 </div>
 
                 <div className="content-section m-0">
                   <h3 className="section-heading">Course Gallery</h3>
                   <div className="gallery-grid">
                     {images &&
-                      images
-                        ?.map((img, idx) => (
-                          <img
-                            key={idx}
-                            src={img || "/img/sidebar-logo.svg"}
-                            onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
-                            loading="lazy"
-                            className={`gallery-item img-placeholder ${idx === 0 ? "large-gallery-item" : ""
-                              }`}
-                            alt={`Gallery ${idx}`}
-                          />
-                        ))}
+                      images?.map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={img || "/img/sidebar-logo.svg"}
+                          onError={(e) =>
+                            (e.target.src = "/img/sidebar-logo.svg")
+                          }
+                          loading="lazy"
+                          className={`gallery-item img-placeholder ${
+                            idx === 0 ? "large-gallery-item" : ""
+                          }`}
+                          alt={`Gallery ${idx}`}
+                        />
+                      ))}
                   </div>
                   <div className="onwards_sec mt-4">
                     <h4 className="mb-0">

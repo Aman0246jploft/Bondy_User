@@ -198,7 +198,7 @@ export const translations = {
     referral: "Referral",
     create: "Create",
     createEvent: "Create Event",
-    createProgram: "Create Program",
+    createProgram: "Create Course",
     verifiedProfile: "Verified Profile",
     draftEvents: "Drafts Events",
     pendingEvents: "Pending Events",

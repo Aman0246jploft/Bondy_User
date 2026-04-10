@@ -4298,6 +4298,19 @@ a.view-map {
   line-height: normal;
 }
 
+.verified_tag {
+  background: #1abc9c;
+  color: #fff;
+  font-family: "SF Pro", sans-serif;
+  font-size: 13px;
+  font-weight: 510;
+  padding: 4px 10px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .item_org img {
   width: 50px;
   height: 50px;
