@@ -145,7 +145,7 @@ function ExploreContent() {
                       <Nav.Link eventKey="Events">{t("eventsTab")}</Nav.Link>
                     </Nav.Item>
                     <Nav.Item>
-                      <Nav.Link eventKey="Program">{t("programTab")}</Nav.Link>
+                      <Nav.Link eventKey="Course">{t("programTab")}</Nav.Link>
                     </Nav.Item>
                   </Nav>
                 </Col>

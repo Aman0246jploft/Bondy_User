@@ -25,6 +25,22 @@ export default function Page() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    // Client-side validation
+    if (!formData.email.trim()) {
+      toast.error("Email is required");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    if (!formData.password) {
+      toast.error("Password is required");
+      return;
+    }
+
     setLoading(true);
     try {
       // Map tab name to backend expected Role String

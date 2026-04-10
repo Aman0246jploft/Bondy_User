@@ -402,6 +402,7 @@ function Page() {
         ...formData,
         totalSeats: Number(formData.totalSeats),
         price: Number(formData.price),
+        venueAddress: formatLocationForApi(formData.venueAddress) || formData.venueAddress,
       };
 
       // Clean payload - extract IDs from populated fields if needed

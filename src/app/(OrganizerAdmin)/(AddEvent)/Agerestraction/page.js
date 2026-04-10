@@ -6,6 +6,8 @@ import { Col, Form, Row } from "react-bootstrap";
 import { useEventContext } from "@/context/EventContext";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { Range, getTrackBackground } from "react-range";
+
 
 function page() {
   const { eventData, updateEventData } = useEventContext();
@@ -17,6 +19,10 @@ function page() {
   // Let's replace the whole top section including imports.
 
   const [featureFee, setFeatureFee] = useState(5.0); // Default fallback
+
+const STEP = 1;
+const MIN = 0;
+const MAX = 100;
 
   useEffect(() => {
     const fetchFeatureFee = async () => {
@@ -186,7 +192,7 @@ function page() {
                         className={`custom-btn ${eventData.ageRestriction?.type === "MIN_AGE" && eventData.ageRestriction?.minAge === 18 ? "" : "outline-btn"}`}
                         onClick={() => {
                           updateEventData({
-                            ageRestriction: { type: "MIN_AGE", minAge: 18 },
+                            ageRestriction: { type: "MIN_AGE", minAge: 18,maxAge: 100, },
                           });
                         }}
                         style={{ minWidth: "100px" }}>
@@ -197,13 +203,13 @@ function page() {
                         className={`custom-btn ${eventData.ageRestriction?.type === "MIN_AGE" && eventData.ageRestriction?.minAge === 21 ? "" : "outline-btn"}`}
                         onClick={() => {
                           updateEventData({
-                            ageRestriction: { type: "MIN_AGE", minAge: 21 },
+                            ageRestriction: { type: "MIN_AGE", minAge: 21,maxAge: 100, },
                           });
                         }}
                         style={{ minWidth: "100px" }}>
                         21+
                       </button>
-                      <button
+                      {/* <button
                         type="button"
                         className={`custom-btn ${eventData.ageRestriction?.type === "RANGE" ? "" : "outline-btn"}`}
                         onClick={() => {
@@ -221,11 +227,11 @@ function page() {
                         }}
                         style={{ minWidth: "100px" }}>
                         Range
-                      </button>
+                      </button> */}
                     </div>
 
                     {/* Single Slider for Custom Min Age */}
-                    {eventData.ageRestriction?.type === "MIN_AGE" && (
+                    {/* {eventData.ageRestriction?.type === "MIN_AGE" && (
                       <div className="mt-3">
                         <label className="form-label small text-white">
                           Minimum Age: {eventData.ageRestriction.minAge}
@@ -239,7 +245,71 @@ function page() {
                           onChange={handleMinAgeChange}
                         />
                       </div>
-                    )}
+                    )} */}
+
+                   {eventData.ageRestriction?.type === "MIN_AGE" && (
+  <div className="mt-3">
+    <div className="d-flex justify-content-between text-white small mb-2">
+      <span>Min: {eventData.ageRestriction.minAge}</span>
+      <span>Max: {eventData.ageRestriction.maxAge}</span>
+    </div>
+
+    <Range
+      values={[
+        eventData.ageRestriction.minAge,
+        eventData.ageRestriction.maxAge || 100,
+      ]}
+      step={STEP}
+      min={MIN}
+      max={MAX}
+      onChange={(values) => {
+        updateEventData({
+          ageRestriction: {
+            ...eventData.ageRestriction,
+            minAge: values[0],
+            maxAge: values[1],
+          },
+        });
+      }}
+      renderTrack={({ props, children }) => (
+        <div
+          {...props}
+          style={{
+            height: "6px",
+            width: "100%",
+            background: getTrackBackground({
+              values: [
+                eventData.ageRestriction.minAge,
+                eventData.ageRestriction.maxAge || 100,
+              ],
+              colors: ["#ccc", "#23ada4", "#ccc"], 
+              min: MIN,
+              max: MAX,
+            }),
+            borderRadius: "5px",
+          }}
+        >
+          {children}
+        </div>
+      )}
+     renderThumb={({ props }) => (
+  <div
+    {...props}
+    style={{
+      ...props.style,
+      height: "18px",
+      width: "18px",
+      borderRadius: "50%",
+      backgroundColor: "#23ada4",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+    }}
+  />
+)}
+    />
+  </div>
+)}
 
                     {/* Dual Inputs/Sliders for Range */}
                     {eventData.ageRestriction?.type === "RANGE" && (
@@ -279,7 +349,7 @@ function page() {
 
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Dress Code / Notes</label>
+                    <label className="form-label">Dress Code</label>
                     <textarea
                       className="form-control"
                       name="dressCode"

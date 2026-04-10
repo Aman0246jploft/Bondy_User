@@ -102,6 +102,30 @@ function RegisterForm() {
 
   const handleCustomerSignup = async (e) => {
     e.preventDefault();
+
+    // Client-side validation
+    if (!customerData.email.trim()) {
+      toast.error("Email is required");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerData.email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    if (!customerData.contactNumber) {
+      toast.error("Contact number is required");
+      return;
+    }
+    if (!customerData.password) {
+      toast.error("Password is required");
+      return;
+    }
+  
+    if (!customerData.confirmPassword) {
+      toast.error("Confirm password is required");
+      return;
+    }
     if (customerData.password !== customerData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
@@ -140,10 +164,49 @@ function RegisterForm() {
 
   const handleOrganizerSignup = async (e) => {
     e.preventDefault();
+
+    // Client-side validation
+    if (!organizerData.firstName.trim()) {
+      toast.error("First name is required");
+      return;
+    }
+    if (!organizerData.lastName.trim()) {
+      toast.error("Last name is required");
+      return;
+    }
+    if (!organizerData.email.trim()) {
+      toast.error("Email is required");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(organizerData.email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    if (!organizerData.contactNumber) {
+      toast.error("Contact number is required");
+      return;
+    }
+    if (!organizerData.password) {
+      toast.error("Password is required");
+      return;
+    }
+    if (organizerData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (!organizerData.confirmPassword) {
+      toast.error("Confirm password is required");
+      return;
+    }
     if (organizerData.password !== organizerData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
+    // if (!organizerData.businessType) {
+    //   toast.error("Please select a business type");
+    //   return;
+    // }
     if (!organizerData.acceptTerms) {
       toast.error("Please accept Terms & Conditions");
       return;
@@ -462,7 +525,7 @@ function RegisterForm() {
                                 </div>
                               </Form.Group>
 
-                              <Form.Group className="mb-3">
+                              {/* <Form.Group className="mb-3">
                                 <Form.Label>Choose Business Type</Form.Label>
                                 <Form.Select
                                   name="businessType"
@@ -476,7 +539,7 @@ function RegisterForm() {
                                   <option value="uiux">UI/UX</option>
                                   <option value="frontend">Frontend</option>
                                 </Form.Select>
-                              </Form.Group>
+                              </Form.Group> */}
 
                               <div
                                 className="doc_upload_sec"
@@ -513,7 +576,7 @@ function RegisterForm() {
                                 />
                               </div>
 
-                              <Form.Group className="mb-3">
+                              {/* <Form.Group className="mb-3">
                                 <Form.Control
                                   type="text"
                                   name="referralCode"
@@ -521,7 +584,7 @@ function RegisterForm() {
                                   value={organizerData.referralCode}
                                   onChange={handleOrganizerChange}
                                 />
-                              </Form.Group>
+                              </Form.Group> */}
 
                               <Form.Group className="mb-3">
                                 <div className="custom-checkbox">

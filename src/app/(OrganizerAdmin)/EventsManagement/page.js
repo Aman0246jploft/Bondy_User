@@ -1,7 +1,16 @@
 "use client";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { Col, Row, Tabs, Tab, Form, Pagination, Modal, Spinner } from "react-bootstrap";
+import {
+  Col,
+  Row,
+  Tabs,
+  Tab,
+  Form,
+  Pagination,
+  Modal,
+  Spinner,
+} from "react-bootstrap";
 import { useEventContext } from "@/context/EventContext";
 import eventApi from "@/api/eventApi";
 import promotionsApi from "@/api/promotionsApi";
@@ -86,7 +95,9 @@ function page() {
 
   // ---- Promotion Modal Handlers ----
   const isFeaturedActive = (event) =>
-    event.isFeatured && event.featuredExpiry && new Date(event.featuredExpiry) > new Date();
+    event.isFeatured &&
+    event.featuredExpiry &&
+    new Date(event.featuredExpiry) > new Date();
 
   const openPromoModal = async (event) => {
     setSelectedEvent(event);
@@ -129,7 +140,9 @@ function page() {
         fetchEvents();
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Checkout failed. Please try again.");
+      toast.error(
+        err?.response?.data?.message || "Checkout failed. Please try again.",
+      );
     } finally {
       setCheckingOut(false);
     }
@@ -149,7 +162,8 @@ function page() {
           <Link
             href="/BasicInfo"
             className="custom-btn"
-            onClick={() => clearEventData()}>
+            onClick={() => clearEventData()}
+          >
             {t("createNew")}
           </Link>
         </div>
@@ -223,34 +237,53 @@ function page() {
                               objectFit: "cover",
                               borderRadius: "8px",
                             }}
+                            onError={(e) => {
+                              e.target.src = "/img/sidebar-logo.svg";
+                            }}
                           />
                           <div>
                             <h5 className="d-flex align-items-center gap-2 flex-wrap">
-                              <span className="text-truncate-1" style={{ maxWidth: "250px" }}>
+                              <span
+                                className="text-truncate-1"
+                                style={{ maxWidth: "250px" }}
+                              >
                                 {event.eventTitle}
                               </span>
                               {isFeaturedActive(event) && (
                                 <span
                                   style={{
-                                    background: "linear-gradient(135deg, #f6d365, #fda085)",
+                                    background:
+                                      "linear-gradient(135deg, #f6d365, #fda085)",
                                     color: "#fff",
                                     fontSize: "11px",
                                     fontWeight: 600,
                                     padding: "2px 10px",
                                     borderRadius: "20px",
                                     letterSpacing: "0.5px",
-                                  }}>
+                                  }}
+                                >
                                   ⭐ {t("featured")}
                                 </span>
                               )}
                             </h5>
-                            <p className="ref text-truncate-1" style={{ maxWidth: "300px" }}>
+                            <p
+                              className="ref text-truncate-1"
+                              style={{ maxWidth: "300px" }}
+                            >
                               {event.eventCategory?.name || "General"}
                             </p>
                             {isFeaturedActive(event) && (
-                              <p style={{ fontSize: "11px", color: "#fda085", margin: 0 }}>
+                              <p
+                                style={{
+                                  fontSize: "11px",
+                                  color: "#fda085",
+                                  margin: 0,
+                                }}
+                              >
                                 {t("featuredUntil")}{" "}
-                                {new Date(event.featuredExpiry).toLocaleDateString("en-GB", {
+                                {new Date(
+                                  event.featuredExpiry,
+                                ).toLocaleDateString("en-GB", {
                                   day: "numeric",
                                   month: "short",
                                   year: "numeric",
@@ -262,10 +295,16 @@ function page() {
                       </div>
                       <div className="ticket-rgt">
                         <span
-                          className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}>
-                          {t(event.status?.toLowerCase()) || event.status || t("upcoming")}
+                          className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}
+                        >
+                          {t(event.status?.toLowerCase()) ||
+                            event.status ||
+                            t("upcoming")}
                         </span>
-                        <p className="text-truncate-1" style={{ maxWidth: "200px" }}>
+                        <p
+                          className="text-truncate-1"
+                          style={{ maxWidth: "200px" }}
+                        >
                           {t("venue")} <span>{event.venueName || "TBD"}</span>
                         </p>
                       </div>
@@ -274,10 +313,13 @@ function page() {
                       <p>
                         {t("createDate")}{" "}
                         <span>
-                          {new Date(event.createdAt).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                          })}
+                          {new Date(event.createdAt).toLocaleDateString(
+                            "en-GB",
+                            {
+                              day: "numeric",
+                              month: "short",
+                            },
+                          )}
                         </span>{" "}
                         <span>
                           <svg
@@ -285,39 +327,54 @@ function page() {
                             width="4"
                             height="4"
                             viewBox="0 0 4 4"
-                            fill="none">
+                            fill="none"
+                          >
                             <circle cx="2" cy="2" r="2" fill="#999999" />
                           </svg>
                         </span>{" "}
                         <span>
-                          {new Date(event.startDate).toLocaleTimeString("en-US", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
+                          {new Date(event.startDate).toLocaleTimeString(
+                            "en-US",
+                            {
+                              hour: "numeric",
+                              minute: "2-digit",
+                            },
+                          )}
                         </span>
                       </p>
                       <p>
                         {t("totalBookingRevenue")}{" "}
-                        <span>₮{event.totalRevenue?.toLocaleString() || 0}</span>
+                        <span>
+                          ₮{event.totalRevenue?.toLocaleString() || 0}
+                        </span>
                       </p>
                       <p>
                         <span>
                           <img src="/img/ticket-white.svg" alt="ticket" />
                         </span>{" "}
-                        <span>{event.totalTickets || 0} {t("ticketsSuffix")}</span>
+                        <span>
+                          {event.totalTickets || 0} {t("ticketsSuffix")}
+                        </span>
                       </p>
                       {!isPastOrEnded && (
                         <Link href={`/BasicInfo?eventId=${event._id}`}>
-                          {t("edit")} <img src="/img/Arrow-Right.svg" alt="arrow" />
+                          {t("edit")}{" "}
+                          <img src="/img/Arrow-Right.svg" alt="arrow" />
                         </Link>
                       )}
                       <Link href={`/EventDetailOrganiser?eventId=${event._id}`}>
                         {t("ticketDetails")}{" "}
                         <img src="/img/Arrow-Right.svg" alt="arrow" />
                       </Link>
-                      {!isPastOrEnded && (
-                        isFeaturedActive(event) ? (
-                          <span style={{ color: "#fda085", fontSize: "13px", fontWeight: 500 }}>
+                      {!isPastOrEnded &&
+                        (isFeaturedActive(event) ? (
+                          <span
+                            style={{
+                              color: "#fda085",
+                              fontSize: "13px",
+                              fontWeight: 500,
+                            }}
+                          >
                             ⭐ {t("activePromotion") || "Active Promotion"}
                           </span>
                         ) : (
@@ -325,11 +382,11 @@ function page() {
                             type="button"
                             className="custom-btn"
                             style={{ padding: "8px 16px", fontSize: "13px" }}
-                            onClick={() => openPromoModal(event)}>
+                            onClick={() => openPromoModal(event)}
+                          >
                             🚀 {t("promote")}
                           </button>
-                        )
-                      )}
+                        ))}
                     </div>
                   </div>
                 );
@@ -353,7 +410,8 @@ function page() {
                   <Pagination.Item
                     key={idx + 1}
                     active={idx + 1 === pagination.page}
-                    onClick={() => handlePageChange(idx + 1)}>
+                    onClick={() => handlePageChange(idx + 1)}
+                  >
                     {idx + 1}
                   </Pagination.Item>
                 ))}
@@ -374,26 +432,43 @@ function page() {
 
       {/* ---- Promotion Modal ---- */}
       <Modal show={showPromoModal} onHide={closePromoModal} centered size="lg">
-        <Modal.Header closeButton style={{ background: "#1a1a1a", border: "1px solid #333" }}>
+        <Modal.Header
+          closeButton
+          style={{ background: "#1a1a1a", border: "1px solid #333" }}
+        >
           <Modal.Title style={{ color: "#fff" }}>
             🚀 {t("promote")}:{" "}
-            <span className="text-truncate-1" style={{ color: "#23ada4", maxWidth: "400px", display: "inline-block", verticalAlign: "bottom" }}>{selectedEvent?.eventTitle}</span>
+            <span
+              className="text-truncate-1"
+              style={{
+                color: "#23ada4",
+                maxWidth: "400px",
+                display: "inline-block",
+                verticalAlign: "bottom",
+              }}
+            >
+              {selectedEvent?.eventTitle}
+            </span>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ background: "#1a1a1a", padding: "24px" }}>
           {loadingPackages ? (
             <div className="text-center py-5">
               <Spinner animation="border" variant="primary" />
-              <p className="mt-3" style={{ color: "#999" }}>{t("loading") || "Loading packages..."}</p>
+              <p className="mt-3" style={{ color: "#999" }}>
+                {t("loading") || "Loading packages..."}
+              </p>
             </div>
           ) : promoPackages.length === 0 ? (
             <p className="text-center py-4" style={{ color: "#999" }}>
-              {t("noPackagesAvailable") || "No active promotion packages available at the moment."}
+              {t("noPackagesAvailable") ||
+                "No active promotion packages available at the moment."}
             </p>
           ) : (
             <>
               <p style={{ color: "#999", marginBottom: "20px" }}>
-                {t("selectPlanBoost") || "Select a plan to boost visibility on the Discover Feed and Homepage."}
+                {t("selectPlanBoost") ||
+                  "Select a plan to boost visibility on the Discover Feed and Homepage."}
               </p>
               <Row className="gx-3 gy-3">
                 {promoPackages.map((pkg) => {
@@ -403,32 +478,60 @@ function page() {
                       <div
                         onClick={() => setSelectedPackage(pkg)}
                         style={{
-                          background: isSelected ? "rgba(35,173,164,0.12)" : "#242424",
+                          background: isSelected
+                            ? "rgba(35,173,164,0.12)"
+                            : "#242424",
                           border: `2px solid ${isSelected ? "#23ada4" : "#333"}`,
                           borderRadius: "16px",
                           padding: "20px",
                           cursor: "pointer",
                           transition: "all 0.25s ease",
                           height: "100%",
-                        }}>
-                        <h5 className="text-truncate-1" style={{ color: "#fff", marginBottom: "4px" }}>{pkg.name}</h5>
+                        }}
+                      >
+                        <h5
+                          className="text-truncate-1"
+                          style={{ color: "#fff", marginBottom: "4px" }}
+                        >
+                          {pkg.name}
+                        </h5>
                         <h3 style={{ color: "#23ada4", margin: "8px 0" }}>
                           ₮{pkg.price?.toLocaleString()}
                         </h3>
-                        <p style={{ color: "#999", fontSize: "13px", marginBottom: "12px" }}>
+                        <p
+                          style={{
+                            color: "#999",
+                            fontSize: "13px",
+                            marginBottom: "12px",
+                          }}
+                        >
                           {pkg.durationInDays} {t("daysSuffix") || "days"}
                         </p>
                         {pkg.placements?.length > 0 && (
                           <ul style={{ paddingLeft: "16px", margin: 0 }}>
                             {pkg.placements.map((p, i) => (
-                              <li key={i} style={{ color: "#ccc", fontSize: "12px", marginBottom: "4px" }}>
+                              <li
+                                key={i}
+                                style={{
+                                  color: "#ccc",
+                                  fontSize: "12px",
+                                  marginBottom: "4px",
+                                }}
+                              >
                                 {p}
                               </li>
                             ))}
                           </ul>
                         )}
                         {isSelected && (
-                          <div style={{ marginTop: "12px", color: "#23ada4", fontWeight: 600, fontSize: "13px" }}>
+                          <div
+                            style={{
+                              marginTop: "12px",
+                              color: "#23ada4",
+                              fontWeight: 600,
+                              fontSize: "13px",
+                            }}
+                          >
                             ✓ {t("selected") || "Selected"}
                           </div>
                         )}
@@ -449,11 +552,15 @@ function page() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                  }}>
+                  }}
+                >
                   <div>
-                    <p style={{ color: "#999", margin: 0, fontSize: "13px" }}>{t("selectedPlan") || "Selected Plan"}</p>
+                    <p style={{ color: "#999", margin: 0, fontSize: "13px" }}>
+                      {t("selectedPlan") || "Selected Plan"}
+                    </p>
                     <p style={{ color: "#fff", margin: 0, fontWeight: 600 }}>
-                      {selectedPackage.name} — {selectedPackage.durationInDays} {t("daysSuffix") || "days"}
+                      {selectedPackage.name} — {selectedPackage.durationInDays}{" "}
+                      {t("daysSuffix") || "days"}
                     </p>
                   </div>
                   <h4 style={{ color: "#23ada4", margin: 0 }}>
@@ -464,18 +571,26 @@ function page() {
             </>
           )}
         </Modal.Body>
-        <Modal.Footer style={{ background: "#1a1a1a", border: "1px solid #333", gap: "12px" }}>
+        <Modal.Footer
+          style={{
+            background: "#1a1a1a",
+            border: "1px solid #333",
+            gap: "12px",
+          }}
+        >
           <button
             className="outline-btn"
             onClick={closePromoModal}
-            style={{ padding: "10px 24px" }}>
+            style={{ padding: "10px 24px" }}
+          >
             {t("discard") || "Cancel"}
           </button>
           <button
             className="custom-btn"
             onClick={handleCheckout}
             disabled={!selectedPackage || checkingOut}
-            style={{ minWidth: "140px" }}>
+            style={{ minWidth: "140px" }}
+          >
             {checkingOut ? (
               <>
                 <Spinner animation="border" size="sm" className="me-2" />

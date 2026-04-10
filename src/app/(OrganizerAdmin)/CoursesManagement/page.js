@@ -224,7 +224,11 @@ function CoursesManagement() {
                                                             height: "80px",
                                                             objectFit: "cover",
                                                             borderRadius: "8px",
+                                                            
                                                         }}
+                                                         onError={(e) => {
+                              e.target.src = "/img/sidebar-logo.svg";
+                            }}
                                                     />
                                                     <div>
                                                         <h5 className="d-flex align-items-center gap-2 flex-wrap">
