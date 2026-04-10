@@ -169,7 +169,6 @@ const VenueAutocomplete = ({
       console.error("Error initializing Google Places Autocomplete:", err);
       setError("Failed to initialize Places autocomplete");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded]); // Only reinitialize when API loads, not on every input change
 
   // Manage autocomplete behavior based on input length (separate from initialization)
@@ -200,6 +199,8 @@ const VenueAutocomplete = ({
       address: place.formatted_address || "",
       city: "",
       country: "",
+      state: "",
+      zipcode: "",
       sublocality: "",
       administrative_area_level_2: "",
     };
@@ -214,10 +215,14 @@ const VenueAutocomplete = ({
         types.includes("sublocality_level_1")
       ) {
         locationData.sublocality = longName;
-      } else if (types.includes("locality")) {
+      } else if (types.includes("locality") || types.includes("postal_town")) {
         locationData.city = longName;
+      } else if (types.includes("administrative_area_level_1")) {
+        locationData.state = longName;
       } else if (types.includes("administrative_area_level_2")) {
         locationData.administrative_area_level_2 = longName;
+      } else if (types.includes("postal_code")) {
+        locationData.zipcode = longName;
       } else if (types.includes("country")) {
         locationData.country = longName;
       }
@@ -254,6 +259,8 @@ const VenueAutocomplete = ({
       longitude: locData.longitude,
       city: locData.city,
       country: locData.country,
+      state: locData.state,
+      zipcode: locData.zipcode,
       address: locData.address || inputValue,
     };
 

@@ -125,7 +125,7 @@ export default function Page() {
                   </Col>
                   <Col lg={6}>
                     <Form.Group controlId="phone">
-                      <Form.Label>Phone (Optional)</Form.Label>
+                      <Form.Label>Phone</Form.Label>
                       <Form.Control
                         type="text"
                         placeholder="Phone"

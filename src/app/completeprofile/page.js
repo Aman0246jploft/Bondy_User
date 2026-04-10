@@ -134,10 +134,10 @@ function CompleteProfileContent() {
       return;
     }
 
-    if (!profileData.location) {
-      toast.error("Please provide your location to continue");
-      return;
-    }
+    // if (!profileData.location) {
+    //   toast.error("Please provide your location to continue");
+    //   return;
+    // }
 
     try {
       setLoading(true);
