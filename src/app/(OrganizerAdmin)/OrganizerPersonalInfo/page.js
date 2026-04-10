@@ -278,8 +278,9 @@ function PersonalInfoContent() {
                 onClick={() => fileRef.current.click()}
               >
                 <img
-                  src={preview || "/img/sidebar-logo.svg"}
+                  src={preview || "/img/default-user.png"}
                   alt="Profile"
+                  onError={(e) => { e.target.src = "/img/default-user.png"; }}
                 />
                 <input
                   type="file"

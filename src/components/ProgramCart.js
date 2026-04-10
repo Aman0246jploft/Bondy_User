@@ -57,8 +57,9 @@ const ProgramCart = ({ programsArray, pagination }) => {
                     <span className="event-badge">Featured</span>
                   )}
                   <img
-                    src={getFullImageUrl(program?.posterImage?.[0])}
+                    src={getFullImageUrl(program?.posterImage?.[0]) || "/img/sidebar-logo.svg"}
                     alt={program?.courseTitle}
+                    onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
                   />
                 </div>
                 <div className="card-overlay">
@@ -95,10 +96,9 @@ const ProgramCart = ({ programsArray, pagination }) => {
                       </Link>
                       <Link href="/profile">
                         <img
-                          src={getFullImageUrl(
-                            program?.createdBy?.profileImage,
-                          )}
+                          src={getFullImageUrl(program?.createdBy?.profileImage) || "/img/default-user.png"}
                           alt="profile"
+                          onError={(e) => { e.target.src = "/img/default-user.png"; }}
                         />
                       </Link>
                     </div>

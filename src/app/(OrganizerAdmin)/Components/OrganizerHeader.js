@@ -57,9 +57,10 @@ function OrganizerHeader() {
                 src={
                   profile?.profileImage
                     ? getFullImageUrl(profile.profileImage)
-                    : "/img/sidebar-logo.svg"
+                    : "/img/default-user.png"
                 }
                 alt="User"
+                onError={(e) => { e.target.src = "/img/default-user.png"; }}
               />
             </Link>
           </div>

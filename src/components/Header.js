@@ -112,8 +112,9 @@ export default function BondyHeader() {
                     }
                     className="profile-img-btn">
                     <img
-                      src={getFullImageUrl(userProfile.profileImage)}
+                      src={getFullImageUrl(userProfile.profileImage) || "/img/default-user.png"}
                       alt="profile"
+                      onError={(e) => { e.target.src = "/img/default-user.png"; }}
                       style={{
                         width: "40px",
                         height: "40px",
@@ -229,8 +230,9 @@ export default function BondyHeader() {
                         color: "white",
                       }}>
                       <img
-                        src={getFullImageUrl(userProfile.profileImage)}
+                        src={getFullImageUrl(userProfile.profileImage) || "/img/default-user.png"}
                         alt="profile"
+                        onError={(e) => { e.target.src = "/img/default-user.png"; }}
                         style={{
                           width: "50px",
                           height: "50px",
