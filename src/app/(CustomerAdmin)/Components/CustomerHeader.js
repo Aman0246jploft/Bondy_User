@@ -51,7 +51,11 @@ function CustomerHeader() {
 
           <div className="avatar">
             <Link href="/Personalinfo">
-              <img src={profile?.profileImage ? getFullImageUrl(profile.profileImage) : "/img/avtar.png"} alt="User" />
+              <img 
+                src={profile?.profileImage ? getFullImageUrl(profile.profileImage) : "/img/default-user.png"} 
+                alt="User" 
+                onError={(e) => { e.target.src = "/img/default-user.png"; }}
+              />
             </Link>
           </div>
         </div>

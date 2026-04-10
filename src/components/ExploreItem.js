@@ -5,6 +5,7 @@ import eventApi from "@/api/eventApi";
 import courseApi from "@/api/courseApi";
 import ProgramCart from './ProgramCart';
 import PaginationComponent from './PaginationComponent';
+import { getFullImageUrl } from '@/utils/imageHelper';
 
 const categories = [
   { label: "Upcoming", value: "upcoming" },
@@ -138,9 +139,10 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
                             <span className="event-badge">Featured {isEvent ? "Event" : "Course"}</span>
                           )}
                           <img
-                            src={image}
+                            src={getFullImageUrl(isEvent ? item.posterImage?.[0] : item.posterImage?.[0]) || "/img/sidebar-logo.svg"}
                             alt={title}
                             className="featured-img"
+                            onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
                           />
                         </div>
                       </Col>
@@ -191,23 +193,25 @@ export default function ExploreItem({ type = "Events", filter = "upcoming", onFi
                               <img src="/img/UserEX_icon.svg" className='info-icon' alt="icon" />
                               {isEvent ? item.totalAttendees : item.acquiredSeats || 0} attendees
                             </div>
-                            <div
-  className="info-item"
-  style={{
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    color: "var(--white, #fff)",
-  }}
->
-  <img src="/img/fi_992700.png" className="info-icon" alt="icon" />
-  {new Date(`1970-01-01T${item.startTime}`).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  })}
-</div>
-                            
+                            {isEvent && (
+                              <div
+                                className="info-item"
+                                style={{
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  color: "var(--white, #fff)",
+                                }}
+                              >
+                                <img src="/img/fi_992700.png" className="info-icon" alt="icon" />
+                                {new Date(`1970-01-01T${item.startTime}`).toLocaleTimeString("en-US", {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                })}
+                              </div>
+                            )}
+
                           </div>
                         </div>
                       </Col>

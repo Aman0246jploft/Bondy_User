@@ -291,8 +291,8 @@ function EventDetailsContent() {
                 {attendees.recent?.map((attendee, idx) => (
                   <img
                     key={idx}
-                    src={getFullImageUrl(attendee.profileImage) || "/img/user-default.png"}
-                    onError={(e) => { e.target.src = "/img/user-default.png"; }}
+                    src={getFullImageUrl(attendee.profileImage) || "/img/default-user.png"}
+                    onError={(e) => { e.target.src = "/img/default-user.png"; }}
                     alt={`${attendee.firstName}`}
                     className="rounded-circle attendee-img"
                     style={{
