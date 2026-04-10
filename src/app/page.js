@@ -10,6 +10,7 @@ import Footer from "../components/Footer";
 import Header from "../components/Header";
 import Hero from "../components/Hero";
 import TopEvents from "../components/TopEvents";
+import CourseSection from "../components/CourseSection";
 
 export default function HomePage() {
 
@@ -50,6 +51,7 @@ export default function HomePage() {
         <EventSection type="recommended" extraParams={{ ...searchParams, placement: "homePage" }} />
         <EventSection type="nearYou" extraParams={{ ...searchParams, placement: "homePage" }} />
         <EventSection type="week" extraParams={{ ...searchParams, placement: "homePage" }} />
+        <CourseSection type="featured" />
       </div>
 
       <Categories />

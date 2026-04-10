@@ -170,6 +170,8 @@ function Page() {
       courseTitle: 100,
       shortdesc: 250,
       whatYouWillLearn: 1000,
+      price: 9,
+      totalSeats: 9,
     };
 
     if (limits[name] && value.length > limits[name]) {

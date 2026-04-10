@@ -50,6 +50,11 @@ function page() {
       return;
     }
 
+    if (eventData.venueName.length > 100) {
+      toast.error("Venue Name cannot exceed 100 characters");
+      return;
+    }
+
     // Combine date and time for validation
     const startDateTime = new Date(
       `${eventData.startDate}T${eventData.startTime || "00:00"}`,
@@ -150,7 +155,13 @@ function page() {
                       value={eventData.venueName}
                       onChange={handleInputChange}
                       placeholder="Enter venue name"
+                      maxLength={100}
                     />
+                    <div className="text-end">
+                      <small className="text-secondary">
+                        {eventData.venueName?.length || 0}/100
+                      </small>
+                    </div>
                   </div>
                 </Col>
                 <Col md={12}>

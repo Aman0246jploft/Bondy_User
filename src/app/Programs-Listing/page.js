@@ -1,87 +1,140 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import Header from "../../components/Header";
 import FAQ from "../../components/FAQ";
 import Footer from "../../components/Footer";
 import Field from "../../components/Field";
-import { Container } from "react-bootstrap";
+import { Container, Pagination } from "react-bootstrap";
 import ProgramCart from "@/components/ProgramCart";
-import { useState, useEffect } from "react";
 import courseApi from "@/api/courseApi";
-import PaginationComponent from "@/components/PaginationComponent";
 
-export default function Page() {
-  const [programs, setPrograms] = useState([]);
+/* ── helpers ───────────────────────────────────────────── */
+const SECTION_META = {
+  featured: {
+    filter: "featured",
+    title: "Featured Courses",
+    subtitle: "Top-tier courses selected for you 🌟✨",
+  },
+  recommended: {
+    filter: "recommended",
+    title: "Recommended",
+    subtitle: "Hand-picked courses just for you 🎯✨",
+  },
+  nearYou: {
+    filter: "nearYou",
+    title: "Near You",
+    subtitle: "Discover learning opportunities around you 📍📚",
+  },
+  all: {
+    filter: "all",
+    title: "All Courses",
+    subtitle: "Browse our full catalog of programs 🎉",
+  },
+};
+
+const LIMIT = 12;
+
+/* ── inner component (needs Suspense boundary for useSearchParams) ── */
+function ListingContent() {
+  const searchParams = useSearchParams();
+  const type = searchParams.get("type") || "all";
+
+  const meta = SECTION_META[type] || SECTION_META.all;
+
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalCourses: 0,
-    coursesPerPage: 10
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [filterParams, setFilterParams] = useState({
+    search: "",
+    latitude: null,
+    longitude: null,
+    filter: "" // additional filters from Field component
   });
 
-  const [filters, setFilters] = useState({});
-
-  const fetchPrograms = async (page = 1, currentFilters = {}) => {
-    try {
-      setLoading(true);
-      const response = await courseApi.getCourses({ page, limit: 12, ...currentFilters });
-
-      if (response.status && response.data) {
-        const data = response.data.data || response.data;
-        if (data.courses) {
-          setPrograms(data.courses);
-          setPagination({
-            currentPage: data.currentPage || 1,
-            totalPages: data.totalPages || 1,
-            totalCourses: data.totalCourses || 0,
-            coursesPerPage: data.coursesPerPage || 10,
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching programs:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const totalPages = Math.ceil(total / LIMIT);
 
   useEffect(() => {
-    fetchPrograms(pagination.currentPage, filters);
-  }, [pagination.currentPage, filters]);
+    const fetchCourses = async () => {
+      setLoading(true);
+      try {
+        // Build combined filter string
+        let combinedFilters = [meta.filter];
+        if (filterParams.filter && filterParams.filter !== "all") {
+          combinedFilters.push(filterParams.filter);
+        }
 
-  const handleSearch = (searchParams) => {
-    setFilters(searchParams);
-    if (pagination.currentPage !== 1) {
-      setPagination(prev => ({ ...prev, currentPage: 1 }));
-    }
+        let params = {
+          limit: LIMIT,
+          page,
+          filter: combinedFilters.join(","),
+          search: filterParams.search,
+          latitude: filterParams.latitude,
+          longitude: filterParams.longitude,
+        };
+
+        // geolocation for "nearYou" ONLY if no manual location is provided
+        if (combinedFilters.includes("nearYou") && !params.latitude) {
+          try {
+            const pos = await new Promise((resolve, reject) =>
+              navigator.geolocation.getCurrentPosition(resolve, reject),
+            );
+            params.latitude = pos.coords.latitude;
+            params.longitude = pos.coords.longitude;
+          } catch {
+            console.warn("Location access denied");
+            // If nearYou is the ONLY filter, we might want to return 0, 
+            // but the backend handler also does fallback logic
+          }
+        }
+
+        const response = await courseApi.getCourses(params);
+        if (response.data) {
+          // Backend structure might be { totalCourses, courses, ... }
+          setCourses(response.data.courses || []);
+          setTotal(response.data.totalCourses || 0);
+        }
+      } catch (err) {
+        console.error("Error fetching courses:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, [page, type, filterParams]);
+
+  const handleSearch = (newFilters) => {
+    setFilterParams({
+      search: newFilters.search || "",
+      latitude: newFilters.latitude || null,
+      longitude: newFilters.longitude || null,
+      filter: newFilters.filter || ""
+    });
+    setPage(1); // Reset to first page on search
   };
 
   const handlePageChange = (newPage) => {
-    setPagination(prev => ({ ...prev, currentPage: newPage }));
-    window.scrollTo(0, 0);
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
-
-
 
   return (
     <>
       <div className="listing_page">
         <div className="breadcrumb_text">
-          <h1>Course</h1>
+          <h1>{meta.title}</h1>
           <p
             style={{
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              wordBreak: 'break-word',
               maxWidth: '800px',
               margin: '0 auto'
             }}
           >
-            "A Night to Remember: Adele Live with Her Greatest Hits " 🎶✨
+            {meta.subtitle}
           </p>
         </div>
         <Header />
@@ -113,20 +166,65 @@ export default function Page() {
         </Container>
       </div>
 
-      <ProgramCart programsArray={programs} pagination={pagination} />
+      {loading ? (
+        <div className="text-center py-5">
+          <p>Loading programs...</p>
+        </div>
+      ) : courses.length === 0 ? (
+        <div className="text-center py-5">
+          <p>No programs found matching your criteria.</p>
+        </div>
+      ) : (
+        <>
+          <ProgramCart programsArray={courses} pagination={{ currentPage: page, totalPages }} />
 
-      <PaginationComponent
-        currentPage={pagination.currentPage}
-        totalPages={pagination.totalPages}
-        onPageChange={handlePageChange}
-      />
+          {totalPages > 1 && (
+            <div className="d-flex justify-content-center mt-5 mb-5">
+              <Pagination>
+                <Pagination.First
+                  onClick={() => handlePageChange(1)}
+                  disabled={page === 1}
+                />
+                <Pagination.Prev
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                />
 
-      {/* <div className="ms-auto me-auto mt-4 text-center mb-5 mt-5">
-        <button className="common_btn">View More Concerts</button>
-      </div> */}
+                {[...Array(totalPages)].map((_, idx) => (
+                  <Pagination.Item
+                    key={idx + 1}
+                    active={idx + 1 === page}
+                    onClick={() => handlePageChange(idx + 1)}
+                  >
+                    {idx + 1}
+                  </Pagination.Item>
+                ))}
+
+                <Pagination.Next
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                />
+                <Pagination.Last
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={page === totalPages}
+                />
+              </Pagination>
+            </div>
+          )}
+        </>
+      )}
 
       <FAQ />
       <Footer />
     </>
+  );
+}
+
+/* ── Page wrapper (Suspense required by Next.js for useSearchParams) ── */
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="text-center py-5"><p>Loading…</p></div>}>
+      <ListingContent />
+    </Suspense>
   );
 }

@@ -53,6 +53,9 @@ const ProgramCart = ({ programsArray, pagination }) => {
             <Col xl={3} lg={4} md={6} key={program.id}>
               <div className="event_main_cart">
                 <div className="recommended-card">
+                  {program.isFeatured && (
+                    <span className="event-badge">Featured</span>
+                  )}
                   <img
                     src={getFullImageUrl(program?.posterImage?.[0])}
                     alt={program?.courseTitle}

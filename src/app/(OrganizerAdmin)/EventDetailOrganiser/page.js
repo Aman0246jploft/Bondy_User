@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { Col, Row, Spinner } from "react-bootstrap";
 import { useSearchParams } from "next/navigation";
 import eventApi from "@/api/eventApi";
+import { getFullImageUrl } from "@/utils/imageHelper";
 
 function ExpandableText({ text, limit = 200, className = "" }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -107,9 +108,10 @@ function EventDetailsContent() {
             <div className="event-dtl-card">
               <div className="event-dtl-card-img" style={{ borderRadius: "12px", overflow: "hidden", boxShadow: "0 4px 15px rgba(0,0,0,0.3)" }}>
                 <img
-                  src={event.posterImage?.[0] || "/img/org-img/event-dtl-img.png"}
+                  src={getFullImageUrl(event.posterImage?.[0]) || "/img/sidebar-logo.svg"}
                   alt={event.eventTitle}
                   style={{ width: "100%", height: "auto", minHeight: "200px", objectFit: "cover" }}
+                  onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
                 />
               </div>
               <h3 className="mt-3" style={{ fontSize: "1.5rem", fontWeight: "700" }}>{event.eventTitle}</h3>
@@ -289,7 +291,8 @@ function EventDetailsContent() {
                 {attendees.recent?.map((attendee, idx) => (
                   <img
                     key={idx}
-                    src={attendee.profileImage || "/img/user-default.png"}
+                    src={getFullImageUrl(attendee.profileImage) || "/img/user-default.png"}
+                    onError={(e) => { e.target.src = "/img/user-default.png"; }}
                     alt={`${attendee.firstName}`}
                     className="rounded-circle attendee-img"
                     style={{
@@ -316,7 +319,7 @@ function EventDetailsContent() {
               <span>Teaser Video</span>
             </h4>
             <div className="video-wrapper shadow-lg">
-              <video width="100%" controls poster={event.posterImage?.[0]} className="rounded-3">
+              <video width="100%" controls poster={getFullImageUrl(event.posterImage?.[0])} className="rounded-3">
                 <source src={event.shortTeaserVideo[0]} type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
@@ -349,7 +352,12 @@ function EventDetailsContent() {
             <div className="gallery-grid">
               {event.mediaLinks.map((link, idx) => (
                 <div key={idx} className={`gallery-item ${idx === 0 ? "large" : ""}`}>
-                  <img src={link} alt={`Gallery ${idx}`} className="rounded-3 shadow-sm" />
+                  <img 
+                    src={getFullImageUrl(link)} 
+                    alt={`Gallery ${idx}`} 
+                    className="rounded-3 shadow-sm" 
+                    onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
+                  />
                 </div>
               ))}
             </div>

@@ -237,7 +237,7 @@ function page() {
                   </div>
                 </Col>
 
-                <Col md={12}>
+                {/* <Col md={12}>
                   <div className="event-frm-bx mb-3">
                     <label className="text-white mb-1">Email</label>
                     <div className="d-flex gap-2">
@@ -250,8 +250,8 @@ function page() {
                       />
                     </div>
                   </div>
-                </Col>
-                <Col md={12}>
+                </Col> */}
+                {/* <Col md={12}>
                   <div className="event-frm-bx mb-3">
                     <label className="text-white mb-1">Contact Number</label>
                     <div className="d-flex gap-2 phone-input-profile">
@@ -272,7 +272,7 @@ function page() {
                       </button>
                     </div>
                   </div>
-                </Col>
+                </Col> */}
 
                 <Col md={12}>
                   <div className="event-frm-bx">

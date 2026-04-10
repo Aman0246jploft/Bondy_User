@@ -17,9 +17,12 @@ function page() {
       ticketName: 100,
       refundPolicy: 500,
       addOns: 200,
+      ticketQtyAvailable: 9,
+      ticketPrice: 9,
+      totalTickets: 9,
     };
 
-    if (limits[name] && value.length > limits[name]) {
+    if (limits[name] && value.toString().length > limits[name]) {
       return;
     }
     updateEventData({ [name]: value });

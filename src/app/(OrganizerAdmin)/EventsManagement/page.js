@@ -363,7 +363,7 @@ function page() {
                         </Link>
                       )}
                       <Link href={`/EventDetailOrganiser?eventId=${event._id}`}>
-                        {t("ticketDetails")}{" "}
+                        {t("Info")}{" "}
                         <img src="/img/Arrow-Right.svg" alt="arrow" />
                       </Link>
                       {!isPastOrEnded &&
