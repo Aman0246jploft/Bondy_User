@@ -81,7 +81,9 @@ const SessionCart = ({ type, title, events }) => {
               <div key={id} className="col-lg-3 col-md-6 col-sm-12">
                 <div className="event_main_cart">
                   <div className="recommended-card">
-                    <img src={img} alt={name} onError={(e) => e.target.src = "/img/sidebar-logo.svg"} />
+                    <img src={img} alt={name}
+                     onError={(e) => e.target.src = "/img/sidebar-logo.svg"} 
+                     />
                   </div>
 
                   <div className="card-overlay">
