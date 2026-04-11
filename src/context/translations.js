@@ -13,6 +13,7 @@ export const translations = {
     heroSubtitle: "Explore a world of concerts, movies, and events tailored just for you!",
     eventType: "Event Type",
     eventTypePlaceholder: "exp: music event",
+    
     where: "Where",
     locationPlaceholder: "Location",
     explorePageTitle: "Explore",
@@ -60,6 +61,7 @@ export const translations = {
     totalPaid: "Total paid",
     ticketsSuffix: "tickets",
     ticketDetails: "Ticket Details",
+    TicketDetails:"Ticket Details",
     previous: "Previous",
     next: "Next",
     noCardAdded: "You haven’t added a card yet!",
@@ -241,6 +243,7 @@ export const translations = {
     payoutRequestFailed: "Payout request failed",
     ticketSale: "Ticket Sale",
     payoutRejected: "Payout Refunded",
+    eventcategory:"Event category",
     adjustment: "Adjustment",
     referralReward: "Referral Reward",
     enterValidAmount: "Enter a valid amount",
@@ -283,9 +286,13 @@ export const translations = {
     price: "Price",
     seats: "Seats",
     viewDetails: "View Details",
-    upcomingEventsCount:"Upcoming Events"
+    upcomingEventsCount:"Upcoming Events",
+    recentNotifications:"Recent Notifications",
+     "totalRevenue":"Total Revenue",
+     "Info":"Info",
   },
   mn: {
+    Info:"Мэдээлэл",
     home: "Нүүр",
     explore: "Судлах",
     course: "Курс",
@@ -346,6 +353,7 @@ export const translations = {
     totalPaid: "Нийт төлсөн",
     ticketsSuffix: "тасалбар",
     ticketDetails: "Тасалбарын дэлгэрэнгүй",
+    TicketDetails:"Тасалбарын дэлгэрэнгүй",
     previous: "Өмнөх",
     next: "Дараах",
     noCardAdded: "Та хараахан карт нэмээгүй байна!",
@@ -527,6 +535,7 @@ export const translations = {
     payoutRequestFailed: "Төлбөр хүсэх хүсэлт амжилтгүй боллоо",
     ticketSale: "Тасалбар борлуулалт",
     payoutRejected: "Төлбөр буцаагдсан",
+    eventcategory :"Арга хэмжээний төрөл",
     adjustment: "Зохицуулалт",
     referralReward: "Урилгын шагнал",
     enterValidAmount: "Зөв дүн оруулна уу",
@@ -569,9 +578,11 @@ export const translations = {
     price: "Үнэ",
     seats: "Суудал",
     viewDetails: "Дэлгэрэнгүй үзэх",
-    "Total Revenue": "Нийт орлого",
-    "Total Revenue":"Total Reven",
+    "totalRevenue": "Нийт орлого",
+   
     "Total Events Hosted": "Нийт зохион байгуулсан арга хэмжээ",
     upcomingEventsCount:"Ирэх арга хэмжээ",
+    recentNotifications: "Сүүлийн мэдэгдлүүд",
+    "Total Bookings":"Нийт захиалга",
   }
 };

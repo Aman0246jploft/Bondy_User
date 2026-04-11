@@ -299,7 +299,9 @@ function page() {
                               height: "100%",
                               objectFit: "cover",
                               borderRadius: "10px",
+                              
                             }}
+                             onError={(e) => e.target.src = "/img/sidebar-logo.svg"} 
                           />
                         ) : (
                           <div className="upload-doc">
