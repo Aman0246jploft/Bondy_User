@@ -178,10 +178,10 @@ const HeroSlider = ({ setView, onSearch }) => {
                 <div className="search-field one_field">
                   <img src="/img/event_icon.svg" />
                   <div>
-                    <small>{t("eventType")}</small>
+                    <small>{t("eventcategory")}</small>
                     <input
                       type="text"
-                      placeholder={t("eventTypePlaceholder")}
+                      // placeholder={t("eventTypePlaceholder")}
                       value={keyword}
                       onChange={(e) => setKeyword(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}

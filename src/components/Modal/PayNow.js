@@ -2,10 +2,31 @@
 import Link from "next/link";
 import React from "react";
 import Modal from "react-bootstrap/Modal";
+import { useRouter } from "next/navigation";
+import authApi from "@/api/authApi";
 
 
 export default function PayNow(props) {
 
+ const router = useRouter();
+
+ const handleRedirect = async () => {
+  try {
+    const res = await authApi.getSelfProfile();
+
+    if (res?.status) {
+      const role = res?.data?.user?.userRole;
+
+      if (role === "ORGANIZER") {
+        router.push("/MyTicketsOrganiser");
+      } else if (role === "CUSTOMER") {
+        router.push("/MyTickets");
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 
     return (
@@ -31,11 +52,14 @@ export default function PayNow(props) {
                             <p>Show your tickets upon entering the Cinema
                                 and pick up your snacks at the Cinema bar</p>
                         </div>
-                        <div className="align_btn mt-5">
+                        {/* <div className="align_btn mt-5">
                             <Link href="/" className="common_btn">
                                 Go to My Tickets
                             </Link>
-                        </div>
+                        </div> */}
+                         <button className="common_btn mt-4" onClick={handleRedirect}>
+            Go to My Tickets
+          </button>
                     </div>
                 </Modal.Body>
             </Modal>

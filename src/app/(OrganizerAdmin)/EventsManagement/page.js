@@ -170,7 +170,7 @@ function page() {
         <Row>
           <Col lg={4} xs={6}>
             <div className="event-cards">
-              <h5>{t("Total Revenue")}</h5>
+              <h5>{t("totalRevenue")}</h5>
               <h3>₮{stats.totalRevenue?.toLocaleString() || 0}</h3>
               {/* <p>+15%</p> */}
             </div>

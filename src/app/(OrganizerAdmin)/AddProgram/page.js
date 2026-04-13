@@ -495,6 +495,7 @@ function Page() {
                     <input
                       type="text"
                       className="form-control"
+                       placeholder="Course Name"
                       name="courseTitle"
                       value={formData.courseTitle}
                       onChange={handleChange}
@@ -532,6 +533,7 @@ function Page() {
                     <input
                       type="number"
                       className="form-control"
+                      placeholder="Enter Quantity"
                       name="totalSeats"
                       value={formData.totalSeats}
                       onChange={handleChange}
@@ -557,6 +559,7 @@ function Page() {
                     <label className="form-label">Short Description <span className="text-danger">*</span></label>
                     <textarea
                       className="form-control"
+                      placeholder="Write a sort description"
                       name="shortdesc"
                       rows="3"
                       value={formData.shortdesc}
@@ -800,6 +803,7 @@ function Page() {
                     <label className="form-label">Session Price <span className="text-danger">*</span></label>
                     <input
                       type="number"
+                      placeholder="Session Price"
                       className="form-control text-white"
                       name="price"
                       value={formData.price}
