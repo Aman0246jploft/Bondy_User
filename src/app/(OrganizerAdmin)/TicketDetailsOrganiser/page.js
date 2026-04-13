@@ -45,6 +45,7 @@ function TicketDetailsContent() {
   const [ticketInfo, setTicketInfo] = useState(null);
   const [ticketInfoFull, setTicketInfoFull] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copyStatus, setCopyStatus] = useState("");
   const ticketRef = useRef(null);
 
   useEffect(() => {
@@ -89,6 +90,39 @@ function TicketDetailsContent() {
       pdf.save(`Ticket-${ticketInfo?.bookingId || "details"}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      const res = await bookingApi.getShareAndDownloadUrls(id);
+      if (res.status && res.data) {
+        const shareUrl = res.data.shareUrl;
+        await navigator.clipboard.writeText(shareUrl);
+        setCopyStatus(t("linkCopied") || "Share link copied to clipboard!");
+        setTimeout(() => setCopyStatus(""), 3000);
+      }
+    } catch (error) {
+      console.error("Error sharing ticket:", error);
+    }
+  };
+
+  const handleDownloadLink = async () => {
+    try {
+      const res = await bookingApi.getShareAndDownloadUrls(id);
+      if (res.status && res.data) {
+        const downloadUrl = res.data.data.downloadUrl;
+        // Option 1: Copy to clipboard
+        await navigator.clipboard.writeText(downloadUrl);
+        setCopyStatus(t("downloadLinkCopied") || "Download link copied to clipboard!");
+
+        // Option 2: Open in new tab (as per "when user open it on browser" request)
+        window.open(downloadUrl, "_blank");
+
+        setTimeout(() => setCopyStatus(""), 3000);
+      }
+    } catch (error) {
+      console.error("Error generating download link:", error);
     }
   };
 
@@ -175,10 +209,21 @@ function TicketDetailsContent() {
           <img src="/img/arrow-left-white.svg" alt="Back" className="me-2" />
           {t("backToTicket") || "Back to Tickets"}
         </Link>
-        <button className="common_btn d-flex align-items-center" type="button">
-          <img src="/img/share-icon.svg" className="me-2" alt="" />
-          {t("share") || "Share"}
-        </button>
+        <div className="d-flex align-items-center gap-3">
+          {copyStatus && (
+            <span className="text-teal small animate__animated animate__fadeIn">
+              {copyStatus}
+            </span>
+          )}
+          <button
+            className="common_btn d-flex align-items-center"
+            type="button"
+            onClick={handleShare}
+          >
+            <img src="/img/share-icon.svg" className="me-2" alt="" />
+            {t("share") || "Share"}
+          </button>
+        </div>
       </div>
 
       <div ref={ticketRef} className="cards p-0 overflow-hidden">
@@ -208,14 +253,25 @@ function TicketDetailsContent() {
                 <div className="tickt-dtl-info d-flex justify-content-between align-items-center mb-5">
                   <h4 className="mb-0">{t("ticketDetails") || "Ticket Information"}</h4>
                   <div className="tickt-dtl-info-btns" data-html2canvas-ignore="true">
-                    <button
-                      className="common_btn d-flex align-items-center"
-                      type="button"
-                      onClick={handleDownloadTicket}
-                    >
-                      <img src="/img/download-arrow.svg" className="me-2" alt="" />
-                      {t("downloadTicket") || "Download PDF"}
-                    </button>
+                    <div className="d-flex gap-2">
+                      <button
+                        className="common_btn d-flex align-items-center"
+                        type="button"
+                        onClick={handleDownloadTicket}
+                      >
+                        <img src="/img/download-arrow.svg" className="me-2" alt="" />
+                        {t("downloadTicket") || "Download PDF"}
+                      </button>
+                      <button
+                        className="btn-link-teal d-flex align-items-center p-2 border rounded"
+                        type="button"
+                        onClick={handleDownloadLink}
+                        title={t("getDownloadLink") || "Get Public Download Link"}
+                        style={{ background: "rgba(0, 128, 128, 0.1)", border: "1px solid var(--primary-teal)" }}
+                      >
+                        <img src="/img/link-icon.svg" width="18" height="18" alt="Link" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 

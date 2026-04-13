@@ -17,6 +17,12 @@ const bookingApi = {
 
     getTicketDetail: (transactionId) =>
         apiClient.get(`/booking/detail/${transactionId}`),
+
+    getShareAndDownloadUrls: (transactionId) =>
+        apiClient.get(`/booking/public/generate-urls/${transactionId}`),
+
+    getPublicTicketDetail: (transactionId) =>
+        apiClient.get(`/booking/public/detail/${transactionId}`),
 };
 
 export default bookingApi;
