@@ -160,7 +160,7 @@ function ProgramDetailsContent() {
               </div>
               <div className="onwards_sec">
                 <h4 className="mb-0">
-                  <span className="price-text">${price}</span> onwards
+                  <span className="price-text">₮{price}</span> onwards
                 </h4>
                 <Link
                   href={
@@ -344,7 +344,7 @@ function ProgramDetailsContent() {
                   </div>
                   <div className="onwards_sec mt-4">
                     <h4 className="mb-0">
-                      <span className="price-text">${price}</span>
+                      <span className="price-text">₮{price}</span>
                     </h4>
                     <Link
                       href={
@@ -404,7 +404,7 @@ function ProgramDetailsContent() {
                               ? "Booked"
                               : schedule.isFull
                                 ? "Full"
-                                : `$${price}`}
+                                : `₮${price}`}
                           </span>
                           {schedule.isBooked ? (
                             <span className="badge bg-success">Booked</span>

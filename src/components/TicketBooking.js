@@ -236,11 +236,11 @@ export default function TicketBooking({ item, type, scheduleId }) {
             <div className="price_box">
               <div className="d-flex justify-content-between price_text">
                 <span className="">Ticket Price</span>
-                <span className="">${priceBreakdown.basePrice}</span>
+                <span className="">₮{priceBreakdown.basePrice}</span>
               </div>
               <div className="d-flex justify-content-between  price_text">
                 <span className="">Taxes</span>
-                <span className="">$ {priceBreakdown.taxes}</span>
+                <span className="">₮ {priceBreakdown.taxes}</span>
               </div>
 
               <div className="d-flex justify-content-between  price_text">
@@ -249,7 +249,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
               </div>
               <div className="d-flex justify-content-between align-items-center price_text">
                 <span>Total</span>
-                <span className="text-info">${priceBreakdown.totalAmount}</span>
+                <span className="text-info">₮{priceBreakdown.totalAmount}</span>
               </div>
             </div>
             <div className="tickets_btn">
@@ -268,11 +268,11 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 <h5 className="text-start">Price Details</h5>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Ticket Price</span>
-                  <span className="">${priceBreakdown.basePrice}</span>
+                  <span className="">₮{priceBreakdown.basePrice}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Taxes</span>
-                  <span className="">$ {priceBreakdown.taxes}</span>
+                  <span className="">₮ {priceBreakdown.taxes}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Discount</span>
@@ -280,7 +280,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 </div>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Total</span>
-                  <span className="">${priceBreakdown.totalAmount}</span>
+                  <span className="">₮{priceBreakdown.totalAmount}</span>
                 </div>
               </div>
 
@@ -387,11 +387,11 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 <h5 className="text-start">Price Details</h5>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Ticket Price</span>
-                  <span className="">${priceBreakdown.basePrice}</span>
+                  <span className="">₮{priceBreakdown.basePrice}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Taxes</span>
-                  <span className="">$ {priceBreakdown.taxes}</span>
+                  <span className="">₮ {priceBreakdown.taxes}</span>
                 </div>
                 <div className="d-flex justify-content-between  price_text">
                   <span className="">Discount</span>
@@ -399,7 +399,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 </div>
                 <div className="d-flex justify-content-between price_text">
                   <span className="">Total</span>
-                  <span className="">${priceBreakdown.totalAmount}</span>
+                  <span className="">₮{priceBreakdown.totalAmount}</span>
                 </div>
               </div>
             </div>

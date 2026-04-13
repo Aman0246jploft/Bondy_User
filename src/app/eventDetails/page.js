@@ -138,7 +138,7 @@ function EventDetailsContent() {
               </div>
               <div className="onwards_sec">
                 <h4 className="mb-0">
-                  <span className="price-text">${event?.ticketPrice} </span>
+                  <span className="price-text">₮{event?.ticketPrice} </span>
                 </h4>
                 <Link
                   href={`/eventbooking?eventId=${event?._id}`}
@@ -313,7 +313,7 @@ function EventDetailsContent() {
                   </div>
                   <div className="onwards_sec mt-4">
                     <h4 className="mb-0">
-                      <span className="price-text">${event?.ticketPrice} </span>
+                      <span className="price-text">₮{event?.ticketPrice} </span>
                     </h4>
                     <Link
                       href={`/eventbooking?eventId=${event?._id}`}

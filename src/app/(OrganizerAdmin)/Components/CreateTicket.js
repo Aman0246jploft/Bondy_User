@@ -70,7 +70,7 @@ export default function CreateTicket(props) {
       };
 
       const response = await supportTicketApi.createTicket(payload);
-      if (response.status === 201 || response.status === 200) {
+      if (response?.status === true || response.status === 201) {
         toast.success("Ticket created successfully");
         props.onHide();
         // Reset form

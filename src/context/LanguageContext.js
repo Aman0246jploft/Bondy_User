@@ -71,8 +71,13 @@ export const LanguageProvider = ({ children }) => {
     }
   }, []);
 
-  const t = useCallback((key) => {
-    return translations[language]?.[key] || translations["en"]?.[key] || key;
+  const t = useCallback((key, params = {}) => {
+    let text = translations[language]?.[key] || translations["en"]?.[key] || key;
+    // Interpolate {variableName} placeholders with provided params
+    Object.entries(params).forEach(([paramKey, paramValue]) => {
+      text = text.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), paramValue);
+    });
+    return text;
   }, [language]);
 
   const value = useMemo(() => ({

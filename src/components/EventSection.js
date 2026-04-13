@@ -174,7 +174,7 @@ const EventSection = ({
                       </div> */}
                       <div className="price-tag">
                         {/* from{" "} */}
-                        {item.ticketPrice ? `$${item.ticketPrice}` : "Free"}
+                        {item.ticketPrice ? `₮${item.ticketPrice}` : "Free"}
                       </div>
                     </div>
                   </div>

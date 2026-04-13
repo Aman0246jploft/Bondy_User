@@ -181,7 +181,7 @@ const HeroSlider = ({ setView, onSearch }) => {
                     <small>{t("eventcategory")}</small>
                     <input
                       type="text"
-                      // placeholder={t("eventTypePlaceholder")}
+                       placeholder={t("eventTypePlaceholders")}
                       value={keyword}
                       onChange={(e) => setKeyword(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}
@@ -210,7 +210,7 @@ const HeroSlider = ({ setView, onSearch }) => {
                 <div className="search-field three_field">
                   <img src="/img/date_icon.svg" alt="date" />
                   <div style={{ width: "100%" }}>
-                    <small>When</small>
+                    <small>{t("When")}</small>
                     <select
                       className="border-0 shadow-none p-0 bg-transparent w-100 mt-1"
                       value={dateFilter}

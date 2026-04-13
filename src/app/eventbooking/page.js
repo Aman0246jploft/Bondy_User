@@ -171,7 +171,7 @@ function BookingPageContent() {
               <p className="event-desc mb-4">{bookingItem.shortdesc}</p>
               <div className="onwards_sec">
                 <h4 className="mb-0">
-                  <span className="price-text">${bookingItem.price}</span>{" "}
+                  <span className="price-text">₮{bookingItem.price}</span>{" "}
                   onwards
                 </h4>
                 <Button className="book_mark_icon">

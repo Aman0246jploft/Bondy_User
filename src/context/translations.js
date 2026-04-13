@@ -13,7 +13,7 @@ export const translations = {
     heroSubtitle: "Explore a world of concerts, movies, and events tailored just for you!",
     eventType: "Event Type",
     eventTypePlaceholder: "exp: music event",
-    
+    eventTypePlaceholders:"Search event category",
     where: "Where",
     locationPlaceholder: "Location",
     explorePageTitle: "Explore",
@@ -158,6 +158,7 @@ export const translations = {
     allCategories: "All Categories",
     searchTicketPlaceholder: "Search Ticket ...",
     ticketID: "Ticket ID",
+    When:"When",
     category: "Category",
     subject: "Subject",
     status: "Status",
@@ -243,7 +244,7 @@ export const translations = {
     payoutRequestFailed: "Payout request failed",
     ticketSale: "Ticket Sale",
     payoutRejected: "Payout Refunded",
-    eventcategory:"Event category",
+    eventcategory:"Event name & category",
     adjustment: "Adjustment",
     referralReward: "Referral Reward",
     enterValidAmount: "Enter a valid amount",
@@ -290,6 +291,8 @@ export const translations = {
     recentNotifications:"Recent Notifications",
      "totalRevenue":"Total Revenue",
      "Info":"Info",
+     courseCategory: "Course name & category",
+      totalEarnings:"Total Earnings",
   },
   mn: {
     Info:"Мэдээлэл",
@@ -301,6 +304,7 @@ export const translations = {
     signUp: "Бүртгүүлэх",
     profile: "Профайл",
     login: "Нэвтрэх",
+    courseCategory: "Курсын нэр & ангилал",
     heroTitle1: "Улаанбаатар дахь арга хэмжээ, сургалт,",
     heroTitle2: "курс, туршлагыг олж нээгээрэй",
     heroSubtitle: "Зөвхөн танд зориулсан концерт, кино, арга хэмжээний ертөнцөөр аялаарай!",
@@ -485,6 +489,8 @@ export const translations = {
     failedToUpdateLanguage: "Хэл шинэчлэхэд алдаа гарлаа",
     // Organizer Admin
     dashboard: "Хянах самбар",
+    eventTypePlaceholders: "Үйл явдлын ангилал хайх",
+     When: "Хэзээ",
     programManagement: "Хөтөлбөрийн удирдлага",
     coursesManagement: "Курсын удирдлага",
     promotions: "Урамшуулал",
@@ -507,6 +513,7 @@ export const translations = {
     venue: "Байршил",
     ongoing: "Явагдаж буй",
     createDate: "Үүсгэсэн огноо",
+     totalEarnings: "Нийт орлого",
     totalBookingRevenue: "Захиалгын нийт орлого",
     createNew: "Шинийг үүсгэх",
     featured: "Онцлох",
@@ -535,7 +542,7 @@ export const translations = {
     payoutRequestFailed: "Төлбөр хүсэх хүсэлт амжилтгүй боллоо",
     ticketSale: "Тасалбар борлуулалт",
     payoutRejected: "Төлбөр буцаагдсан",
-    eventcategory :"Арга хэмжээний төрөл",
+    eventcategory: "Үйл явдлын нэр & ангилал",
     adjustment: "Зохицуулалт",
     referralReward: "Урилгын шагнал",
     enterValidAmount: "Зөв дүн оруулна уу",
@@ -579,10 +586,10 @@ export const translations = {
     seats: "Суудал",
     viewDetails: "Дэлгэрэнгүй үзэх",
     "totalRevenue": "Нийт орлого",
-   
     "Total Events Hosted": "Нийт зохион байгуулсан арга хэмжээ",
     upcomingEventsCount:"Ирэх арга хэмжээ",
     recentNotifications: "Сүүлийн мэдэгдлүүд",
     "Total Bookings":"Нийт захиалга",
+   
   }
 };
