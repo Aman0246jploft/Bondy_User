@@ -111,7 +111,7 @@ function TicketDetailsContent() {
     try {
       const res = await bookingApi.getShareAndDownloadUrls(id);
       if (res.status && res.data) {
-        const downloadUrl = res.data.data.downloadUrl;
+        const downloadUrl = res.data.downloadUrl;
         // Option 1: Copy to clipboard
         await navigator.clipboard.writeText(downloadUrl);
         setCopyStatus(t("downloadLinkCopied") || "Download link copied to clipboard!");
@@ -262,7 +262,7 @@ function TicketDetailsContent() {
                         <img src="/img/download-arrow.svg" className="me-2" alt="" />
                         {t("downloadTicket") || "Download PDF"}
                       </button>
-                      <button
+                      {/* <button
                         className="btn-link-teal d-flex align-items-center p-2 border rounded"
                         type="button"
                         onClick={handleDownloadLink}
@@ -270,7 +270,7 @@ function TicketDetailsContent() {
                         style={{ background: "rgba(0, 128, 128, 0.1)", border: "1px solid var(--primary-teal)" }}
                       >
                         <img src="/img/link-icon.svg" width="18" height="18" alt="Link" />
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 </div>
