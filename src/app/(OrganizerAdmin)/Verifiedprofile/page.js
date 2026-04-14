@@ -184,16 +184,16 @@ function page() {
                 </div>
               )}
 
-              {status === "pending" && (
+              {/* {status === "pending" && (
                 <div className="alert alert-warning">
                   Your verification is pending approval.
                 </div>
-              )}
+              )} */}
 
               <Row>
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="text-white mb-2">Government ID</label>
+                    {/* <label className="text-white mb-2">Government ID</label>
                     <div
                       className="doc_upload_sec mt-0"
                       onClick={() =>
@@ -233,7 +233,7 @@ function page() {
                         onChange={(e) => handleFileChange(e, "Gov ID")}
                         disabled={status === "approved"}
                       />
-                    </div>
+                    </div> */}
                   </div>
                 </Col>
 

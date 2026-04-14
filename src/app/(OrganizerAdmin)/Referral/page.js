@@ -151,7 +151,7 @@ function page() {
                     <button className="common_btn" type="button" onClick={handleCopyLink}>
                       Copy Link
                     </button>
-                    <span className="link-icon">
+                    <span className="link-icon" >
                       <img src="/img/link.svg" alt="link" />
                     </span>
                   </>

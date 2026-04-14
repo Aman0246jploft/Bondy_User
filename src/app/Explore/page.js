@@ -29,7 +29,7 @@ function ExploreContent() {
       });
 
       if (response?.data?.categories) {
-        setCategories(response.data.categories);
+        setCategories(response?.data?.categories);
       } else {
         setCategories([]);
       }
@@ -96,13 +96,13 @@ function ExploreContent() {
           <p>{t("explorePageSubtitle")}</p>
         </div>
       </div>
-
+ 
       <div className="listing_bannr_field">
         <Container>
           {/* Search Field Component */}
           <Field
             onSearch={handleSearch}
-            label={activeTab === "Events" ? "Event Name/Type" : "Course Name/Type"}
+            label={activeTab === "Events" ? <small>{t("eventcategory")}</small> : <small>{t("courseCategory")}</small>}
             placeholder={activeTab === "Events" ? "e.g. music festival" : "e.g. guitar course"}
           />
 

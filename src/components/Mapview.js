@@ -41,7 +41,7 @@ export default function Mapview({ searchParams }) {
         let currentParams = { limit: 20, page: 1, ...searchParams };
 
         // Try Near You first
-        const nearRes = await eventApi.getEvents({ ...currentParams, filter: "nearYou" });
+        const nearRes = await eventApi.getEvents({ ...currentParams, filter: "nearyou" });
         if (nearRes.data?.events?.length > 0) {
           setEvents(nearRes.data.events);
         } else {
@@ -185,7 +185,7 @@ export default function Mapview({ searchParams }) {
                         </div>
                       </div>
                       <div className="price-section">
-                        <div><h5 className="m-0 fw-bold">{event.ticketPrice ? `$${event.ticketPrice}` : "Free"}</h5></div>
+                        <div><h5 className="m-0 fw-bold">{event.ticketPrice ? `₮${event.ticketPrice}` : "Free"}</h5></div>
                         <Link href={`/eventDetails?id=${event._id}`} className="common_btn text-decoration-none text-white text-center">
                           View Details
                         </Link>

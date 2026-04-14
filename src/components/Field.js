@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import VenueAutocomplete from "../app/(OrganizerAdmin)/Components/VenueAutocomplete";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Field({ onSearch, label = "Search", placeholder = "Search here..." }) {
+   const { t } = useLanguage()
   const [isReady, setIsReady] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState(null);
@@ -95,7 +97,7 @@ export default function Field({ onSearch, label = "Search", placeholder = "Searc
             <div className="search-field two_field">
               <img src="/img/loc_icon.svg" alt="location" />
               <div style={{ width: "100%", overflow: "hidden" }}>
-                <small>Where</small>
+                <small>{t("where")}</small>
                 <div onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}>
                   <VenueAutocomplete
                     key={resetKey}
@@ -112,7 +114,7 @@ export default function Field({ onSearch, label = "Search", placeholder = "Searc
             <div className="search-field three_field">
               <img src="/img/date_icon.svg" alt="date" />
               <div style={{ width: "100%" }}>
-                <small>When</small>
+                <small>{t("When")}</small>
                 <select
                   className="border-0 shadow-none p-0 bg-transparent text-secondary w-100 placeholder-styled-select mt-1"
                   value={dateFilter}

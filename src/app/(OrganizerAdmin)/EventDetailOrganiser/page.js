@@ -253,7 +253,7 @@ function EventDetailsContent() {
             <li>
               <h6>Price</h6>
               <p className="text-primary" style={{ fontSize: "1.2rem", fontWeight: "700" }}>
-                ${event.ticketPrice?.toLocaleString() || 0}
+                ₮{event.ticketPrice?.toLocaleString() || 0}
               </p>
             </li>
             {event.addOns && (

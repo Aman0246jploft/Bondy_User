@@ -19,7 +19,7 @@ const ProgramCart = ({ programsArray, pagination }) => {
       duration: "2hrs",
       sessions: "12 sessions",
       date: "May 1 – Jun 1",
-      price: "$300",
+      price: "₮300",
       available: true,
     },
     {
@@ -40,7 +40,7 @@ const ProgramCart = ({ programsArray, pagination }) => {
       duration: "2hrs",
       sessions: "12 sessions",
       date: "May 1 – Jun 1",
-      price: "$300",
+      price: "₮300",
       available: true,
     },
   ];
@@ -140,7 +140,7 @@ const ProgramCart = ({ programsArray, pagination }) => {
                     <div className="price_align" style={{ marginTop: 'auto' }}>
                       {!program?.currentSchedule?.isFull ? (
                         <>
-                          <span style={{ fontWeight: '700' }}>${program?.price}</span>
+                          <span style={{ fontWeight: '700' }}>₮{program?.price}</span>
                           <Link
                             href={
                               program?.currentSchedule?._id

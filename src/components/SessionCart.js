@@ -6,19 +6,19 @@ const eventData = {
   NextSession: {
     title: "Next Session",
     data: [
-      { id: 1, name: "Nora Bayes", date: "May 6, 2025", location: "Hagen", price: "$778.58", img: "/img/img_01.png" },
-      { id: 2, name: "Tony Bennett", date: "Aug 2, 2025", location: "Salem (OR)", price: "$388.89", img: "/img/img_02.png" },
-      { id: 3, name: "Joan Baez", date: "Dec 28, 2025", location: "Naltchik", price: "$406.27", img: "/img/img_03.png" },
-      { id: 4, name: "Devendra Banhart", date: "Feb 9, 2025", location: "Sterlitamak", price: "$275.43", img: "/img/img_04.png" },
+      { id: 1, name: "Nora Bayes", date: "May 6, 2025", location: "Hagen", price: "₮778.58", img: "/img/img_01.png" },
+      { id: 2, name: "Tony Bennett", date: "Aug 2, 2025", location: "Salem (OR)", price: "₮388.89", img: "/img/img_02.png" },
+      { id: 3, name: "Joan Baez", date: "Dec 28, 2025", location: "Naltchik", price: "₮406.27", img: "/img/img_03.png" },
+      { id: 4, name: "Devendra Banhart", date: "Feb 9, 2025", location: "Sterlitamak", price: "₮275.43", img: "/img/img_04.png" },
     ],
   },
   PastSessions: {
     title: "Past Sessions",
     data: [
-      { id: 101, name: "City Beats", date: "Mar 10", location: "Your City", price: "$99", img: "/img/img_01.png" },
-      { id: 102, name: "Local Jam", date: "Mar 12", location: "Downtown", price: "$79", img: "/img/img_02.png" },
-      { id: 103, name: "Street Vibes", date: "Mar 15", location: "Main Square", price: "$69", img: "/img/img_03.png" },
-      { id: 104, name: "Open Mic", date: "Mar 18", location: "Cafe Zone", price: "$59", img: "/img/img_04.png" },
+      { id: 101, name: "City Beats", date: "Mar 10", location: "Your City", price: "₮99", img: "/img/img_01.png" },
+      { id: 102, name: "Local Jam", date: "Mar 12", location: "Downtown", price: "₮79", img: "/img/img_02.png" },
+      { id: 103, name: "Street Vibes", date: "Mar 15", location: "Main Square", price: "₮69", img: "/img/img_03.png" },
+      { id: 104, name: "Open Mic", date: "Mar 18", location: "Cafe Zone", price: "₮59", img: "/img/img_04.png" },
     ],
   },
 };
@@ -54,7 +54,7 @@ const SessionCart = ({ type, title, events }) => {
               location = item.venueAddress.city || item.venueAddress.address;
             }
 
-            const price = item.ticketPrice !== undefined ? `$${item.ticketPrice}` : item.price;
+            const price = item.ticketPrice !== undefined ? `₮${item.ticketPrice}` : item.price;
 
             // Calculate seats left
             const seatsLeft = item.totalTickets && item.ticketQtyAvailable

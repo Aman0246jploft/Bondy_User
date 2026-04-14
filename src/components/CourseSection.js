@@ -126,7 +126,7 @@ const CourseSection = ({
                       </div>
 
                       <div className="price-tag">
-                        {item.price ? `$${item.price}` : "Free"}
+                        {item.price ? `₮${item.price}` : "Free"}
                       </div>
                     </div>
                   </div>
