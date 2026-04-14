@@ -13,6 +13,10 @@ export default function OTPPage() {
   const [loading, setLoading] = useState(false);
   const inputRefs = useRef([]);
 
+ useEffect(() => {
+  document.title = "OTP - Bondy";
+}, []);
+
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const flow = searchParams.get("flow");

@@ -70,6 +70,7 @@ function CoursesManagement() {
 
     useEffect(() => {
         fetchCategories();
+        document.title = "Courses Management - Bondy";
     }, []);
 
     useEffect(() => {

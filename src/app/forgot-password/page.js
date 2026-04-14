@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { Col, Container, Form, Row } from "react-bootstrap";
 import authApi from "@/api/authApi";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,10 @@ export default function ForgotPasswordPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
+
+ useEffect(() => {
+  document.title = "Forgot Password - Bondy";
+}, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

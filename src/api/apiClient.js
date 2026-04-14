@@ -28,7 +28,7 @@ apiClient.interceptors.response.use(
         if (!skipToast) {
             if (response.data?.status && response.data?.message) {
                 if (typeof response.data.message === "string") {
-                    toast.success(response.data.message);
+                    // toast.success(response.data.message);
                 }
             } else if (response.data?.status === false && response.data?.message) {
                 if (response.data.message === "Invalid or expired token") {

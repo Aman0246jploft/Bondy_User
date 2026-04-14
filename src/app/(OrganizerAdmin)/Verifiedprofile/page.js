@@ -69,6 +69,7 @@ function page() {
         setContactNumber("");
       }
     }
+    document.title = "Verified Profile - Bondy";
   }, [userData]);
 
   const fetchProfile = async () => {

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import { useEventContext } from "@/context/EventContext";
 import authApi from "@/api/authApi";
@@ -107,6 +107,11 @@ function page() {
     e.preventDefault();
     router.push("/EventPreview");
   };
+
+  useEffect(() => {
+    document.title = "Gallery - Bondy";
+  }, []);
+
 
   return (
     <div>

@@ -58,6 +58,7 @@ function page() {
   useEffect(() => {
     fetchCode();
     fetchStats();
+    document.title = "Referral - Bondy";
   }, []);
 
   const handleCopyLink = () => {

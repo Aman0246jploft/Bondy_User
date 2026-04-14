@@ -80,6 +80,7 @@ function page() {
   useEffect(() => {
     fetchEvents();
     fetchStats();
+    document.title = "Events Management - Bondy";
   }, [pagination.page, activeTab]);
 
   const handlePageChange = (newPage) => {
@@ -135,7 +136,7 @@ function page() {
         packageId: selectedPackage._id,
       });
       if (res?.status) {
-        toast.success("Promotion activated successfully! 🎉");
+        toast.success("Promotion activated successfully");
         closePromoModal();
         fetchEvents();
       }

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useRef } from "react";
+import React, { useRef,useEffect } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import { useEventContext } from "@/context/EventContext";
 import { useRouter } from "next/navigation";
@@ -89,6 +89,8 @@ function page() {
 
     router.push("/Agerestraction");
   };
+
+  useEffect(() => { document.title = "Tickets & Pricing - Bondy"; }, []);
 
   return (
     <div>

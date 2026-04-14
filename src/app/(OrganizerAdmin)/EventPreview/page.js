@@ -28,6 +28,7 @@ function page() {
       }
     };
     fetchCategories();
+    dcoument.title = "Event Preview - Bondy";
   }, []);
 
   const getCategoryName = (id) => {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import React from "react";
 import { Col, Row } from "react-bootstrap";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useEffect } from "react";
 
 function UserDetailsOrganizer() {
   return (
@@ -12,6 +13,12 @@ function UserDetailsOrganizer() {
 }
 
 function UserDetailsOrganizerContent() {
+
+  useEffect(() => {
+    document.title = "User Details - Bondy";
+  }, []);
+
+
   return (
     <div>
       <div className="cards ticket-details">

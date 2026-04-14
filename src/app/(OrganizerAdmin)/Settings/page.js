@@ -79,7 +79,7 @@ function page() {
     try {
       await userSettingApi.updateUserSetting({ language: lang.dbLabel });
       if (changeLanguage) changeLanguage(lang.code);
-      toast.success("Language updated");
+       toast.success("Language updated");
     } catch (error) {
       console.error("Failed to update language:", error);
       toast.error("Failed to update language");
@@ -89,6 +89,11 @@ function page() {
   if (loading) {
     return <div className="text-center py-5">Loading settings...</div>;
   }
+
+  useEffect(() => {
+    document.title = "Settings - Bondy";
+  }, []);
+
 
   return (
     <div>

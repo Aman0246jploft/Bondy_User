@@ -1,8 +1,14 @@
 import Link from "next/link";
 import React from "react";
 import { Col, Row } from "react-bootstrap";
+import { useEffect } from "react";
 
 function page() {
+  useEffect(() => {
+    document.title = "Subscription & Billing - Bondy";
+  }, []);
+
+
   return (
     <div>
       <div className="cards subscription">

@@ -48,6 +48,7 @@ function Page() {
 
   useEffect(() => {
     fetchWishlist(activeTab, 1);
+    document.title = `${t("myFavorite")} - Bondy`;
   }, [activeTab]);
 
   const handleTabSelect = (k) => {

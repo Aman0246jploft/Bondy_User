@@ -36,6 +36,7 @@ const MAX = 100;
       }
     };
     fetchFeatureFee();
+    document.title = "Age Restriction - Bondy";
   }, []);
 
   // Local state for age slider if needed, or directly use eventData

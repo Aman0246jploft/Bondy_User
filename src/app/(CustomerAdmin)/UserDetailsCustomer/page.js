@@ -2,6 +2,7 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { Row, Col } from "react-bootstrap";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import useEffect from "react";
 
 function UserDetailsCustomer() {
   return (
@@ -12,7 +13,13 @@ function UserDetailsCustomer() {
 }
 
 function UserDetailsCustomerContent() {
+  
   const { t } = useLanguage();
+
+  useEffect(() => {
+    document.title = `${t("userProfile")} - Bondy`;
+  }, []);
+
   return (
     <div>
       <div className="cards ticket-details">

@@ -26,6 +26,7 @@ export default function PrivacyPolicy() {
             }
         };
         fetchPolicy();
+        document.title = "Privacy Policy | Bondy";
     }, []);
 
     return (

@@ -15,6 +15,7 @@ import ReviewListModal from "@/components/Modal/ReviewListModal";
 import authApi from "@/api/authApi";
 import blockUserApi from "@/api/blockUser";
 import reportUserApi from "@/api/reportUser";
+import toast from "react-hot-toast";
 
 function ProfileContent() {
   const searchParams = useSearchParams();
@@ -54,6 +55,14 @@ function ProfileContent() {
 
     fetchUserProfile();
   }, [userId]);
+
+  useEffect(() => {
+    if (userProfile?.firstName || userProfile?.lastName) {
+      document.title = `${userProfile.firstName || ''} ${userProfile.lastName || ''} | Bondy`;
+    } else {
+      document.title = 'Profile | Bondy';
+    }
+  }, [userProfile]);
 
   const handleFollow = async () => {
     try {
@@ -121,8 +130,12 @@ function ProfileContent() {
   const handleConfirm = async () => {
     try {
       if (actionType === "block") {
-        await blockUserApi.blockUser({ toUser: userId });
+        const res = await blockUserApi.blockUser({ toUser: userId });
         setShowConfirm(false);
+        if (res.status === true) {
+          toast.success(res.message);
+        } else {
+        }
       }
     } catch (error) {
       console.error(error);
@@ -137,11 +150,9 @@ function ProfileContent() {
       setReportError("Reason is required");
       return;
     }
-
     setReportError("");
-
     try {
-      await reportUserApi.reportUser({
+      const res = await reportUserApi.reportUser({
         toUser: userId,
         reason,
         description,
@@ -150,6 +161,10 @@ function ProfileContent() {
       setShowReportModal(false);
       setReportReason("");
       setReportDescription("");
+      if (res.status === true) {
+        toast.success(res.message);
+      } else {
+      }
     } catch (error) {
       console.error(error);
     }

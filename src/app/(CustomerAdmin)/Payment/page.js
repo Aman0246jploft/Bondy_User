@@ -3,9 +3,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 import { Row, Col } from "react-bootstrap";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import useEffect from "react";
 
 function page() {
   const { t } = useLanguage();
+  useEffect (() => {
+    document.title = "Payment - Bondy";
+  },[]);
   return (
     <div>
       <div className="cards payment-cards">

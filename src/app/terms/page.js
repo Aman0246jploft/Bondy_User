@@ -26,6 +26,7 @@ export default function TermsConditions() {
             }
         };
         fetchTerms();
+        document.title =  (t("termsConditions") || "Terms & Conditions") + " | Bondy";
     }, []);
 
     return (

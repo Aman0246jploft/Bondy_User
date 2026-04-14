@@ -43,6 +43,14 @@ function EventAttendeesContent() {
     return () => clearTimeout(timer);
   }, [eventId, search]);
 
+  useEffect(() => {
+    if (eventTitle) {
+      document.title = `${eventTitle} Attendees | Bondy`;
+    } else {
+      document.title = 'Event Attendees | Bondy';
+    }
+  }, [eventTitle]);
+
   return (
     <>
       <Header />

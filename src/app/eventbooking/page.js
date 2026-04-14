@@ -24,6 +24,12 @@ function BookingPageContent() {
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
   useEffect(() => {
+    if (bookingItem?.title) {
+      document.title = `${bookingItem.title} | Bondy`;
+    }
+  }, [bookingItem]);
+
+  useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {

@@ -34,6 +34,10 @@ export default function HomePage() {
     }
   }, []);
 
+   useEffect(() => {
+    document.title = 'Home | Bondy';
+  }, []);
+
   return (
     <>
       <Header />

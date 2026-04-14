@@ -45,6 +45,7 @@ function page() {
 
   useEffect(() => {
     fetchTickets(activeTab, currentPage);
+    document.title = `${t("myTickets")} - Bondy`;
   }, [activeTab, currentPage]);
 
   const handleTabSelect = (k) => {

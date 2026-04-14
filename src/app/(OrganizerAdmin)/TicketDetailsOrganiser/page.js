@@ -15,6 +15,11 @@ const ExpandableText = ({ text, limit = 100 }) => {
   if (!text) return null;
   if (text.length <= limit) return <p>{text}</p>;
 
+  useEffect(() => {
+    document.title = "Ticket Details - Bondy";
+  }, []);
+
+
   return (
     <div>
       <p>

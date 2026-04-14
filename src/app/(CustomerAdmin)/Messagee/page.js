@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useRef, useCallback, Suspense, use } from "react";
 import "./message.css";
 import Link from "next/link";
 import { useSocket } from "@/context/SocketContext";
@@ -93,6 +93,9 @@ function MessageeContent() {
   // ══════════════════════════════════════════════════════════
   // 1. Initial chat list fetch (page 1) + real-time listeners
   // ══════════════════════════════════════════════════════════
+ 
+useEffect(() => {document.title = "Message - Bondy";}, []);
+
   useEffect(() => {
     if (!socket) return;
 

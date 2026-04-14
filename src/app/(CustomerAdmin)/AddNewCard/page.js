@@ -2,13 +2,14 @@
 import Link from "next/link";
 import React from "react";
 import { Col, Form, Image, Row } from "react-bootstrap";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 
 import { useLanguage } from "@/context/LanguageContext";
 
 function page() {
   const { t } = useLanguage();
   const [showCvv, setShowCvv] = useState(false);
+  useEffect(() => {document.title = "Add New Card - Bondy";}, []);
   return (
     <div>
       <div className="cards">

@@ -104,6 +104,7 @@ function page() {
     fetchUpcomingEvents();
     fetchAnalytics();
     fetchNotifications();
+    document.title = "Dashboard Organizer - Bondy";
   }, []);
 
   return (

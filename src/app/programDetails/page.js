@@ -18,6 +18,7 @@ import wishlistApi from "@/api/wishlistApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatDate } from "@/utils/dateFormater";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 function ProgramDetailsContent() {
   const router = useRouter();
@@ -58,7 +59,8 @@ function ProgramDetailsContent() {
     try {
       if (isWishlisted) {
         const response = await wishlistApi.removeFromWishlist({ entityId: id });
-        if (response.status) {
+        if (response?.status === true) {
+          toast.success(response?.message);
           setIsWishlisted(false);
         }
       } else {
@@ -66,7 +68,8 @@ function ProgramDetailsContent() {
           entityId: id,
           entityModel: "Course",
         });
-        if (response.status) {
+        if (response?.status === true) {
+          toast.success(response?.message);
           setIsWishlisted(true);
         }
       }
@@ -76,6 +79,12 @@ function ProgramDetailsContent() {
       setWishlistLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (courseDetails?.courseTitle) {
+      document.title = `${courseDetails.courseTitle} | Bondy`;
+    }
+  }, [courseDetails]);
 
   if (!courseDetails) {
     return (
@@ -312,13 +321,14 @@ function ProgramDetailsContent() {
                       {createdBy?.isVerified && (
                         <span className="verified_tag">✓ VERIFIED</span>
                       )}
-
-                        <span
-    className="view_details"
-    onClick={() => router.push(`/profile?id=${createdBy?._id}`)}
-  >
-    View Details
-  </span>
+                      <span
+                        className="view_details"
+                        onClick={() =>
+                          router.push(`/profile?id=${createdBy?._id}`)
+                        }
+                      >
+                        View Details
+                      </span>
                     </span>
                   </div>
                 </div>
