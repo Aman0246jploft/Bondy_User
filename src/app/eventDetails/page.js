@@ -16,6 +16,7 @@ import ExpandableText from "@/components/ExpandableText";
 import Footer from "@/components/Footer";
 import EventSection from "@/components/EventSection";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 import { getFullImageUrl } from "@/utils/imageHelper";
 
@@ -49,6 +50,12 @@ function EventDetailsContent() {
     fetchEventDetails();
   }, [eventId]);
 
+  useEffect(() => {
+    if (event?.eventTitle) {
+      document.title = `${event.eventTitle} | Bondy`;
+    }
+  }, [event]);
+
 
   const handleWishlistToggle = async () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -63,7 +70,8 @@ function EventDetailsContent() {
     try {
       if (isWishlisted) {
         const response = await wishlistApi.removeFromWishlist({ entityId: eventId });
-        if (response.status) {
+        if (response.status === true) {
+          toast.success(response.message)
           setIsWishlisted(false);
         }
       } else {
@@ -71,8 +79,9 @@ function EventDetailsContent() {
           entityId: eventId,
           entityModel: "Event"
         });
-        if (response.status) {
+        if (response.status === true) {
           setIsWishlisted(true);
+          toast.success(response.message)
         }
       }
     } catch (error) {

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useRef } from "react";
+import React, { useRef,useEffect } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import LocationMap from "../../Components/LocationMap"; // Assuming this component exists
 import VenueAutocomplete from "../../Components/VenueAutocomplete";
@@ -78,6 +78,9 @@ function page() {
 
     router.push("/TicketsPricing");
   };
+
+  useEffect(() => { document.title = "Date, Time and Location - Bondy"; }, []);
+
 
   return (
     <div>

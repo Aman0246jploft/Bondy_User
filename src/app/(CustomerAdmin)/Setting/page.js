@@ -40,6 +40,7 @@ function page() {
 
   useEffect(() => {
     fetchSettings();
+    document.title = `Setting - Bondy`;
   }, []);
 
   const fetchSettings = async () => {

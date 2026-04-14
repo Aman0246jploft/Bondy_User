@@ -45,10 +45,11 @@ export default function BondyHeader() {
       <nav className="bondy-nav">
         {/* LOGO INTRO ANIMATION */}
         <motion.div
-          className="logo-box"
-          initial={{ scale: 2.5, x: "45vw", y: "45vh" }}
-          animate={!isAnimating ? { scale: 1, x: 0, y: 0 } : {}}
-          transition={{ duration: 1.2, ease: [0.6, 0.01, -0.05, 0.9] }}>
+           className="logo-box"
+          // initial={{ scale: 2.5, x: "45vw", y: "45vh" }}
+          // animate={!isAnimating ? { scale: 1, x: 0, y: 0 } : {}}
+          // transition={{ duration: 1.2, ease: [0.6, 0.01, -0.05, 0.9] }}
+          >
           <div className="logo_box">
             <Link href="/">
               <img src="/img/logo.svg" alt="logo" />

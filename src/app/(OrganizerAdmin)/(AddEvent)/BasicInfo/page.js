@@ -35,7 +35,6 @@ function BasicInfoContent() {
       const response = await eventApi.getEventDetails(eventId);
       if (response.data && response.data.event) {
         loadEventForEdit(response.data.event);
-        toast.success("Event loaded for editing");
       }
     } catch (error) {
       console.error("Error loading event:", error);
@@ -179,6 +178,11 @@ function BasicInfoContent() {
 
     router.push("/DateTime");
   };
+
+  useEffect(() => {
+    document.title = "Basic Info - Bondy";
+  }, []);
+
 
   return (
     <div>

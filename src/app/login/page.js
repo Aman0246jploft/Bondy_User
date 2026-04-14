@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { Col, Container, Form, Nav, Row, Tab } from "react-bootstrap";
 import authApi from "@/api/authApi";
 import { useRouter } from "next/navigation";
@@ -11,6 +11,10 @@ export default function Page() {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("Customer");
+
+  useEffect(() => {
+  document.title = "Login - Bondy";
+}, []);
 
   // Form State
   const [formData, setFormData] = useState({

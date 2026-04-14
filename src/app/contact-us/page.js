@@ -20,6 +20,10 @@ export default function Page() {
   const [topics, setTopics] = useState([]);
 
   useEffect(() => {
+  document.title = "Contact-Us - Bondy";
+}, []);
+
+  useEffect(() => {
     const fetchTopics = async () => {
       try {
         const { data } = await categoryApi.getCategories({ type: "support_ticket", limit: 1000 });

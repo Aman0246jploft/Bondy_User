@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
+import toast from "react-hot-toast";
 
 const availableLanguages = [
   {
@@ -20,6 +21,7 @@ const availableLanguages = [
 ];
 
 export default function LanguageSelector() {
+
   const [open, setOpen] = useState(false);
   const { language, changeLanguage } = useLanguage();
 
@@ -30,6 +32,8 @@ export default function LanguageSelector() {
   const handleSelect = (langCode) => {
     changeLanguage(langCode);
     setOpen(false);
+    toast.success(`Language changed to ${availableLanguages.find((l) => l.code === langCode).name}`);
+
   };
 
   // 👇 Outside click close logic

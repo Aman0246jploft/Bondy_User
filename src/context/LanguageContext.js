@@ -63,7 +63,7 @@ export const LanguageProvider = ({ children }) => {
         };
         const res = await userSettingApi.updateUserSetting(payload);
         if (res.status) {
-          toast.success(translations[lang]?.languageUpdated || "Language preference saved");
+          // toast.success(translations[lang]?.languageUpdated || "Language preference saved");
         }
       } catch (error) {
         console.error("Failed to save language preference to backend:", error);

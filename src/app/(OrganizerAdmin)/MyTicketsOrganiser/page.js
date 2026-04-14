@@ -50,6 +50,7 @@ function page() {
 
   useEffect(() => {
     fetchTickets(activeTab, currentPage, bookingType);
+    document.title = "My Tickets - Bondy";
   }, [activeTab, currentPage, bookingType]);
 
   const handleTabSelect = (k) => {

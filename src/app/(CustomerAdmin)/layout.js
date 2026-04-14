@@ -37,6 +37,10 @@ export default function RootLayout({ children }) {
 
   if (!authorized) return null;
 
+  useEffect(() => {
+    document.title = "Customer Admin - Bondy";
+  }, []);
+
   return (
     <div
       className={`app-layout ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}

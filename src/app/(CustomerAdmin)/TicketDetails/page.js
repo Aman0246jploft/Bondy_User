@@ -52,6 +52,7 @@ function TicketDetailsContent() {
     if (id) {
       fetchTicketDetail(id);
     }
+    document.title = `${t("ticketDetails")} - Bondy`;
   }, [id]);
 
   const fetchTicketDetail = async (transactionId) => {

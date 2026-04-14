@@ -63,6 +63,7 @@ function EventDetailsContent() {
     if (eventId) {
       fetchDetails();
     }
+    document.title = "Event Details - Bondy";
   }, [eventId]);
 
   if (loading) {

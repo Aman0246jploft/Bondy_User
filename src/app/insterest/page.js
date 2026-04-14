@@ -131,6 +131,10 @@ function InterestPageContent() {
     }
   };
 
+  useEffect(() => {
+  document.title = "Interest - Bondy";
+}, []);
+
   return (
     <div className="login_sec compplete_profile_sec">
       <Container fluid>

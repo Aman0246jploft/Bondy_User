@@ -58,6 +58,7 @@ function Page() {
 
       setCourseId(id);
     }
+    document.title = "Add/Edit Course - Bondy";
   }, []);
 
   // Fetch Categories and Location on Mount
@@ -161,6 +162,8 @@ function Page() {
 
 
     setFormData(transformedCourse);
+
+  
 
   };
 

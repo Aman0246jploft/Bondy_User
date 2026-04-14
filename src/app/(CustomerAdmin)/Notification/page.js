@@ -29,6 +29,7 @@ export default function NotificationPage() {
 
   useEffect(() => {
     fetchNotifications();
+    document.title = `Notification - Bondy`;
   }, []);
 
   const handleMarkAllRead = async () => {

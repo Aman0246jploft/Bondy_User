@@ -14,6 +14,10 @@ const ExpandableText = ({ text, limit = 100 }) => {
   if (!text) return null;
   if (text.length <= limit) return <p>{text}</p>;
 
+  useEffect(() => {
+        document.title = (text.length > 50 ? text.substring(0, 50) + "..." : text) + " - Bondy";
+    }, [text]);
+
   return (
     <div>
       <p>

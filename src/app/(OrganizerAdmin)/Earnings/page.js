@@ -101,6 +101,10 @@ function page() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    document.title = "Earnings - Bondy";
+  }, []);
+
   const handleRequestPayout = async (e) => {
     e.preventDefault();
     const amount = Number(payoutAmount);

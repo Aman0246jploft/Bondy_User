@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ResetPasswordPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1); // 1: OTP, 2: Password Reset, 3: Success
+    const { t } = useLanguage();
 
     // OTP State
     const [otp, setOtp] = useState(["", "", "", "", ""]);
@@ -161,6 +163,11 @@ export default function ResetPasswordPage() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        document.title = (t("resetPassword") || "Reset Password") + " | Bondy";
+    }, [t]);
+
 
     return (
         <div className="login_sec otp_sec">

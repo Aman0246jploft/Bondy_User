@@ -241,6 +241,10 @@ function RegisterForm() {
     }
   };
 
+  useEffect(() => {
+        document.title = ("Register"  + " | Bondy")
+    }, []);
+
   return (
     <div className="login_sec">
       <Container fluid>

@@ -44,6 +44,7 @@ function page() {
 
   useEffect(() => {
     fetchCategories();
+    document.title = "Support Tickets - Bondy";
   }, []);
 
   useEffect(() => {

@@ -48,6 +48,12 @@ function ListingContent() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    if (meta?.title) {
+      document.title = `${meta.title} | Bondy`;
+    }
+  }, [meta]);
   const [filterParams, setFilterParams] = useState({
     search: "",
     latitude: null,

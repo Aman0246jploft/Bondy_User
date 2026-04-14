@@ -65,6 +65,12 @@ function ListingContent() {
       subtitle: `Discover the best events in ${categoryDetail.name} 🌟`,
     };
   }
+  
+    useEffect(() => {
+      if (meta?.title) {
+        document.title = `${meta.title} | Bondy`;
+      }
+    }, [meta]);
 
   // Fetch Category Details if categoryId is present
   useEffect(() => {

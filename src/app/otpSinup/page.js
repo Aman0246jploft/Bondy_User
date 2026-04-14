@@ -21,6 +21,10 @@ export default function OTPPage() {
     }
   }, []);
 
+  useEffect(() => {
+    document.title = "OTP Verification | Bondy";
+  }, []);
+
   const handleChange = (element, index) => {
     if (isNaN(element.value)) return false;
 

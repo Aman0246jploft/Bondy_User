@@ -13,6 +13,10 @@ export default function RootLayout({ children }) {
   const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
+  document.title = "Organizer Admin - Bondy";
+}, []);
+
+  useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -34,6 +38,7 @@ export default function RootLayout({ children }) {
       }
     };
     checkAuth();
+  
   }, [router]);
 
   if (!authorized) return null;

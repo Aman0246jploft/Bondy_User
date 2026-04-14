@@ -11,6 +11,7 @@ export default function PromotionsPage() {
 
   useEffect(() => {
     fetchPackages();
+    document.title = "Promotions - Bondy";
   }, []);
 
   const fetchPackages = async () => {

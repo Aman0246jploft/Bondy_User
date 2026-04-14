@@ -19,6 +19,10 @@ function ExploreContent() {
   const [loading, setLoading] = useState(false);
   const [searchParams, setSearchParams] = useState({});
 
+  useEffect(() => {
+    document.title = `${t("explorePageTitle")} | Bondy`;
+  }, [t]);
+
   const fetchCategories = async (type) => {
     try {
       setLoading(true);

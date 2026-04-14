@@ -101,6 +101,7 @@ function PersonalInfoContent() {
       }
     };
     fetchProfile();
+    document.title = "Personal Info - Bondy";
   }, []);
 
   const handleChange = (e) => {

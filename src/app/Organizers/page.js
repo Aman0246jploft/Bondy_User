@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import EventSection from "@/components/EventSection";
 import EventGallery from "@/components/EventGallery";
 import EventEaseUI from "@/components/EventEaseUI";
+import React, { useState, useRef, useEffect } from "react";
 
 export default function page() {
   const images = [
@@ -14,6 +15,10 @@ export default function page() {
     "/img/interactive-process-image-4.png",
     "/img/interactive-process-image-1.png",
   ];
+
+  useEffect(() => {
+  document.title = "Organizers - Bondy";
+}, []);
 
   return (
     <>

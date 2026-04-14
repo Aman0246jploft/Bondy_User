@@ -88,6 +88,11 @@ function MessageContent() {
     // ══════════════════════════════════════════════════════════
     // 1. Initial chat list fetch (page 1) + real-time listeners
     // ══════════════════════════════════════════════════════════
+
+    useEffect (() => {
+        document.title = "Message - Bondy";
+    },[])
+
     useEffect(() => {
         if (!socket) return;
 

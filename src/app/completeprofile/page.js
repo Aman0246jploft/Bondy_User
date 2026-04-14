@@ -36,6 +36,10 @@ function CompleteProfileContent() {
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
+  document.title = "Complete your personal profile - Bondy";
+}, []);
+
+  useEffect(() => {
     const fetchProfile = async () => {
       try {
         const response = await authApi.getSelfProfile();
