@@ -9,6 +9,7 @@ import Footer from "../../components/Footer";
 import Field from "../../components/Field";
 import { Container, Pagination } from "react-bootstrap";
 import eventApi from "@/api/eventApi";
+import categoryApi from "@/api/categoryApi";
 
 /* ── helpers ───────────────────────────────────────────── */
 const SECTION_META = {
@@ -39,12 +40,12 @@ const LIMIT = 12;
 /* ── inner component (needs Suspense boundary for useSearchParams) ── */
 function ListingContent() {
   const searchParams = useSearchParams();
-  const type = searchParams.get("type") || "recommended";
-
-  const meta = SECTION_META[type] || SECTION_META.all;
+  const type = searchParams.get("type") || "all"; // Default to all if category might be present
+  const categoryId = searchParams.get("category");
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categoryDetail, setCategoryDetail] = useState(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [filterParams, setFilterParams] = useState({
@@ -56,6 +57,34 @@ function ListingContent() {
 
   const totalPages = Math.ceil(total / LIMIT);
 
+  // Determine metadata display
+  let meta = SECTION_META[type] || SECTION_META.all;
+  if (categoryId && categoryDetail) {
+    meta = {
+      title: categoryDetail.name.charAt(0).toUpperCase() + categoryDetail.name.slice(1),
+      subtitle: `Discover the best events in ${categoryDetail.name} 🌟`,
+    };
+  }
+
+  // Fetch Category Details if categoryId is present
+  useEffect(() => {
+    if (categoryId) {
+      const fetchCategory = async () => {
+        try {
+          const res = await categoryApi.getCategoryDetails(categoryId);
+          if (res.data && res.data.category) {
+            setCategoryDetail(res.data.category);
+          }
+        } catch (err) {
+          console.error("Error fetching category details:", err);
+        }
+      };
+      fetchCategory();
+    } else {
+      setCategoryDetail(null);
+    }
+  }, [categoryId]);
+
   useEffect(() => {
     const fetchEvents = async () => {
       setLoading(true);
@@ -63,11 +92,12 @@ function ListingContent() {
         let params = {
           limit: LIMIT,
           page,
-          filter: meta.filter,
+          filter: meta.filter || "all",
           search: filterParams.search,
           latitude: filterParams.latitude,
           longitude: filterParams.longitude,
-          date: filterParams.date
+          date: filterParams.date,
+          categoryId: categoryId || ""
         };
 
         // geolocation for "nearYou" ONLY if no manual location is provided
@@ -98,7 +128,7 @@ function ListingContent() {
     };
 
     fetchEvents();
-  }, [page, type, filterParams]);
+  }, [page, type, filterParams, categoryId]);
 
   const handleSearch = (newFilters) => {
     setFilterParams({

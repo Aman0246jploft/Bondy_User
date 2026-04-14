@@ -495,7 +495,7 @@ function Page() {
                     <input
                       type="text"
                       className="form-control"
-                       placeholder="Course Name"
+                      placeholder="Course Name"
                       name="courseTitle"
                       value={formData.courseTitle}
                       onChange={handleChange}
