@@ -30,7 +30,7 @@ function CustomerHeader() {
     <div>
       <header className="topbar">
         {/* Search */}
-        <div className="topbar-search">
+        <div className="topbar-search" style={{ visibility: "hidden" }}>
           <input
             type="text"
             className="form-control"

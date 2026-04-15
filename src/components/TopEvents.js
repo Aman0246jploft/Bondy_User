@@ -1,4 +1,6 @@
+"use client";
 import React from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 const eventData = [
   {
@@ -34,17 +36,18 @@ const eventData = [
 ];
 
 const TopEvents = () => {
+  const { t } = useLanguage();
   const doubleData = [...eventData, ...eventData];
 
   return (
     <div className="events-section">
       <div className="container">
         <div className="main_title text-center">
-          <h2>Top Events</h2>
+          <h2>{t("topEvents")}</h2>
           <p>
-            Find the singers you're looking for quickly.{" "}
+            {t("topEventsDesc")}{" "}
             <a href="/Explore" className="text-theme-color text-decoration-underline">
-              You can see more.
+              {t("youCanSeeMore")}
             </a>
           </p>
         </div>

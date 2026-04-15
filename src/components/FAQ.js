@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, CircleHelp } from "lucide-react";
 import authApi from "@/api/authApi";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function FAQ() {
+  const { t } = useLanguage();
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -33,7 +35,7 @@ export default function FAQ() {
     return (
       <div className="faq-body">
         <div className="faq-wrapper text-center">
-          <p>Loading FAQs...</p>
+          <p>{t("loadingFaqs")}</p>
         </div>
       </div>
     );
@@ -44,12 +46,10 @@ export default function FAQ() {
       <div className="faq-wrapper">
         <div className="main_title text-center">
           <h2>
-            Frequently Asked <span>Questions</span>
+            {t("frequentlyAsked")} <span>{t("questions")}</span>
           </h2>
           <p>
-            Explore the most common questions and detailed answers about our
-            events of concerts, and security to help guide your journey in the
-            EVENJO.
+            {t("faqDescription")}
           </p>
         </div>
 
@@ -81,7 +81,7 @@ export default function FAQ() {
               </div>
             ))
           ) : (
-            <div className="text-center">No FAQs found.</div>
+            <div className="text-center">{t("noFaqsFound")}</div>
           )}
         </div>
       </div>

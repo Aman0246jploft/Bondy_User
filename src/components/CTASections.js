@@ -1,8 +1,33 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Apple, Play } from "lucide-react";
+import globalSettingApi from "@/api/globalSettingApi";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function CTASection() {
+  const { t } = useLanguage();
+  const [socialLinks, setSocialLinks] = useState({
+    apple_store: "#",
+    google_play: "#",
+  });
+
+  useEffect(() => {
+    const fetchSocialLinks = async () => {
+      try {
+        const response = await globalSettingApi.getSocialLinks();
+        if (response?.data?.value) {
+          setSocialLinks({
+            apple_store: response.data.value.apple_store || "#",
+            google_play: response.data.value.google_play || "#",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching social links:", error);
+      }
+    };
+    fetchSocialLinks();
+  }, []);
+
   return (
     <section className="cta-wrapper cTa_section">
       <div className="container">
@@ -18,18 +43,17 @@ export default function CTASection() {
           <img src="/img/lineshap-ctn.svg" className="float-shapeBtoom pos-6" />
 
           <div className="cta-content">
-            <h2>Ready to get started?</h2>
+            <h2>{t("readyToGetStarted")}</h2>
             <p>
-              Risus habitant leo egestas mauris diam eget morbi tempus
-              vulputate.
+              {t("ctaDescription")}
             </p>
 
             <div className="cta-buttons">
-              <a href="#" className="cta-btn outline">
-                <img src="/img/apple_icon.svg" /> App Store
+              <a href={socialLinks.apple_store} target="_blank" rel="noopener noreferrer" className="cta-btn outline">
+                <img src="/img/apple_icon.svg" /> {t("appStore")}
               </a>
-              <a href="#" className="cta-btn outline">
-                <img src="/img/play_icon.svg" /> Google Play
+              <a href={socialLinks.google_play} target="_blank" rel="noopener noreferrer" className="cta-btn outline">
+                <img src="/img/play_icon.svg" /> {t("googlePlay")}
               </a>
             </div>
           </div>

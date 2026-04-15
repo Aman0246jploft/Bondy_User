@@ -27,6 +27,7 @@ function ProfileContent() {
 
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentUserRole, setCurrentUserRole] = useState(null); // Logged-in user's role
 
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState("");
@@ -55,6 +56,21 @@ function ProfileContent() {
 
     fetchUserProfile();
   }, [userId]);
+
+  // Fetch logged-in user's role
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await authApi.getSelfProfile();
+        if (response.status) {
+          setCurrentUserRole(response.data.user.role);
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   useEffect(() => {
     if (userProfile?.firstName || userProfile?.lastName) {
@@ -317,10 +333,14 @@ function ProfileContent() {
                       <button
                         className="btn-message"
                         onClick={() => {
-                          if (userProfile?.role === "ORGANIZER") {
-                            router.push(`/Messagee?userId=${userId}`);
-                          } else {
+                          console.log("User Profile State:", userProfile);
+                          console.log("Current User Role:", currentUserRole);
+
+                          // Route based on LOGGED-IN user's role, not the profile being viewed
+                          if (currentUserRole === "ORGANIZER") {
                             router.push(`/Message?userId=${userId}`);
+                          } else {
+                            router.push(`/Messagee?userId=${userId}`);
                           }
                         }}
                       >

@@ -8,10 +8,13 @@ import { parsePhoneNumber } from "react-phone-number-input";
 import authApi from "@/api/authApi";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
+import GuestRoute from "@/components/GuestRoute";
+import { useLanguage } from "@/context/LanguageContext";
 
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const [selectedTab, setSelectedTab] = useState("Customer");
   const [show2, setShow2] = useState(false);
   const [show, setShow] = useState(false);
@@ -105,29 +108,29 @@ function RegisterForm() {
 
     // Client-side validation
     if (!customerData.email.trim()) {
-      toast.error("Email is required");
+      toast.error(t("emailRequired"));
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(customerData.email.trim())) {
-      toast.error("Please enter a valid email address");
+      toast.error(t("invalidEmail"));
       return;
     }
     if (!customerData.contactNumber) {
-      toast.error("Contact number is required");
+      toast.error(t("contactNumberRequired"));
       return;
     }
     if (!customerData.password) {
-      toast.error("Password is required");
+      toast.error(t("passwordRequired"));
       return;
     }
   
     if (!customerData.confirmPassword) {
-      toast.error("Confirm password is required");
+      toast.error(t("confirmPasswordRequired"));
       return;
     }
     if (customerData.password !== customerData.confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t("passwordsNotMatch"));
       return;
     }
     setLoading(true);
@@ -167,40 +170,40 @@ function RegisterForm() {
 
     // Client-side validation
     if (!organizerData.firstName.trim()) {
-      toast.error("First name is required");
+      toast.error(t("firstNameRequired"));
       return;
     }
     if (!organizerData.lastName.trim()) {
-      toast.error("Last name is required");
+      toast.error(t("lastNameRequired"));
       return;
     }
     if (!organizerData.email.trim()) {
-      toast.error("Email is required");
+      toast.error(t("emailRequired"));
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(organizerData.email.trim())) {
-      toast.error("Please enter a valid email address");
+      toast.error(t("invalidEmail"));
       return;
     }
     if (!organizerData.contactNumber) {
-      toast.error("Contact number is required");
+      toast.error(t("contactNumberRequired"));
       return;
     }
     if (!organizerData.password) {
-      toast.error("Password is required");
+      toast.error(t("passwordRequired"));
       return;
     }
     if (organizerData.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error(t("passwordMinLength"));
       return;
     }
     if (!organizerData.confirmPassword) {
-      toast.error("Confirm password is required");
+      toast.error(t("confirmPasswordRequired"));
       return;
     }
     if (organizerData.password !== organizerData.confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t("passwordsNotMatch"));
       return;
     }
     // if (!organizerData.businessType) {
@@ -208,7 +211,7 @@ function RegisterForm() {
     //   return;
     // }
     if (!organizerData.acceptTerms) {
-      toast.error("Please accept Terms & Conditions");
+      toast.error(t("acceptTerms"));
       return;
     }
     setLoading(true);
@@ -246,6 +249,7 @@ function RegisterForm() {
     }, []);
 
   return (
+    <GuestRoute>
     <div className="login_sec">
       <Container fluid>
         <Row className="justify-content-between align-items-center gy-4">
@@ -253,10 +257,9 @@ function RegisterForm() {
             <div className="login_img">
               <img src="/img/login_side_img.png" alt="login side" />
               <div className="content_img_box">
-                <h4>Explore Events Effortlessly</h4>
+                <h4>{t("exploreEventsEffortlessly")}</h4>
                 <p>
-                  Discover, book, and track events seamlessly with calendar
-                  integration and personalized event curation
+                  {t("exploreEventsEffortlesslyDesc")}
                 </p>
               </div>
             </div>
@@ -267,10 +270,9 @@ function RegisterForm() {
               <Col xxl={7} xl={9} lg={10} md={12}>
                 <div className="common_field">
                   <div className="fz_32">
-                    <h2 className="">Get started</h2>
+                    <h2 className="">{t("getStarted")}</h2>
                     <p>
-                      Register for events and create images of the activities
-                      you plan to attend.
+                      {t("registerForEventsDesc")}
                     </p>
                   </div>
 
@@ -286,10 +288,10 @@ function RegisterForm() {
                           className="custom-nav-pills justify-content-center m-auto"
                         >
                           <Nav.Item>
-                            <Nav.Link eventKey="Customer">Customer</Nav.Link>
+                            <Nav.Link eventKey="Customer">{t("customer")}</Nav.Link>
                           </Nav.Item>
                           <Nav.Item>
-                            <Nav.Link eventKey="Organizer">Organizer</Nav.Link>
+                            <Nav.Link eventKey="Organizer">{t("organizer")}</Nav.Link>
                           </Nav.Item>
                         </Nav>
                       </Col>
@@ -305,7 +307,7 @@ function RegisterForm() {
                                 <Form.Control
                                   type="email"
                                   name="email"
-                                  placeholder="Email"
+                                  placeholder={t("email")}
                                   value={customerData.email}
                                   onChange={handleCustomerChange}
                                   required
@@ -331,7 +333,7 @@ function RegisterForm() {
                                   <Form.Control
                                     type={show ? "text" : "password"}
                                     name="password"
-                                    placeholder="Password"
+                                    placeholder={t("password")}
                                     value={customerData.password}
                                     onChange={handleCustomerChange}
                                     required
@@ -358,7 +360,7 @@ function RegisterForm() {
                                   <Form.Control
                                     type={show2 ? "text" : "password"}
                                     name="confirmPassword"
-                                    placeholder="Confirm Password"
+                                    placeholder={t("confirmPassword")}
                                     value={customerData.confirmPassword}
                                     onChange={handleCustomerChange}
                                     required
@@ -385,13 +387,13 @@ function RegisterForm() {
                                 disabled={loading}
                                 className="common_btn w-100 d-block text-center text-decoration-none"
                               >
-                                {loading ? "Signing Up..." : "Sign Up"}
+                                {loading ? t("signingUp") : t("signUp")}
                               </button>
                             </Form>
 
                             <div className="other_text">
                               <span></span>
-                              <h6>or sign up with</h6>
+                              <h6>{t("orSignUpWith")}</h6>
                               <span></span>
                             </div>
 
@@ -412,8 +414,8 @@ function RegisterForm() {
 
                             <div className="other_signup">
                               <span>
-                                Already have an account?{" "}
-                                <Link href="/login">Login</Link>
+                                {t("alreadyHaveAccount")}{" "}
+                                <Link href="/login">{t("login")}</Link>
                               </span>
                             </div>
                           </Tab.Pane>
@@ -653,6 +655,7 @@ function RegisterForm() {
         </Row>
       </Container>
     </div>
+    </GuestRoute>
   );
 }
 

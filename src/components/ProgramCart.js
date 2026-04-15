@@ -155,9 +155,9 @@ const ProgramCart = ({ programsArray, pagination }) => {
                       ) : (
                         <>
                           <span className="redText" style={{ fontWeight: '700' }}>Seats Full</span>
-                          <Link href="" className="common_btn">
+                          {/* <Link href="" className="common_btn">
                             Join Waitlist
-                          </Link>
+                          </Link> */}
                         </>
                       )}
                     </div>

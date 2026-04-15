@@ -3,8 +3,10 @@ import React, { useEffect, useState } from "react";
 import { Col, Row, Tab, Tabs, Spinner } from "react-bootstrap";
 import promotionsApi from "../../../api/promotionsApi";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function PromotionsPage() {
+  const { t } = useLanguage();
   const [eventPackages, setEventPackages] = useState([]);
   const [coursePackages, setCoursePackages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +32,7 @@ export default function PromotionsPage() {
       }
     } catch (error) {
       console.error("Error fetching promotion packages:", error);
-      toast.error("Failed to load promotion packages");
+      toast.error(t("failedToLoadPromotionPackages"));
     } finally {
       setLoading(false);
     }
@@ -40,7 +42,7 @@ export default function PromotionsPage() {
     if (packages.length === 0) {
       return (
         <div className="text-center p-5 text-muted">
-          No active promotion packages available for {type}s at the moment.
+          {type === "event" ? t("noPromotionPackagesEvent") : t("noPromotionPackagesCourse")}
         </div>
       );
     }
@@ -53,7 +55,7 @@ export default function PromotionsPage() {
               <div>
                 <h5>{pkg.name}</h5>
                 <h2>
-                  ₮{pkg.price?.toLocaleString()} <span>{pkg.durationInDays} days</span>
+                  ₮{pkg.price?.toLocaleString()} <span>{pkg.durationInDays} {t("days")}</span>
                 </h2>
               </div>
               <div className="  flex-grow-1 mt-3">
@@ -67,7 +69,7 @@ export default function PromotionsPage() {
                 ) : (
                   <p>
                     <img src="/img/checkmark-vector.svg" className="me-3" alt="" />
-                    Standard Placement
+                    {t("standardPlacement")}
                   </p>
                 )}
               </div>
@@ -86,10 +88,9 @@ export default function PromotionsPage() {
       <div className="cards">
         <div className="card-header border-0 pb-0">
           <div>
-            <h2 className="card-title">Promotion Packages</h2>
+            <h2 className="card-title">{t("promotionPackages")}</h2>
             <p className="card-desc">
-              Boost your visibility with our curated promotion packages. Choose
-              the package that best fits your needs and budget to maximize your reach.
+              {t("promotionPackagesDesc")}
             </p>
           </div>
         </div>
@@ -106,12 +107,12 @@ export default function PromotionsPage() {
                 id="promotion-tabs"
                 className="mb-4"
               >
-                <Tab eventKey="events" title="Event Packages">
-                  <h5 className="promation-title mt-4">Boost Event Visibility</h5>
+                <Tab eventKey="events" title={t("eventPackages")}>
+                  <h5 className="promation-title mt-4">{t("boostEventVisibility")}</h5>
                   {renderPackages(eventPackages, "event")}
                 </Tab>
-                <Tab eventKey="courses" title="Course Packages">
-                  <h5 className="promation-title mt-4">Boost Course Visibility</h5>
+                <Tab eventKey="courses" title={t("coursePackages")}>
+                  <h5 className="promation-title mt-4">{t("boostCourseVisibility")}</h5>
                   {renderPackages(coursePackages, "course")}
                 </Tab>
               </Tabs>

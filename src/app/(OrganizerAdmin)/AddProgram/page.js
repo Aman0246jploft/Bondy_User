@@ -92,7 +92,7 @@ function Page() {
             }));
           } catch (locErr) {
             console.warn("Could not fetch location automatically", locErr);
-            toast.error("Could not fetch current location. Please enter address manually.");
+            // toast.error("Could not fetch current location. Please enter address manually.");
           }
         }
       } catch (error) {

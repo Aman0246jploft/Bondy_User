@@ -11,8 +11,10 @@ import apiClient from "../../../api/apiClient";
 import authApi from "../../../api/authApi";
 import toast from "react-hot-toast";
 import { getFullImageUrl } from "../../../utils/imageHelper";
+import { useLanguage } from "@/context/LanguageContext";
 
 function page() {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
   const [businessDoc, setBusinessDoc] = useState(null);
@@ -117,11 +119,11 @@ function page() {
         if (docType === "Business Proof") setBusinessDoc(docObj);
         if (docType === "Gov ID") setGovIdDoc(docObj);
 
-        toast.success(`${docType} uploaded successfully`);
+        toast.success(`${docType} ${t("uploadedSuccessfully")}`);
       }
     } catch (error) {
       console.error("Upload error", error);
-      toast.error("Failed to upload document");
+      toast.error(t("failedToUploadDocument"));
     } finally {
       setLoading(false);
     }
@@ -131,7 +133,7 @@ function page() {
     // Require at least one? Or both? User said "Business Proof , govId".
     // Let's require at least one for now, or assume both if UI suggests.
     if (!businessDoc && !govIdDoc) {
-      toast.error("Please upload at least one document");
+      toast.error(t("uploadAtLeastOneDocument"));
       return;
     }
 
@@ -146,13 +148,13 @@ function page() {
 
       const res = await apiClient.post("/verification/submit", payload);
       if (res.status === 200) {
-        toast.success("Verification submitted successfully");
+        toast.success(t("verificationSubmittedSuccessfully"));
         setStatus("pending");
       }
     } catch (error) {
       console.error("Submit error", error);
       toast.error(
-        error.response?.data?.message || "Failed to submit verification",
+        error.response?.data?.message || t("failedToSubmitVerification"),
       );
     } finally {
       setLoading(false);
@@ -170,18 +172,17 @@ function page() {
               handleSubmit();
             }}>
             <div className="event-form-card">
-              <h4 className="mb-4 text-white">Organizer Verification</h4>
+              <h4 className="mb-4 text-white">{t("organizerVerification")}</h4>
 
               {status === "approved" && (
                 <div className="alert alert-success">
-                  Your account is verified!
+                  {t("accountVerified")}
                 </div>
               )}
 
               {status === "rejected" && (
                 <div className="alert alert-danger">
-                  Your verification was rejected. Please re-upload valid
-                  documents.
+                  {t("verificationRejected")}
                 </div>
               )}
 
@@ -278,7 +279,7 @@ function page() {
                 <Col md={12}>
                   <div className="event-frm-bx">
                     <label className="text-white mb-2">
-                      Business Document (Proof of Business)
+                      {t("businessDocument")}
                     </label>
                     <div
                       className="doc_upload_sec mt-0"
@@ -306,9 +307,9 @@ function page() {
                           />
                         ) : (
                           <div className="upload-doc">
-                            Upload Business Document
-                            <p>Drag and drop or browse to upload</p>
-                            <span className="add_photo_text">Upload Photo</span>
+                            {t("uploadBusinessDocument")}
+                            <p>{t("dragDropOrBrowse")}</p>
+                            <span className="add_photo_text">{t("uploadPhoto")}</span>
                           </div>
                         )}
                       </div>
@@ -332,7 +333,7 @@ function page() {
                     type="submit"
                     className="custom-btn"
                     disabled={loading || (!businessDoc && !govIdDoc)}>
-                    {loading ? "Submitting..." : "Submit for Verification"}
+                                        {loading ? t("submitting") : t("submitForVerification")}
                   </button>
                 </div>
               )}
@@ -340,14 +341,14 @@ function page() {
               {/* Document History / Status List */}
               {userData?.documents?.length > 0 && (
                 <div className="mt-5">
-                  <h5 className="text-white mb-3">Uploaded Documents</h5>
+                  <h5 className="text-white mb-3">{t("uploadedDocuments")}</h5>
                   <div className="table-responsive">
                     <table className="table table-responsive uploaded-documents-tbl">
                       <thead>
                         <tr>
-                          <th>Document Name</th>
-                          <th>Status</th>
-                          <th>Reason</th>
+                          <th>{t("documentName")}</th>
+                          <th>{t("status")}</th>
+                          <th>{t("reason")}</th>
                         </tr>
                       </thead>
                       <tbody>

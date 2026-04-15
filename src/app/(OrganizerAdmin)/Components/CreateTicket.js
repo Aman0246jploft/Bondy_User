@@ -5,8 +5,10 @@ import Modal from "react-bootstrap/Modal";
 import authApi from "../../../api/authApi";
 import supportTicketApi from "../../../api/supportTicketApi";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function CreateTicket(props) {
+  const { t } = useLanguage();
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     category: "",
@@ -48,7 +50,7 @@ export default function CreateTicket(props) {
 
   const handleSubmit = async () => {
     if (!formData.category || !formData.subject || !formData.description) {
-      toast.error("Please fill all required fields");
+      toast.error(t("fillRequiredFields"));
       return;
     }
 
@@ -57,7 +59,7 @@ export default function CreateTicket(props) {
       // Find the selected category object to send its name
       const selectedCategory = categories.find(cat => cat._id === formData.category);
       if (!selectedCategory) {
-        toast.error("Invalid Category Selected");
+        toast.error(t("invalidCategorySelected"));
         setLoading(false);
         return;
       }
@@ -71,7 +73,7 @@ export default function CreateTicket(props) {
 
       const response = await supportTicketApi.createTicket(payload);
       if (response?.status === true || response.status === 201) {
-        toast.success("Ticket created successfully");
+        toast.success(t("ticketCreatedSuccessfully"));
         props.onHide();
         // Reset form
         setFormData({
@@ -84,7 +86,7 @@ export default function CreateTicket(props) {
       }
     } catch (error) {
       console.error("Error creating ticket:", error);
-      toast.error(error.response?.data?.message || "Error creating ticket");
+      toast.error(error.response?.data?.message || t("errorCreatingTicket"));
     } finally {
       setLoading(false);
     }
@@ -101,21 +103,21 @@ export default function CreateTicket(props) {
         className="common_modal gradientsSc create-ticket-modal"
       >
         <Modal.Header closeButton>
-          <Modal.Title>Create Tickets</Modal.Title>
+          <Modal.Title>{t("createTicketsModalTitle")}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
             <Row>
               <Col md={12}>
                 <div className="event-frm-bx">
-                  <label className="form-label">Ticket Category</label>
+                  <label className="form-label">{t("ticketCategory")}</label>
                   <select
                     className="form-select"
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
                   >
-                    <option value="">Select Category</option>
+                    <option value="">{t("selectCategory")}</option>
                     {categories.map((cat) => (
                       <option key={cat._id} value={cat._id}>
                         {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
@@ -126,7 +128,7 @@ export default function CreateTicket(props) {
               </Col>
               <Col md={6}>
                 <div className="event-frm-bx">
-                  <label className="form-label">Subject</label>
+                  <label className="form-label">{t("subject")}</label>
                   <input
                     type="text"
                     className="form-control"
@@ -153,7 +155,7 @@ export default function CreateTicket(props) {
               </Col> */}
               <Col md={12}>
                 <div className="event-frm-bx">
-                  <label className="form-label">Description</label>
+                  <label className="form-label">{t("description")}</label>
                   <textarea
                     className="form-control"
                     name="description"
@@ -170,7 +172,7 @@ export default function CreateTicket(props) {
                 onClick={handleSubmit}
                 disabled={loading}
               >
-                {loading ? "Submitting..." : "Submit Ticket"}
+                                {loading ? t("submitting") : t("submitTicket")}
               </button>
             </div>
           </Form>

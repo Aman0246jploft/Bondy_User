@@ -3,8 +3,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { Col, Row, Spinner } from "react-bootstrap";
 import toast from "react-hot-toast";
 import referralApi from "@/api/referralApi";
+import { useLanguage } from "@/context/LanguageContext";
 
 function page() {
+  const { t } = useLanguage();
   const [referralCode, setReferralCode] = useState("");
   const [referralLink, setReferralLink] = useState("");
   const [stats, setStats] = useState({
@@ -64,7 +66,7 @@ function page() {
   const handleCopyLink = () => {
     if (!referralLink) return;
     navigator.clipboard.writeText(referralLink);
-    toast.success("Referral link copied!");
+    toast.success(t("referralLinkCopied"));
   };
 
   const handleInvite = async (e) => {
@@ -100,10 +102,10 @@ function page() {
 
   const statusLabel = (status) => {
     switch (status) {
-      case "COMPLETED": return "Rewarded";
-      case "SIGNED_UP": return "Signed Up";
-      case "PENDING": return "Pending";
-      case "EXPIRED": return "Expired";
+      case "COMPLETED": return t("rewarded");
+      case "SIGNED_UP": return t("signedUp");
+      case "PENDING": return t("pending");
+      case "EXPIRED": return t("expired");
       default: return status;
     }
   };
@@ -122,8 +124,8 @@ function page() {
       <div className="cards">
         <div className="card-header">
           <div>
-            <h2 className="card-title">Referral</h2>
-            <p className="card-desc">Invite organizers & earn ₮75,000 per successful signup.</p>
+            <h2 className="card-title">{t("referral")}</h2>
+            <p className="card-desc">{t("referralDesc")}</p>
           </div>
         </div>
 
@@ -131,18 +133,21 @@ function page() {
           {/* Left — Share link + invite */}
           <Col md={6}>
             <div className="analytics-chart link-cards border-0">
-              <h4 className="mb-1">Invite Organizers & Earn</h4>
+              <h4 className="mb-1">{t("inviteOrganizersEarn")}</h4>
               <p className="mb-3" style={{ color: "#999", fontSize: "14px" }}>
-                Get ₮75,000 credit for every organizer who joins and hosts their first event.
+                {t("inviteOrganizersDesc")}
               </p>
 
               {/* Referral link */}
-              <h6 className="mb-2">Your Unique Referral Link</h6>
+              <h6 className="mb-2">{t("yourReferralLink")}</h6>
               <div className="link-bx">
                 {loadingCode ? (
                   <Spinner animation="border" size="sm" />
                 ) : (
                   <>
+                  <span  >
+                      <img src="/img/link.svg" alt="link" />
+                    </span>
                     <input
                       type="text"
                       className="form-control"
@@ -150,11 +155,9 @@ function page() {
                       readOnly
                     />
                     <button className="common_btn" type="button" onClick={handleCopyLink}>
-                      Copy Link
+                      {t("copyLink")}
                     </button>
-                    <span className="link-icon" >
-                      <img src="/img/link.svg" alt="link" />
-                    </span>
+                    
                   </>
                 )}
               </div>
@@ -187,15 +190,15 @@ function page() {
           {/* Right — Stats */}
           <Col md={6}>
             <div className="referal-cards analytics-chart border-0 mb-3">
-              <h6>Total Referrals</h6>
+              <h6>{t("totalReferrals")}</h6>
               <h3>{loadingStats ? "—" : stats.totalReferrals}</h3>
             </div>
             <div className="referal-cards analytics-chart border-0 mb-3">
-              <h6>Successful Signups</h6>
+              <h6>{t("successfulSignups")}</h6>
               <h3>{loadingStats ? "—" : stats.signedUp}</h3>
             </div>
             <div className="referal-cards analytics-chart border-0">
-              <h6>Total Reward Earned</h6>
+              <h6>{t("totalRewardEarned")}</h6>
               <h3>₮{loadingStats ? "—" : stats.totalRewardEarned.toLocaleString()}</h3>
             </div>
           </Col>
@@ -205,13 +208,13 @@ function page() {
         <div className="custom-table-cards billing-history">
           <div className="card-header">
             <div>
-              <h5 className="table-title">Referral History</h5>
+              <h5 className="table-title">{t("referralHistory")}</h5>
             </div>
             <div className="table-search">
               <input
                 type="text"
                 className="form-control"
-                placeholder="Search referrals..."
+                placeholder={t("searchReferrals")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -224,23 +227,23 @@ function page() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Invited User</th>
-                  <th>Date Invited</th>
-                  <th>Status</th>
-                  <th>Reward</th>
+                  <th>{t("invitedUser")}</th>
+                  <th>{t("dateInvited")}</th>
+                  <th>{t("status")}</th>
+                  <th>{t("reward")}</th>
                 </tr>
               </thead>
               <tbody>
                 {loadingStats ? (
                   <tr>
                     <td colSpan={4} className="text-center py-4">
-                      <Spinner animation="border" size="sm" /> Loading...
+                      <Spinner animation="border" size="sm" /> {t("loading")}
                     </td>
                   </tr>
                 ) : filteredHistory.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="text-center py-4" style={{ color: "#999" }}>
-                      {search ? "No matching referrals found." : "No referrals yet. Start inviting!"}
+                      {search ? t("noMatchingReferrals") : t("noReferralsYet")}
                     </td>
                   </tr>
                 ) : (

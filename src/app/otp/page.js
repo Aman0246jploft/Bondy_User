@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
+import GuestRoute from "@/components/GuestRoute";
 
 export default function OTPPage() {
   const router = useRouter();
@@ -142,6 +143,7 @@ export default function OTPPage() {
   };
 
   return (
+    <GuestRoute>
     <div className="login_sec otp_sec">
       <Container fluid>
         <Row className="justify-content-between align-items-center gy-4 m-0">
@@ -212,5 +214,6 @@ export default function OTPPage() {
         </Row>
       </Container>
     </div>
+    </GuestRoute>
   );
 }

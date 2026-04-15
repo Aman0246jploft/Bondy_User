@@ -251,6 +251,38 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+.options-dropdown a.clear-chat {
+  color: #ff5555;
+}
+
+.options-dropdown a.clear-chat:hover {
+  background: rgba(255, 85, 85, 0.1);
+}
+
+.options-dropdown a.block-action {
+  color: #ff5555;
+}
+
+.options-dropdown a.block-action:hover {
+  background: rgba(255, 85, 85, 0.1);
+}
+
+.options-dropdown a.unblock-action {
+  color: #1abc9c;
+}
+
+.options-dropdown a.unblock-action:hover {
+  background: rgba(26, 188, 156, 0.1);
+}
+
+.options-dropdown a.report-action {
+  color: #ffa500;
+}
+
+.options-dropdown a.report-action:hover {
+  background: rgba(255, 165, 0, 0.1);
+}
+
 /* MESSAGES */
 .messages-area {
   flex: 1;
@@ -582,4 +614,28 @@
   color: var(--text-muted);
   border: 1px solid var(--border-color);
   backdrop-filter: blur(5px);
+}
+
+/* ---------------------- CLEAR CHAT MODAL -------------- */
+.clear-chat-modal .modal-content {
+  background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 24px !important;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.clear-chat-modal .modal-body {
+  padding: 32px !important;
+}
+
+.clear-chat-modal .modal-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.clear-chat-modal button:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
 }

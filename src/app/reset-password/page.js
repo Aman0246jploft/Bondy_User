@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
+import GuestRoute from "@/components/GuestRoute";
 
 export default function ResetPasswordPage() {
     const router = useRouter();
@@ -170,6 +171,7 @@ export default function ResetPasswordPage() {
 
 
     return (
+        <GuestRoute>
         <div className="login_sec otp_sec">
             <Container fluid>
                 <Row className="justify-content-between align-items-center gy-4 m-0">
@@ -361,5 +363,6 @@ export default function ResetPasswordPage() {
                 </Row>
             </Container>
         </div>
+        </GuestRoute>
     );
 }

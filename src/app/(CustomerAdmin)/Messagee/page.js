@@ -6,6 +6,9 @@ import { useSocket } from "@/context/SocketContext";
 import { toast } from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
 import authApi from "@/api/authApi";
+import { Modal } from "react-bootstrap";
+import blockUserApi from "@/api/blockUser";
+import reportUserApi from "@/api/reportUser";
 
 const CHAT_LIMIT = 20;
 const MSG_LIMIT = 50;
@@ -72,6 +75,15 @@ function MessageeContent() {
   const [typingUsers, setTypingUsers] = useState({}); // { userId: userName }
   const [sidebarTyping, setSidebarTyping] = useState({}); // { chatId: boolean }
   const typingTimeoutRef = useRef(null);
+  const [showClearChatModal, setShowClearChatModal] = useState(false);
+
+  // ─── Block & Report State ──────────────────────────────────
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [showUnblockModal, setShowUnblockModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  const [reportError, setReportError] = useState("");
 
   // ─── Helper ────────────────────────────────────────────────
   const getMyId = useCallback(() => {
@@ -89,6 +101,12 @@ function MessageeContent() {
     },
     [getMyId],
   );
+
+  // Check if current user has blocked the other user
+  const isBlockedByMe = activeChat?.blockedBy?._id === getMyId() || activeChat?.blockedBy === getMyId();
+  
+  // Check if current user is blocked by the other user
+  const isBlockedByOther = activeChat?.isBlocked && !isBlockedByMe;
 
   // ══════════════════════════════════════════════════════════
   // 1. Initial chat list fetch (page 1) + real-time listeners
@@ -493,15 +511,19 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
   }, [socket]);
 
   // 12. Clear Chat (for me)
-  const clearChat = useCallback(() => {
+  const handleClearChatClick = useCallback(() => {
     if (!socket || !activeChat || activeChat.isVirtual) return;
+    setShowDropdown(false);
+    setShowClearChatModal(true);
+  }, [socket, activeChat]);
 
-    if (!window.confirm(t("clearChatConfirm") || "Clear all messages in this chat for you?")) return;
+  const confirmClearChat = useCallback(() => {
+    if (!socket || !activeChat || activeChat.isVirtual) return;
 
     socket.emit("clear_chat", { chatId: activeChat._id }, (response) => {
       if (response.status === "ok") {
         setMessages([]);
-        setShowDropdown(false);
+        setShowClearChatModal(false);
         toast.success(t("chatCleared") || "Chat cleared");
       } else {
         toast.error(response.message || t("failedToClearChat") || "Failed to clear chat");
@@ -614,7 +636,7 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
                     return (
                       <div
                         key={chat._id}
-                        onClick={() => setActiveChat(chat)}
+                        onClick={() => { setShowDropdown(false); setActiveChat(chat); }}
                         className={`user-chat-box ${activeChat?._id === chat._id ? "active" : ""}`}
                       >
                         <div className="position-relative">
@@ -704,13 +726,28 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
 
                       {showDropdown && (
                         <div className="options-dropdown">
-                          <Link href="#">
+                          <Link href={`/profile?id=${getOtherUser(activeChat)._id}`}>
                             <img src="/img/user-white.svg" className="me-2" alt="" />
-                            {t("userProfile")}
+                            {t("userProfile") || "User Profile"}
                           </Link>
-                          <a href="#" className="clear-chat" onClick={(e) => { e.preventDefault(); clearChat(); }}>
+                          <a href="#" className="clear-chat" onClick={(e) => { e.preventDefault(); handleClearChatClick(); }}>
                             <img src="/img/delete.svg" className="me-2" style={{ filter: "invert(40%) sepia(91%) saturate(3452%) hue-rotate(346deg) brightness(103%) contrast(106%)" }} alt="" />
-                            {t("clearChat")}
+                            {t("clearChat") || "Clear Chat"}
+                          </a>
+                          {isBlockedByMe ? (
+                            <a href="#" className="unblock-action" onClick={(e) => { e.preventDefault(); setShowDropdown(false); setShowUnblockModal(true); }}>
+                              <img src="/img/block-icon.svg" className="me-2" alt="" style={{ width: '16px', height: '16px', filter: 'invert(48%) sepia(79%) saturate(2476%) hue-rotate(130deg) brightness(95%) contrast(85%)' }} onError={(e) => e.target.style.display = 'none'} />
+                              {t("unblockUser") || "Unblock User"}
+                            </a>
+                          ) : (
+                            <a href="#" className="block-action" onClick={(e) => { e.preventDefault(); setShowDropdown(false); setShowBlockModal(true); }}>
+                              <img src="/img/block-icon.svg" className="me-2" alt="" style={{ width: '16px', height: '16px', filter: "invert(40%) sepia(91%) saturate(3452%) hue-rotate(346deg) brightness(103%) contrast(106%)" }} onError={(e) => e.target.style.display = 'none'} />
+                              {t("blockUser") || "Block User"}
+                            </a>
+                          )}
+                          <a href="#" className="report-action" onClick={(e) => { e.preventDefault(); setShowDropdown(false); setShowReportModal(true); }}>
+                            <img src="/img/report-icon.svg" className="me-2" alt="" style={{ width: '16px', height: '16px', filter: "invert(54%) sepia(98%) saturate(1475%) hue-rotate(2deg) brightness(103%) contrast(105%)" }} onError={(e) => e.target.style.display = 'none'} />
+                            {t("reportUser") || "Report User"}
                           </a>
                         </div>
                       )}
@@ -841,7 +878,29 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
                     </div>
 
                     {/* MESSAGE INPUT */}
-                    <div className="message-input">
+                    {isBlockedByOther ? (
+                      <div className="message-input" style={{ padding: '16px' }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          padding: '14px 20px',
+                          background: 'rgba(231, 76, 60, 0.1)',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(231, 76, 60, 0.3)'
+                        }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" stroke="#e74c3c" strokeWidth="2"/>
+                            <path d="M7 7L17 17" stroke="#e74c3c" strokeWidth="2" strokeLinecap="round"/>
+                          </svg>
+                          <span style={{ color: '#e74c3c', fontSize: '14px', fontWeight: 500 }}>
+                            {t("youAreBlockedByThisUser") || "You are blocked by this user"}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="message-input">
                       {/* Staged file preview */}
                       {stagedFile && (
                         <div style={{
@@ -910,6 +969,7 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
                         </button>
                       </div>
                     </div>
+                    )}
                   </div>
                 ) : (
                   <div className="no-chat-selected">
@@ -923,6 +983,304 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
           </div>
         </div>
       </div>
+
+      {/* Clear Chat Confirmation Modal */}
+      <Modal show={showClearChatModal} onHide={() => setShowClearChatModal(false)} centered className="clear-chat-modal">
+        <Modal.Body className="text-center p-4">
+          <div className="modal-icon mb-3">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)"/>
+              <path d="M9 9L15 15M15 9L9 15" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("clearChat") || "Clear Chat"}?</h4>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '24px' }}>
+            {t("clearChatConfirmMessage") || "Are you sure you want to clear all messages in this chat? This action cannot be undone."}
+          </p>
+          <div className="d-flex gap-3 justify-content-center">
+            <button 
+              onClick={() => setShowClearChatModal(false)}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'transparent',
+                color: '#fff',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {t("cancel") || "Cancel"}
+            </button>
+            <button 
+              onClick={confirmClearChat}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '12px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+                color: '#fff',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {t("clearChat") || "Clear Chat"}
+            </button>
+          </div>
+        </Modal.Body>
+      </Modal>
+
+      {/* Block User Confirmation Modal */}
+      <Modal show={showBlockModal} onHide={() => setShowBlockModal(false)} centered className="clear-chat-modal">
+        <Modal.Body className="text-center p-4">
+          <div className="modal-icon mb-3">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)"/>
+              <circle cx="12" cy="12" r="5" stroke="#ff4d4f" strokeWidth="2"/>
+              <path d="M8.5 8.5L15.5 15.5" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("blockUser") || "Block User"}?</h4>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '24px' }}>
+            {t("blockUserConfirmMessage") || `Are you sure you want to block ${getOtherUser(activeChat)?.firstName} ${getOtherUser(activeChat)?.lastName}? They won't be able to message you.`}
+          </p>
+          <div className="d-flex gap-3 justify-content-center">
+            <button 
+              onClick={() => setShowBlockModal(false)}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'transparent',
+                color: '#fff',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {t("cancel") || "Cancel"}
+            </button>
+            <button 
+              onClick={async () => {
+                try {
+                  const otherUserId = getOtherUser(activeChat)?._id;
+                  if (!otherUserId) return;
+                  const res = await blockUserApi.blockUser({ toUser: otherUserId });
+                  setShowBlockModal(false);
+                  if (res.status === true) {
+                    // Update local state to reflect block
+                    const myId = getMyId();
+                    setActiveChat(prev => ({ ...prev, blockedBy: { _id: myId }, isBlocked: true }));
+                    setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, blockedBy: { _id: myId }, isBlocked: true } : c));
+                    toast.success(res.message || t("userBlockedSuccessfully") || "User blocked successfully");
+                  }
+                } catch (error) {
+                  console.error(error);
+                  toast.error(t("failedToBlockUser") || "Failed to block user");
+                }
+              }}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '12px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+                color: '#fff',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {t("blockUser") || "Block User"}
+            </button>
+          </div>
+        </Modal.Body>
+      </Modal>
+
+      {/* Unblock User Confirmation Modal */}
+      <Modal show={showUnblockModal} onHide={() => setShowUnblockModal(false)} centered className="clear-chat-modal">
+        <Modal.Body className="text-center p-4">
+          <div className="modal-icon mb-3">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)"/>
+              <path d="M8 12l3 3 5-6" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("unblockUser") || "Unblock User"}?</h4>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '24px' }}>
+            {t("unblockUserConfirmMessage") || `Are you sure you want to unblock ${getOtherUser(activeChat)?.firstName} ${getOtherUser(activeChat)?.lastName}? They will be able to message you again.`}
+          </p>
+          <div className="d-flex gap-3 justify-content-center">
+            <button 
+              onClick={() => setShowUnblockModal(false)}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'transparent',
+                color: '#fff',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {t("cancel") || "Cancel"}
+            </button>
+            <button 
+              onClick={async () => {
+                try {
+                  const otherUserId = getOtherUser(activeChat)?._id;
+                  if (!otherUserId) return;
+                  const res = await blockUserApi.unblockUser({ toUser: otherUserId });
+                  setShowUnblockModal(false);
+                  if (res.status === true) {
+                    // Update local state to reflect unblock
+                    setActiveChat(prev => ({ ...prev, blockedBy: null, isBlocked: false }));
+                    setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, blockedBy: null, isBlocked: false } : c));
+                    toast.success(res.message || t("userUnblockedSuccessfully") || "User unblocked successfully");
+                  }
+                } catch (error) {
+                  console.error(error);
+                  toast.error(t("failedToUnblockUser") || "Failed to unblock user");
+                }
+              }}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '12px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #1abc9c 0%, #3db5b4 100%)',
+                color: '#fff',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {t("unblockUser") || "Unblock User"}
+            </button>
+          </div>
+        </Modal.Body>
+      </Modal>
+
+      {/* Report User Modal */}
+      <Modal show={showReportModal} onHide={() => { setShowReportModal(false); setReportReason(""); setReportDescription(""); setReportError(""); }} centered className="clear-chat-modal">
+        <Modal.Body className="p-4">
+          <div className="text-center mb-3">
+            <div className="modal-icon mb-3">
+              <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)"/>
+                <path d="M12 8V12M12 16H12.01" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("reportUser") || "Report User"}</h4>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '16px' }}>
+              {t("reportUserDescription") || `Report ${getOtherUser(activeChat)?.firstName} ${getOtherUser(activeChat)?.lastName} for inappropriate behavior`}
+            </p>
+          </div>
+          
+          <div style={{ marginBottom: '16px' }}>
+            <input
+              type="text"
+              placeholder={t("enterReason") || "Enter reason *"}
+              value={reportReason}
+              onChange={(e) => { setReportReason(e.target.value); setReportError(""); }}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                border: reportError ? '1px solid #e74c3c' : '1px solid #404040',
+                background: '#1a1a1a',
+                color: '#fff',
+                fontSize: '14px',
+                outline: 'none'
+              }}
+            />
+            {reportError && (
+              <p style={{ color: '#e74c3c', fontSize: '12px', marginTop: '6px', marginBottom: 0 }}>
+                {reportError}
+              </p>
+            )}
+          </div>
+          
+          <div style={{ marginBottom: '24px' }}>
+            <textarea
+              placeholder={t("descriptionOptional") || "Description (optional)"}
+              value={reportDescription}
+              onChange={(e) => setReportDescription(e.target.value)}
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                border: '1px solid #404040',
+                background: '#1a1a1a',
+                color: '#fff',
+                fontSize: '14px',
+                outline: 'none',
+                resize: 'none'
+              }}
+            />
+          </div>
+          
+          <div className="d-flex gap-3 justify-content-center">
+            <button 
+              onClick={() => { setShowReportModal(false); setReportReason(""); setReportDescription(""); setReportError(""); }}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '10px',
+                border: 'none',
+                background: '#444',
+                color: '#fff',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {t("cancel") || "Cancel"}
+            </button>
+            <button 
+              onClick={async () => {
+                const reason = reportReason.trim();
+                if (!reason) {
+                  setReportError(t("reasonIsRequired") || "Reason is required");
+                  return;
+                }
+                try {
+                  const userId = getOtherUser(activeChat)?._id;
+                  if (!userId) return;
+                  const res = await reportUserApi.reportUser({
+                    toUser: userId,
+                    reason: reason,
+                    description: reportDescription.trim()
+                  });
+                  setShowReportModal(false);
+                  setReportReason("");
+                  setReportDescription("");
+                  setReportError("");
+                  if (res.status === true) {
+                    toast.success(res.message || t("userReportedSuccessfully") || "User reported successfully");
+                  }
+                } catch (error) {
+                  console.error(error);
+                  toast.error(t("failedToReportUser") || "Failed to report user");
+                }
+              }}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '10px',
+                border: 'none',
+                background: '#1abc9c',
+                color: '#fff',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {t("submitReport") || "Submit Report"}
+            </button>
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

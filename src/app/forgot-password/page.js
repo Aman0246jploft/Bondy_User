@@ -5,6 +5,7 @@ import { Col, Container, Form, Row } from "react-bootstrap";
 import authApi from "@/api/authApi";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import GuestRoute from "@/components/GuestRoute";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -41,6 +42,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
+    <GuestRoute>
     <div className="login_sec">
       <Container fluid>
         <Row className="justify-content-between align-items-center gy-4">
@@ -103,5 +105,6 @@ export default function ForgotPasswordPage() {
         </Row>
       </Container>
     </div>
+    </GuestRoute>
   );
 }

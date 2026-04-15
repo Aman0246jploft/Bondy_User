@@ -5,8 +5,10 @@ import Link from 'next/link';
 import globalSettingApi from '../api/globalSettingApi';
 import stayUpdatedApi from '../api/stayUpdatedApi';
 import toast from 'react-hot-toast';
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Footer() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [socialLinks, setSocialLinks] = useState({
@@ -38,22 +40,22 @@ export default function Footer() {
 
   const handleSignup = async () => {
     if (!email) {
-      toast.error("Please enter an email address");
+      toast.error(t("pleaseEnterEmail"));
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      toast.error("Please enter a valid email address");
+      toast.error(t("pleaseEnterValidEmail"));
       return;
     }
 
     setLoading(true);
     try {
       const response = await stayUpdatedApi.signup({ email });
-      if (response.status) {
+      if (response.status === true) {
         setEmail("");
-        // Toast is already handled by the apiClient interceptor
+        toast.success(t("thanksForSigningUp"));
       }
     } catch (error) {
       console.error("Signup error:", error);
@@ -75,32 +77,32 @@ export default function Footer() {
                 <img src='/img/footer_logo.svg' />
               </div>
 
-              <p>Rapidly myocardinate scalable manufactured products rather than cross functional.</p>
+              <p>{t("footerDescription")}</p>
 
               <div className="footer-links">
                 <div>
                   {/* <Link href="#">Agenda</Link> */}
                   {/* <Link href="#">Speakers</Link> */}
-                  <Link href="/register">Register</Link>
+                  <Link href="/register">{t("register")}</Link>
                   {/* <Link href="#">Venue</Link> */}
                   {/* <Link href="#">FAQ</Link> */}
                 </div>
                 <div>
-                  <Link href="/terms">Terms & Conditions</Link>
-                  <Link href="/privacy-policy">Privacy Policy</Link>
+                  <Link href="/terms">{t("termsConditions")}</Link>
+                  <Link href="/privacy-policy">{t("privacyPolicy")}</Link>
                   {/* <Link href="#">Cookie Policy</Link> */}
                 </div>
               </div>
-              <div className="copyright">© 2026 Bondy. All rights reserved.</div>
+              <div className="copyright">© 2026 Bondy. {t("allRightsReserved")}</div>
             </div>
 
             <div className="footer-right">
-              <h2>Stay updated</h2>
-              <p>Sign up for event updates & exclusive content from our website.</p>
+              <h2>{t("stayUpdated")}</h2>
+              <p>{t("stayUpdatedDesc")}</p>
               <div className="input-box">
                 <input
                   type="email"
-                  placeholder="Email"
+                  placeholder={t("emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
@@ -111,11 +113,11 @@ export default function Footer() {
                 onClick={handleSignup}
                 disabled={loading}
               >
-                {loading ? "Sending..." : "Stay updated"}
+                {loading ? t("sending") : t("stayUpdated")}
               </button>
 
               <div className="social-links">
-                <h4>Follow us</h4>
+                <h4>{t("followUs")}</h4>
                 <div className='social_icon'>
                   <Link href={socialLinks.facebook} target="_blank">  <img src='/img/facebook.svg' /></Link>
                   <Link href={socialLinks.linkedin} target="_blank"><img src='/img/linkdein.svg' /></Link>
