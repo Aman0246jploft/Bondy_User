@@ -5,6 +5,7 @@ import Link from "next/link";
 import VerificationModl from "@/components/Modal/VerificationModl";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
+import GuestRoute from "@/components/GuestRoute";
 
 export default function OTPPage() {
   const [modalShow, setModalShow] = useState(false);
@@ -94,6 +95,7 @@ export default function OTPPage() {
   };
 
   return (
+    <GuestRoute>
     <div className="login_sec otp_sec">
       <Container fluid>
         <Row className="justify-content-between align-items-center gy-4 m-0">
@@ -166,5 +168,6 @@ export default function OTPPage() {
         />
       </Container>
     </div>
+    </GuestRoute>
   );
 }

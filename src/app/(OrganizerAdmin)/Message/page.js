@@ -6,6 +6,10 @@ import { useSocket } from "@/context/SocketContext";
 import { toast } from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
 import authApi from "@/api/authApi";
+import { Modal } from "react-bootstrap";
+import blockUserApi from "@/api/blockUser";
+import reportUserApi from "@/api/reportUser";
+import { useLanguage } from "@/context/LanguageContext";
 
 const CHAT_LIMIT = 20;
 const MSG_LIMIT = 50;
@@ -31,6 +35,7 @@ function parseJwt(token) {
 }
 
 function MessageContent() {
+    const { t } = useLanguage();
     const { socket, isSocketConnected, onlineUsers } = useSocket();
     const searchParams = useSearchParams();
     const targetUserId = searchParams.get("userId");
@@ -68,6 +73,15 @@ function MessageContent() {
     const [typingUsers, setTypingUsers] = useState({}); // { userId: userName }
     const [sidebarTyping, setSidebarTyping] = useState({}); // { chatId: boolean }
     const typingTimeoutRef = useRef(null);
+    const [showClearChatModal, setShowClearChatModal] = useState(false);
+
+    // ─── Block & Report State ──────────────────────────────────
+    const [showBlockModal, setShowBlockModal] = useState(false);
+    const [showUnblockModal, setShowUnblockModal] = useState(false);
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportReason, setReportReason] = useState("");
+    const [reportDescription, setReportDescription] = useState("");
+    const [reportError, setReportError] = useState("");
 
     // ─── Helper ────────────────────────────────────────────────
     const getMyId = useCallback(() => {
@@ -85,6 +99,12 @@ function MessageContent() {
         [getMyId],
     );
 
+    // Check if current user has blocked the other user
+    const isBlockedByMe = activeChat?.blockedBy?._id === getMyId() || activeChat?.blockedBy === getMyId();
+    
+    // Check if current user is blocked by the other user
+    const isBlockedByOther = activeChat?.isBlocked && !isBlockedByMe;
+
     // ══════════════════════════════════════════════════════════
     // 1. Initial chat list fetch (page 1) + real-time listeners
     // ══════════════════════════════════════════════════════════
@@ -101,6 +121,7 @@ function MessageContent() {
             setChatListLoading(false);
             if (response.status === "ok") {
                 setChats(response.data);
+                console.log(response.data ,"dattttttttt");
                 // Join all rooms in the chat list to listen for updates (like typing)
                 response.data.forEach((chat) => {
                     socket.emit("join_chat", { chatId: chat._id });
@@ -476,14 +497,19 @@ function MessageContent() {
     }, [socket]);
 
     // 12. Clear Chat (for me)
-    const clearChat = useCallback(() => {
+    const handleClearChatClick = useCallback(() => {
         if (!socket || !activeChat || activeChat.isVirtual) return;
-        if (!window.confirm("Clear all messages in this chat for you?")) return;
+        setShowDropdown(false);
+        setShowClearChatModal(true);
+    }, [socket, activeChat]);
+
+    const confirmClearChat = useCallback(() => {
+        if (!socket || !activeChat || activeChat.isVirtual) return;
 
         socket.emit("clear_chat", { chatId: activeChat._id }, (response) => {
             if (response.status === "ok") {
                 setMessages([]);
-                setShowDropdown(false);
+                setShowClearChatModal(false);
                 toast.success("Chat cleared");
             } else {
                 toast.error(response.message || "Failed to clear chat");
@@ -566,10 +592,10 @@ function MessageContent() {
                                 className={`col-lg-3 col-md-4 chat-sidebar ${activeChat ? "mobile-hide" : ""}`}
                             >
                                 <div className="d-flex align-items-center justify-content-between mb-3">
-                                    <h4 className="title m-0">Messages</h4>
+                                    <h4 className="title m-0">{t("messages")}</h4>
                                     <div
                                         className={`status-dot ${isSocketConnected ? "online" : "offline"}`}
-                                        title={isSocketConnected ? "Connected" : "Disconnected"}
+                                        title={isSocketConnected ? t("connected") : t("disconnected")}
                                     >
                                     </div>
                                 </div>
@@ -577,7 +603,7 @@ function MessageContent() {
                                 <div className="search-box">
                                     <input
                                         type="text"
-                                        placeholder="Search"
+                                        placeholder={t("search")}
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
@@ -595,7 +621,7 @@ function MessageContent() {
                                         return (
                                             <div
                                                 key={chat._id}
-                                                onClick={() => setActiveChat(chat)}
+                                                onClick={() => { setShowDropdown(false); setActiveChat(chat); }}
                                                 className={`user-chat-box ${activeChat?._id === chat._id ? "active" : ""}`}
                                             >
                                                 <div className="position-relative">
@@ -612,9 +638,9 @@ function MessageContent() {
                                                     <h5>{other.firstName} {other.lastName}</h5>
                                                     <p className="text-truncate" style={{ maxWidth: "150px" }}>
                                                         {sidebarTyping[chat._id] && Object.keys(sidebarTyping[chat._id]).length > 0 ? (
-                                                            <span style={{ color: "var(--primary-color)", fontWeight: "500" }}>Typing...</span>
+                                                            <span style={{ color: "var(--primary-color)", fontWeight: "500" }}>{t("typing")}</span>
                                                         ) : (
-                                                            chat.lastMessage?.content || "No messages yet"
+                                                            chat.lastMessage?.content || t("noMessagesYet")
                                                         )}
                                                     </p>
                                                 </div>
@@ -639,16 +665,16 @@ function MessageContent() {
                                     {/* Chat list loader / end states */}
                                     {chatListLoading && (
                                         <div className="text-center py-2">
-                                            <small className="text-muted">Loading chats…</small>
+                                            <small className="text-muted">{t("loading")}…</small>
                                         </div>
                                     )}
                                     {!chatListLoading && !chatHasMore && chats.length > 0 && (
                                         <div className="text-center py-2">
-                                            <small className="text-muted">No more chats</small>
+                                            <small className="text-muted">{t("noMoreChats")}</small>
                                         </div>
                                     )}
                                     {!chatListLoading && filteredChats.length === 0 && (
-                                        <div className="text-center mt-4 text-muted">No chats found</div>
+                                        <div className="text-center mt-4 text-muted">{t("noChatsFound")}</div>
                                     )}
                                 </div>
                             </div>
@@ -677,7 +703,7 @@ function MessageContent() {
                                                     {getOtherUser(activeChat).lastName}
                                                 </h5>
                                                 <small className={onlineUsers.has(getOtherUser(activeChat)._id) ? "online" : "offline"}>
-                                                    {onlineUsers.has(getOtherUser(activeChat)._id) ? "Online" : "Offline"}
+                                                    {onlineUsers.has(getOtherUser(activeChat)._id) ? t("online") : t("offline")}
                                                 </small>
                                             </div>
 
@@ -685,13 +711,28 @@ function MessageContent() {
 
                                             {showDropdown && (
                                                 <div className="options-dropdown">
-                                                    <Link href="#">
+                                                    <Link href={`/profile?id=${getOtherUser(activeChat)._id}`}>
                                                         <img src="/img/user-white.svg" className="me-2" alt="" />
-                                                        User Profile
+                                                        {t("userProfile")}
                                                     </Link>
-                                                    <a href="#" className="clear-chat" onClick={(e) => { e.preventDefault(); clearChat(); }}>
+                                                    <a href="#" className="clear-chat" onClick={(e) => { e.preventDefault(); handleClearChatClick(); }}>
                                                         <img src="/img/delete.svg" className="me-2" style={{ filter: "invert(40%) sepia(91%) saturate(3452%) hue-rotate(346deg) brightness(103%) contrast(106%)" }} alt="" />
-                                                        Clear Chat
+                                                    {t("clearChat")}
+                                                    </a>
+                                                    {isBlockedByMe ? (
+                                                        <a href="#" className="unblock-action" onClick={(e) => { e.preventDefault(); setShowDropdown(false); setShowUnblockModal(true); }}>
+                                                            <img src="/img/block-icon.svg" className="me-2" alt="" style={{ width: '16px', height: '16px', filter: 'invert(48%) sepia(79%) saturate(2476%) hue-rotate(130deg) brightness(95%) contrast(85%)' }} onError={(e) => e.target.style.display = 'none'} />
+                                                            {t("unblockUser")}
+                                                        </a>
+                                                    ) : (
+                                                        <a href="#" className="block-action" onClick={(e) => { e.preventDefault(); setShowDropdown(false); setShowBlockModal(true); }}>
+                                                            <img src="/img/block-icon.svg" className="me-2" alt="" style={{ width: '16px', height: '16px', filter: "invert(40%) sepia(91%) saturate(3452%) hue-rotate(346deg) brightness(103%) contrast(106%)" }} onError={(e) => e.target.style.display = 'none'} />
+                                                            {t("blockUser")}
+                                                        </a>
+                                                    )}
+                                                    <a href="#" className="report-action" onClick={(e) => { e.preventDefault(); setShowDropdown(false); setShowReportModal(true); }}>
+                                                        <img src="/img/report-icon.svg" className="me-2" alt="" style={{ width: '16px', height: '16px', filter: "invert(54%) sepia(98%) saturate(1475%) hue-rotate(2deg) brightness(103%) contrast(105%)" }} onError={(e) => e.target.style.display = 'none'} />
+                                                        {t("reportUser")}
                                                     </a>
                                                 </div>
                                             )}
@@ -703,19 +744,19 @@ function MessageContent() {
                                             {/* Load-older indicator */}
                                             {msgLoading && msgPage > 1 && (
                                                 <div className="text-center py-2">
-                                                    <small className="text-muted">Loading older messages…</small>
+                                                    <small className="text-muted">{t("loadingOlderMessages")}…</small>
                                                 </div>
                                             )}
                                             {!msgHasMore && messages.length > 0 && (
                                                 <div className="text-center py-2">
-                                                    <small className="text-muted">Beginning of conversation</small>
+                                                    <small className="text-muted">{t("beginningOfConversation")}</small>
                                                 </div>
                                             )}
 
                                             {/* Initial load spinner */}
                                             {msgLoading && msgPage === 1 && (
                                                 <div className="text-center py-4">
-                                                    <small className="text-muted">Loading messages…</small>
+                                                    <small className="text-muted">{t("loadingMessages")}…</small>
                                                 </div>
                                             )}
 
@@ -801,7 +842,7 @@ function MessageContent() {
                                                                                     className="chat-file-link"
                                                                                     style={{ display: "block", marginBottom: m.content ? "4px" : 0 }}
                                                                                 >
-                                                                                    📎 Download file
+                                                                                    📎 {t("downloadFile")}
                                                                                 </a>
                                                                             )}
                                                                             {m.content}
@@ -817,7 +858,7 @@ function MessageContent() {
                                             {Object.values(typingUsers).length > 0 && (
                                                 <div className="typing-indicator-container">
                                                     <div className="typing-text">
-                                                        {Object.values(typingUsers).join(", ")} {Object.values(typingUsers).length > 1 ? "are" : "is"} typing
+                                                        {Object.values(typingUsers).join(", ")} {Object.values(typingUsers).length > 1 ? t("typingPlural") : t("typingSingular")}
                                                         <span className="dot-animation"><span>.</span><span>.</span><span>.</span></span>
                                                     </div>
                                                 </div>
@@ -827,80 +868,103 @@ function MessageContent() {
                                         </div>
 
                                         {/* MESSAGE INPUT */}
-                                        <div className="message-input">
-                                            {/* Staged file preview */}
-                                            {stagedFile && (
+                                        {isBlockedByOther ? (
+                                            <div className="message-input" style={{ padding: '16px' }}>
                                                 <div style={{
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    gap: "12px",
-                                                    padding: "10px 16px",
-                                                    background: "rgba(255, 255, 255, 0.05)",
-                                                    borderRadius: "16px",
-                                                    marginBottom: "12px",
-                                                    border: "1px solid var(--border-color)",
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '10px',
+                                                    padding: '14px 20px',
+                                                    background: 'rgba(231, 76, 60, 0.1)',
+                                                    borderRadius: '12px',
+                                                    border: '1px solid rgba(231, 76, 60, 0.3)'
                                                 }}>
-                                                    {stagedFile.fileType === "image" ? (
-                                                        <img
-                                                            src={stagedFile.localUrl}
-                                                            alt="preview"
-                                                            style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "8px" }}
-                                                        />
-                                                    ) : (
-                                                        <span style={{ fontSize: "20px" }}>📄</span>
-                                                    )}
-                                                    <span style={{ flex: 1, fontSize: "13px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                        {stagedFile.name}
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <circle cx="12" cy="12" r="10" stroke="#e74c3c" strokeWidth="2"/>
+                                                        <path d="M7 7L17 17" stroke="#e74c3c" strokeWidth="2" strokeLinecap="round"/>
+                                                    </svg>
+                                                    <span style={{ color: '#e74c3c', fontSize: '14px', fontWeight: 500 }}>
+                                                        {t("youAreBlockedByThisUser")}
                                                     </span>
-                                                    <button
-                                                        onClick={() => setStagedFile(null)}
-                                                        style={{ background: "none", border: "none", color: "#ff5555", fontSize: "16px", cursor: "pointer", padding: "4px" }}
-                                                        title="Remove attachment"
-                                                    >✕</button>
                                                 </div>
-                                            )}
-
-                                            <div className="input-container">
-                                                {/* Hidden file input */}
-                                                <input
-                                                    ref={fileInputRef}
-                                                    type="file"
-                                                    accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
-                                                    style={{ display: "none" }}
-                                                    onChange={handleFileSelect}
-                                                />
-
-                                                <button
-                                                    className="clip-btn"
-                                                    onClick={() => fileInputRef.current?.click()}
-                                                    disabled={isUploading}
-                                                    title="Attach file"
-                                                >
-                                                    {isUploading ? "⏳" : "📎"}
-                                                </button>
-
-                                                <input
-                                                    type="text"
-                                                    placeholder={stagedFile ? "Add a caption..." : "Your message..."}
-                                                    value={message}
-                                                    onChange={handleInputChange}
-                                                    onKeyPress={handleKeyPress}
-                                                />
-
-                                                <button
-                                                    onClick={sendMessage}
-                                                    className="send-btn"
-                                                    disabled={isUploading || (!message.trim() && !stagedFile)}
-                                                >
-                                                    <img src="/img/send_chat.svg" alt="Send" />
-                                                </button>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div className="message-input">
+                                                {/* Staged file preview */}
+                                                {stagedFile && (
+                                                    <div style={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: "12px",
+                                                        padding: "10px 16px",
+                                                        background: "rgba(255, 255, 255, 0.05)",
+                                                        borderRadius: "16px",
+                                                        marginBottom: "12px",
+                                                        border: "1px solid var(--border-color)",
+                                                    }}>
+                                                        {stagedFile.fileType === "image" ? (
+                                                            <img
+                                                                src={stagedFile.localUrl}
+                                                                alt="preview"
+                                                                style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "8px" }}
+                                                            />
+                                                        ) : (
+                                                            <span style={{ fontSize: "20px" }}>📄</span>
+                                                        )}
+                                                        <span style={{ flex: 1, fontSize: "13px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                            {stagedFile.name}
+                                                        </span>
+                                                        <button
+                                                            onClick={() => setStagedFile(null)}
+                                                            style={{ background: "none", border: "none", color: "#ff5555", fontSize: "16px", cursor: "pointer", padding: "4px" }}
+                                                            title={t("removeAttachment")}
+                                                        >✕</button>
+                                                    </div>
+                                                )}
+
+                                                <div className="input-container">
+                                                    {/* Hidden file input */}
+                                                    <input
+                                                        ref={fileInputRef}
+                                                        type="file"
+                                                        accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                                                        style={{ display: "none" }}
+                                                        onChange={handleFileSelect}
+                                                    />
+
+                                                    <button
+                                                        className="clip-btn"
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                        disabled={isUploading}
+                                                        title={t("attachFile")}
+                                                    >
+                                                        {isUploading ? "⏳" : "📎"}
+                                                    </button>
+
+                                                    <input
+                                                        type="text"
+                                                        placeholder={stagedFile ? t("addCaption") : t("yourMessagePlaceholder")}
+                                                        value={message}
+                                                        onChange={handleInputChange}
+                                                        onKeyPress={handleKeyPress}
+                                                    />
+
+                                                    <button
+                                                        onClick={sendMessage}
+                                                        className="send-btn"
+                                                        disabled={isUploading || (!message.trim() && !stagedFile)}
+                                                    >
+                                                        <img src="/img/send_chat.svg" alt="Send" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="no-chat-selected">
                                         <img src="/img/logo.svg" alt="Logo" />
-                                        Select a chat to start messaging
+                                        {t("selectChatToStart")}
                                     </div>
                                 )}
                             </div>
@@ -909,13 +973,312 @@ function MessageContent() {
                     </div>
                 </div>
             </div>
+
+            {/* Clear Chat Confirmation Modal */}
+            <Modal show={showClearChatModal} onHide={() => setShowClearChatModal(false)} centered className="clear-chat-modal">
+                <Modal.Body className="text-center p-4">
+                    <div className="modal-icon mb-3">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)"/>
+                            <path d="M9 9L15 15M15 9L9 15" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                    </div>
+                    <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("clearChat")}?</h4>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '24px' }}>
+                        {t("clearChatConfirmMessage")}
+                    </p>
+                    <div className="d-flex gap-3 justify-content-center">
+                        <button 
+                            onClick={() => setShowClearChatModal(false)}
+                            style={{
+                                padding: '10px 24px',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                background: 'transparent',
+                                color: '#fff',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {t("cancel")}
+                        </button>
+                        <button 
+                            onClick={confirmClearChat}
+                            style={{
+                                padding: '10px 24px',
+                                borderRadius: '12px',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+                                color: '#fff',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {t("clearChat")}
+                        </button>
+                    </div>
+                </Modal.Body>
+            </Modal>
+
+            {/* Block User Confirmation Modal */}
+            <Modal show={showBlockModal} onHide={() => setShowBlockModal(false)} centered className="clear-chat-modal">
+                <Modal.Body className="text-center p-4">
+                    <div className="modal-icon mb-3">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)"/>
+                            <circle cx="12" cy="12" r="5" stroke="#ff4d4f" strokeWidth="2"/>
+                            <path d="M8.5 8.5L15.5 15.5" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                    </div>
+                    <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("blockUser")}?</h4>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '24px' }}>
+                        {t("blockUserConfirmMessage")}
+                    </p>
+                    <div className="d-flex gap-3 justify-content-center">
+                        <button 
+                            onClick={() => setShowBlockModal(false)}
+                            style={{
+                                padding: '10px 24px',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                background: 'transparent',
+                                color: '#fff',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {t("cancel")}
+                        </button>
+                        <button 
+                            onClick={async () => {
+                                try {
+                                    const otherUserId = getOtherUser(activeChat)?._id;
+                                    if (!otherUserId) return;
+                                    const res = await blockUserApi.blockUser({ toUser: otherUserId });
+                                    setShowBlockModal(false);
+                                    if (res.status === true) {
+                                        // Update local state to reflect block
+                                        const myId = getMyId();
+                                        setActiveChat(prev => ({ ...prev, blockedBy: { _id: myId }, isBlocked: true }));
+                                        setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, blockedBy: { _id: myId }, isBlocked: true } : c));
+                                        toast.success(res.message || t("userBlockedSuccessfully"));
+                                    }
+                                } catch (error) {
+                                    console.error(error);
+                                    toast.error(t("failedToBlockUser"));
+                                }
+                            }}
+                            style={{
+                                padding: '10px 24px',
+                                borderRadius: '12px',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+                                color: '#fff',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {t("blockUser")}
+                        </button>
+                    </div>
+                </Modal.Body>
+            </Modal>
+
+            {/* Unblock User Confirmation Modal */}
+            <Modal show={showUnblockModal} onHide={() => setShowUnblockModal(false)} centered className="clear-chat-modal">
+                <Modal.Body className="text-center p-4">
+                    <div className="modal-icon mb-3">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)"/>
+                            <path d="M8 12l3 3 5-6" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </div>
+                    <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("unblockUser")}?</h4>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '24px' }}>
+                        {t("unblockUserConfirmMessage")}
+                    </p>
+                    <div className="d-flex gap-3 justify-content-center">
+                        <button 
+                            onClick={() => setShowUnblockModal(false)}
+                            style={{
+                                padding: '10px 24px',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                background: 'transparent',
+                                color: '#fff',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {t("cancel")}
+                        </button>
+                        <button 
+                            onClick={async () => {
+                                try {
+                                    const otherUserId = getOtherUser(activeChat)?._id;
+                                    if (!otherUserId) return;
+                                    const res = await blockUserApi.unblockUser({ toUser: otherUserId });
+                                    setShowUnblockModal(false);
+                                    if (res.status === true) {
+                                        // Update local state to reflect unblock
+                                        setActiveChat(prev => ({ ...prev, blockedBy: null, isBlocked: false }));
+                                        setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, blockedBy: null, isBlocked: false } : c));
+                                        toast.success(res.message || t("userUnblockedSuccessfully"));
+                                    }
+                                } catch (error) {
+                                    console.error(error);
+                                    toast.error(t("failedToUnblockUser"));
+                                }
+                            }}
+                            style={{
+                                padding: '10px 24px',
+                                borderRadius: '12px',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, #1abc9c 0%, #3db5b4 100%)',
+                                color: '#fff',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {t("unblockUser")}
+                        </button>
+                    </div>
+                </Modal.Body>
+            </Modal>
+
+            {/* Report User Modal */}
+            <Modal show={showReportModal} onHide={() => { setShowReportModal(false); setReportReason(""); setReportDescription(""); setReportError(""); }} centered className="clear-chat-modal">
+                <Modal.Body className="p-4">
+                    <div className="text-center mb-3">
+                        <div className="modal-icon mb-3">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)"/>
+                                <path d="M12 8V12M12 16H12.01" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round"/>
+                            </svg>
+                        </div>
+                        <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("reportUser")}</h4>
+                        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '16px' }}>
+                            {t("reportUserDescription")}
+                        </p>
+                    </div>
+                    
+                    <div style={{ marginBottom: '16px' }}>
+                        <input
+                            type="text"
+                            placeholder={t("enterReason")}
+                            value={reportReason}
+                            onChange={(e) => { setReportReason(e.target.value); setReportError(""); }}
+                            style={{
+                                width: '100%',
+                                padding: '12px 16px',
+                                borderRadius: '10px',
+                                border: reportError ? '1px solid #e74c3c' : '1px solid #404040',
+                                background: '#1a1a1a',
+                                color: '#fff',
+                                fontSize: '14px',
+                                outline: 'none'
+                            }}
+                        />
+                        {reportError && (
+                            <p style={{ color: '#e74c3c', fontSize: '12px', marginTop: '6px', marginBottom: 0 }}>
+                                {reportError}
+                            </p>
+                        )}
+                    </div>
+                    
+                    <div style={{ marginBottom: '24px' }}>
+                        <textarea
+                            placeholder={t("descriptionOptional")}
+                            value={reportDescription}
+                            onChange={(e) => setReportDescription(e.target.value)}
+                            rows={3}
+                            style={{
+                                width: '100%',
+                                padding: '12px 16px',
+                                borderRadius: '10px',
+                                border: '1px solid #404040',
+                                background: '#1a1a1a',
+                                color: '#fff',
+                                fontSize: '14px',
+                                outline: 'none',
+                                resize: 'none'
+                            }}
+                        />
+                    </div>
+                    
+                    <div className="d-flex gap-3 justify-content-center">
+                        <button 
+                            onClick={() => { setShowReportModal(false); setReportReason(""); setReportDescription(""); setReportError(""); }}
+                            style={{
+                                padding: '10px 24px',
+                                borderRadius: '10px',
+                                border: 'none',
+                                background: '#444',
+                                color: '#fff',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {t("cancel")}
+                        </button>
+                        <button 
+                            onClick={async () => {
+                                const reason = reportReason.trim();
+                                if (!reason) {
+                                    setReportError(t("reasonIsRequired"));
+                                    return;
+                                }
+                                try {
+                                    const userId = getOtherUser(activeChat)?._id;
+                                    if (!userId) return;
+                                    const res = await reportUserApi.reportUser({
+                                        toUser: userId,
+                                        reason: reason,
+                                        description: reportDescription.trim()
+                                    });
+                                    setShowReportModal(false);
+                                    setReportReason("");
+                                    setReportDescription("");
+                                    setReportError("");
+                                    if (res.status === true) {
+                                        toast.success(res.message || t("userReportedSuccessfully"));
+                                    }
+                                } catch (error) {
+                                    console.error(error);
+                                    toast.error(t("failedToReportUser"));
+                                }
+                            }}
+                            style={{
+                                padding: '10px 24px',
+                                borderRadius: '10px',
+                                border: 'none',
+                                background: '#1abc9c',
+                                color: '#fff',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {t("submitReport")}
+                        </button>
+                    </div>
+                </Modal.Body>
+            </Modal>
         </div>
     );
 }
 
 export default function Page() {
+    const { t } = useLanguage();
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div>{t("loading")}...</div>}>
             <MessageContent />
         </Suspense>
     );

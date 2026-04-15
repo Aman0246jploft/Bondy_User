@@ -12,7 +12,7 @@ import { useLanguage } from "@/context/LanguageContext";
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-function page() {
+function Page() {
   const { t } = useLanguage();
 
   const TYPE_LABEL = {
@@ -22,6 +22,7 @@ function page() {
     REFUND: t("refund"),
     ADJUSTMENT: t("adjustment"),
     REFERRAL: t("referralReward"),
+    PURCHASE:t("purchase")
   };
 
   const TYPE_BADGE = {
@@ -31,6 +32,7 @@ function page() {
     REFUND: "cancel",
     ADJUSTMENT: "upcoming",
     REFERRAL: "complete",
+    PURCHASE:"purchase"
   };
 
   const formatAmount = (amount) => {
@@ -453,4 +455,4 @@ function page() {
   );
 }
 
-export default page;
+export default Page;

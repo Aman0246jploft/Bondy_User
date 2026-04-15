@@ -5,9 +5,12 @@ import { Col, Container, Form, Nav, Row, Tab } from "react-bootstrap";
 import authApi from "@/api/authApi";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import GuestRoute from "@/components/GuestRoute";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Page() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("Customer");
@@ -32,16 +35,16 @@ export default function Page() {
 
     // Client-side validation
     if (!formData.email.trim()) {
-      toast.error("Email is required");
+      toast.error(t("emailRequired"));
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email.trim())) {
-      toast.error("Please enter a valid email address");
+      toast.error(t("pleaseEnterValidEmail"));
       return;
     }
     if (!formData.password) {
-      toast.error("Password is required");
+      toast.error(t("passwordRequired"));
       return;
     }
 
@@ -71,6 +74,7 @@ export default function Page() {
   };
 
   return (
+    <GuestRoute>
     <div className="login_sec">
       <Container fluid>
         <Row className="justify-content-between align-items-center gy-4">
@@ -78,10 +82,9 @@ export default function Page() {
             <div className="login_img">
               <img src="/img/login_side_img.png" alt="login side" />
               <div className="content_img_box">
-                <h4>Explore Events Effortlessly</h4>
+                <h4>{t("exploreEventsEffortlessly")}</h4>
                 <p>
-                  Discover, book, and track events seamlessly with calendar
-                  integration and personalized event curation
+                  {t("exploreEventsEffortlesslyDesc")}
                 </p>
               </div>
             </div>
@@ -92,10 +95,9 @@ export default function Page() {
               <Col xxl={7} xl={9} lg={10} md={12}>
                 <div className="common_field">
                   <div className="fz_32">
-                    <h2 className="">Good to See You Again</h2>
+                    <h2 className="">{t("goodToSeeYouAgain")}</h2>
                     <p>
-                      Smart travel plans, tailored just for you. Sign in to
-                      continue.
+                      {t("smartTravelPlans")}
                     </p>
                   </div>
 
@@ -109,10 +111,10 @@ export default function Page() {
                           variant="pills"
                           className="custom-nav-pills justify-content-center m-auto">
                           <Nav.Item>
-                            <Nav.Link eventKey="Customer">Customer</Nav.Link>
+                            <Nav.Link eventKey="Customer">{t("customer")}</Nav.Link>
                           </Nav.Item>
                           <Nav.Item>
-                            <Nav.Link eventKey="Organizer">Organizer</Nav.Link>
+                            <Nav.Link eventKey="Organizer">{t("organizer")}</Nav.Link>
                           </Nav.Item>
                         </Nav>
                       </Col>
@@ -129,7 +131,7 @@ export default function Page() {
                                 <Form.Control
                                   type="email"
                                   name="email"
-                                  placeholder="Email"
+                                  placeholder={t("email")}
                                   value={formData.email}
                                   onChange={handleChange}
                                   required
@@ -142,7 +144,7 @@ export default function Page() {
                                   <Form.Control
                                     type={show ? "text" : "password"}
                                     name="password"
-                                    placeholder="Enter your password"
+                                    placeholder={t("enterPassword")}
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
@@ -166,20 +168,20 @@ export default function Page() {
                                 <Link
                                   href="/forgot-password"
                                   className="forgot-password">
-                                  Forgot Password?
+                                  {t("forgotPasswordQuestion")}
                                 </Link>
                               </div>
                               <button
                                 type="submit"
                                 disabled={loading}
                                 className="common_btn w-100 d-block text-center text-decoration-none border-0">
-                                {loading ? "Signing In..." : "Sign In"}
+                                {loading ? t("signingIn") : t("signIn")}
                               </button>
                             </Form>
 
                             <div className="other_text">
                               <span></span>
-                              <h6>or sign up with</h6>
+                              <h6>{t("orSignUpWith")}</h6>
                               <span></span>
                             </div>
 
@@ -201,8 +203,8 @@ export default function Page() {
                             <div className="other_signup">
                               <span>
                                 {" "}
-                                Don't have an account?{" "}
-                                <Link href="/register">Sign Up</Link>
+                                {t("dontHaveAccount")}{" "}
+                                <Link href="/register">{t("signUp")}</Link>
                               </span>
                             </div>
                           </Tab.Pane>
@@ -217,7 +219,7 @@ export default function Page() {
                                 <Form.Control
                                   type="email"
                                   name="email"
-                                  placeholder="Email"
+                                  placeholder={t("email")}
                                   value={formData.email}
                                   onChange={handleChange}
                                   required
@@ -230,7 +232,7 @@ export default function Page() {
                                   <Form.Control
                                     type={show ? "text" : "password"}
                                     name="password"
-                                    placeholder="Enter your password"
+                                    placeholder={t("enterPassword")}
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
@@ -254,20 +256,20 @@ export default function Page() {
                                 <Link
                                   href="/forgot-password"
                                   className="forgot-password">
-                                  Forgot Password?
+                                  {t("forgotPasswordQuestion")}
                                 </Link>
                               </div>
                               <button
                                 type="submit"
                                 disabled={loading}
                                 className="common_btn w-100 d-block text-center text-decoration-none border-0">
-                                {loading ? "Signing In..." : "Sign In"}
+                                {loading ? t("signingIn") : t("signIn")}
                               </button>
                             </Form>
 
                             <div className="other_text">
                               <span></span>
-                              <h6>or sign up with</h6>
+                              <h6>{t("orSignUpWith")}</h6>
                               <span></span>
                             </div>
 
@@ -289,8 +291,8 @@ export default function Page() {
                             <div className="other_signup">
                               <span>
                                 {" "}
-                                Don't have an account?{" "}
-                                <Link href="/register">Sign Up</Link>
+                                {t("dontHaveAccount")}{" "}
+                                <Link href="/register">{t("signUp")}</Link>
                               </span>
                             </div>
                           </Tab.Pane>
@@ -305,5 +307,6 @@ export default function Page() {
         </Row>
       </Container>
     </div>
+    </GuestRoute>
   );
 }

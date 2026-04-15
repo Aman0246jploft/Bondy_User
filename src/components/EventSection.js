@@ -3,6 +3,7 @@ import Link from "next/link";
 /* 🔹 DATA */
 import React, { useEffect, useState } from "react";
 import eventApi from "../api/eventApi";
+import { useLanguage } from "@/context/LanguageContext";
 
 const EventSection = ({
   type = "recommended",
@@ -13,6 +14,7 @@ const EventSection = ({
   customTitle = "",
   extraParams = null,
 }) => {
+  const { t } = useLanguage();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState(customTitle);
@@ -21,14 +23,14 @@ const EventSection = ({
   const getFilterAndTitle = () => {
     switch (type) {
       case "recommended":
-        return { filter: "recommended", defaultTitle: "Recommended" };
+        return { filter: "recommended", defaultTitle: t("recommended") };
       case "near":
       case "nearYou":
-        return { filter: "nearYou", defaultTitle: "Near You" };
+        return { filter: "nearYou", defaultTitle: t("nearYou") };
       case "week":
-        return { filter: "thisWeek", defaultTitle: "Happening Soon" };
+        return { filter: "thisWeek", defaultTitle: t("happeningSoon") };
       default:
-        return { filter: "all", defaultTitle: "Events" };
+        return { filter: "all", defaultTitle: t("events") };
     }
   };
 
@@ -86,7 +88,7 @@ const EventSection = ({
     return (
       <section className="recommended-section">
         <div className="container">
-          <p>Loading...</p>
+          <p>{t("loadingEvents")}</p>
         </div>
       </section>
     ); // Or a skeleton loader
@@ -107,7 +109,7 @@ const EventSection = ({
                 href={`/Listing?type=${getFilterAndTitle().filter === "all" ? "all" : type}`}
                 className="see-all"
               >
-                See all
+                {t("seeAll")}
               </Link>
             )}
           </div>

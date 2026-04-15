@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import courseApi from "../api/courseApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatDate } from "@/utils/dateFormater";
+import { useLanguage } from "@/context/LanguageContext";
 
 const CourseSection = ({
   type = "featured",
@@ -13,6 +14,7 @@ const CourseSection = ({
   customTitle = "",
   extraParams = null,
 }) => {
+  const { t } = useLanguage();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState(customTitle);
@@ -21,13 +23,13 @@ const CourseSection = ({
   const getFilterAndTitle = () => {
     switch (type) {
       case "featured":
-        return { filter: "featured", defaultTitle: "Featured Courses" };
+        return { filter: "featured", defaultTitle: t("featuredCourses") };
       case "recommended":
-        return { filter: "recommended", defaultTitle: "Recommended for You" };
+        return { filter: "recommended", defaultTitle: t("recommendedForYou") };
       case "nearYou":
-        return { filter: "nearYou", defaultTitle: "Courses Near You" };
+        return { filter: "nearYou", defaultTitle: t("coursesNearYou") };
       default:
-        return { filter: "all", defaultTitle: "All Courses" };
+        return { filter: "all", defaultTitle: t("allCourses") };
     }
   };
 
@@ -63,7 +65,7 @@ const CourseSection = ({
     return (
       <section className="recommended-section">
         <div className="container">
-          <p>Loading Featured Courses...</p>
+          <p>{t("loadingCourses")}</p>
         </div>
       </section>
     );
@@ -83,7 +85,7 @@ const CourseSection = ({
                 href={`/Programs-Listing?type=${type}`}
                 className="see-all"
               >
-                See all
+                {t("seeAll")}
               </Link>
             )}
           </div>

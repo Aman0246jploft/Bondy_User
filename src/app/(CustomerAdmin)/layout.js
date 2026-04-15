@@ -35,11 +35,13 @@ export default function RootLayout({ children }) {
     checkAuth();
   }, [router]);
 
-  if (!authorized) return null;
-
-  useEffect(() => {
+   useEffect(() => {
     document.title = "Customer Admin - Bondy";
   }, []);
+  
+  if (!authorized) return null;
+
+ 
 
   return (
     <div

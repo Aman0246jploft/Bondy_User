@@ -3,14 +3,24 @@ import React, { useEffect, useState } from "react";
 import CreateTicket from "../Components/CreateTicket";
 import authApi from "../../../api/authApi";
 import supportTicketApi from "../../../api/supportTicketApi";
+import { useLanguage } from "@/context/LanguageContext";
 
-function page() {
+function Page() {
+  const { t } = useLanguage();
   const [modalShow, setModalShow] = useState(false);
   const [tickets, setTickets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+
+  const STATUS_OPTIONS = [
+    { value: "", label: t("allStatus") },
+    { value: "Open", label: t("open") },
+    { value: "Pending", label: t("pending") },
+    { value: "Resolved", label: t("resolved") },
+  ];
 
   const fetchCategories = async () => {
     try {
@@ -30,6 +40,7 @@ function page() {
     try {
       const params = {};
       if (selectedCategory) params.category = selectedCategory;
+      if (selectedStatus) params.status = selectedStatus;
 
       const response = await supportTicketApi.getMyTickets(params);
       if (response.status && response.data) {
@@ -49,7 +60,7 @@ function page() {
 
   useEffect(() => {
     fetchTickets();
-  }, [selectedCategory]);
+  }, [selectedCategory, selectedStatus]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -64,19 +75,42 @@ function page() {
     }
   };
 
+  const getStatusText = (status) => {
+    switch (status) {
+      case "Open":
+        return t("open");
+      case "Pending":
+        return t("pending");
+      case "Resolved":
+        return t("resolved");
+      default:
+        return status;
+    }
+  };
+
+  const filteredTickets = tickets.filter((ticket) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      ticket.ticketId?.toLowerCase().includes(q) ||
+      ticket.subject?.toLowerCase().includes(q) ||
+      ticket.category?.toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div>
       <div className="cards">
         <div className="card-header">
           <div>
-            <h2 className="card-title">Support Tickets</h2>
+            <h2 className="card-title">{t("supportTickets")}</h2>
           </div>
           <div>
             <button
               className="custom-btn"
               type="button"
               onClick={() => setModalShow(true)}>
-              Create Ticket
+              {t("createTicket")}
             </button>
           </div>
         </div>
@@ -84,17 +118,27 @@ function page() {
         <div className="custom-table-cards billing-history">
           <div className="card-header">
             <div>
-              <h5 className="table-title">Ticket List</h5>
+              <h5 className="table-title">{t("supportTicketList")}</h5>
             </div>
             <div className="dashboard-filter d-flex gap-2">
               <select
                 className="form-select w-auto"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}>
-                <option value="">All Categories</option>
+                <option value="">{t("allCategories")}</option>
                 {categories.map((cat) => (
                   <option key={cat._id} value={cat.name}>
                     {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="form-select w-auto"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}>
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
                   </option>
                 ))}
               </select>
@@ -102,7 +146,7 @@ function page() {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search Ticket ..."
+                  placeholder={t("searchTicketPlaceholder")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -118,16 +162,16 @@ function page() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Ticket ID</th>
-                  <th>Category</th>
-                  <th>Subject</th>
-                  <th>Status</th>
-                  <th>Last update date</th>
+                  <th>{t("ticketID")}</th>
+                  <th>{t("category")}</th>
+                  <th>{t("subject")}</th>
+                  <th>{t("status")}</th>
+                  <th>{t("lastUpdateDate")}</th>
                 </tr>
               </thead>
               <tbody>
-                {tickets.length > 0 ? (
-                  tickets.map((ticket) => (
+                {filteredTickets.length > 0 ? (
+                  filteredTickets.map((ticket) => (
                     <tr key={ticket._id}>
                       <td>#{ticket.ticketId}</td>
                       <td>
@@ -142,7 +186,7 @@ function page() {
                           className={`status-badge ${getStatusBadge(
                             ticket.status,
                           )}`}>
-                          {ticket.status}
+                          {getStatusText(ticket.status)}
                         </span>
                       </td>
                       <td>
@@ -162,7 +206,7 @@ function page() {
                 ) : (
                   <tr>
                     <td colSpan="5" className="text-center">
-                      No tickets found
+                      {t("noTicketsFound")}
                     </td>
                   </tr>
                 )}
@@ -182,4 +226,4 @@ function page() {
   );
 }
 
-export default page;
+export default Page;

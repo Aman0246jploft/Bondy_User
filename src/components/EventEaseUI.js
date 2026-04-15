@@ -88,7 +88,7 @@ const EventEaseUI = () => {
               <Link href="/Explore" className="btn-teal">
                 Start Exploring Events
               </Link>
-              <Link href="" className="btn-white">
+              <Link href="/BasicInfo" className="btn-white">
                 Create Your First Event
               </Link>
             </div>

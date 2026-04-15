@@ -4,8 +4,10 @@ import Link from "next/link";
 import React from "react";
 import { Col, Row } from "react-bootstrap";
 import { useEffect } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 function page() {
+  const { t } = useLanguage();
   useEffect(() => {
     document.title = "Subscription & Billing - Bondy";
   }, []);
@@ -16,15 +18,15 @@ function page() {
       <div className="cards subscription">
         <div className="card-header">
           <div>
-            <h2 className="card-title">Subscription & Billing</h2>
+            <h2 className="card-title">{t("subscriptionBilling")}</h2>
           </div>
         </div>
         <Row>
           <Col md={7}>
             <div className="analytics-chart">
               <div className="plan-header">
-                <h3>Standard Plan</h3>
-                <span className="status-pill">Active</span>
+                <h3>{t("standardPlan")}</h3>
+                <span className="status-pill">{t("active")}</span>
               </div>
               <p className="plan-sub">$299 / 7 Days • Renew 12 Oct 2025</p>
               <div className="pricing-cards border-0 p-0">
@@ -34,7 +36,7 @@ function page() {
                     className="me-3"
                     alt=""
                   />
-                  Unlimited Event Listings
+                  {t("unlimitedEventListings")}
                 </p>
                 <p>
                   <img
@@ -42,7 +44,7 @@ function page() {
                     className="me-3"
                     alt=""
                   />
-                  Featured Placement (Homeage, Maps & Areas)
+                  {t("featuredPlacement")}
                 </p>
                 <p>
                   <img
@@ -50,7 +52,7 @@ function page() {
                     className="me-3"
                     alt=""
                   />
-                  Boosted Visibility & Ranking
+                  {t("boostedVisibility")}
                 </p>
                 <p>
                   <img
@@ -58,7 +60,7 @@ function page() {
                     className="me-3"
                     alt=""
                   />
-                  Advanced Analytics Dashboard
+                  {t("advancedAnalyticsDashboard")}
                 </p>
                 <p>
                   <img
@@ -66,7 +68,7 @@ function page() {
                     className="me-3"
                     alt=""
                   />
-                  Promotions & Discounts
+                  {t("promotionsDiscounts")}
                 </p>
                 <p>
                   <img
@@ -74,7 +76,7 @@ function page() {
                     className="me-3"
                     alt=""
                   />
-                  Auto Reminders & Scheduled Messages
+                  {t("autoReminders")}
                 </p>
                 <p>
                   <img
@@ -82,16 +84,16 @@ function page() {
                     className="me-3"
                     alt=""
                   />
-                  Priority Support
+                  {t("prioritySupport")}
                 </p>
               </div>
               <div className="renew-on mt-3">
-                <span>Renew on: 12 Oct 2025</span>
+                <span>{t("renewOn")}: 12 Oct 2025</span>
               </div>
               <div className="d-flex justify-content-between mt-3">
-                <button className="outline-btn">Cancel Plan</button>
+                <button className="outline-btn">{t("cancelPlan")}</button>
                 <Link href="/Promotions" className="custom-btn">
-                  Upgrade Plan
+                  {t("upgradePlan")}
                 </Link>
               </div>
             </div>
@@ -99,7 +101,7 @@ function page() {
 
           <Col md={5}>
             <div className="analytics-chart payment-cards h-100">
-              <h3 className="section-title">Payment Methods</h3>
+              <h3 className="section-title">{t("paymentMethods")}</h3>
               <div className="card-row">
                 <div className="card-icon">
                   <img
@@ -114,7 +116,7 @@ function page() {
                 </div>
               </div>
               <div className="billing">
-                <h4>Billing Address</h4>
+                <h4>{t("billingAddress")}</h4>
                 <p>
                   123 Event Horizon Way
                   <br />
@@ -123,7 +125,7 @@ function page() {
               </div>
               <div className="mt-2">
                 <button className="outline-btn w-100" type="button">
-                  Edit payment method
+                  {t("editPaymentMethod")}
                 </button>
               </div>
             </div>
@@ -132,14 +134,14 @@ function page() {
         <div className="custom-table-cards billing-history">
           <div className="card-header">
             <div>
-              <h5 className="table-title">Billing History</h5>
+              <h5 className="table-title">{t("billingHistory")}</h5>
             </div>
 
             <div className="table-search">
               <input
                 type="text"
                 className="form-control"
-                placeholder="Search Billing ... "
+                placeholder={t("searchBilling")}
               />
               <button type="button">
                 <img src="/img/org-img/search-white.svg" width={16} />
@@ -150,11 +152,11 @@ function page() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Plan</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Invoice</th>
+                  <th>{t("date")}</th>
+                  <th>{t("plan")}</th>
+                  <th>{t("amount")}</th>
+                  <th>{t("status")}</th>
+                  <th>{t("invoice")}</th>
                 </tr>
               </thead>
               <tbody>

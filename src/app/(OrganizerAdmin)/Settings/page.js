@@ -7,7 +7,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import toast from "react-hot-toast";
 
 function page() {
-  const { changeLanguage } = useLanguage();
+  const { t, changeLanguage } = useLanguage();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -62,10 +62,10 @@ function page() {
 
     try {
       await userSettingApi.updateUserSetting({ [field]: newValue });
-      toast.success("Settings updated");
+      toast.success(t("settingsUpdated"));
     } catch (error) {
       console.error("Failed to update setting:", error);
-      toast.error("Failed to update settings");
+      toast.error(t("failedToUpdateSettings"));
       // Revert on failure
       setSettings(prev => ({ ...prev, [field]: !newValue }));
     }
@@ -79,34 +79,35 @@ function page() {
     try {
       await userSettingApi.updateUserSetting({ language: lang.dbLabel });
       if (changeLanguage) changeLanguage(lang.code);
-       toast.success("Language updated");
+       toast.success(t("languageUpdated"));
     } catch (error) {
       console.error("Failed to update language:", error);
-      toast.error("Failed to update language");
+      toast.error(t("failedToUpdateLanguage"));
     }
   };
-
-  if (loading) {
-    return <div className="text-center py-5">Loading settings...</div>;
-  }
-
-  useEffect(() => {
+ useEffect(() => {
     document.title = "Settings - Bondy";
   }, []);
+
+  if (loading) {
+    return <div className="text-center py-5">{t("loadingSettings")}</div>;
+  }
+
+ 
 
 
   return (
     <div>
       <div className="cards setting-card">
         <div className="card-title">
-          <h3>Setting</h3>
+          <h3>{t("setting")}</h3>
         </div>
 
         {/* In-App Notifications */}
         <div className="setting-info">
           <div className="setting-info-lft">
-            <h5>In-App Notifications</h5>
-            <p>Receive notifications within the app while you are using it.</p>
+            <h5>{t("inAppNotifications")}</h5>
+            <p>{t("inAppNotificationsDesc")}</p>
           </div>
           <div className="setting-info-rgt">
             <div className="form-check form-switch">
@@ -125,8 +126,8 @@ function page() {
         {/* Push Notifications */}
         <div className="setting-info">
           <div className="setting-info-lft">
-            <h5>Push Notifications</h5>
-            <p>Receive push-notifications on your device for important events and offers.</p>
+            <h5>{t("pushNotifications")}</h5>
+            <p>{t("pushNotificationsDesc")}</p>
           </div>
           <div className="setting-info-rgt">
             <div className="form-check form-switch">
@@ -145,8 +146,8 @@ function page() {
         {/* Email Notifications */}
         <div className="setting-info">
           <div className="setting-info-lft">
-            <h5>Email Notifications</h5>
-            <p>Stay updated with event news and updates directly to your email.</p>
+            <h5>{t("emailNotifications")}</h5>
+            <p>{t("emailNotificationsDesc")}</p>
           </div>
           <div className="setting-info-rgt">
             <div className="form-check form-switch">
@@ -165,8 +166,8 @@ function page() {
         {/* WhatsApp Notifications */}
         <div className="setting-info">
           <div className="setting-info-lft">
-            <h5>WhatsApp Notifications</h5>
-            <p>Receive instant updates and alerts directly on WhatsApp.</p>
+            <h5>{t("whatsappNotifications")}</h5>
+            <p>{t("whatsappNotificationsDesc")}</p>
           </div>
           <div className="setting-info-rgt">
             <div className="form-check form-switch">
@@ -185,8 +186,8 @@ function page() {
         {/* SMS Notifications */}
         <div className="setting-info">
           <div className="setting-info-lft">
-            <h5>SMS Notifications</h5>
-            <p>Get text messages for ticket availability and critical alerts.</p>
+            <h5>{t("smsNotifications")}</h5>
+            <p>{t("smsNotificationsDesc")}</p>
           </div>
           <div className="setting-info-rgt">
             <div className="form-check form-switch">
@@ -205,7 +206,7 @@ function page() {
 
         {/* Language Selection */}
         <div className="language-wrapper">
-          <p className="title">Select your preferred language</p>
+          <p className="title">{t("preferredLanguage")}</p>
 
           <div className="language-select" onClick={() => setOpen(!open)}>
             <div className="d-flex align-items-center gap-2">

@@ -54,8 +54,8 @@ export default function Page() {
     setLoading(true);
     try {
       const response = await contactApi.createContact(formData);
-      if (response.status) {
-        toast.success("Message sent successfully!");
+      if (response?.status === true) {
+        toast.success("Your message has been sent successfully!");
         setFormData({
           fullName: "",
           email: "",
