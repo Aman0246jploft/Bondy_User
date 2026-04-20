@@ -8,8 +8,11 @@ import toast from "react-hot-toast";
 import GuestRoute from "@/components/GuestRoute";
 import { useLanguage } from "@/context/LanguageContext";
 
+import VerificationModl from "@/components/Modal/VerificationModl";
+
 function OTPContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useLanguage();
   const [otp, setOtp] = useState(["", "", "", "", ""]);
   const [email, setEmail] = useState("");
@@ -215,6 +218,11 @@ function OTPContent() {
             </Col>
           </Row>
         </Container>
+        <VerificationModl
+          show={modalShow}
+          onHide={() => setModalShow(false)}
+          redirectPath={redirectPath}
+        />
       </div>
     </GuestRoute>
   );
