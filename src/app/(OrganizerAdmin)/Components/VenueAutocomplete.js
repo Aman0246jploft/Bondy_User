@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useRef, useEffect, useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 import { Form } from "react-bootstrap";
 
 // Global flag to track Google Maps script loading state
@@ -10,7 +11,7 @@ let isGoogleMapsLoaded = false;
 const VenueAutocomplete = ({
   defaultValue,
   onPlaceSelected,
-  placeholder = "Search Venue Address",
+  placeholder = null,
   className = "form-control",
   disabled = false,
   minLength = 3,
@@ -21,11 +22,14 @@ const VenueAutocomplete = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState(null);
   const [inputValue, setInputValue] = useState(defaultValue || "");
+  const { t } = useLanguage();
+  // If caller passed a placeholder explicitly, use it; otherwise use translated default
+  const effectivePlaceholder = placeholder || t("searchVenuePlaceholder");
 
   // Load Google Maps API
   useEffect(() => {
     if (!apiKey) {
-      setError("Google Maps API key is not configured");
+      setError(t("googleMapsApiKeyMissing"));
       return;
     }
 
@@ -100,7 +104,7 @@ const VenueAutocomplete = ({
     };
 
     script.onerror = () => {
-      setError("Failed to load Google Maps API");
+      setError(t("failedToLoadGoogleMaps"));
       isGoogleMapsLoading = false;
     };
 
@@ -167,7 +171,7 @@ const VenueAutocomplete = ({
       };
     } catch (err) {
       console.error("Error initializing Google Places Autocomplete:", err);
-      setError("Failed to initialize Places autocomplete");
+      setError(t("failedToInitPlaces"));
     }
   }, [isLoaded]); // Only reinitialize when API loads, not on every input change
 
@@ -290,7 +294,7 @@ const VenueAutocomplete = ({
           type="text"
           value={inputValue}
           onChange={handleInputChange}
-          placeholder={placeholder}
+          placeholder={effectivePlaceholder}
           className={className}
           disabled={disabled}
         />
@@ -306,13 +310,12 @@ const VenueAutocomplete = ({
         type="text"
         value={inputValue}
         onChange={handleInputChange}
-        // placeholder={`${placeholder} (min ${minLength} characters)`}
-        placeholder={`${placeholder}`}
+        placeholder={effectivePlaceholder}
         className={className}
         disabled={disabled || !isLoaded}
       />
       {!isLoaded && !error && (
-        <small className="text-muted">Loading...</small>
+        <small className="text-muted">{t("loading")}</small>
       )}
     </>
   );

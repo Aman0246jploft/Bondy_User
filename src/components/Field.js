@@ -121,14 +121,14 @@ export default function Field({ onSearch, label = "Search", placeholder = "Searc
                   onChange={(e) => setDateFilter(e.target.value)}
                   style={{ outline: "none", cursor: "pointer", appearance: "none", backgroundColor: "transparent" }}
                 >
-                  <option value="all">All Dates</option>
-                  <option value="today">Today</option>
-                  <option value="thisWeek">This Week</option>
-                  <option value="thisWeekend">This Weekend</option>
-                  <option value="nextWeek">Next Week</option>
-                  <option value="thisYear">This Year</option>
-                  <option value="upcoming">Upcoming</option>
-                  <option value="past">Past</option>
+                  <option value="all">{t("allDates")}</option>
+                  <option value="today">{t("today")}</option>
+                  <option value="thisWeek">{t("thisWeek")}</option>
+                  <option value="thisWeekend">{t("thisWeekend")}</option>
+                  <option value="nextWeek">{t("nextWeek")}</option>
+                  <option value="thisYear">{t("thisYear")}</option>
+                  <option value="upcoming">{t("upcoming")}</option>
+                  <option value="past">{t("past")}</option>
                 </select>
               </div>
             </div>

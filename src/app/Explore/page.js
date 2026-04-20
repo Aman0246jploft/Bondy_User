@@ -107,7 +107,7 @@ function ExploreContent() {
           <Field
             onSearch={handleSearch}
             label={activeTab === "Events" ? <small>{t("eventcategory")}</small> : <small>{t("courseCategory")}</small>}
-            placeholder={activeTab === "Events" ? "e.g. music festival" : "e.g. guitar course"}
+            placeholder={activeTab === "Events" ? t("exampleMusicFestival") : t("exampleGuitarCourse")}
           />
 
           {/* Categories/Multi-Select Filters */}

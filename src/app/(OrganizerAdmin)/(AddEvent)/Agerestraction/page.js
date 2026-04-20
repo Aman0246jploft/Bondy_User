@@ -7,9 +7,11 @@ import { useEventContext } from "@/context/EventContext";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { Range, getTrackBackground } from "react-range";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 function page() {
+  const { t } = useLanguage();
   const { eventData, updateEventData } = useEventContext();
   const router = useRouter();
   // Dynamically import or require authApi if needed, or assume it is available in scope if I add the import at the top.
@@ -36,7 +38,7 @@ const MAX = 100;
       }
     };
     fetchFeatureFee();
-    document.title = "Age Restriction - Bondy";
+    document.title = t("ageRestrictionPageTitle");
   }, []);
 
   // Local state for age slider if needed, or directly use eventData
@@ -154,10 +156,10 @@ const MAX = 100;
                   <div className="event-frm-bx d-flex justify-content-between align-items-center">
                     <div>
                       <label className="form-label mb-0">
-                        Access & Privacy
+                        {t("accessAndPrivacyLabel")}
                       </label>
                       <p className="text-white small mb-0">
-                        Only People with the link can view
+                        {t("accessAndPrivacyDesc")}
                       </p>
                     </div>
                     <div className="form-check form-switch">
@@ -179,16 +181,16 @@ const MAX = 100;
 
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Age Restriction</label>
+                    <label className="form-label">{t("ageRestrictionLabel")}</label>
                     <div className="d-flex gap-3 mb-4">
-                      <button
+                        <button
                         type="button"
                         className={`custom-btn ${eventData.ageRestriction?.type === "ALL_AGES" ? "" : "outline-btn"}`}
                         onClick={() => handleAgeTypeChange("ALL_AGES")}
                         style={{ minWidth: "100px" }}>
-                        All Ages
+                        {t("allAges")}
                       </button>
-                      <button
+                        <button
                         type="button"
                         className={`custom-btn ${eventData.ageRestriction?.type === "MIN_AGE" && eventData.ageRestriction?.minAge === 18 ? "" : "outline-btn"}`}
                         onClick={() => {
@@ -197,9 +199,9 @@ const MAX = 100;
                           });
                         }}
                         style={{ minWidth: "100px" }}>
-                        18+
+                        {t("age18Plus")}
                       </button>
-                      <button
+                        <button
                         type="button"
                         className={`custom-btn ${eventData.ageRestriction?.type === "MIN_AGE" && eventData.ageRestriction?.minAge === 21 ? "" : "outline-btn"}`}
                         onClick={() => {
@@ -208,7 +210,7 @@ const MAX = 100;
                           });
                         }}
                         style={{ minWidth: "100px" }}>
-                        21+
+                        {t("age21Plus")}
                       </button>
                       {/* <button
                         type="button"
@@ -249,10 +251,10 @@ const MAX = 100;
                     )} */}
 
                    {eventData.ageRestriction?.type === "MIN_AGE" && (
-  <div className="mt-3">
+    <div className="mt-3">
     <div className="d-flex justify-content-between text-white small mb-2">
-      <span>Min: {eventData.ageRestriction.minAge}</span>
-      <span>Max: {eventData.ageRestriction.maxAge}</span>
+      <span>{t("minLabel")} {eventData.ageRestriction.minAge}</span>
+      <span>{t("maxLabel")} {eventData.ageRestriction.maxAge}</span>
     </div>
 
     <Range
@@ -350,13 +352,13 @@ const MAX = 100;
 
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Dress Code</label>
+                    <label className="form-label">{t("dressCode")}</label>
                     <textarea
                       className="form-control"
                       name="dressCode"
                       value={eventData.dressCode}
                       onChange={handleDressCodeChange}
-                      placeholder="e.g. Black tie only. No outside food or drinks allowed Doors close at 10 PM sharp..."
+                      placeholder={t("dressCodePlaceholder")}
                       rows={4}></textarea>
                   </div>
                 </Col>
@@ -395,13 +397,13 @@ const MAX = 100;
 
               <div className="d-flex gap-2 justify-content-end mt-4">
                 <Link href="/TicketsPricing" className="outline-btn">
-                  Back
+                  {t("back")}
                 </Link>
                 <button
                   type="button"
                   onClick={handleNext}
                   className="custom-btn">
-                  Save and Continue
+                  {t("saveAndContinue")}
                 </button>
               </div>
             </div>

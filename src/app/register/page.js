@@ -247,8 +247,8 @@ function RegisterForm() {
   };
 
   useEffect(() => {
-        document.title = ("Register"  + " | Bondy")
-    }, []);
+        document.title = `${t("signUp")} | Bondy`;
+    }, [t]);
 
   return (
     <GuestRoute>
@@ -303,6 +303,7 @@ function RegisterForm() {
                           <Tab.Pane eventKey="Customer">
                             <Form
                               className="login_field"
+                              noValidate
                               onSubmit={handleCustomerSignup}
                             >
                               <Form.Group className="mb-3">
@@ -312,7 +313,7 @@ function RegisterForm() {
                                   placeholder={t("email")}
                                   value={customerData.email}
                                   onChange={handleCustomerChange}
-                                  required
+                                  aria-required="true"
                                 />
                               </Form.Group>
 
@@ -338,7 +339,7 @@ function RegisterForm() {
                                     placeholder={t("password")}
                                     value={customerData.password}
                                     onChange={handleCustomerChange}
-                                    required
+                                    aria-required="true"
                                   />
                                   <button
                                     type="button"
@@ -365,7 +366,7 @@ function RegisterForm() {
                                     placeholder={t("confirmPassword")}
                                     value={customerData.confirmPassword}
                                     onChange={handleCustomerChange}
-                                    required
+                                    aria-required="true"
                                   />
                                   <button
                                     type="button"
@@ -425,6 +426,7 @@ function RegisterForm() {
                           <Tab.Pane eventKey="Organizer">
                             <Form
                               className="login_field"
+                              noValidate
                               onSubmit={handleOrganizerSignup}
                             >
                               <Row>
@@ -433,10 +435,10 @@ function RegisterForm() {
                                     <Form.Control
                                       type="text"
                                       name="firstName"
-                                      placeholder="First Name"
+                                      placeholder={t("firstName")}
                                       value={organizerData.firstName}
                                       onChange={handleOrganizerChange}
-                                      required
+                                      aria-required="true"
                                     />
                                   </Form.Group>
                                 </Col>
@@ -445,10 +447,10 @@ function RegisterForm() {
                                     <Form.Control
                                       type="text"
                                       name="lastName"
-                                      placeholder="Last Name"
+                                      placeholder={t("lastName")}
                                       value={organizerData.lastName}
                                       onChange={handleOrganizerChange}
-                                      required
+                                      aria-required="true"
                                     />
                                   </Form.Group>
                                 </Col>
@@ -458,10 +460,10 @@ function RegisterForm() {
                                 <Form.Control
                                   type="email"
                                   name="email"
-                                  placeholder="Email"
+                                  placeholder={t("email")}
                                   value={organizerData.email}
                                   onChange={handleOrganizerChange}
-                                  required
+                                  aria-required="true"
                                 />
                               </Form.Group>
 
@@ -484,10 +486,10 @@ function RegisterForm() {
                                   <Form.Control
                                     type={show ? "text" : "password"}
                                     name="password"
-                                    placeholder="Password"
+                                    placeholder={t("password")}
                                     value={organizerData.password}
                                     onChange={handleOrganizerChange}
-                                    required
+                                    aria-required="true"
                                   />
                                   <button
                                     type="button"
@@ -511,10 +513,10 @@ function RegisterForm() {
                                   <Form.Control
                                     type={show2 ? "text" : "password"}
                                     name="confirmPassword"
-                                    placeholder="Confirm Password"
+                                    placeholder={t("confirmPassword")}
                                     value={organizerData.confirmPassword}
                                     onChange={handleOrganizerChange}
-                                    required
+                                    aria-required="true"
                                   />
                                   <button
                                     type="button"
@@ -562,14 +564,13 @@ function RegisterForm() {
                                       className="preview-img"
                                     />
                                   ) : (
-                                    <div className="upload-doc">
-                                      Attach Documents
+                                      <div className="upload-doc">
+                                      {t("attachDocuments")}
                                       <p>
-                                        Drag and drop or browse to upload an
-                                        image or video
+                                        {t("dragDropBrowse")}
                                       </p>
                                       <span className="add_photo_text">
-                                        Upload Photo
+                                        {t("uploadPhoto")}
                                       </span>
                                     </div>
                                   )}
@@ -604,7 +605,7 @@ function RegisterForm() {
                                     onChange={handleOrganizerChange}
                                   />
                                   <label htmlFor="terms">
-                                    Accept <span>Terms &amp; Conditions</span>
+                                    {t("acceptTermsConditions")}
                                   </label>
                                 </div>
                               </Form.Group>
@@ -614,13 +615,13 @@ function RegisterForm() {
                                 disabled={loading}
                                 className="common_btn w-100 d-block text-center text-decoration-none"
                               >
-                                {loading ? "Signing Up..." : "Sign Up"}
+                                {loading ? t("signingUp") : t("signUp")}
                               </button>
                             </Form>
 
                             <div className="other_text">
                               <span></span>
-                              <h6>or sign up with</h6>
+                              <h6>{t("orSignUpWith")}</h6>
                               <span></span>
                             </div>
 
@@ -641,8 +642,8 @@ function RegisterForm() {
 
                             <div className="other_signup">
                               <span>
-                                Already have an account?{" "}
-                                <Link href="/login">Login</Link>
+                                {t("alreadyHaveAccount")} {" "}
+                                <Link href="/login">{t("login")}</Link>
                               </span>
                             </div>
                           </Tab.Pane>

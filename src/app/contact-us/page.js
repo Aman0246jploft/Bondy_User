@@ -2,6 +2,7 @@
 
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+import { useLanguage } from "@/context/LanguageContext";
 import { Col, Container, Form, Row } from "react-bootstrap";
 import { useState, useEffect } from "react";
 import contactApi from "@/api/contactApi";
@@ -9,6 +10,7 @@ import categoryApi from "@/api/categoryApi";
 import { toast } from "react-hot-toast";
 
 export default function Page() {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -20,7 +22,7 @@ export default function Page() {
   const [topics, setTopics] = useState([]);
 
   useEffect(() => {
-  document.title = "Contact-Us - Bondy";
+  document.title = `${t("contactUs")} - Bondy`;
 }, []);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function Page() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.fullName || !formData.email || !formData.message) {
-      toast.error("Please fill required fields!");
+      toast.error(t("pleaseFillRequiredFields"));
       return;
     }
 
@@ -55,7 +57,7 @@ export default function Page() {
     try {
       const response = await contactApi.createContact(formData);
       if (response?.status === true) {
-        toast.success("Your message has been sent successfully!");
+        toast.success(t("messageSentSuccess"));
         setFormData({
           fullName: "",
           email: "",
@@ -76,12 +78,8 @@ export default function Page() {
     <>
       <div className="listing_page">
         <div className="breadcrumb_text">
-          <h1>Contact Us</h1>
-          <p>
-            Whether you have questions, need advice on your hair care routine,
-            or simply want to share your experience, our team will be happy to
-            answer you.
-          </p>
+          <h1>{t("contactUs")}</h1>
+          <p>{t("contactUsDescription")}</p>
         </div>
         <Header />
       </div>
@@ -91,22 +89,19 @@ export default function Page() {
           <Row className="justify-content-center">
             <Col lg={7}>
               <div className="contact_title">
-                <h2>Send Us a Message</h2>
-                <p>
-                  Have a question or need help? Fill out the form below and
-                  we'll respond as soon as possible.
-                </p>
+                <h2>{t("sendUsMessage")}</h2>
+                <p>{t("sendUsMessageDesc")}</p>
               </div>
               <Form className="common_field" onSubmit={handleSubmit}>
                 <Row className="g-4">
                   <Col lg={6}>
                     <Form.Group controlId="fullName">
                       <Form.Label>
-                        Full Name <span className="text-danger">*</span>
+                        {t("fullName")} <span className="text-danger">*</span>
                       </Form.Label>
                       <Form.Control
                         type="text"
-                        placeholder="Full Name"
+                        placeholder={t("fullNamePlaceholder")}
                         name="fullName"
                         value={formData.fullName}
                         onChange={handleChange}
@@ -116,11 +111,11 @@ export default function Page() {
                   <Col lg={6}>
                     <Form.Group controlId="email">
                       <Form.Label>
-                        Email Address <span className="text-danger">*</span>
+                        {t("emailAddress")} <span className="text-danger">*</span>
                       </Form.Label>
                       <Form.Control
                         type="email"
-                        placeholder="Email"
+                        placeholder={t("emailPlaceholder")}
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
@@ -129,10 +124,10 @@ export default function Page() {
                   </Col>
                   <Col lg={6}>
                     <Form.Group controlId="phone">
-                      <Form.Label>Phone</Form.Label>
+                      <Form.Label>{t("phone")}</Form.Label>
                       <Form.Control
                         type="text"
-                        placeholder="Phone"
+                        placeholder={t("phonePlaceholder")}
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
@@ -141,16 +136,16 @@ export default function Page() {
                   </Col>
                   <Col lg={6}>
                     <Form.Group controlId="topic">
-                      <Form.Label>Select Topic</Form.Label>
+                      <Form.Label>{t("selectTopic")}</Form.Label>
                       <Form.Select
                         name="topic"
                         value={formData.topic}
                         onChange={handleChange}
                       >
-                        <option value="">Select Topic</option>
-                        {topics.map((t) => (
-                          <option key={t._id} value={t.name}>
-                            {t.name}
+                        <option value="">{t("selectTopicPlaceholder")}</option>
+                        {topics.map((topic) => (
+                          <option key={topic._id} value={topic.name}>
+                            {topic.name}
                           </option>
                         ))}
                       </Form.Select>
@@ -159,7 +154,7 @@ export default function Page() {
                   <Col lg={12}>
                     <Form.Group controlId="message">
                       <Form.Label>
-                        Your Message <span className="text-danger">*</span>
+                        {t("yourMessage")} <span className="text-danger">*</span>
                       </Form.Label>
                       <Form.Control
                         as="textarea"
@@ -176,7 +171,7 @@ export default function Page() {
                       type="submit"
                       disabled={loading}
                     >
-                      {loading ? "Sending..." : "Send Message"}
+                      {loading ? t("sending") : t("sendMessage")}
                     </button>
                   </Col>
                 </Row>

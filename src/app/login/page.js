@@ -16,8 +16,8 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("Customer");
 
   useEffect(() => {
-  document.title = "Login - Bondy";
-}, []);
+    document.title = `${t("login")} - Bondy`;
+  }, [t]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -124,6 +124,7 @@ export default function Page() {
                           <Tab.Pane eventKey="Customer">
                             <Form
                               className="login_field"
+                              noValidate
                               onSubmit={handleLogin}>
                               <Form.Group
                                 className="mb-3"
@@ -134,7 +135,7 @@ export default function Page() {
                                   placeholder={t("email")}
                                   value={formData.email}
                                   onChange={handleChange}
-                                  required
+                                  aria-required="true"
                                 />
                               </Form.Group>
                               <Form.Group
@@ -147,7 +148,7 @@ export default function Page() {
                                     placeholder={t("enterPassword")}
                                     value={formData.password}
                                     onChange={handleChange}
-                                    required
+                                    aria-required="true"
                                   />
                                   <button
                                     type="button"
@@ -212,6 +213,7 @@ export default function Page() {
                           <Tab.Pane eventKey="Organizer">
                             <Form
                               className="login_field"
+                              noValidate
                               onSubmit={handleLogin}>
                               <Form.Group
                                 className="mb-3"
@@ -222,7 +224,7 @@ export default function Page() {
                                   placeholder={t("email")}
                                   value={formData.email}
                                   onChange={handleChange}
-                                  required
+                                  aria-required="true"
                                 />
                               </Form.Group>
                               <Form.Group
@@ -235,7 +237,7 @@ export default function Page() {
                                     placeholder={t("enterPassword")}
                                     value={formData.password}
                                     onChange={handleChange}
-                                    required
+                                    aria-required="true"
                                   />
                                   <button
                                     type="button"
