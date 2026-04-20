@@ -3,9 +3,11 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { Col, Row } from "react-bootstrap";
+import { useLanguage } from "@/context/LanguageContext";
 
 const ProgramCart = ({ programsArray, pagination }) => {
   const [programs, setPrograms] = useState([]);
+  const { t } = useLanguage();
   useEffect(() => {
     setPrograms(programsArray || []);
   }, [programsArray]);
@@ -54,7 +56,7 @@ const ProgramCart = ({ programsArray, pagination }) => {
               <div className="event_main_cart">
                 <div className="recommended-card">
                   {program.isFeatured && (
-                    <span className="event-badge">Featured</span>
+                    <span className="event-badge">{t("featured")}</span>
                   )}
                   <img
                     src={getFullImageUrl(program?.posterImage?.[0]) || "/img/sidebar-logo.svg"}
@@ -116,7 +118,7 @@ const ProgramCart = ({ programsArray, pagination }) => {
                       </div>
                       <div title={`${program?.schedules?.length} sessions`} style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
                         <img src="/img/time_icon.svg" style={{ width: '16px', height: '16px' }} />
-                        {program?.schedules?.length} sessions
+                        {program?.schedules?.length} {t("sessions")}
                       </div>
 
                       <div
@@ -149,12 +151,12 @@ const ProgramCart = ({ programsArray, pagination }) => {
                             }
                             className="common_btn"
                           >
-                            Book Now
+                            {t("bookNow")}
                           </Link>
                         </>
                       ) : (
                         <>
-                          <span className="redText" style={{ fontWeight: '700' }}>Seats Full</span>
+                          <span className="redText" style={{ fontWeight: '700' }}>{t("seatsFull")}</span>
                           {/* <Link href="" className="common_btn">
                             Join Waitlist
                           </Link> */}

@@ -11,6 +11,7 @@ import Header from "../components/Header";
 import Hero from "../components/Hero";
 import TopEvents from "../components/TopEvents";
 import CourseSection from "../components/CourseSection";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function HomePage() {
 
@@ -34,8 +35,9 @@ export default function HomePage() {
     }
   }, []);
 
+  const { t } = useLanguage();
    useEffect(() => {
-    document.title = 'Home | Bondy';
+    document.title = `${t("home")} | Bondy`;
   }, []);
 
   return (

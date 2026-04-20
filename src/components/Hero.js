@@ -221,14 +221,14 @@ const HeroSlider = ({ setView, onSearch }) => {
                         color: dateFilter === "all" ? "rgba(255, 255, 255, 0.6)" : "#ffffff"
                       }}
                     >
-                      <option value="all" style={{ backgroundColor: "#222", color: "#fff" }}>All Dates</option>
-                      <option value="today" style={{ backgroundColor: "#222", color: "#fff" }}>Today</option>
-                      <option value="thisWeek" style={{ backgroundColor: "#222", color: "#fff" }}>This Week</option>
-                      <option value="thisWeekend" style={{ backgroundColor: "#222", color: "#fff" }}>This Weekend</option>
-                      <option value="nextWeek" style={{ backgroundColor: "#222", color: "#fff" }}>Next Week</option>
-                      <option value="thisYear" style={{ backgroundColor: "#222", color: "#fff" }}>This Year</option>
-                      <option value="upcoming" style={{ backgroundColor: "#222", color: "#fff" }}>Upcoming</option>
-                      <option value="past" style={{ backgroundColor: "#222", color: "#fff" }}>Past</option>
+                      <option value="all" style={{ backgroundColor: "#222", color: "#fff" }}>{t("allDates")}</option>
+                      <option value="today" style={{ backgroundColor: "#222", color: "#fff" }}>{t("today")}</option>
+                      <option value="thisWeek" style={{ backgroundColor: "#222", color: "#fff" }}>{t("thisWeek")}</option>
+                      <option value="thisWeekend" style={{ backgroundColor: "#222", color: "#fff" }}>{t("thisWeekend")}</option>
+                      <option value="nextWeek" style={{ backgroundColor: "#222", color: "#fff" }}>{t("nextWeek")}</option>
+                      <option value="thisYear" style={{ backgroundColor: "#222", color: "#fff" }}>{t("thisYear")}</option>
+                      <option value="upcoming" style={{ backgroundColor: "#222", color: "#fff" }}>{t("upcoming")}</option>
+                      <option value="past" style={{ backgroundColor: "#222", color: "#fff" }}>{t("past")}</option>
                     </select>
                   </div>
                 </div>

@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 import Header from "../../components/Header";
 import FAQ from "../../components/FAQ";
 import Footer from "../../components/Footer";
@@ -15,23 +16,23 @@ import courseApi from "@/api/courseApi";
 const SECTION_META = {
   featured: {
     filter: "featured",
-    title: "Featured Courses",
-    subtitle: "Top-tier courses selected for you 🌟✨",
+    titleKey: "featuredCourses",
+    subtitleKey: "featuredSubtitle",
   },
   recommended: {
     filter: "recommended",
-    title: "Recommended",
-    subtitle: "Hand-picked courses just for you 🎯✨",
+    titleKey: "recommended",
+    subtitleKey: "recommendedSubtitle",
   },
   nearYou: {
     filter: "nearYou",
-    title: "Near You",
-    subtitle: "Discover learning opportunities around you 📍📚",
+    titleKey: "nearYou",
+    subtitleKey: "nearYouSubtitle",
   },
   all: {
     filter: "all",
-    title: "All Courses",
-    subtitle: "Browse our full catalog of programs 🎉",
+    titleKey: "allCourses",
+    subtitleKey: "allSubtitle",
   },
 };
 
@@ -44,16 +45,19 @@ function ListingContent() {
 
   const meta = SECTION_META[type] || SECTION_META.all;
 
+  const { t } = useLanguage();
+
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    if (meta?.title) {
-      document.title = `${meta.title} | Bondy`;
+    const title = meta?.titleKey ? t(meta.titleKey) : meta?.title || "";
+    if (title) {
+      document.title = `${title} | Bondy`;
     }
-  }, [meta]);
+  }, [meta, t]);
   const [filterParams, setFilterParams] = useState({
     search: "",
     latitude: null,
@@ -133,15 +137,15 @@ function ListingContent() {
   return (
     <>
       <div className="listing_page">
-        <div className="breadcrumb_text">
-          <h1>{meta.title}</h1>
+          <div className="breadcrumb_text">
+          <h1>{meta.titleKey ? t(meta.titleKey) : meta.title}</h1>
           <p
             style={{
               maxWidth: '800px',
               margin: '0 auto'
             }}
           >
-            {meta.subtitle}
+            {meta.subtitleKey ? t(meta.subtitleKey) : meta.subtitle}
           </p>
         </div>
         <Header />
@@ -151,22 +155,22 @@ function ListingContent() {
         <Container>
           <Field
             onSearch={handleSearch}
-            label="Course Name/Type"
-            placeholder="e.g. music course"
+            label={t("courseNameType")}
+            placeholder={t("exampleMusicCourse")}
           />
           <div className="book_mark_list">
             <ul>
               <li>
                 <img src="/img/bookanytime.svg " />
-                Book Anytime
+                {t("bookAnytime")}
               </li>
               <li>
                 <img src="/img/refundable.svg " />
-                Refundable Tickets
+                {t("refundableTickets")}
               </li>
               <li>
                 <img src="/img/smart_icon.svg " />
-                Smart Deals
+                {t("smartDeals")}
               </li>
             </ul>
           </div>
@@ -175,11 +179,11 @@ function ListingContent() {
 
       {loading ? (
         <div className="text-center py-5">
-          <p>Loading programs...</p>
+          <p>{t("loadingPrograms")}</p>
         </div>
       ) : courses.length === 0 ? (
         <div className="text-center py-5">
-          <p>No programs found matching your criteria.</p>
+          <p>{t("noProgramsFound")}</p>
         </div>
       ) : (
         <>

@@ -7,9 +7,11 @@ import authApi from "@/api/authApi";
 import eventApi from "@/api/eventApi";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
 
 function BasicInfoContent() {
+  const { t } = useLanguage();
   const { eventData, updateEventData, loadEventForEdit } = useEventContext();
   const [categories, setCategories] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -38,7 +40,7 @@ function BasicInfoContent() {
       }
     } catch (error) {
       console.error("Error loading event:", error);
-      toast.error("Failed to load event");
+      toast.error(t("failedToLoadEvent"));
       router.push("/EventsManagement");
     } finally {
       setLoading(false);
@@ -76,9 +78,9 @@ function BasicInfoContent() {
     let tagsArray = value.split(",").map((tag) => tag.trim());
 
     // Limit to 5 tags
-    if (tagsArray.length > 5) {
+      if (tagsArray.length > 5) {
       tagsArray = tagsArray.slice(0, 5);
-      toast.error("Maximum 5 tags allowed");
+      toast.error(t("maxTagsAllowed"));
     }
 
     // Limit each tag to 20 characters
@@ -96,14 +98,14 @@ function BasicInfoContent() {
     // Validation: Check file size (max 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      toast.error("Image size must be less than 5MB");
+      toast.error(t("imageSizeMustBeLessThan"));
       return;
     }
 
     // Validation: Check file type
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Only JPG, JPEG, PNG, and WEBP formats are allowed");
+      toast.error(t("invalidImageFormat"));
       return;
     }
 
@@ -119,11 +121,11 @@ function BasicInfoContent() {
         response.data.files.length > 0
       ) {
         updateEventData({ posterImage: [response.data.files[0]] });
-        toast.success("Image uploaded successfully");
+        toast.success(t("imageUploadedSuccessfully"));
       }
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error("Failed to upload image");
+      toast.error(t("imageUploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -132,47 +134,47 @@ function BasicInfoContent() {
   const handleNext = (e) => {
     e.preventDefault();
     if (!eventData.eventTitle) {
-      toast.error("Event title is required");
+      toast.error(t("eventTitleRequired"));
       return;
     }
 
     if (eventData.eventTitle.length < 5) {
-      toast.error("Event title must be at least 5 characters long");
+      toast.error(t("eventTitleMinLength"));
       return;
     }
 
     if (!eventData.eventCategory) {
-      toast.error("Event category is required");
+      toast.error(t("eventCategoryRequired"));
       return;
     }
 
     if (!eventData.posterImage || eventData.posterImage.length === 0) {
-      toast.error("Please upload an event poster image");
+      toast.error(t("pleaseUploadEventPoster"));
       return;
     }
 
     if (!eventData.shortdesc || eventData.shortdesc.trim() === "") {
-      toast.error("Short description is required");
+      toast.error(t("shortDescriptionRequired"));
       return;
     }
 
     if (eventData.shortdesc.length < 10) {
-      toast.error("Short description must be at least 10 characters long");
+      toast.error(t("shortDescriptionMinLength"));
       return;
     }
 
     if (!eventData.longdesc || eventData.longdesc.trim() === "") {
-      toast.error("Detailed description is required");
+      toast.error(t("detailedDescriptionRequired"));
       return;
     }
 
     if (eventData.longdesc.length < 50) {
-      toast.error("Detailed description must be at least 50 characters long");
+      toast.error(t("detailedDescriptionMinLength"));
       return;
     }
 
     if (!eventData.tags || eventData.tags.length === 0 || (eventData.tags.length === 1 && eventData.tags[0] === "")) {
-      toast.error("At least one tag is required");
+      toast.error(t("atLeastOneTagRequired"));
       return;
     }
 
@@ -180,7 +182,7 @@ function BasicInfoContent() {
   };
 
   useEffect(() => {
-    document.title = "Basic Info - Bondy";
+    document.title = t("basicInfoPageTitle");
   }, []);
 
 
@@ -192,8 +194,8 @@ function BasicInfoContent() {
             <li className="steps-item">
               <Link href="/BasicInfo" className="steps-link active">
                 <span className="steps-text">
-                  <img src="/img/org-img/step-icon-01.svg" className="me-2" />
-                  Event Basic Info
+                      <img src="/img/org-img/step-icon-01.svg" className="me-2" />
+                    {t("eventBasicInfoStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -203,8 +205,8 @@ function BasicInfoContent() {
             <li className="steps-item">
               <Link href="/DateTime" className="steps-link">
                 <span className="steps-text">
-                  <img src="/img/org-img/step-icon-02.svg" className="me-2" />
-                  Date, Time and Location
+                      <img src="/img/org-img/step-icon-02.svg" className="me-2" />
+                    {t("dateTimeStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -214,8 +216,8 @@ function BasicInfoContent() {
             <li className="steps-item">
               <Link href="/TicketsPricing" className="steps-link">
                 <span className="steps-text">
-                  <img src="/img/org-img/step-icon-03.svg" className="me-2" />
-                  Tickets & Pricing
+                      <img src="/img/org-img/step-icon-03.svg" className="me-2" />
+                    {t("ticketsPricingStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -225,8 +227,8 @@ function BasicInfoContent() {
             <li className="steps-item">
               <Link href="/Agerestraction" className="steps-link">
                 <span className="steps-text">
-                  <img src="/img/org-img/step-icon-04.svg" className="me-2" />
-                  Age Restriction
+                      <img src="/img/org-img/step-icon-04.svg" className="me-2" />
+                    {t("ageRestrictionStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -236,8 +238,8 @@ function BasicInfoContent() {
             <li className="steps-item">
               <Link href="/Gallery" className="steps-link">
                 <span className="steps-text">
-                  <img src="/img/org-img/step-icon-01.svg" className="me-2" />
-                  Gallery
+                      <img src="/img/org-img/step-icon-01.svg" className="me-2" />
+                    {t("galleryStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -251,7 +253,7 @@ function BasicInfoContent() {
                 <Col md={6}>
                   <div className="event-frm-bx">
                     <label className="form-label">
-                      Event Title <span className="text-danger">*</span>
+                      {t("eventTitleLabel")} <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
@@ -259,7 +261,7 @@ function BasicInfoContent() {
                       name="eventTitle"
                       value={eventData.eventTitle || ""}
                       onChange={handleInputChange}
-                      placeholder="Enter event title"
+                      placeholder={t("eventTitlePlaceholder")}
                     />
                     <div className="text-end mt-1">
                       <small className="text-white">
@@ -271,14 +273,14 @@ function BasicInfoContent() {
                 <Col md={6}>
                   <div className="event-frm-bx">
                     <label className="form-label">
-                      Event Category <span className="text-danger">*</span>
+                      {t("eventCategoryLabel")} <span className="text-danger">*</span>
                     </label>
                     <select
                       className="form-select"
                       name="eventCategory"
                       value={eventData.eventCategory}
                       onChange={handleInputChange}>
-                      <option value="">Select Event Category</option>
+                      <option value="">{t("selectEventCategory")}</option>
                       {categories.map((cat) => (
                         <option key={cat._id} value={cat._id}>
                           {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
@@ -290,8 +292,8 @@ function BasicInfoContent() {
                 <Col md={12}>
                   <div className="event-frm-bx upload">
                     <div>
-                      <h5>Upload Event Poster <span className="text-danger">*</span></h5>
-                      <p>Drag and drop or browse to upload (Max 5MB, JPG/PNG/WEBP)</p>
+                      <h5>{t("uploadEventPosterTitle")} <span className="text-danger">*</span></h5>
+                      <p>{t("uploadEventPosterDesc")}</p>
                     </div>
                     <input
                       type="file"
@@ -301,7 +303,7 @@ function BasicInfoContent() {
                       accept="image/*"
                     />
                     <label htmlFor="upload">
-                      {uploading ? "Uploading..." : "Upload"}
+                      {uploading ? t("uploading") : t("upload")}
                     </label>
                   </div>
                   {eventData.posterImage &&
@@ -352,10 +354,10 @@ function BasicInfoContent() {
                           </div>
                           <div>
                             <p className="text-success mb-1">
-                              ✓ Event poster uploaded successfully
+                              {t("eventPosterUploadedSuccessLine")}
                             </p>
                             <p className="text-white" style={{ fontSize: "14px" }}>
-                              Click the × button to remove and upload a different image
+                              {t("clickToRemoveAndUploadDifferentImage")}
                             </p>
                           </div>
                         </div>
@@ -366,12 +368,12 @@ function BasicInfoContent() {
             </div>
             <div className="event-form-card">
               <div className="event-frm-bx">
-                <label className="form-label">Short Description <span className="text-danger">*</span></label>
+                <label className="form-label">{t("shortDescriptionLabel")} <span className="text-danger">*</span></label>
                 <textarea
                   name="shortdesc"
                   value={eventData.shortdesc || ""}
                   onChange={handleInputChange}
-                  placeholder="Brief summary"></textarea>
+                  placeholder={t("shortDescriptionPlaceholder")}></textarea>
                 <div className="text-end mt-1">
                   <small className="text-white">
                     {(eventData.shortdesc?.length || 0)}/250
@@ -380,13 +382,13 @@ function BasicInfoContent() {
               </div>
               <div className="event-frm-bx">
                 <label className="form-label">
-                  Detailed Description/Highlights <span className="text-danger">*</span>
+                  {t("detailedDescriptionLabel")} <span className="text-danger">*</span>
                 </label>
                 <textarea
                   name="longdesc"
                   value={eventData.longdesc || ""}
                   onChange={handleInputChange}
-                  placeholder="Full details about the event"></textarea>
+                  placeholder={t("detailedDescriptionPlaceholder")}></textarea>
                 <div className="text-end mt-1">
                   <small className="text-white">
                     {(eventData.longdesc?.length || 0)}/2000
@@ -394,11 +396,11 @@ function BasicInfoContent() {
                 </div>
               </div>
               <div className="event-frm-bx">
-                <label className="form-label">Tags <span className="text-danger">*</span></label>
+                <label className="form-label">{t("tagsLabel")} <span className="text-danger">*</span></label>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Add relevant tags (comma separated)"
+                  placeholder={t("tagsPlaceholder")}
                   onChange={handleTagsChange}
                   value={eventData.tags && eventData.tags.join(", ")}
                 />
@@ -408,13 +410,13 @@ function BasicInfoContent() {
                   className="outline-btn"
                   type="button"
                   onClick={() => router.back()}>
-                  Back
+                  {t("back")}
                 </button>
                 <button
                   className="custom-btn"
                   type="button"
                   onClick={handleNext}>
-                  Save and Continue
+                  {t("saveAndContinue")}
                 </button>
               </div>
             </div>
@@ -426,8 +428,9 @@ function BasicInfoContent() {
 }
 
 export default function Page() {
+  const { t } = useLanguage();
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t("loading")}</div>}>
       <BasicInfoContent />
     </Suspense>
   );

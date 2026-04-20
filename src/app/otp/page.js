@@ -6,17 +6,19 @@ import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import GuestRoute from "@/components/GuestRoute";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function OTPPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [otp, setOtp] = useState(["", "", "", "", ""]);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const inputRefs = useRef([]);
 
  useEffect(() => {
-  document.title = "OTP - Bondy";
-}, []);
+  document.title = `${t("verifyAndContinue")} - Bondy`;
+}, [t]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -52,7 +54,7 @@ export default function OTPPage() {
     e.preventDefault();
     const otpValue = otp.join("");
     if (otpValue.length < 5) {
-      toast.error("Please enter full OTP");
+      toast.error(t("pleaseEnterFullOtp"));
       return;
     }
 
@@ -128,14 +130,14 @@ export default function OTPPage() {
   const handleResend = async (e) => {
     e.preventDefault();
     if (!email) {
-      toast.error("Email not found");
+      toast.error(t("emailNotFound"));
       return;
     }
 
     try {
       const response = await authApi.resendOtp({ email });
       if (response.status) {
-        toast.success("OTP resent successfully");
+        toast.success(t("otpResentSuccessfully"));
       }
     } catch (error) {
       // error handled by apiClient
@@ -151,11 +153,8 @@ export default function OTPPage() {
             <div className="login_img">
               <img src="/img/login_side_img.png" alt="login side" />
               <div className="content_img_box">
-                <h4>Explore Events Effortlessly</h4>
-                <p>
-                  Discover, book, and track events seamlessly with calendar
-                  integration and personalized event curation
-                </p>
+                <h4>{t("exploreEventsEffortlessly")}</h4>
+                <p>{t("exploreEventsEffortlesslyDesc")}</p>
               </div>
             </div>
           </Col>
@@ -165,11 +164,11 @@ export default function OTPPage() {
               <Col xl={7} lg={9} md={10}>
                 <div className="common_field">
                   <div className="fz_32">
-                    <h2>Enter code</h2>
+                    <h2>{t("enterVerificationCode")}</h2>
                     <p>
-                      We sent a verification code to your email
+                      {t("weSentCode")}
                       <br />
-                      <span>{email || "your email"}</span>
+                      <span>{email || t("email")}</span>
                     </p>
                   </div>
 
@@ -192,9 +191,9 @@ export default function OTPPage() {
 
                     <div className="other_signup mb-4">
                       <span>
-                        Didn’t receive the code?{" "}
+                        {t("didntReceiveCode")} {" "}
                         <Link href="#" onClick={handleResend}>
-                          Resend
+                          {t("resend")}
                         </Link>
                       </span>
                     </div>
@@ -204,7 +203,7 @@ export default function OTPPage() {
                       className="common_btn w-100 border-0"
                       disabled={loading}
                     >
-                      {loading ? "Verifying..." : "Verify & Continue"}
+                      {loading ? t("verifying") : t("verifyAndContinue")}
                     </button>
                   </Form>
                 </div>
