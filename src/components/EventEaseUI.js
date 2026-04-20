@@ -1,8 +1,10 @@
 import Link from "next/link";
 import React from "react";
 import { Container, Row, Col, Button } from "react-bootstrap";
+import { useLanguage } from "@/context/LanguageContext";
 
 const EventEaseUI = () => {
+  const { t } = useLanguage();
   return (
     <div className="eventEase-section">
       <Container>
@@ -10,11 +12,8 @@ const EventEaseUI = () => {
           <Row>
             <Col lg={6}>
               <div className="main_title">
-                <h2>How It Works</h2>
-                <p>
-                  Getting started with EventEase is easy. Follow these simple
-                  steps to discover and attend amazing events.
-                </p>
+                <h2>{t("howItWorksTitle")}</h2>
+                <p>{t("howItWorksDesc")}</p>
               </div>
             </Col>
           </Row>
@@ -26,10 +25,8 @@ const EventEaseUI = () => {
                   <img src="/img/how_icon01.svg" />
                 </div>
                 <div>
-                  <h3 className="step-heading">Register as Organizer</h3>
-                  <p className="step-text">
-                    Create your organizer account in just a few simple steps.
-                  </p>
+                  <h3 className="step-heading">{t("registerAsOrganizer")}</h3>
+                  <p className="step-text">{t("registerAsOrganizerDesc")}</p>
                 </div>
               </div>
               <div className="step-container icon_arrow">
@@ -37,11 +34,8 @@ const EventEaseUI = () => {
                   <img src="/img/how_icon02.svg" />
                 </div>
                 <div>
-                  <h3 className="step-heading">Create Event / Program</h3>
-                  <p className="step-text">
-                    Add event details like title, date, location, pricing and
-                    schedule.
-                  </p>
+                  <h3 className="step-heading">{t("createEventProgram")}</h3>
+                  <p className="step-text">{t("createEventProgramDesc")}</p>
                 </div>
               </div>
               <div className="step-container icon_arrow">
@@ -49,11 +43,8 @@ const EventEaseUI = () => {
                   <img src="/img/how_icon03.svg" />
                 </div>
                 <div>
-                  <h3 className="step-heading">Publish & Promote</h3>
-                  <p className="step-text">
-                    Publish your event and make it visible to your audience
-                    instantly.
-                  </p>
+                  <h3 className="step-heading">{t("publishPromote")}</h3>
+                  <p className="step-text">{t("publishPromoteDesc")}</p>
                 </div>
               </div>
               <div className="step-container mb-0">
@@ -61,11 +52,8 @@ const EventEaseUI = () => {
                   <img src="/img/how_icon04.svg" />
                 </div>
                 <div>
-                  <h3 className="step-heading">Manage & Track</h3>
-                  <p className="step-text">
-                    Track registrations, attendees, earnings and event
-                    performance in one dashboard.
-                  </p>
+                  <h3 className="step-heading">{t("manageTrack")}</h3>
+                  <p className="step-text">{t("manageTrackDesc")}</p>
                 </div>
               </div>
             </Col>
@@ -80,16 +68,13 @@ const EventEaseUI = () => {
         <Row className="justify-content-center">
           <Col lg={10}>
             <div className="cta-box">
-              <h2 className="cta-title">Ready to Get Started?</h2>
-              <p className="cta-desc">
-                Join thousands of event enthusiasts who've discovered their next
-                favorite experience.
-              </p>
+              <h2 className="cta-title">{t("readyToGetStarted")}</h2>
+              <p className="cta-desc">{t("ctaDesc")}</p>
               <Link href="/Explore" className="btn-teal">
-                Start Exploring Events
+                {t("startExploringBtn")}
               </Link>
               <Link href="/BasicInfo" className="btn-white">
-                Create Your First Event
+                {t("createFirstEventBtn")}
               </Link>
             </div>
           </Col>

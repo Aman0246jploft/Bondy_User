@@ -21,7 +21,7 @@ export default function Sidebar({ toggleSidebar }) {
     e.preventDefault();
     localStorage.removeItem("token");
     localStorage.removeItem("userProfile");
-    toast.success("Logged out successfully");
+    toast.success(t("loggedOutSuccessfully"));
     router.push("/login");
   };
 

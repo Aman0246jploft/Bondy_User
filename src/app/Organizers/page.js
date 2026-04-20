@@ -7,8 +7,10 @@ import EventSection from "@/components/EventSection";
 import EventGallery from "@/components/EventGallery";
 import EventEaseUI from "@/components/EventEaseUI";
 import React, { useState, useRef, useEffect } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function page() {
+  const { t } = useLanguage();
   const images = [
     "/img/interactive-process-image-1.png",
     "/img/interactive-process-image-2.png",
@@ -17,7 +19,7 @@ export default function page() {
   ];
 
   useEffect(() => {
-  document.title = "Organizers - Bondy";
+  document.title = t("organizersPageTitle");
 }, []);
 
   return (
@@ -29,18 +31,13 @@ export default function page() {
             <Col lg={7} className="mb-4">
               <div className="header-box">
                 <h1 className="event-title">
-                  Create & Manage Your
-                  <br /> Events in One Place
+                  {t("createManageEventsLine1")}<br />{t("createManageEventsLine2")}
                 </h1>
               </div>
             </Col>
 
             <Col lg={5} className="">
-              <p className="event-desc mb-4">
-                Tech Event 2026 showcases groundbreaking innovations, featuring
-                keynote talks, interactive workshops, and networking sessions
-                for tech enthusiasts and industry leaders.
-              </p>
+              <p className="event-desc mb-4">{t("organizersHeaderDesc")}</p>
             </Col>
           </Row>
         </Container>
@@ -53,17 +50,13 @@ export default function page() {
               <Col lg={7} className="mb-4">
                 <div className="header-box">
                   <h1 className="event-title">
-                    Why Create Events <br /> With Us?
+                    {t("whyCreateEventsTitle")}
                   </h1>
                 </div>
               </Col>
 
               <Col lg={5} className="">
-                <p className="event-desc mb-4">
-                  Tech Event 2026 showcases groundbreaking innovations,
-                  featuring keynote talks, interactive workshops, and networking
-                  sessions for tech enthusiasts and industry leaders.
-                </p>
+                <p className="event-desc mb-4">{t("organizersWhyDesc")}</p>
               </Col>
             </Row>
           </Container>
@@ -81,13 +74,8 @@ export default function page() {
 
             <Col lg={6} className="order-2 order-lg-2">
               <div className="reatEvent_text">
-                <h3>Easy Event Creation</h3>
-                <p>
-                  {" "}
-                  Create and publish events in just a few minutes using our
-                  simple and intuitive form. No technical knowledge required —
-                  everything is quick and hassle-free.
-                </p>
+                <h3>{t("easyEventCreationTitle")}</h3>
+                <p>{t("easyEventCreationDesc")}</p>
               </div>
             </Col>
           </Row>
@@ -98,13 +86,8 @@ export default function page() {
           <Row className="g-4 justify-content-between align-items-center">
             <Col lg={6} className="order-2 order-lg-1">
               <div className="reatEvent_text">
-                <h3>Manage Attendees</h3>
-                <p>
-                  {" "}
-                  Easily track registrations, check attendee details and monitor
-                  event attendance. All participant information is available in
-                  one organized dashboard.
-                </p>
+                <h3>{t("manageAttendeesTitle")}</h3>
+                <p>{t("manageAttendeesDesc")}</p>
               </div>
             </Col>
             <Col lg={4} className="order-1 order-lg-2">
@@ -127,13 +110,8 @@ export default function page() {
 
             <Col lg={6} className="order-2 order-lg-2">
               <div className="reatEvent_text">
-                <h3>Event Promotion</h3>
-                <p>
-                  {" "}
-                  Get your events featured and discovered by users on our
-                  platform. Boost visibility and attract more participants
-                  without extra marketing effort.
-                </p>
+                <h3>{t("eventPromotionTitle")}</h3>
+                <p>{t("eventPromotionDesc")}</p>
               </div>
             </Col>
           </Row>
@@ -144,13 +122,8 @@ export default function page() {
           <Row className="g-4 justify-content-between align-items-center">
             <Col lg={6} className="order-2 order-lg-1">
               <div className="reatEvent_text">
-                <h3>Earn More</h3>
-                <p>
-                  {" "}
-                  Sell tickets and programs directly through our platform with
-                  secure payments. Increase your revenue by reaching a wider and
-                  targeted audience.
-                </p>
+                <h3>{t("earnMoreTitle")}</h3>
+                <p>{t("earnMoreDesc")}</p>
               </div>
             </Col>
             <Col lg={4} className="order-1 order-lg-2">
@@ -171,40 +144,33 @@ export default function page() {
               <Col lg={7} className="mb-4">
                 <div className="header-box">
                   <h1 className="event-title">
-                    What You Can
-                    <br /> Create
-                  </h1>
+                      {t("whatYouCanCreateTitleLine1")}<br />{t("whatYouCanCreateTitleLine2")}
+                    </h1>
                 </div>
               </Col>
 
               <Col lg={5} className="">
-                <p className="event-desc mb-4">
-                  Create technology-focused events featuring keynote sessions,
-                  interactive workshops, and networking opportunities for
-                  industry professionals and enthusiasts.
-                </p>
+                <p className="event-desc mb-4">{t("createTechEventsDesc")}</p>
               </Col>
             </Row>
 
             <Row>
               <Col lg={4}>
                 <div className="what_create_Card">
-                  <h2>Workshops & Seminars</h2>
-                  <p>
-                    Host professional learning sessions with easy registrations.
-                  </p>
+                  <h2>{t("workshopsAndSeminars")}</h2>
+                  <p>{t("workshopsAndSeminarsDesc")}</p>
                 </div>
               </Col>
               <Col lg={4}>
                 <div className="what_create_Card">
-                  <h2>Live Events</h2>
-                  <p>Manage concerts, meetups and public events smoothly.</p>
+                  <h2>{t("liveEvents")}</h2>
+                  <p>{t("liveEventsDesc")}</p>
                 </div>
               </Col>
               <Col lg={4}>
                 <div className="what_create_Card">
-                  <h2>Training Programs</h2>
-                  <p>Run structured training programs with flexible pricing.</p>
+                  <h2>{t("trainingPrograms")}</h2>
+                  <p>{t("trainingProgramsDesc")}</p>
                 </div>
               </Col>
             </Row>
@@ -215,11 +181,11 @@ export default function page() {
       <div className="details_fq">
         <FAQ />
       </div>
-      <EventSection
+            <EventSection
         type="recommended"
         limit={4}
         showSeeAll={false}
-        customTitle="Events You May Like"
+        customTitle={t("eventsYouMayLike")}
       />
       <Footer />
     </>

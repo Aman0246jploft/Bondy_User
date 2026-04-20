@@ -88,7 +88,7 @@ function CompleteProfileContent() {
       }
     } catch (error) {
       console.error("Upload failed:", error);
-      toast.error("Image upload failed");
+      toast.error(t("imageUploadFailed"));
     } finally {
       setLoading(false);
     }
@@ -134,7 +134,7 @@ function CompleteProfileContent() {
   const handleContinue = async (e) => {
     e.preventDefault();
     if (!profileData.firstName || !profileData.lastName) {
-      toast.error("Please enter your name");
+      toast.error(t("pleaseEnterYourName"));
       return;
     }
 

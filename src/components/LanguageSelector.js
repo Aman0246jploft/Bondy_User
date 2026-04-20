@@ -23,7 +23,7 @@ const availableLanguages = [
 export default function LanguageSelector() {
 
   const [open, setOpen] = useState(false);
-  const { language, changeLanguage } = useLanguage();
+  const { language, changeLanguage, t } = useLanguage();
 
   const wrapperRef = useRef(null);
 
@@ -32,7 +32,8 @@ export default function LanguageSelector() {
   const handleSelect = (langCode) => {
     changeLanguage(langCode);
     setOpen(false);
-    toast.success(`Language changed to ${availableLanguages.find((l) => l.code === langCode).name}`);
+    const langName = availableLanguages.find((l) => l.code === langCode).name;
+    toast.success(t("languageChanged", { language: langName }));
 
   };
 

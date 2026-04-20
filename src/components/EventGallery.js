@@ -1,6 +1,8 @@
 import React from 'react';
+import { useLanguage } from "@/context/LanguageContext";
 
 const EventGallery = () => {
+  const { t } = useLanguage();
   return (
     <section className=" organizations-event">
       <div className="container">
@@ -11,8 +13,8 @@ const EventGallery = () => {
             <div className="organizations-event-card">
               <img src="/img/Img_ev_01.png" alt="Event" className="organizations-event-img" />
               <div className="organizations-event-overlay">
-                <p className="organizations-event-tag">Memorable experience</p>
-                <h3 className="organizations-event-title">Unforgettable Moments at Eventive 2026</h3>
+                <p className="organizations-event-tag">{t("memorableExperienceTag")}</p>
+                <h3 className="organizations-event-title">{t("unforgettableMomentsTitle")}</h3>
               </div>
             </div>
           </div>
@@ -22,8 +24,8 @@ const EventGallery = () => {
             <div className="organizations-event-card">
               <img src="/img/Img_ev_02.png" alt="Event" className="organizations-event-img" />
               <div className="organizations-event-overlay">
-                <p className="organizations-event-tag">Skilled Speakers</p>
-                <h3 className="organizations-event-title">Storytelling Festival</h3>
+                <p className="organizations-event-tag">{t("skilledSpeakersTag")}</p>
+                <h3 className="organizations-event-title">{t("storytellingFestivalTitle")}</h3>
               </div>
             </div>
           </div>
@@ -33,8 +35,8 @@ const EventGallery = () => {
             <div className="organizations-event-card">
               <img src="/img/Img_ev_03.png" alt="Event" className="organizations-event-img" />
               <div className="organizations-event-overlay">
-                <p className="organizations-event-tag">Community Build</p>
-                <h3 className="organizations-event-title">Build Networking</h3>
+                <p className="organizations-event-tag">{t("communityBuildTag")}</p>
+                <h3 className="organizations-event-title">{t("buildNetworkingTitle")}</h3>
               </div>
             </div>
           </div>

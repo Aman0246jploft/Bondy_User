@@ -23,7 +23,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
     e.preventDefault();
     localStorage.removeItem("token");
     localStorage.removeItem("userProfile");
-    toast.success("Logged out successfully");
+    toast.success(t("loggedOutSuccessfully"));
     router.push("/login");
   };
 

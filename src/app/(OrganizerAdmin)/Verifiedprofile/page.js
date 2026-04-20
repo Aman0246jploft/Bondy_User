@@ -48,12 +48,12 @@ function page() {
 
       const res = await apiClient.post("/user/update-profile", payload);
       if (res.status === 200) {
-        toast.success("Profile updated successfully");
+        toast.success(t("profileUpdatedSuccessfully"));
         fetchProfile(); // Refresh data
       }
     } catch (error) {
       console.error("Update profile error", error);
-      toast.error(error.response?.data?.message || "Failed to update profile");
+      toast.error(error.response?.data?.message || t("failedToUpdateProfile"));
     }
   };
 

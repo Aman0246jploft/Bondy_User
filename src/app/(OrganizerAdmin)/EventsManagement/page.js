@@ -111,7 +111,7 @@ function page() {
         setPromoPackages(res?.data?.packages || []);
       }
     } catch (err) {
-      toast.error("Failed to load promotion packages");
+      toast.error(t("failedToLoadPromotionPackages"));
     } finally {
       setLoadingPackages(false);
     }
@@ -126,7 +126,7 @@ function page() {
 
   const handleCheckout = async () => {
     if (!selectedPackage) {
-      toast.error("Please select a promotion package first.");
+      toast.error(t("pleaseSelectPromotionPackageFirst"));
       return;
     }
     setCheckingOut(true);
@@ -136,7 +136,7 @@ function page() {
         packageId: selectedPackage._id,
       });
       if (res?.status) {
-        toast.success("Promotion activated successfully");
+        toast.success(t("promotionActivatedSuccessfully"));
         closePromoModal();
         fetchEvents();
       }

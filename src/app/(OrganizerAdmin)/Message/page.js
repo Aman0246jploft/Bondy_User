@@ -192,7 +192,7 @@ function MessageContent() {
                         setChatPage(nextPage);
                         setChatHasMore(response.hasMore ?? false);
                     } else {
-                        toast.error(response.message || "Failed to load more chats");
+                        toast.error(response.message || t("failedToLoadMoreChats"));
                     }
                 },
             );
@@ -236,11 +236,11 @@ function MessageContent() {
                         });
                         hasAutoSelected.current = true;
                     } else {
-                        toast.error("Unable to load user information");
+                        toast.error(t("unableToLoadUserInformation"));
                     }
                 } catch (error) {
                     console.error("Error fetching user data:", error);
-                    toast.error("Failed to load user information");
+                    toast.error(t("failedToLoadUserInformation"));
                 }
             }
         };
@@ -281,7 +281,7 @@ function MessageContent() {
                         if (messagesAreaRef.current) messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
                     }, 100);
                 } else {
-                    toast.error(response.message || "Failed to load messages");
+                    toast.error(response.message || t("failedToLoadMessages"));
                 }
             },
         );
@@ -476,7 +476,7 @@ function MessageContent() {
                     }));
                 }
             } else {
-                toast.error(response.message || "Failed to send message");
+                toast.error(response.message || t("failedToSendMessage"));
             }
         });
     }, [socket, activeChat, message, stagedFile]);
@@ -489,9 +489,9 @@ function MessageContent() {
         socket.emit("delete_message", { messageId, deleteType: "me" }, (response) => {
             if (response.status === "ok") {
                 setMessages((prev) => prev.filter((m) => m._id !== messageId));
-                toast.success("Message deleted");
+                toast.success(t("messageDeleted"));
             } else {
-                toast.error(response.message || "Failed to delete message");
+                toast.error(response.message || t("failedToDeleteMessage"));
             }
         });
     }, [socket]);
@@ -510,9 +510,9 @@ function MessageContent() {
             if (response.status === "ok") {
                 setMessages([]);
                 setShowClearChatModal(false);
-                toast.success("Chat cleared");
+                toast.success(t("chatCleared"));
             } else {
-                toast.error(response.message || "Failed to clear chat");
+                toast.error(response.message || t("failedToClearChat"));
             }
         });
     }, [socket, activeChat]);
@@ -563,7 +563,7 @@ function MessageContent() {
             setStagedFile({ fileUrl, fileType, localUrl, name: file.name });
         } catch (err) {
             console.error("File upload error:", err);
-            toast.error("File upload failed");
+            toast.error(t("fileUploadFailed"));
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
