@@ -1,5 +1,6 @@
 import Link from "next/link";
 import React from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 /* 🔹 DATA - Keys updated to match props */
 const eventData = {
@@ -25,8 +26,12 @@ const eventData = {
 
 const SessionCart = ({ type, title, events }) => {
   // If events are passed via props, use them, otherwise check local data (optional fallback)
+  const { t, language } = useLanguage();
+
   const dataToRender = events || (eventData[type] ? eventData[type].data : []);
-  const displayTitle = title || (eventData[type] ? eventData[type].title : "");
+  let displayTitle = title || "";
+  if (!displayTitle && type === "NextSession") displayTitle = t("nextSession");
+  if (!displayTitle && type === "PastSessions") displayTitle = t("pastSessions");
 
   if (!dataToRender || dataToRender.length === 0) return null;
 
@@ -54,12 +59,25 @@ const SessionCart = ({ type, title, events }) => {
               location = item.venueAddress.city || item.venueAddress.address;
             }
 
-            const price = item.ticketPrice !== undefined ? `₮${item.ticketPrice}` : item.price;
+            const formatPrice = (amount) => {
+              if (amount == null || amount === undefined) return t("priceNotAvailable");
+              try {
+                const locale = language === "mn" ? "mn-MN" : "en-US";
+                const formatted = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(amount);
+                return `₮${formatted}`;
+              } catch (e) {
+                return `₮${amount}`;
+              }
+            };
+
+            const price = item.ticketPrice !== undefined
+              ? formatPrice(item.ticketPrice)
+              : (typeof item.price === "number" ? formatPrice(item.price) : item.price);
 
             // Calculate seats left
             const seatsLeft = item.totalTickets && item.ticketQtyAvailable
-              ? `${item.ticketQtyAvailable}/${item.totalTickets} Seat left`
-              : "42/50 Sheet left";
+              ? `${item.ticketQtyAvailable}/${item.totalTickets} ${t("seatsLeft")}`
+              : null;
 
             // Booking URL Logic
             const isCourse = item.courseTitle || item.schedules;
@@ -87,7 +105,7 @@ const SessionCart = ({ type, title, events }) => {
                   </div>
 
                   <div className="card-overlay">
-                    <div className="overlay-content">
+                        <div className="overlay-content">
                       <Link href={`/eventDetails?id=${id}`}>
                         <span className="artist-name">{name}</span>
                       </Link>
@@ -101,12 +119,12 @@ const SessionCart = ({ type, title, events }) => {
                         </span>
                       </div>
 
-                      <div className="price-tag">from {price}</div>
+                      <div className="price-tag">{t("fromLabel")} {price}</div>
                       <div className="event_cart_footer">
                         <Link href={bookingUrl} className="common_btn max_170">
-                          Book
+                          {t("bookNow")}
                         </Link>
-                        <span>{seatsLeft}</span>
+                        {seatsLeft && <span>{seatsLeft}</span>}
                       </div>
                     </div>
                   </div>

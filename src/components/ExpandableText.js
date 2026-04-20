@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 const ExpandableText = ({ text, limit = 250, className = "section-text" }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -7,6 +8,8 @@ const ExpandableText = ({ text, limit = 250, className = "section-text" }) => {
 
   const shouldTruncate = text.length > limit;
   const displayedText = isExpanded ? text : text.slice(0, limit);
+
+  const { t } = useLanguage();
 
   return (
     <div className={className}>
@@ -28,7 +31,7 @@ const ExpandableText = ({ text, limit = 250, className = "section-text" }) => {
             marginTop: "2px"
           }}
         >
-          {isExpanded ? "View Less" : "View More"}
+          {isExpanded ? t("viewLess") : t("viewMore")}
         </button>
       )}
     </div>

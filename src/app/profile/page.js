@@ -16,6 +16,7 @@ import authApi from "@/api/authApi";
 import blockUserApi from "@/api/blockUser";
 import reportUserApi from "@/api/reportUser";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 function ProfileContent() {
   const searchParams = useSearchParams();
@@ -56,6 +57,8 @@ function ProfileContent() {
 
     fetchUserProfile();
   }, [userId]);
+
+  const { t } = useLanguage();
 
   // Fetch logged-in user's role
   useEffect(() => {
@@ -116,7 +119,7 @@ function ProfileContent() {
         className="d-flex justify-content-center align-items-center"
         style={{ minHeight: "100vh", backgroundColor: "#000", color: "#fff" }}
       >
-        Loading profile...
+        {t("loadingProfile")}
       </div>
     );
   }
@@ -127,7 +130,7 @@ function ProfileContent() {
         className="d-flex justify-content-center align-items-center"
         style={{ minHeight: "100vh", backgroundColor: "#000", color: "#fff" }}
       >
-        User not found
+        {t("userNotFound")}
       </div>
     );
   }
@@ -241,13 +244,13 @@ function ProfileContent() {
 
                         {showMenu && (
                           <div className="menu_dropdown">
-                            <div onClick={() => handleAction("block")}>
-                              Block
+                              <div onClick={() => handleAction("block")}>
+                                {t("block")}
+                              </div>
+                              <div onClick={() => handleAction("report")}>
+                                {t("report")}
+                              </div>
                             </div>
-                            <div onClick={() => handleAction("report")}>
-                              Report
-                            </div>
-                          </div>
                         )}
                       </>
                     )}
@@ -262,15 +265,15 @@ function ProfileContent() {
                     </h2>
                     <p className="designation">
                       {userProfile?.role === "ORGANIZER"
-                        ? "Event Organizer"
-                        : "User"}
+                        ? t("eventOrganizer")
+                        : t("userRole")}
                     </p>
                     <div className="stats-row">
                       {userProfile?.role === "ORGANIZER" && (
                         <span className="me-3">
                           {" "}
                           <img src="/img/event_icon_01.svg" />
-                          {userProfile?.totalEventsHosted || 0} Events Hosted
+                          {userProfile?.totalEventsHosted || 0} {t("eventsHosted")}
                         </span>
                       )}
                       {userProfile?.role !== "CUSTOMER" && (
@@ -283,7 +286,7 @@ function ProfileContent() {
                           }}
                         >
                           <img src="/img/user_icon.svg" alt="followers" />{" "}
-                          {userProfile?.totalFollowers || 0} Followers
+                          {userProfile?.totalFollowers || 0} {t("followers")}
                         </span>
                       )}
                       {userProfile?.isMyProfile && (
@@ -296,7 +299,7 @@ function ProfileContent() {
                           }}
                         >
                           <img src="/img/user_icon.svg" alt="following" />{" "}
-                          {userProfile?.totalFollowing || 0} Following
+                          {userProfile?.totalFollowing || 0} {t("following")}
                         </span>
                       )}
                       {userProfile?.role === "ORGANIZER" && (
@@ -305,7 +308,7 @@ function ProfileContent() {
                           onClick={() => setShowReviewModal(true)}
                         >
                           <img src="/img/star-icon.svg" alt="star" />{" "}
-                          {userProfile?.averageRating || 0}/5 Rating (
+                          {userProfile?.averageRating || 0}/5 {t("rating")} (
                           {userProfile?.reviewCount || 0})
                         </span>
                       )}
@@ -317,7 +320,7 @@ function ProfileContent() {
                       !userProfile?.isFollowed &&
                       !userProfile?.isMyProfile && (
                         <button className="btn-follow" onClick={handleFollow}>
-                          <img src="/img/User_plus.svg" /> Follow
+                          <img src="/img/User_plus.svg" /> {t("follow")}
                         </button>
                       )}
 
@@ -325,12 +328,12 @@ function ProfileContent() {
                       userProfile?.isFollowed &&
                       !userProfile?.isMyProfile && (
                         <button className="btn-follow" onClick={handleUnfollow}>
-                          <img src="/img/User_plus.svg" /> Followed
+                          <img src="/img/User_plus.svg" /> {t("followed")}
                         </button>
                       )}
 
                     {!userProfile?.isMyProfile && (
-                      <button
+                        <button
                         className="btn-message"
                         onClick={() => {
                           console.log("User Profile State:", userProfile);
@@ -343,8 +346,8 @@ function ProfileContent() {
                             router.push(`/Messagee?userId=${userId}`);
                           }
                         }}
-                      >
-                        <img src="/img/message.svg" /> Messages
+                        >
+                        <img src="/img/message.svg" /> {t("messages")}
                       </button>
                     )}
                   </div>
@@ -353,9 +356,9 @@ function ProfileContent() {
                 {/* Statistics */}
 
                 <div className="about-section mt-4">
-                  <h4 className="about-title">About me</h4>
+                  <h4 className="about-title">{t("aboutMe")}</h4>
                   <p className="about-text">
-                    {userProfile?.bio || "No bio available."}
+                    {userProfile?.bio || t("noBioAvailable")}
                   </p>
                 </div>
               </div>
@@ -387,11 +390,11 @@ function ProfileContent() {
                     <Tab.Content>
                       <Tab.Pane eventKey="first">
                         <SessionCart
-                          title="Next Session"
+                          title={t("nextSession")}
                           events={userProfile?.events?.upcoming_events}
                         />
                         <SessionCart
-                          title="Past Sessions"
+                          title={t("pastSessions")}
                           events={userProfile?.events?.previous_events}
                         />
                       </Tab.Pane>
@@ -408,8 +411,8 @@ function ProfileContent() {
           <div className="confirm_box">
             <h4>
               {actionType === "block"
-                ? "Are you sure you want to block this user?"
-                : "Are you sure you want to report this user?"}
+                ? t("confirmBlockUser")
+                : t("confirmReportUser")}
             </h4>
 
             <p style={{ fontSize: "13px", color: "#aaa" }}>
@@ -421,7 +424,7 @@ function ProfileContent() {
                 onClick={() => setShowConfirm(false)}
                 style={{ background: "#444", color: "#fff" }}
               >
-                Cancel
+                {t("cancel")}
               </button>
 
               <button
@@ -431,7 +434,7 @@ function ProfileContent() {
                   color: "#fff",
                 }}
               >
-                Yes, {actionType}
+                {t("yes")}, {t(actionType)}
               </button>
             </div>
           </div>
@@ -441,11 +444,11 @@ function ProfileContent() {
       {showReportModal && (
         <div className="confirm_modal">
           <div className="confirm_box">
-            <h4>Report User</h4>
+            <h4>{t("reportUser")}</h4>
 
             <input
               type="text"
-              placeholder="Enter reason *"
+              placeholder={t("enterReasonPlaceholder")}
               value={reportReason}
               onChange={(e) => {
                 setReportReason(e.target.value);
@@ -463,7 +466,7 @@ function ProfileContent() {
             )}
 
             <textarea
-              placeholder="Description "
+              placeholder={t("descriptionPlaceholder")}
               value={reportDescription}
               onChange={(e) => setReportDescription(e.target.value)}
               className="report_input"
@@ -474,14 +477,14 @@ function ProfileContent() {
                 onClick={() => setShowReportModal(false)}
                 style={{ background: "#444", color: "#fff" }}
               >
-                Cancel
+                {t("cancel")}
               </button>
 
               <button
                 onClick={handleReportSubmit}
                 style={{ background: "#1abc9c", color: "#fff" }}
               >
-                Submit
+                {t("submit")}
               </button>
             </div>
           </div>

@@ -8,8 +8,10 @@ import authApi from "@/api/authApi";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { useLanguage } from "@/context/LanguageContext";
 
 function page() {
+  const { t } = useLanguage();
   const { eventData } = useEventContext();
   const [publishing, setPublishing] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -28,7 +30,7 @@ function page() {
       }
     };
     fetchCategories();
-    dcoument.title = "Event Preview - Bondy";
+    document.title = t("eventPreviewPageTitle");
   }, []);
 
   const getCategoryName = (id) => {
@@ -65,9 +67,9 @@ function page() {
       }
 
       if (response.status) {
-        const action = isEditMode ? "updated" : "created";
-        const draftMsg = isDraft ? "as draft" : "successfully";
-        toast.success(`Event ${action} ${draftMsg}`);
+        const actionKey = isEditMode ? "updatedLabel" : "createdLabel";
+        const draftKey = isDraft ? "asDraft" : "successfully";
+        toast.success(`${t("event")}: ${t(actionKey)} ${t(draftKey)}`);
         router.push("/EventsManagement");
       }
     } catch (error) {
@@ -82,11 +84,11 @@ function page() {
     <div>
       <div className="cards event-details">
         <Link href="/Gallery" className="back-btn">
-          <img src="/img/arrow-left-white.svg" alt="Back" />
-          Back to Gallery
+          <img src="/img/arrow-left-white.svg" alt={t("back")} />
+          {t("backToGallery")}
         </Link>
         <h4 className="line-title">
-          <span>Event Details</span>
+          <span>{t("eventDetails")}</span>
         </h4>
         <Row>
           <Col md={2}>
@@ -104,36 +106,36 @@ function page() {
           <Col md={10}>
             <ul className="event-dtl-rgt">
               <li>
-                <h6>Category</h6>
+                <h6>{t("category")}</h6>
                 <p>{getCategoryName(eventData.eventCategory)}</p>
               </li>
               <li>
-                <h6>Start Date</h6>
+                <h6>{t("startDate")}</h6>
                 <p>{eventData.startDate} {eventData.startTime}</p>
               </li>
               <li>
-                <h6>Tags</h6>
+                <h6>{t("tagsLabel")}</h6>
                 <p>{eventData.tags && eventData.tags.join(", ")}</p>
               </li>
               <li>
-                <span className="status-badge pending">{eventData.isDraft ? "Draft" : "Review"}</span>
+                <span className="status-badge pending">{eventData.isDraft ? t("draftLabel") : t("reviewLabel")}</span>
               </li>
             </ul>
           </Col>
         </Row>
         <div className="time-location common-dtl-list mt-20">
           <h4 className="line-title">
-            <span>Date time and Location</span>
+            <span>{t("dateTimeLocation")}</span>
           </h4>
           <ul className="event-dtl-rgt">
+              <li>
+                <h6>{t("venueName")}</h6>
+                <p>{eventData.venueName}</p>
+              </li>
             <li>
-              <h6>Venue Name</h6>
-              <p>{eventData.venueName}</p>
-            </li>
-            <li>
-              <h6>
+                <h6>
                 <img src="/img/white-calendar.svg" alt="" />
-                Start Date
+                {t("startDate")}
               </h6>
               <p>
                 <span>{eventData.startDate}</span>
@@ -142,9 +144,9 @@ function page() {
               </p>
             </li>
             <li>
-              <h6>
+                <h6>
                 <img src="/img/white-calendar.svg" alt="" />
-                End Date
+                {t("endDate")}
               </h6>
               <p>
                 <span>{eventData.endDate}</span>
@@ -153,9 +155,9 @@ function page() {
               </p>
             </li>
             <li>
-              <h6>
+                <h6>
                 <img src="/img/Map-Point.svg" alt="" />
-                Location
+                {t("location")}
               </h6>
               <p style={{ wordBreak: "break-word" }}>
                 {eventData.venueAddress.address} <br />
@@ -166,46 +168,46 @@ function page() {
         </div>
         <div className="ticket-pricing common-dtl-list mt-20">
           <h4 className="line-title">
-            <span>Ticket & Pricing</span>
+            <span>{t("ticketAndPricing")}</span>
           </h4>
           <ul className="event-dtl-rgt">
-            <li>
-              <h6>Ticket Name</h6>
-              <p>{eventData.ticketName}</p>
-            </li>
-            <li>
-              <h6>Quantity Available</h6>
-              <p>{eventData.ticketQtyAvailable}</p>
-            </li>
-            <li>
-              <h6>Price Per Ticket</h6>
-              <p>${eventData.ticketPrice}</p>
-            </li>
-            <li>
-              <h6>Total Tickets</h6>
-              <p>{eventData.totalTickets}</p>
-            </li>
-            <li>
-              <h6>Add-ons</h6>
-              <p>{eventData.addOns || "-"}</p>
-            </li>
-            <li>
-              <h6>Sale Start Date</h6>
-              <p>{eventData.ticketSelesStartDate}</p>
-            </li>
-            <li>
-              <h6>Sale End Date</h6>
-              <p>{eventData.ticketSelesEndDate}</p>
-            </li>
-            <li>
-              <h6>Refund Policy</h6>
-              <p>{eventData.refundPolicy}</p>
-            </li>
+              <li>
+                <h6>{t("ticketName")}</h6>
+                <p>{eventData.ticketName}</p>
+              </li>
+              <li>
+                <h6>{t("quantityAvailable")}</h6>
+                <p>{eventData.ticketQtyAvailable}</p>
+              </li>
+              <li>
+                <h6>{t("pricePerTicketLabel")}</h6>
+                <p>{eventData.ticketPrice}</p>
+              </li>
+              <li>
+                <h6>{t("totalTicketsLabel")}</h6>
+                <p>{eventData.totalTickets}</p>
+              </li>
+              <li>
+                <h6>{t("addons")}</h6>
+                <p>{eventData.addOns || "-"}</p>
+              </li>
+              <li>
+                <h6>{t("salesStartDateLabel")}</h6>
+                <p>{eventData.ticketSelesStartDate}</p>
+              </li>
+              <li>
+                <h6>{t("salesEndDateLabel")}</h6>
+                <p>{eventData.ticketSelesEndDate}</p>
+              </li>
+              <li>
+                <h6>{t("refundPolicy")}</h6>
+                <p>{eventData.refundPolicy}</p>
+              </li>
           </ul>
         </div>
         <div className="short-desc">
           <h4 className="line-title">
-            <span>Short Description</span>
+            <span>{t("shortDescription")}</span>
           </h4>
           <p style={{ wordBreak: "break-word" }}>
             {eventData.shortdesc}
@@ -213,7 +215,7 @@ function page() {
         </div>
         <div className="long-desc mt-20">
           <h4 className="line-title">
-            <span>Detailed Description/Highlights</span>
+            <span>{t("detailedDescriptionLabel")}</span>
           </h4>
           <p style={{ wordBreak: "break-word" }}>
             {eventData.longdesc}
@@ -222,7 +224,7 @@ function page() {
         {eventData.shortTeaserVideo && eventData.shortTeaserVideo.length > 0 && (
           <div className="video-section mt-20">
             <h4 className="line-title">
-              <span>Teaser Video</span>
+              <span>{t("teaserVideo")}</span>
             </h4>
             <video
               src={getFullImageUrl(eventData.shortTeaserVideo[0])}
@@ -234,7 +236,7 @@ function page() {
         )}
         <div className="gellry-images">
           <h4 className="line-title">
-            <span>Gallery</span>
+            <span>{t("gallery")}</span>
           </h4>
           <div className="gallery-grid">
             {eventData.mediaLinks.map((link, index) => (
@@ -246,7 +248,7 @@ function page() {
         </div>
         <div className="d-flex gap-2 justify-content-end mt-5">
           <Link href="/Gallery" className="outline-btn">
-            Back
+            {t("back")}
           </Link>
           {/* <button
             type="button"
@@ -262,7 +264,7 @@ function page() {
             onClick={() => handlePublish(false)}
             disabled={publishing}
           >
-            {publishing ? "Publishing..." : "Publish"}
+            {publishing ? t("publishing") : t("publish")}
           </button>
         </div>
       </div>

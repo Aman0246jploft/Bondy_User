@@ -4,6 +4,7 @@ import { Button, Form, Spinner } from "react-bootstrap";
 import commentApi from "../api/commentApi";
 import { getFullImageUrl } from "../utils/imageHelper";
 import ExpandableText from "./ExpandableText";
+import { useLanguage } from "@/context/LanguageContext";
 
 const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }) => {
     const router = useRouter();
@@ -13,6 +14,7 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
     const [loadingReplies, setLoadingReplies] = useState(false);
     const [showReplies, setShowReplies] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const { t } = useLanguage();
 
     const fetchReplies = async () => {
         setLoadingReplies(true);
@@ -106,7 +108,7 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
                         style={{ color: "#999" }}
                         onClick={() => setShowReplyForm(!showReplyForm)}
                     >
-                        Reply
+                        {t("reply")}
                     </button>
 
                     {comment.totalReplies > 0 && (
@@ -115,7 +117,7 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
                             style={{ color: "var(--primary-teal, #23ada4)" }}
                             onClick={handleToggleReplies}
                         >
-                            {showReplies ? "Hide Replies" : `View ${comment.totalReplies} Replies`}
+                            {showReplies ? t("hideReplies") : t("viewReplies", { count: comment.totalReplies })}
                         </button>
                     )}
                 </div>
@@ -124,7 +126,7 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
                     <div className="mt-3 d-flex align-items-start">
                         <Form.Control
                             type="text"
-                            placeholder="Write a reply..."
+                            placeholder={t("writeReplyPlaceholder")}
                             size="sm"
                             value={replyContent}
                             onChange={(e) => setReplyContent(e.target.value)}
@@ -145,7 +147,7 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
                             onClick={handleReplySubmit}
                             style={{ backgroundColor: "var(--primary-teal, #23ada4)", borderColor: "var(--primary-teal, #23ada4)", whiteSpace: "nowrap" }}
                         >
-                            {submitting ? <Spinner animation="border" size="sm" /> : "Post"}
+                            {submitting ? <Spinner animation="border" size="sm" /> : t("post")}
                         </Button>
                     </div>
                 )}
@@ -183,6 +185,7 @@ export default function CommentsSection({ entityId, entityModel }) {
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
+    const { t } = useLanguage();
 
     const fetchComments = async (pageNum = 1, append = false) => {
         try {
@@ -257,7 +260,7 @@ export default function CommentsSection({ entityId, entityModel }) {
 
     return (
         <div className="comments-section mt-5 pt-4" style={{ borderTop: "1px solid #333" }}>
-            <h3 className="mb-4" style={{ color: "var(--white, #fff)" }}>Comments ({total})</h3>
+            <h3 className="mb-4" style={{ color: "var(--white, #fff)" }}>{t("comments")} ({total})</h3>
 
             <div className="mb-5 d-flex align-items-start">
 
@@ -267,7 +270,7 @@ export default function CommentsSection({ entityId, entityModel }) {
                 <div className="flex-grow-1 me-3">
                     <textarea
                         rows={2}
-                        placeholder="Add a comment..."
+                        placeholder={t("addCommentPlaceholder")}
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         style={{
@@ -288,7 +291,7 @@ export default function CommentsSection({ entityId, entityModel }) {
                         onClick={handleCommentSubmit}
                         style={{ border: "none" }}
                     >
-                        {submitting ? <Spinner animation="border" size="sm" /> : "Add Comment"}
+                        {submitting ? <Spinner animation="border" size="sm" /> : t("addComment")}
                     </Button>
                 </div>
             </div>
@@ -315,13 +318,13 @@ export default function CommentsSection({ entityId, entityModel }) {
                                     onClick={loadMore}
                                     style={{ borderRadius: "20px", color: "#999", borderColor: "#444" }}
                                 >
-                                    Load More Comments
+                                    {t("loadMoreComments")}
                                 </Button>
                             </div>
                         )}
                     </>
                 ) : (
-                    <p className="text-muted text-center py-4">No comments yet. Be the first to comment!</p>
+                    <p className="text-muted text-center py-4">{t("noCommentsYet")}</p>
                 )}
             </div>
             <style jsx>{`

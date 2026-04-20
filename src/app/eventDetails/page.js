@@ -17,6 +17,7 @@ import Footer from "@/components/Footer";
 import EventSection from "@/components/EventSection";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 import { getFullImageUrl } from "@/utils/imageHelper";
 
@@ -29,6 +30,7 @@ function EventDetailsContent() {
   const [attendees, setAttendees] = useState(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -153,7 +155,7 @@ function EventDetailsContent() {
                   href={`/eventbooking?eventId=${event?._id}`}
                   className="common_btn"
                 >
-                  Book Ticket Now
+                  {t("bookTicketNow")}
                 </Link>
                 <Button className="book_mark_icon">
                   <img src="/img/share_icon.svg" />
@@ -238,19 +240,19 @@ function EventDetailsContent() {
               <div className="event-details-container details_Event_box">
                 <div className="details_Event_time">
                   <div className="event_time_mange">
-                    <h5>Date & Time</h5>
-                    <span>
-                      {formatEventDateTime(
-                        event?.startDate,
-                        event?.startTime,
-                        event?.endTime,
-                      )}
-                    </span>
-                  </div>
-                  <div className="event_time_mange">
-                    <h5>Location</h5>
-                    <span>{event?.venueAddress?.address}</span>
-                  </div>
+                      <h5>{t("dateAndTime")}</h5>
+                      <span>
+                        {formatEventDateTime(
+                          event?.startDate,
+                          event?.startTime,
+                          event?.endTime,
+                        )}
+                      </span>
+                    </div>
+                    <div className="event_time_mange">
+                      <h5>{t("location")}</h5>
+                      <span>{event?.venueAddress?.address}</span>
+                    </div>
                   {/* <div className="event_time_mange">
                     <h5>Date & Time</h5>
                     <span>
@@ -277,13 +279,13 @@ function EventDetailsContent() {
                 </div>
 
                 <div className="content-section">
-                  <h3 className="section-heading">What to expect</h3>
+                  <h3 className="section-heading">{t("whatToExpect")}</h3>
                   <ExpandableText text={event?.longdesc} limit={300} />
                 </div>
 
                 {/* Event Gallery Section */}
                 <div className="content-section">
-                  <h3 className="section-heading">Event Gallery</h3>
+                  <h3 className="section-heading">{t("eventGallery")}</h3>
                   <div className="gallery-grid">
                     {mediaItems.length > 0 ? (
                       mediaItems.map((item, index) => (
@@ -292,8 +294,8 @@ function EventDetailsContent() {
                           href={getFullImageUrl(item.url)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`gallery-item ${index === 0 ? "large-gallery-item" : ""
-                            }`}
+                          className={`gallery-item ${index === 0 ? "large-gallery-item" : ""}
+                            `}
                           style={{ display: "block", textDecoration: "none" }}
                         >
                           {item.type === "video" ? (
@@ -311,13 +313,13 @@ function EventDetailsContent() {
                               onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
                               loading="lazy"
                               className="w-100 h-100 object-fit-cover img-placeholder"
-                              alt={`Gallery item ${index + 1}`}
+                              alt={`${t("galleryItemAlt")} ${index + 1}`}
                             />
                           )}
                         </a>
                       ))
                     ) : (
-                      <p>No gallery items available.</p>
+                      <p>{t("noGalleryItems")}</p>
                     )}
                   </div>
                   <div className="onwards_sec mt-4">
@@ -328,7 +330,7 @@ function EventDetailsContent() {
                       href={`/eventbooking?eventId=${event?._id}`}
                       className="common_btn"
                     >
-                      Book Ticket Now
+                      {t("bookTicketNow")}
                     </Link>
                     <Button className="book_mark_icon">
                       <img src="/img/share_icon.svg" />
@@ -344,16 +346,16 @@ function EventDetailsContent() {
             <div className="crowd_main">
               <div className="Insights_box">
                 <div className="title_crowd">
-                  <h3 className="">Crowd Insights</h3>
+                  <h3 className="">{t("crowdInsights")}</h3>
                 </div>
 
                 <div className="insights-card">
-                  <span className="">Who is going</span>
+                  <span className="">{t("whoIsGoing")}</span>
 
                   <div className="  whisiGoing_box">
                     <div>
                       <h2>{attendees?.total || 0}</h2>
-                      <small className="text-secondary">Attendees</small>
+                      <small className="text-secondary">{t("attendees")}</small>
                     </div>
 
                     <div className="">
@@ -383,7 +385,7 @@ function EventDetailsContent() {
                           </>
                         ) : (
                           <span className="small text-muted">
-                            Be the first to join!
+                            {t("beFirstToJoin")}
                           </span>
                         )}
                       </div>
@@ -393,14 +395,14 @@ function EventDetailsContent() {
                       className="text-teal text-decoration-none small"
                       style={{ color: "#26a69a" }}
                     >
-                      View All
+                      {t("viewAll")}
                     </a>
                   </div>
 
                   <hr className="border-secondary opacity-25 my-4" />
 
                   <div className="mt-3">
-                    <span>Events Seats</span>
+                    <span>{t("eventSeats")}</span>
                     {(() => {
                       const totalTickets = event?.totalTickets || 0;
                       const availableTickets = event?.ticketQtyAvailable || 0;
@@ -413,7 +415,7 @@ function EventDetailsContent() {
                       return (
                         <>
                           <p className="small mb-2">
-                            Seats Booked - {bookedSeats}
+                            {t("seatsBooked")} - {bookedSeats}
                           </p>
                           <div className="custom-progress-bg mb-2">
                             <div
@@ -423,7 +425,7 @@ function EventDetailsContent() {
                           </div>
                           <div className="text-end">
                             <small className="small">
-                              Seats left - {availableTickets}
+                              {t("seatsLeft")} - {availableTickets}
                             </small>
                           </div>
                         </>
@@ -434,7 +436,7 @@ function EventDetailsContent() {
               </div>
 
               <div className="title_crowd mt-4">
-                <h3 className="">This event sponsored by</h3>
+                <h3 className="">{t("sponsoredBy")}</h3>
               </div>
               <div className="sponsor-card">
                 <div className="sponsor-card_profile">
@@ -454,7 +456,7 @@ function EventDetailsContent() {
                   </h5>
                 </div>
                 <Link href={`/profile?id=${event?.createdBy?._id}`} className="btn-book py-2 px-4 btn text-white text-decoration-none">
-                  View Details
+                  {t("viewDetails")}
                 </Link>
               </div>
             </div>
@@ -469,7 +471,7 @@ function EventDetailsContent() {
         type="recommended"
         limit={4}
         showSeeAll={false}
-        customTitle="Events You May Like"
+        customTitle={t("eventsYouMayLike")}
       />
       <Footer />
     </>

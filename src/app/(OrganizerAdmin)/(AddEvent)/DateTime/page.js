@@ -7,8 +7,10 @@ import VenueAutocomplete from "../../Components/VenueAutocomplete";
 import { useEventContext } from "@/context/EventContext";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 function page() {
+  const { t } = useLanguage();
   const { eventData, updateEventData } = useEventContext();
   const inputRef = useRef(null);
   const router = useRouter();
@@ -46,12 +48,12 @@ function page() {
     e.preventDefault();
 
     if (!eventData.startDate || !eventData.endDate || !eventData.venueName) {
-      toast.error("Please fill in required fields");
+      toast.error(t("pleaseFillRequiredFields"));
       return;
     }
 
     if (eventData.venueName.length > 100) {
-      toast.error("Venue Name cannot exceed 100 characters");
+      toast.error(t("venueNameTooLong"));
       return;
     }
 
@@ -66,20 +68,20 @@ function page() {
 
     // Validate Start Date is in the future
     if (startDateTime < now) {
-      toast.error("Start date/time must be in the future");
+      toast.error(t("startDateMustBeInFuture"));
       return;
     }
 
     // Validate End Date is after Start Date
     if (endDateTime <= startDateTime) {
-      toast.error("End date/time must be after start date/time");
+      toast.error(t("endDateMustBeAfterStart"));
       return;
     }
 
     router.push("/TicketsPricing");
   };
 
-  useEffect(() => { document.title = "Date, Time and Location - Bondy"; }, []);
+  useEffect(() => { document.title = t("dateTimePageTitle"); }, []);
 
 
   return (
@@ -91,7 +93,7 @@ function page() {
               <Link href="/BasicInfo" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-01.svg" className="me-2" />
-                  Event Basic Info
+                  {t("eventBasicInfoStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -102,7 +104,7 @@ function page() {
               <Link href="/DateTime" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-02.svg" className="me-2" />
-                  Date, Time and Location
+                  {t("dateTimeStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -113,7 +115,7 @@ function page() {
               <Link href="/TicketsPricing" className="steps-link">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-03.svg" className="me-2" />
-                  Tickets & Pricing
+                  {t("ticketsPricingStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -124,7 +126,7 @@ function page() {
               <Link href="/Agerestraction" className="steps-link">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-04.svg" className="me-2" />
-                  Age Restriction
+                  {t("ageRestrictionStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -135,7 +137,7 @@ function page() {
               <Link href="/Gallery" className="steps-link">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-01.svg" className="me-2" />
-                  Gallery
+                  {t("galleryStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -149,7 +151,7 @@ function page() {
                 <Col md={6}>
                   <div className="event-frm-bx">
                     <label className="form-label">
-                      Venue Name <span className="text-danger">*</span>
+                      {t("venueName")} <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
@@ -157,7 +159,7 @@ function page() {
                       name="venueName"
                       value={eventData.venueName}
                       onChange={handleInputChange}
-                      placeholder="Enter venue name"
+                      placeholder={t("venueNamePlaceholder")}
                       maxLength={100}
                     />
                     <div className="text-end">
@@ -169,37 +171,38 @@ function page() {
                 </Col>
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Venue Address</label>
+                    <label className="form-label">{t("venueAddressLabel")}</label>
                     <VenueAutocomplete
                       defaultValue={eventData.venueAddress && eventData.venueAddress.address}
+                      placeholder={t("searchVenuePlaceholder")}
                       onPlaceSelected={handleVenueSelected}
                     />
                   </div>
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">City</label>
-                    <input
+                    <label className="form-label">{t("cityLabel")}</label>
+                      <input
                       type="text"
                       className="form-control"
                       name="city"
                       value={eventData.venueAddress && eventData.venueAddress.city}
                       onChange={handleInputChange}
-                      placeholder="City"
+                      placeholder={t("cityPlaceholder")}
                       readOnly
                     />
                   </div>
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Country</label>
-                    <input
+                    <label className="form-label">{t("countryLabel")}</label>
+                      <input
                       type="text"
                       className="form-control"
                       name="country"
                       value={eventData.venueAddress && eventData.venueAddress.country}
                       onChange={handleInputChange}
-                      placeholder="Country"
+                      placeholder={t("countryPlaceholder")}
                       readOnly
                     />
                   </div>
@@ -215,7 +218,7 @@ function page() {
                 <Col md={6}>
                   <div className="event-frm-bx">
                     <label className="form-label">
-                      Start Date <span className="text-danger">*</span>
+                      {t("startDate")} <span className="text-danger">*</span>
                     </label>
                     <div className="date-input-wrapper">
                       <input
@@ -232,7 +235,7 @@ function page() {
                 <Col md={6}>
                   <div className="event-frm-bx">
                     <label className="form-label">
-                      End Date <span className="text-danger">*</span>
+                      {t("endDate")} <span className="text-danger">*</span>
                     </label>
                     <div className="date-input-wrapper">
                       <input
@@ -248,7 +251,7 @@ function page() {
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Start Time</label>
+                    <label className="form-label">{t("startTime")}</label>
                     <div className="date-input-wrapper">
                       <input
                         type="time"
@@ -262,7 +265,7 @@ function page() {
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">End Time</label>
+                    <label className="form-label">{t("endTime")}</label>
                     <div className="date-input-wrapper">
                       <input
                         type="time"
@@ -277,14 +280,14 @@ function page() {
               </Row>
               <div className="d-flex gap-2 justify-content-end mt-2">
                 <Link href="/BasicInfo" className="outline-btn">
-                  Back
+                  {t("back")}
                 </Link>
 
                 <button
                   type="button"
                   onClick={handleNext}
                   className="custom-btn">
-                  Save and Continue
+                  {t("saveAndContinue")}
                 </button>
               </div>
             </div>

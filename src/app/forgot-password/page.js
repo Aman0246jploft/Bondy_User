@@ -6,21 +6,23 @@ import authApi from "@/api/authApi";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import GuestRoute from "@/components/GuestRoute";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const { t } = useLanguage();
 
  useEffect(() => {
-  document.title = "Forgot Password - Bondy";
-}, []);
+  document.title = `${t("forgotPasswordQuestion")} - Bondy`;
+}, [t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email) {
-      toast.error("Please enter your email address");
+      toast.error(t("pleaseEnterEmail"));
       return;
     }
 
@@ -31,7 +33,7 @@ export default function ForgotPasswordPage() {
       if (response.status) {
         // Store email for the reset password page
         localStorage.setItem("resetEmail", email);
-        toast.success("OTP sent to your email");
+        toast.success(t("otpSentToEmail"));
         router.push("/reset-password");
       }
     } catch (error) {
@@ -50,11 +52,8 @@ export default function ForgotPasswordPage() {
             <div className="login_img">
               <img src="/img/login_side_img.png" alt="login side" />
               <div className="content_img_box">
-                <h4>Explore Events Effortlessly</h4>
-                <p>
-                  Discover, book, and track events seamlessly with calendar
-                  integration and personalized event curation
-                </p>
+                <h4>{t("exploreEventsEffortlessly")}</h4>
+                <p>{t("exploreEventsEffortlesslyDesc")}</p>
               </div>
             </div>
           </Col>
@@ -64,22 +63,19 @@ export default function ForgotPasswordPage() {
               <Col xxl={7} xl={9} lg={10} md={12}>
                 <div className="common_field">
                   <div className="fz_32">
-                    <h2>Forgot Password?</h2>
-                    <p>
-                      No worries! Enter your email address and we'll send you a
-                      verification code to reset your password.
-                    </p>
+                    <h2>{t("forgotPasswordQuestion")}</h2>
+                    <p>{t("noWorriesEnterEmail")}</p>
                   </div>
 
-                  <Form className="login_field" onSubmit={handleSubmit}>
+                  <Form className="login_field" noValidate onSubmit={handleSubmit}>
                     <Form.Group className="mb-3" controlId="email">
                       <Form.Control
                         type="email"
                         name="email"
-                        placeholder="Enter your email"
+                        placeholder={t("enterYourEmail")}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        required
+                        aria-required="true"
                       />
                     </Form.Group>
 
@@ -88,14 +84,14 @@ export default function ForgotPasswordPage() {
                       disabled={loading}
                       className="common_btn w-100 d-block text-center text-decoration-none border-0"
                     >
-                      {loading ? "Sending..." : "Send Verification Code"}
+                      {loading ? t("sending") : t("sendVerificationCode")}
                     </button>
                   </Form>
 
                   <div className="other_signup mt-4">
                     <span>
-                      Remember your password?{" "}
-                      <Link href="/login">Back to Login</Link>
+                      {t("rememberPassword")} {" "}
+                      <Link href="/login">{t("backToLogin")}</Link>
                     </span>
                   </div>
                 </div>

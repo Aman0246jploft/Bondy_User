@@ -4,11 +4,13 @@ import React from "react";
 import Modal from "react-bootstrap/Modal";
 import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 export default function PayNow(props) {
 
  const router = useRouter();
+ const { t } = useLanguage();
 
  const handleRedirect = async () => {
   try {
@@ -48,9 +50,8 @@ export default function PayNow(props) {
                             <img src="/img/Success.svg" />
                         </div>
                         <div className="modal_title addto_list text-center mb-4">
-                            <h3>Payment successful</h3>
-                            <p>Show your tickets upon entering the Cinema
-                                and pick up your snacks at the Cinema bar</p>
+                          <h3>{t("paymentSuccessful")}</h3>
+                          <p>{t("paymentSuccessDesc")}</p>
                         </div>
                         {/* <div className="align_btn mt-5">
                             <Link href="/" className="common_btn">
@@ -58,7 +59,7 @@ export default function PayNow(props) {
                             </Link>
                         </div> */}
                          <button className="common_btn mt-4" onClick={handleRedirect}>
-            Go to My Tickets
+            {t("goToMyTickets")}
           </button>
                     </div>
                 </Modal.Body>

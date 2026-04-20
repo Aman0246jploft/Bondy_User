@@ -13,6 +13,7 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 import courseApi from "@/api/courseApi";
 import wishlistApi from "@/api/wishlistApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
@@ -44,6 +45,19 @@ function ProgramDetailsContent() {
       fetchDetails();
     }
   }, [id]);
+
+  const { t, language } = useLanguage();
+
+  const formatPrice = (amount) => {
+    if (amount == null || amount === undefined) return t("priceNotAvailable") || "N/A";
+    try {
+      const locale = language === "mn" ? "mn-MN" : "en-US";
+      const formatted = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(amount);
+      return `₮${formatted}`;
+    } catch (e) {
+      return `₮${amount}`;
+    }
+  };
 
   const handleWishlistToggle = async () => {
     const token =
@@ -91,7 +105,7 @@ function ProgramDetailsContent() {
       <>
         <Header />
         <Container className="my-5 text-center">
-          <h2>Loading...</h2>
+          <h2>{t("loading")}</h2>
         </Container>
         <Footer />
       </>
@@ -169,7 +183,7 @@ function ProgramDetailsContent() {
               </div>
               <div className="onwards_sec">
                 <h4 className="mb-0">
-                  <span className="price-text">₮{price}</span> onwards
+                  <span className="price-text">{formatPrice(price)}</span> {t("onwards")}
                 </h4>
                 <Link
                   href={
@@ -179,7 +193,7 @@ function ProgramDetailsContent() {
                   }
                   className="common_btn"
                 >
-                  Book Now
+                  {t("bookNow")}
                 </Link>
                 <Button className="book_mark_icon">
                   <img src="/img/share_icon.svg" />
@@ -239,22 +253,22 @@ function ProgramDetailsContent() {
               <div className="event-details-container details_Event_box">
                 <div className="details_Event_time">
                   <div className="event_time_mange">
-                    <h5>Date & Time</h5>
+                    <h5>{t("dateAndTime")}</h5>
                     <span>
                       {currentSchedule
                         ? `${formatDate(
                             currentSchedule.startDate,
-                          )} at ${currentSchedule.startTime} to ${currentSchedule.endTime}`
-                        : "Detailed timing not available"}
+                          )} ${t("at")} ${currentSchedule.startTime} ${t("to")} ${currentSchedule.endTime}`
+                        : t("detailedTimingNotAvailable")}
                     </span>
                   </div>
                   <div className="event_time_mange">
-                    <h5>Location</h5>
-                    <span>{locationString}</span>
+                    <h5>{t("location")}</h5>
+                    <span>{locationString || t("locationNotAvailable")}</span>
                   </div>
 
                   <Link className="view-map" href="">
-                    View in Map
+                    {t("viewInMap")}
                   </Link>
                 </div>
                 <div className="map-container">
@@ -267,17 +281,17 @@ function ProgramDetailsContent() {
 
                 {/* Text Content Sections */}
                 <div className="content-section">
-                  <h2 className="section-heading">Description</h2>
+                  <h2 className="section-heading">{t("shortDescription")}</h2>
                   <ExpandableText text={shortdesc} limit={300} />
                 </div>
 
                 <div className="content-section">
-                  <h2 className="section-heading">What You Will Learn</h2>
+                  <h2 className="section-heading">{t("whatYouWillLearn")}</h2>
                   <ExpandableText text={whatYouWillLearn} limit={300} />
                 </div>
 
                 <div className="organization_profile">
-                  <h4>Organized By</h4>
+                  <h4>{t("organizedBy")}</h4>
 
                   <div
                     className="item_org"
@@ -319,7 +333,7 @@ function ProgramDetailsContent() {
                     >
                       {createdBy?.firstName} {createdBy?.lastName}
                       {createdBy?.isVerified && (
-                        <span className="verified_tag">✓ VERIFIED</span>
+                        <span className="verified_tag">✓ {t("verified")}</span>
                       )}
                       <span
                         className="view_details"
@@ -327,14 +341,14 @@ function ProgramDetailsContent() {
                           router.push(`/profile?id=${createdBy?._id}`)
                         }
                       >
-                        View Details
+                        {t("viewDetails")}
                       </span>
                     </span>
                   </div>
                 </div>
 
                 <div className="content-section m-0">
-                  <h3 className="section-heading">Course Gallery</h3>
+                  <h3 className="section-heading">{t("gallery")}</h3>
                   <div className="gallery-grid">
                     {images &&
                       images?.map((img, idx) => (
@@ -353,19 +367,19 @@ function ProgramDetailsContent() {
                       ))}
                   </div>
                   <div className="onwards_sec mt-4">
-                    <h4 className="mb-0">
-                      <span className="price-text">₮{price}</span>
-                    </h4>
-                    <Link
-                      href={
-                        currentSchedule?._id
-                          ? `/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`
-                          : `/eventbooking?id=${courseDetails._id}`
-                      }
-                      className="common_btn"
-                    >
-                      Book Now
-                    </Link>
+                        <h4 className="mb-0">
+                          <span className="price-text">{formatPrice(price)}</span>
+                        </h4>
+                        <Link
+                          href={
+                            currentSchedule?._id
+                              ? `/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`
+                              : `/eventbooking?id=${courseDetails._id}`
+                          }
+                          className="common_btn"
+                        >
+                          {t("bookNow")}
+                        </Link>
                     <Button className="book_mark_icon">
                       <img src="/img/share_icon.svg" />
                     </Button>
@@ -376,9 +390,9 @@ function ProgramDetailsContent() {
               {id && <CommentsSection entityId={id} entityModel="Course" />}
             </Container>
           </Col>
-          <Col lg={4}>
+            <Col lg={4}>
             <div className="upcming_session">
-              <h4>Upcoming Sessions</h4>
+              <h4>{t("upcomingSessions")}</h4>
               <div className="upcming_session_box">
                 {schedules && schedules.length > 0 ? (
                   schedules.map((schedule, idx) => {
@@ -400,32 +414,31 @@ function ProgramDetailsContent() {
                           </div>
                           <div className="upcming_session_content">
                             <span>
-                              {dayName} • {schedule.startTime} -{" "}
-                              {schedule.endTime}
+                              {dayName} • {schedule.startTime} {t("to")} {schedule.endTime}
                             </span>
                             <h6>
-                              {courseTitle} (Session {idx + 1})
+                              {courseTitle} ({t("sessionLabel")} {idx + 1})
                             </h6>
                           </div>
                         </div>
                         <div className="booking_bx">
                           <span className="text_pr">
                             {schedule.isBooked
-                              ? "Booked"
+                              ? t("booked")
                               : schedule.isFull
-                                ? "Full"
-                                : `₮${price}`}
+                                ? t("full")
+                                : formatPrice(price)}
                           </span>
                           {schedule.isBooked ? (
-                            <span className="badge bg-success">Booked</span>
+                            <span className="badge bg-success">{t("booked")}</span>
                           ) : schedule.isFull ? (
-                            <span className="badge bg-danger">Full</span>
+                            <span className="badge bg-danger">{t("full")}</span>
                           ) : (
                             <Link
                               href={`/eventbooking?id=${courseDetails._id}&scheduleId=${schedule._id}`}
                               className="common_btn"
                             >
-                              Book Now
+                              {t("bookNow")}
                             </Link>
                           )}
                         </div>
@@ -433,7 +446,7 @@ function ProgramDetailsContent() {
                     );
                   })
                 ) : (
-                  <p>No upcoming sessions found.</p>
+                  <p>{t("noUpcomingSessionsFound")}</p>
                 )}
               </div>
             </div>

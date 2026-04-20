@@ -2,6 +2,7 @@
 import React from 'react';
 import { Container, Row, Col, Button } from 'react-bootstrap';
 import ExpandableText from './ExpandableText';
+import { useLanguage } from '@/context/LanguageContext';
 
 const reviewData = [
   {
@@ -28,10 +29,11 @@ const reviewData = [
 ];
 
 export default function Reviews() {
+  const { t } = useLanguage();
   return (
     <Container className="text-white mt-5 mb-5">
       <div className='review_sec'>
-        <h3 className="section-title">Reviews</h3>
+        <h3 className="section-title">{t("reviews")}</h3>
         <Row>
           <Col lg={12} md={12}>
             {reviewData.map((review) => (

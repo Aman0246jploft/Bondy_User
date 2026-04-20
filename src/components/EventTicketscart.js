@@ -1,11 +1,14 @@
 import React from "react";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { useLanguage } from "@/context/LanguageContext";
 
 const EventTicketscart = ({ item }) => {
   const posterImage =
     item?.posterImage && item.posterImage.length > 0
       ? item.posterImage[0]
       : null;
+
+  const { t } = useLanguage();
 
   return (
     <section className="recommended-section event_booking_card p-0">
@@ -25,17 +28,17 @@ const EventTicketscart = ({ item }) => {
           <div className="card-overlay">
             <div className="overlay-content">
               <h5 className="artist-name text-capitalize">
-                {item?.title || "Name"}
+                {item?.title || t("namePlaceholder")}
               </h5>
 
               <ul className="list_event text-capitalize">
-                <li>{item?.duration || "Duration N/A"}</li>
-                <li>{item?.categoryName || "Category"}</li>
-                <li>{item?.status || "Status"}</li>
+                <li>{item?.duration || t("durationNotAvailable")}</li>
+                <li>{item?.categoryName || t("categoryPlaceholder")}</li>
+                <li>{item?.status || t("statusPlaceholder")}</li>
                 {/* <li>7:30 PM</li> */}
               </ul>
               <span className="text-capitalize">
-                {item?.venueAddress?.address || "Location"}
+                {item?.venueAddress?.address || t("locationPlaceholder")}
               </span>
               {/* <span>Las Vegas,Nevada,USA</span> */}
             </div>

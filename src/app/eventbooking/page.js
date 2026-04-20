@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useLanguage } from "@/context/LanguageContext";
 import TicketBooking from "@/components/TicketBooking";
 import eventApi from "@/api/eventApi";
 import bookingApi from "@/api/bookingApi";
@@ -23,11 +24,23 @@ function BookingPageContent() {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
+  const { t, language } = useLanguage();
+
   useEffect(() => {
     if (bookingItem?.title) {
       document.title = `${bookingItem.title} | Bondy`;
     }
   }, [bookingItem]);
+
+  const formatPrice = (amount) => {
+    if (amount == null || amount === undefined) return t("priceNotAvailable") || "N/A";
+    try {
+      const locale = language === "mn" ? "mn-MN" : "en-US";
+      return new Intl.NumberFormat(locale, { style: "currency", currency: "MNT", maximumFractionDigits: 0 }).format(amount);
+    } catch (e) {
+      return `₮${amount}`;
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -129,7 +142,7 @@ function BookingPageContent() {
       <>
         <Header />
         <Container className="my-5 text-center">
-          <h2>Loading...</h2>
+          <h2>{t("loading")}</h2>
         </Container>
         <Footer />
       </>
@@ -141,7 +154,7 @@ function BookingPageContent() {
       <>
         <Header />
         <Container className="my-5 text-center">
-          <h2>Item not found</h2>
+          <h2>{t("itemNotFound")}</h2>
         </Container>
         <Footer />
       </>
@@ -178,7 +191,7 @@ function BookingPageContent() {
               <div className="onwards_sec">
                 <h4 className="mb-0">
                   <span className="price-text">₮{bookingItem.price}</span>{" "}
-                  onwards
+                  <span>{t("onwards")}</span>
                 </h4>
                 <Button className="book_mark_icon">
                   <img src="/img/share_icon.svg" />

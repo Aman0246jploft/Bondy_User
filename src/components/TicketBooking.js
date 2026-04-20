@@ -5,6 +5,7 @@ import EventTicketscart from "./EventTicketscart";
 import PayNow from "./Modal/PayNow";
 import bookingApi from "@/api/bookingApi";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function TicketBooking({item, type, scheduleId}) {
     const [step, setStep] = useState(1); // 1: Tickets, 2: Payment, 3: Review
@@ -26,6 +27,19 @@ export default function TicketBooking({item, type, scheduleId}) {
     const [promoCode, setPromoCode] = useState(""); // Input value
     const [appliedPromoCode, setAppliedPromoCode] = useState(""); // Validated/Applied value
     const [transactionId, setTransactionId] = useState(null); // Store initiated transaction ID
+
+    const { t, language } = useLanguage();
+
+    const formatPrice = (amount) => {
+        if (amount == null || amount === undefined) return t("priceNotAvailable") || "N/A";
+        try {
+            const locale = language === "mn" ? "mn-MN" : "en-US";
+            const formatted = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(amount);
+            return `₮${formatted}`;
+        } catch (e) {
+            return `₮${amount}`;
+        }
+    };
 
     // Calculate booking details when qty or appliedPromoCode changes
     useEffect(() => {
@@ -68,7 +82,7 @@ export default function TicketBooking({item, type, scheduleId}) {
 
     const handleApplyPromo = async () => {
         if (!promoCode.trim()) {
-            toast.error("Please enter a promo code");
+            toast.error(t("pleaseEnterPromo"));
             return;
         }
 
@@ -100,23 +114,23 @@ export default function TicketBooking({item, type, scheduleId}) {
 
                 if (res.data.breakdown.promoApplied) {
                     setAppliedPromoCode(promoCode);
-                    toast.success(res.data.breakdown.promoMessage || "Promo code applied!");
+                    toast.success(res.data.breakdown.promoMessage || t("promoApplied"));
                 } else {
                     setAppliedPromoCode("");
-                    toast.error(res.data.breakdown.promoMessage || "Invalid promo code");
+                    toast.error(res.data.breakdown.promoMessage || t("invalidPromo"));
                 }
             } else {
-                toast.error(res.message || "Invalid promo code");
+                toast.error(res.message || t("invalidPromo"));
                 setAppliedPromoCode("");
                 setPriceBreakdown((prev) => ({
                     ...prev,
                     promoApplied: false,
-                    promoMessage: res.message || "Invalid promo code",
+                    promoMessage: res.message || t("invalidPromo"),
                 }));
             }
         } catch (error) {
             console.error("Promo code error:", error);
-            const msg = error?.response?.data?.message || "Invalid promo code";
+            const msg = error?.response?.data?.message || t("invalidPromo");
             toast.error(msg);
             setAppliedPromoCode("");
             setPriceBreakdown((prev) => ({
@@ -150,13 +164,13 @@ export default function TicketBooking({item, type, scheduleId}) {
             if (initResponse.status) {
                 setTransactionId(initResponse.data.transactionId);
                 setStep(3); // Move to Review Step
-                toast.success("Booking initiated, please review.");
+                toast.success(t("bookingInitiated"));
             } else {
-                toast.error(initResponse.message || "Booking initiation failed"); // Reverted step logic removal
+                toast.error(initResponse.message || t("bookingInitiationFailed")); // Reverted step logic removal
             }
         } catch (error) {
             console.error("Initiate booking error:", error);
-            toast.error("Failed to initiate booking");
+            toast.error(t("failedToInitiateBooking"));
         } finally {
             setLoading(false);
         }
@@ -165,7 +179,7 @@ export default function TicketBooking({item, type, scheduleId}) {
     // Step 3 -> Finish: Confirm Payment
     const handleConfirmBooking = async () => {
         if (!transactionId) {
-            toast.error("No booking to confirm. Please restart.");
+            toast.error(t("noBookingToConfirm"));
             return;
         }
         setLoading(true);
@@ -177,11 +191,11 @@ export default function TicketBooking({item, type, scheduleId}) {
             if (confirmResponse.status) {
                 setModalShow(true); // Show success modal
             } else {
-                toast.error(confirmResponse.message || "Payment failed");
+                toast.error(confirmResponse.message || t("paymentFailed"));
             }
         } catch (error) {
             console.error("Confirm payment error:", error);
-            toast.error("Something went wrong during payment");
+            toast.error(t("paymentErrorGeneric"));
         } finally {
             setLoading(false);
         }
@@ -192,7 +206,7 @@ export default function TicketBooking({item, type, scheduleId}) {
             case 1:
                 return (
                     <div className="fade-in ">
-                        <h5 className="fw-bold mb-3">Quantity</h5>
+                        <h5 className="fw-bold mb-3">{t("quantity")}</h5>
                         <div className="quantity-selector mb-5">
                             <button className="btn text-white fs-4" onClick={() => setQty(qty > 1 ? qty - 1 : 1)}>
                                 −
@@ -203,16 +217,16 @@ export default function TicketBooking({item, type, scheduleId}) {
                             </button>
                         </div>
 
-                        <h5 className="text-start">Discount Code</h5>
+                        <h5 className="text-start">{t("discountCode")}</h5>
                         <div className="promo-group mb-2">
                             <input
                                 type="text"
-                                placeholder="Enter code here"
+                                placeholder={t("enterPromoPlaceholder")}
                                 value={promoCode}
                                 onChange={(e) => setPromoCode(e.target.value)}
                             />
                             <button className="common_btn" onClick={handleApplyPromo}>
-                                APPLY
+                                {t("apply")}
                             </button>
                         </div>
                         {priceBreakdown?.promoMessage && (
@@ -222,30 +236,30 @@ export default function TicketBooking({item, type, scheduleId}) {
                         )}
 
                         <h5 className="text-start" style={{marginTop: "20px", display: "inline-block"}}>
-                            Price Details
+                            {t("priceDetails")}
                         </h5>
                         <div className="price_box">
                             <div className="d-flex justify-content-between price_text">
-                                <span className="">Ticket Price</span>
-                                <span className="">₮{priceBreakdown.basePrice}</span>
+                                <span className="">{t("ticketPrice")}</span>
+                                <span className="">{formatPrice(priceBreakdown.basePrice)}</span>
                             </div>
                             <div className="d-flex justify-content-between  price_text">
-                                <span className="">Taxes</span>
-                                <span className="">₮ {priceBreakdown.taxes}</span>
+                                <span className="">{t("taxes")}</span>
+                                <span className="">{formatPrice(priceBreakdown.taxes)}</span>
                             </div>
 
                             <div className="d-flex justify-content-between  price_text">
-                                <span>Discount</span>
-                                <span className="text-info">-{priceBreakdown.discount}</span>
+                                <span>{t("discount")}</span>
+                                <span className="text-info">-{formatPrice(priceBreakdown.discount)}</span>
                             </div>
                             <div className="d-flex justify-content-between align-items-center price_text">
-                                <span>Total</span>
-                                <span className="text-info">₮{priceBreakdown.totalAmount}</span>
+                                <span>{t("total")}</span>
+                                <span className="text-info">{formatPrice(priceBreakdown.totalAmount)}</span>
                             </div>
                         </div>
                         <div className="tickets_btn">
                             <button className="common_btn  mt-4" onClick={() => setStep(2)}>
-                                Pay Now
+                                {t("payNow")}
                             </button>
                         </div>
                     </div>
@@ -256,27 +270,27 @@ export default function TicketBooking({item, type, scheduleId}) {
                     <div className="payment_container">
                         <div className="payment_card_wrapper">
                             <div className="price_box">
-                                <h5 className="text-start">Price Details</h5>
+                                <h5 className="text-start">{t("priceDetails")}</h5>
                                 <div className="d-flex justify-content-between price_text">
-                                    <span className="">Ticket Price</span>
-                                    <span className="">₮{priceBreakdown.basePrice}</span>
+                                    <span className="">{t("ticketPrice")}</span>
+                                    <span className="">{formatPrice(priceBreakdown.basePrice)}</span>
                                 </div>
                                 <div className="d-flex justify-content-between  price_text">
-                                    <span className="">Taxes</span>
-                                    <span className="">₮ {priceBreakdown.taxes}</span>
+                                    <span className="">{t("taxes")}</span>
+                                    <span className="">{formatPrice(priceBreakdown.taxes)}</span>
                                 </div>
                                 <div className="d-flex justify-content-between  price_text">
-                                    <span className="">Discount</span>
-                                    <span className="">-{priceBreakdown.discount}</span>
+                                    <span className="">{t("discount")}</span>
+                                    <span className="">-{formatPrice(priceBreakdown.discount)}</span>
                                 </div>
                                 <div className="d-flex justify-content-between price_text">
-                                    <span className="">Total</span>
-                                    <span className="">₮{priceBreakdown.totalAmount}</span>
+                                    <span className="">{t("total")}</span>
+                                    <span className="">{formatPrice(priceBreakdown.totalAmount)}</span>
                                 </div>
                             </div>
 
                             <div className="payment_card_add">
-                                <h2 className="">Payment Method</h2>
+                                <h2 className="">{t("paymentMethod")}</h2>
                                 <div
                                     className="payment_method_item"
                                     onClick={() => setSelectedMethod("card")}
@@ -296,12 +310,12 @@ export default function TicketBooking({item, type, scheduleId}) {
                                             />
                                         </div>
                                         <div className="method_info">
-                                            <h6>Card</h6>
+                                            <h6>{t("card")}</h6>
                                             <span>... 3455</span>
                                         </div>
                                     </div>
                                     <button className="edit_btn" onClick={(e) => e.stopPropagation()}>
-                                        EDIT
+                                        {t("edit")}
                                     </button>
                                 </div>
 
@@ -319,8 +333,8 @@ export default function TicketBooking({item, type, scheduleId}) {
                                             {selectedMethod === "qpay" && <div className="radio_inner"></div>}
                                         </div>
                                         <div className="method_info">
-                                            <h6>Qh6ay</h6>
-                                            <span>Fund your wallet</span>
+                                            <h6>{t("qpay")}</h6>
+                                            <span>{t("fundYourWallet")}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -341,15 +355,15 @@ export default function TicketBooking({item, type, scheduleId}) {
                                             {selectedMethod === "social" && <div className="radio_inner"></div>}
                                         </div>
                                         <div className="method_info">
-                                            <h6>Socialh6ay</h6>
-                                            <span>Fund your wallet</span>
+                                            <h6>{t("socialPay")}</h6>
+                                            <span>{t("fundYourWallet")}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div className="tickets_btn">
                                 <button className="common_btn  mt-4" onClick={handleInitiateBooking} disabled={loading}>
-                                    {loading ? "Processing..." : "Pay Now"}
+                                    {loading ? t("processing") : t("payNow")}
                                 </button>
                             </div>
                         </div>
@@ -361,22 +375,22 @@ export default function TicketBooking({item, type, scheduleId}) {
                     <div className="payment_container review_sec">
                         <div className="payment_card_wrapper">
                             <div className="price_box">
-                                <h5 className="text-start">Price Details</h5>
+                                <h5 className="text-start">{t("priceDetails")}</h5>
                                 <div className="d-flex justify-content-between price_text">
-                                    <span className="">Ticket Price</span>
-                                    <span className="">₮{priceBreakdown.basePrice}</span>
+                                    <span className="">{t("ticketPrice")}</span>
+                                    <span className="">{formatPrice(priceBreakdown.basePrice)}</span>
                                 </div>
                                 <div className="d-flex justify-content-between  price_text">
-                                    <span className="">Taxes</span>
-                                    <span className="">₮ {priceBreakdown.taxes}</span>
+                                    <span className="">{t("taxes")}</span>
+                                    <span className="">{formatPrice(priceBreakdown.taxes)}</span>
                                 </div>
                                 <div className="d-flex justify-content-between  price_text">
-                                    <span className="">Discount</span>
-                                    <span className="">-{priceBreakdown.discount}</span>
+                                    <span className="">{t("discount")}</span>
+                                    <span className="">-{formatPrice(priceBreakdown.discount)}</span>
                                 </div>
                                 <div className="d-flex justify-content-between price_text">
-                                    <span className="">Total</span>
-                                    <span className="">₮{priceBreakdown.totalAmount}</span>
+                                    <span className="">{t("total")}</span>
+                                    <span className="">{formatPrice(priceBreakdown.totalAmount)}</span>
                                 </div>
                             </div>
                         </div>
@@ -401,18 +415,18 @@ export default function TicketBooking({item, type, scheduleId}) {
 
                             {/* Lower Section: FanProtect Card */}
                             <div className="protection_card">
-                                <div className="guarantee_row refund_content">
-                                    <img src="/img/white_shield.svg" />
-                                    <h4>FanProtect : every order is 100% guaranteed</h4>
-                                </div>
-
-                                <div className="refund_row">
-                                    <img src="/img/dollaricon.svg" />
-                                    <div className="refund_content">
-                                        <h4>Easy Refund</h4>
-                                        <p>Change of plans? Get your money back up to 24 hours before the event.</p>
+                                    <div className="guarantee_row refund_content">
+                                        <img src="/img/white_shield.svg" />
+                                        <h4>{t("fanProtectTitle")}</h4>
                                     </div>
-                                </div>
+
+                                    <div className="refund_row">
+                                        <img src="/img/dollaricon.svg" />
+                                        <div className="refund_content">
+                                            <h4>{t("easyRefundTitle")}</h4>
+                                            <p>{t("easyRefundDesc")}</p>
+                                        </div>
+                                    </div>
                             </div>
                         </div>
                         <div className="tickets_btn">
@@ -421,7 +435,7 @@ export default function TicketBooking({item, type, scheduleId}) {
                                 onClick={handleConfirmBooking} // Call confirm booking
                                 disabled={loading}
                             >
-                                {loading ? "Processing..." : "Pay Now"}
+                                {loading ? t("processing") : t("payNow")}
                             </button>
                         </div>
                     </div>
@@ -437,7 +451,7 @@ export default function TicketBooking({item, type, scheduleId}) {
                         <div className="stepper-container">
                             <span className={`step-item ${step >= 1 ? "active" : ""}`} onClick={() => setStep(1)}>
                                 {" "}
-                                <img src="/img/tickets_icon.svg" /> Tickets
+                                <img src="/img/tickets_icon.svg" /> {t("tickets")}
                             </span>
                             <span className={`step-divider ${step >= 2 ? "active" : ""}`}>
                                 <svg
@@ -456,7 +470,7 @@ export default function TicketBooking({item, type, scheduleId}) {
                                 </svg>
                             </span>
                             <span className={`step-item ${step >= 2 ? "active" : ""}`} onClick={() => setStep(2)}>
-                                <img src="/img/payment_icon.svg" /> Payment
+                                <img src="/img/payment_icon.svg" /> {t("paymentLabel")}
                             </span>
                             <span className={`step-divider ${step >= 3 ? "active" : ""}`}>
                                 <svg
@@ -475,7 +489,7 @@ export default function TicketBooking({item, type, scheduleId}) {
                                 </svg>
                             </span>
                             <span className={`step-item ${step === 3 ? "active" : ""}`} onClick={() => setStep(3)}>
-                                <img src="/img/review_icon.svg" /> Review
+                                <img src="/img/review_icon.svg" /> {t("reviewLabel")}
                             </span>
                         </div>
 

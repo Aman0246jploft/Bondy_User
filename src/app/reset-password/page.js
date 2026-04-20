@@ -33,7 +33,7 @@ export default function ResetPasswordPage() {
     useEffect(() => {
         const storedEmail = localStorage.getItem("resetEmail");
         if (!storedEmail) {
-            toast.error("Please start from the forgot password page");
+            toast.error(t("pleaseStartFromForgotPassword"));
             router.push("/forgot-password");
             return;
         }
@@ -74,7 +74,7 @@ export default function ResetPasswordPage() {
         const otpValue = otp.join("");
 
         if (otpValue.length < 5) {
-            toast.error("Please enter complete OTP");
+            toast.error(t("pleaseEnterCompleteOtp"));
             return;
         }
 
@@ -85,10 +85,10 @@ export default function ResetPasswordPage() {
                 otp: otpValue,
             });
 
-            if (response.status) {
+                if (response.status) {
                 setResetToken(response.data.token);
                 setStep(2);
-                toast.success("OTP verified! Now set your new password");
+                toast.success(t("otpVerifiedNowSetNewPassword"));
             }
         } catch (error) {
             // Error handled by interceptor
@@ -108,7 +108,7 @@ export default function ResetPasswordPage() {
             });
 
             if (response.status) {
-                toast.success("OTP resent successfully");
+                toast.success(t("otpResentSuccessfully"));
                 setResendTimer(60);
                 setCanResend(false);
                 setOtp(["", "", "", "", ""]);
@@ -129,12 +129,12 @@ export default function ResetPasswordPage() {
         e.preventDefault();
 
         if (formData.newPassword.length < 6) {
-            toast.error("Password must be at least 6 characters");
+            toast.error(t("passwordMinLength"));
             return;
         }
 
         if (formData.newPassword !== formData.confirmPassword) {
-            toast.error("Passwords do not match");
+            toast.error(t("passwordsNotMatch"));
             return;
         }
 
@@ -146,9 +146,9 @@ export default function ResetPasswordPage() {
                 resetToken: resetToken,
             });
 
-            if (response.status) {
+                if (response.status) {
                 setStep(3);
-                toast.success("Password reset successful!");
+                toast.success(t("passwordResetSuccessful"));
 
                 // Clear stored email
                 localStorage.removeItem("resetEmail");
@@ -179,11 +179,8 @@ export default function ResetPasswordPage() {
                         <div className="login_img">
                             <img src="/img/login_side_img.png" alt="login side" />
                             <div className="content_img_box">
-                                <h4>Explore Events Effortlessly</h4>
-                                <p>
-                                    Discover, book, and track events seamlessly with calendar
-                                    integration and personalized event curation
-                                </p>
+                                <h4>{t("exploreEventsEffortlessly")}</h4>
+                                <p>{t("exploreEventsEffortlesslyDesc")}</p>
                             </div>
                         </div>
                     </Col>
@@ -195,9 +192,9 @@ export default function ResetPasswordPage() {
                                     {step === 1 && (
                                         <>
                                             <div className="fz_32">
-                                                <h2>Enter Verification Code</h2>
+                                                <h2>{t("enterVerificationCode")}</h2>
                                                 <p>
-                                                    We sent a verification code to your email
+                                                    {t("weSentCode")}
                                                     <br />
                                                     <span>{email}</span>
                                                 </p>
@@ -222,14 +219,14 @@ export default function ResetPasswordPage() {
 
                                                 <div className="other_signup mb-4">
                                                     <span>
-                                                        Didn't receive the code?{" "}
+                                                        {t("didntReceiveCode")} {" "}
                                                         {canResend ? (
                                                             <Link href="#" onClick={handleResendOtp}>
-                                                                Resend
+                                                                {t("resend")}
                                                             </Link>
                                                         ) : (
                                                             <span style={{ color: "#999" }}>
-                                                                Resend in {resendTimer}s
+                                                                {t("resendIn")} {resendTimer}s
                                                             </span>
                                                         )}
                                                     </span>
@@ -240,7 +237,7 @@ export default function ResetPasswordPage() {
                                                     className="common_btn w-100 border-0"
                                                     disabled={loading}
                                                 >
-                                                    {loading ? "Verifying..." : "Verify & Continue"}
+                                                    {loading ? t("verifying") : t("verifyAndContinue")}
                                                 </button>
                                             </Form>
                                         </>
@@ -249,10 +246,8 @@ export default function ResetPasswordPage() {
                                     {step === 2 && (
                                         <>
                                             <div className="fz_32">
-                                                <h2>Set New Password</h2>
-                                                <p>
-                                                    Create a strong password to secure your account
-                                                </p>
+                                                <h2>{t("setNewPassword")}</h2>
+                                                <p>{t("createStrongPassword")}</p>
                                             </div>
 
                                             <Form className="login_field" onSubmit={handleResetPassword}>
@@ -261,10 +256,10 @@ export default function ResetPasswordPage() {
                                                         <Form.Control
                                                             type={show ? "text" : "password"}
                                                             name="newPassword"
-                                                            placeholder="New Password"
+                                                            placeholder={t("newPassword")}
                                                             value={formData.newPassword}
                                                             onChange={handlePasswordChange}
-                                                            required
+                                                            aria-required="true"
                                                             minLength={6}
                                                         />
                                                         <button
@@ -278,8 +273,8 @@ export default function ResetPasswordPage() {
                                                             />
                                                         </button>
                                                     </div>
-                                                    <small className="text-muted">
-                                                        Minimum 6 characters
+                                                        <small className="text-muted">
+                                                        {t("minimumCharacters")}
                                                     </small>
                                                 </Form.Group>
 
@@ -288,10 +283,10 @@ export default function ResetPasswordPage() {
                                                         <Form.Control
                                                             type={showConfirm ? "text" : "password"}
                                                             name="confirmPassword"
-                                                            placeholder="Confirm New Password"
+                                                            placeholder={t("confirmNewPassword")}
                                                             value={formData.confirmPassword}
                                                             onChange={handlePasswordChange}
-                                                            required
+                                                            aria-required="true"
                                                         />
                                                         <button
                                                             type="button"
@@ -313,7 +308,7 @@ export default function ResetPasswordPage() {
                                                     disabled={loading}
                                                     className="common_btn w-100 d-block text-center text-decoration-none border-0"
                                                 >
-                                                    {loading ? "Resetting..." : "Reset Password"}
+                                                    {loading ? t("sending") : t("resetPassword")}
                                                 </button>
                                             </Form>
                                         </>
@@ -341,17 +336,17 @@ export default function ResetPasswordPage() {
                                                         />
                                                     </svg>
                                                 </div>
-                                                <h2>Password Reset Successful!</h2>
+                                                <h2>{t("passwordResetSuccessful")}</h2>
                                                 <p>
-                                                    Your password has been reset successfully.
+                                                    {t("passwordResetSuccessful")}
                                                     <br />
-                                                    Redirecting to login page...
+                                                    {t("backToLogin")}
                                                 </p>
                                             </div>
 
                                             <div className="other_signup mt-4">
                                                 <span>
-                                                    <Link href="/login">Go to Login Now</Link>
+                                                    <Link href="/login">{t("backToLogin")}</Link>
                                                 </span>
                                             </div>
                                         </>

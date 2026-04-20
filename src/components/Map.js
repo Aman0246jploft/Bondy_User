@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Map({ latitude, longitude, title }) {
   const mapRef = useRef(null);
@@ -77,6 +78,8 @@ export default function Map({ latitude, longitude, title }) {
 
   }, [isLoaded, latitude, longitude, title]);
 
+  const { t } = useLanguage();
+
   return (
     <div
       ref={mapRef}
@@ -85,7 +88,7 @@ export default function Map({ latitude, longitude, title }) {
     >
       {!isLoaded && (
         <div className="d-flex align-items-center justify-content-center h-100 text-muted">
-          Loading Map...
+          {t("loadingMap")}
         </div>
       )}
     </div>

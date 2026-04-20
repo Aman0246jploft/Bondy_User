@@ -122,7 +122,7 @@ const EventSection = ({
                 <div className="event_main_cart">
                   <div className="recommended-card">
                     {(item.isFeatured || item.fetcherEvent) && (
-                      <span className="event-badge">Featured Event</span>
+                      <span className="event-badge">{t("featured")}</span>
                     )}
                     <img
                       src={

@@ -7,8 +7,10 @@ import authApi from "@/api/authApi";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { useLanguage } from "@/context/LanguageContext";
 
 function page() {
+  const { t } = useLanguage();
   const { eventData, updateEventData } = useEventContext();
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
@@ -19,7 +21,7 @@ function page() {
 
     const currentImageCount = eventData.mediaLinks.length;
     if (currentImageCount + files.length > 5) {
-      toast.error(`You can only upload a maximum of 5 images. You currently have ${currentImageCount} images.`);
+      toast.error(t("maxGalleryImagesExceededDynamic", { count: currentImageCount }));
       return;
     }
 
@@ -44,10 +46,10 @@ function page() {
       updateEventData({
         mediaLinks: [...eventData.mediaLinks, ...newLinks],
       });
-      toast.success("Images uploaded successfully");
+      toast.success(t("imagesUploadedSuccessfully"));
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error("Failed to upload image");
+      toast.error(t("failedToUploadImage"));
     } finally {
       setUploading(false);
     }
@@ -64,7 +66,7 @@ function page() {
 
     const currentVideoCount = (eventData.shortTeaserVideo || []).length;
     if (currentVideoCount + files.length > 1) {
-      toast.error("Only one video is allowed as a teaser.");
+      toast.error(t("onlyOneVideoAllowed"));
       return;
     }
 
@@ -87,10 +89,10 @@ function page() {
       updateEventData({
         shortTeaserVideo: [...(eventData.shortTeaserVideo || []), ...newLinks],
       });
-      toast.success("Videos uploaded successfully");
+      toast.success(t("videosUploadedSuccessfully"));
     } catch (error) {
       console.error("Error uploading video:", error);
-      toast.error("Failed to upload video");
+      toast.error(t("failedToUploadVideo"));
     } finally {
       setUploading(false);
     }
@@ -109,7 +111,7 @@ function page() {
   };
 
   useEffect(() => {
-    document.title = "Gallery - Bondy";
+    document.title = t("galleryPageTitle");
   }, []);
 
 
@@ -180,11 +182,9 @@ function page() {
                 <Col md={12}>
                   <div className="event-frm-bx upload">
                     <div>
-                      <h5>Media & Gallery</h5>
+                      <h5>{t("mediaAndGalleryTitle")}</h5>
                       <p>
-                        Upload images (max 5), promotional videos, or short
-                        teaser clips to showcase <br /> your event. Drag and
-                        drop files or click to browse.
+                        {t("mediaAndGalleryDesc")}
                       </p>
                     </div>
                     <input
@@ -196,7 +196,7 @@ function page() {
                       accept="image/*"
                     />
                     <label htmlFor="upload">
-                      {uploading ? "Uploading..." : "Upload"}
+                      {uploading ? t("uploading") : t("upload")}
                     </label>
                   </div>
                   <div className="upload-images">
@@ -218,11 +218,9 @@ function page() {
 
                   <div className="event-frm-bx upload mt-4">
                     <div>
-                      <h5>Short Teaser Clips</h5>
+                      <h5>{t("shortTeaserClipsTitle")}</h5>
                       <p>
-                        Upload a short video clip (max 1) to tease your event.{" "}
-                        <br />
-                        Drag and drop files or click to browse.
+                        {t("shortTeaserClipsDesc")}
                       </p>
                     </div>
                     <input
@@ -234,7 +232,7 @@ function page() {
                       accept="video/*"
                     />
                     <label htmlFor="upload-video">
-                      {uploading ? "Uploading..." : "Upload Video"}
+                      {uploading ? t("uploading") : t("uploadVideo")}
                     </label>
                   </div>
                   <div className="upload-images">
@@ -268,14 +266,14 @@ function page() {
 
               <div className="d-flex gap-2 justify-content-end mt-2">
                 <Link href="/Agerestraction" className="outline-btn">
-                  Back
+                  {t("back")}
                 </Link>
 
                 <button
                   type="button"
                   onClick={handleNext}
                   className="custom-btn">
-                  Save and Continue
+                  {t("saveAndContinue")}
                 </button>
               </div>
             </div>

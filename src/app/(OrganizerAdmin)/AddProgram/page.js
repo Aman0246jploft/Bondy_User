@@ -9,6 +9,7 @@ import { fetchCurrentLocation, formatLocationForApi } from "../../../utils/locat
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { getFullImageUrl } from "../../../utils/imageHelper";
+import { useLanguage } from "@/context/LanguageContext";
 
 function Page() {
   const inputRef = useRef(null);
@@ -58,8 +59,10 @@ function Page() {
 
       setCourseId(id);
     }
-    document.title = "Add/Edit Course - Bondy";
+    document.title = t("addEditCourseTitle");
   }, []);
+
+  const { t } = useLanguage();
 
   // Fetch Categories and Location on Mount
   useEffect(() => {
@@ -80,7 +83,7 @@ function Page() {
             }
           } catch (error) {
             console.error("Error fetching course details", error);
-            toast.error("Failed to load course details");
+              toast.error(t("failedToLoadCourseDetails"));
           }
         } else {
           // Fetch Location only for new courses
@@ -97,7 +100,7 @@ function Page() {
         }
       } catch (error) {
         console.error("Error fetching initial data", error);
-        toast.error("Error loading page data");
+        toast.error(t("errorLoadingPageData"));
       } finally {
         setInitialLoading(false);
       }
@@ -248,11 +251,11 @@ function Page() {
     const uploadData = new FormData();
     for (let i = 0; i < files.length; i++) {
       if (files[i].size > maxSize) {
-        toast.error(`Image ${files[i].name} exceeds 5MB limit`);
+        toast.error(`${t("imageExceedsLimit")}: ${files[i].name}`);
         return;
       }
       if (!allowedTypes.includes(files[i].type)) {
-        toast.error(`Invalid format for ${files[i].name}. Only JPG, PNG, WEBP are allowed.`);
+        toast.error(`${t("invalidImageFormat")}: ${files[i].name}`);
         return;
       }
       uploadData.append("files", files[i]);
@@ -271,11 +274,11 @@ function Page() {
           ...prev,
           posterImage: [response.data.files[0]]
         }));
-        toast.success("Image uploaded successfully");
+        toast.success(t("imageUploadedSuccessfully"));
       }
     } catch (error) {
       console.error("Upload error", error);
-      toast.error("Failed to upload image");
+        toast.error(t("imageUploadFailed"));
     } finally {
       setLoading(false);
     }
@@ -291,11 +294,11 @@ function Page() {
     const uploadData = new FormData();
     for (let i = 0; i < files.length; i++) {
       if (files[i].size > maxSize) {
-        toast.error(`Gallery image ${files[i].name} exceeds 5MB limit`);
+        toast.error(`${t("galleryImageExceedsLimit")}: ${files[i].name}`);
         return;
       }
       if (!allowedTypes.includes(files[i].type)) {
-        toast.error(`Invalid format for ${files[i].name}. Only JPG, PNG, WEBP are allowed.`);
+        toast.error(`${t("invalidImageFormat")}: ${files[i].name}`);
         return;
       }
       uploadData.append("files", files[i]);
@@ -311,7 +314,7 @@ function Page() {
         setFormData(prev => {
           const combined = [...prev.galleryImages, ...response.data.files];
           if (combined.length > 5) {
-            toast.error("Maximum 5 gallery images allowed. Extra images were ignored.");
+            toast.error(t("maxGalleryImagesExceeded"));
             return {
               ...prev,
               galleryImages: combined.slice(0, 5)
@@ -322,11 +325,11 @@ function Page() {
             galleryImages: combined
           };
         });
-        toast.success("Gallery images uploaded successfully");
+        toast.success(t("galleryImagesUploadedSuccessfully"));
       }
     } catch (error) {
       console.error("Upload error", error);
-      toast.error("Failed to upload gallery images");
+        toast.error(t("failedToUploadGalleryImages"));
     } finally {
       setLoading(false);
     }
@@ -335,31 +338,31 @@ function Page() {
   const handleSubmit = async () => {
     // Validation 1: Required fields
     if (!formData.courseTitle || !formData.courseCategory || !formData.totalSeats || !formData.price || !formData.shortdesc || !formData.whatYouWillLearn || !formData.venueAddress?.address) {
-      toast.error("Please fill all required fields: Name, Category, Seats, Price, Descriptions, and Address");
+      toast.error(t("pleaseFillRequiredFieldsCourse"));
       return;
     }
 
     // Validation 2: Image upload
     if (formData.posterImage.length === 0) {
-      toast.error("Please upload at least one image");
+      toast.error(t("pleaseUploadAtLeastOneImage"));
       return;
     }
 
     // Validation 3: Price validation
     if (Number(formData.price) < 0) {
-      toast.error("Price must be greater than or equal to 0");
+      toast.error(t("priceMustBeNonNegative"));
       return;
     }
 
     // Validation 4: Total seats validation
     if (Number(formData.totalSeats) < 1) {
-      toast.error("Total seats must be at least 1");
+      toast.error(t("totalSeatsAtLeastOne"));
       return;
     }
 
     // Validation 5: Schedule validation
     if (!formData.schedules || formData.schedules.length === 0) {
-      toast.error("Please add at least one schedule");
+      toast.error(t("pleaseAddAtLeastOneSchedule"));
       return;
     }
 
@@ -368,13 +371,13 @@ function Page() {
       const sched = formData.schedules[i];
 
       if (!sched.startDate || !sched.endDate || !sched.startTime || !sched.endTime) {
-        toast.error(`Please fill all date and time fields for schedule ${i + 1}`);
+        toast.error(t("pleaseFillScheduleFields").replace("{index}", String(i + 1)));
         return;
       }
 
       // Check if start date is before end date
       if (new Date(sched.startDate) > new Date(sched.endDate)) {
-        toast.error(`Schedule ${i + 1}: Start date must be before or equal to end date`);
+        toast.error(t("scheduleStartBeforeEnd"));
         return;
       }
 
@@ -386,7 +389,7 @@ function Page() {
         const endMins = endH * 60 + endM;
 
         if (startMins >= endMins) {
-          toast.error(`Schedule ${i + 1}: Start time must be before end time on the same day`);
+          toast.error(t("scheduleStartTimeBeforeEnd"));
           return;
         }
       }
@@ -394,7 +397,7 @@ function Page() {
 
     // Validation 7: Enrollment type vs schedules count
     if (formData.enrollmentType === 'fixedStart' && formData.schedules.length !== 1) {
-      toast.error("Fixed-start courses must have exactly one schedule");
+      toast.error(t("fixedStartCoursesSingleSchedule"));
       return;
     }
 
@@ -423,14 +426,14 @@ function Page() {
         // Update existing course
         const res = await courseApi.updateCourse(courseId, payload);
         if (res.status) {
-          toast.success("Course updated successfully!");
+          toast.success(t("courseUpdatedSuccess"));
           router.push("/CoursesManagement");
         }
       } else {
         // Create new course
         const res = await apiClient.post("/course/create", payload);
         if (res.status) {
-          toast.success("Course created successfully!");
+          toast.success(t("courseCreatedSuccess"));
           router.push("/CoursesManagement");
         }
       }
@@ -443,7 +446,7 @@ function Page() {
   };
 
   if (initialLoading) {
-    return <div className="text-center p-5 text-white">Loading...</div>;
+    return <div className="text-center p-5 text-white">{t("loading")}</div>;
   }
 
   return (
@@ -456,12 +459,12 @@ function Page() {
                 <Col md={12}>
                   <div className="event-frm-bx upload">
                     <div>
-                      <h5>Upload Poster <span className="text-danger">*</span></h5>
-                      <p>Max 5MB, JPG/PNG/WEBP, Single Image only</p>
+                      <h5>{t("uploadPoster")} <span className="text-danger">*</span></h5>
+                      <p>{t("uploadPosterDesc")}</p>
                     </div>
                     <input type="file" id="upload" className="d-none" onChange={handleImageUpload} />
                     <label htmlFor="upload">
-                      {loading ? "Uploading..." : "Upload"}
+                      {loading ? t("uploading") : t("upload")}
                     </label>
                   </div>
                   {formData.posterImage.length > 0 && (
@@ -494,11 +497,11 @@ function Page() {
 
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Course Name <span className="text-danger">*</span></label>
+                    <label className="form-label">{t("courseName")} <span className="text-danger">*</span></label>
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Course Name"
+                      placeholder={t("courseNamePlaceholder")}
                       name="courseTitle"
                       value={formData.courseTitle}
                       onChange={handleChange}
@@ -513,7 +516,7 @@ function Page() {
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Course Category <span className="text-danger">*</span></label>
+                    <label className="form-label">{t("courseCategory")} <span className="text-danger">*</span></label>
                     <select
                       className="form-select"
                       name="courseCategory"
@@ -521,7 +524,7 @@ function Page() {
                       onChange={handleChange}
                       required
                     >
-                      <option value="">Select Course Category</option>
+                      <option value="">{t("selectCourseCategory")}</option>
                       {categories.map((cat) => (
                         <option key={cat._id} value={cat._id}>
                           {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
@@ -532,11 +535,11 @@ function Page() {
                 </Col>
                 <Col md={6}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Quantity Available <span className="text-danger">*</span></label>
+                    <label className="form-label">{t("quantityAvailable")} <span className="text-danger">*</span></label>
                     <input
                       type="number"
                       className="form-control"
-                      placeholder="Enter Quantity"
+                      placeholder={t("enterQuantity")}
                       name="totalSeats"
                       value={formData.totalSeats}
                       onChange={handleChange}
@@ -546,10 +549,11 @@ function Page() {
                 </Col>
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Venue Address <span className="text-danger">*</span></label>
+                    <label className="form-label">{t("venueAddressLabel")} <span className="text-danger">*</span></label>
                     <VenueAutocomplete
                       defaultValue={formData.venueAddress?.address}
                       onPlaceSelected={handleVenueSelected}
+                      placeholder={t("venueAddressLabel")}
                     />
                   </div>
                 </Col>
@@ -559,10 +563,10 @@ function Page() {
 
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="form-label">Short Description <span className="text-danger">*</span></label>
+                    <label className="form-label">{t("shortDescriptionLabel")} <span className="text-danger">*</span></label>
                     <textarea
                       className="form-control"
-                      placeholder="Write a sort description"
+                      placeholder={t("shortDescriptionPlaceholder")}
                       name="shortdesc"
                       rows="3"
                       value={formData.shortdesc}
@@ -578,14 +582,14 @@ function Page() {
 
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="form-label">What You Will Learn <span className="text-danger">*</span></label>
+                    <label className="form-label">{t("whatYouWillLearn")} <span className="text-danger">*</span></label>
                     <textarea
                       className="form-control"
                       name="whatYouWillLearn"
                       rows="4"
                       value={formData.whatYouWillLearn}
                       onChange={handleChange}
-                      placeholder="Describe what students will learn in this course..."
+                      placeholder={t("whatYouWillLearnPlaceholder")}
                     ></textarea>
                     <div className="text-end mt-1">
                       <small className="text-white">
@@ -615,12 +619,12 @@ function Page() {
                 <Col md={12}>
                   <div className="event-frm-bx upload">
                     <div>
-                      <h5>Upload Gallery Images (Optional)</h5>
-                      <p>Add additional images (Max 5 images allowed)</p>
+                      <h5>{t("uploadGalleryTitle")}</h5>
+                      <p>{t("uploadGalleryDesc")}</p>
                     </div>
                     <input type="file" id="gallery-upload" className="d-none" multiple onChange={handleGalleryUpload} />
                     <label htmlFor="gallery-upload">
-                      {loading ? "Uploading..." : "Upload Gallery"}
+                      {loading ? t("uploading") : t("uploadGallery")}
                     </label>
                   </div>
                   {formData.galleryImages.length > 0 && (
@@ -682,8 +686,8 @@ function Page() {
                       </div>
                     </div>
                     <div>
-                      <h6 className="mb-0 text-white">Ongoing Course / Program</h6>
-                      <small className="text-secondary">Students can join anytime</small>
+                      <h6 className="mb-0 text-white">{t("ongoingCourseLabel")}</h6>
+                      <small className="text-secondary">{t("ongoingCourseDesc")}</small>
                     </div>
                   </div>
 
@@ -710,9 +714,9 @@ function Page() {
                         {formData.enrollmentType === 'fixedStart' && <span style={{ color: 'white', fontWeight: 'bold' }}>✓</span>}
                       </div>
                     </div>
-                    <div className="d-flex flex-column">
-                      <span className="text-white fw-bold">Fixed-start course</span>
-                      <span className="text-secondary small">All students start and finish together</span>
+                      <div className="d-flex flex-column">
+                      <span className="text-white fw-bold">{t("fixedStartCourseLabel")}</span>
+                      <span className="text-secondary small">{t("fixedStartCourseDesc")}</span>
                     </div>
                   </div>
                 </div>
@@ -725,7 +729,7 @@ function Page() {
                   <Row>
                     <Col md={6}>
                       <div className="event-frm-bx">
-                        <label className="form-label">Start Date <span className="text-danger">*</span></label>
+                        <label className="form-label">{t("startDate")} <span className="text-danger">*</span></label>
                         <div className="date-input-wrapper">
                           <input
                             type="date"
@@ -739,7 +743,7 @@ function Page() {
                     </Col>
                     <Col md={6}>
                       <div className="event-frm-bx">
-                        <label className="form-label">End Date <span className="text-danger">*</span></label>
+                        <label className="form-label">{t("endDate")} <span className="text-danger">*</span></label>
                         <div className="date-input-wrapper">
                           <input
                             type="date"
@@ -753,7 +757,7 @@ function Page() {
                     </Col>
                     <Col md={6}>
                       <div className="event-frm-bx">
-                        <label className="form-label">Start Time <span className="text-danger">*</span></label>
+                        <label className="form-label">{t("startTime")} <span className="text-danger">*</span></label>
                         <div className="date-input-wrapper">
                           <input
                             type="time"
@@ -766,7 +770,7 @@ function Page() {
                     </Col>
                     <Col md={6}>
                       <div className="event-frm-bx">
-                        <label className="form-label">End Time <span className="text-danger">*</span></label>
+                        <label className="form-label">{t("endTime")} <span className="text-danger">*</span></label>
                         <div className="date-input-wrapper">
                           <input
                             type="time"
@@ -782,7 +786,7 @@ function Page() {
                     <div className="d-flex justify-content-end">
                       {index > 0 && (
                         <Button variant="danger" size="sm" onClick={() => removeScheduleSlot(index)}>
-                          Remove Slot
+                          {t("removeSlot")}
                         </Button>
                       )}
                     </div>
@@ -791,10 +795,10 @@ function Page() {
               ))}
 
               {formData.enrollmentType === 'Ongoing' && (
-                <Col md={12}>
+                  <Col md={12}>
                   <div className="event-frm-bx">
                     <Button type="button" className="add-slot" onClick={addScheduleSlot}>
-                      + Add another time slot
+                      {t("addAnotherSlot")}
                     </Button>
                   </div>
                 </Col>
@@ -803,10 +807,10 @@ function Page() {
               <Row>
                 <Col md={6}>
                   <div className="event-frm-bx ">
-                    <label className="form-label">Session Price <span className="text-danger">*</span></label>
+                    <label className="form-label">{t("sessionPrice")} <span className="text-danger">*</span></label>
                     <input
                       type="number"
-                      placeholder="Session Price"
+                      placeholder={t("sessionPricePlaceholder")}
                       className="form-control text-white"
                       name="price"
                       value={formData.price}
@@ -818,7 +822,7 @@ function Page() {
               </Row>
               <div className="d-flex gap-2 justify-content-center mt-2">
                 <button className="custom-btn" type="submit" disabled={loading}>
-                  {loading ? (courseId ? "Updating..." : "Creating...") : (courseId ? "Update Course" : "Create Course")}
+                  {loading ? (courseId ? t("updating") : t("creating")) : (courseId ? t("updateCourse") : t("createCourse"))}
                 </button>
               </div>
             </div>
