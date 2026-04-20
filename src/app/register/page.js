@@ -156,7 +156,8 @@ function RegisterForm() {
       const response = await authApi.customerSignup(payload);
       if (response.status) {
         localStorage.setItem("registerEmail", customerData.email);
-        router.push("/otp");
+        localStorage.setItem("registerType", "CUSTOMER");
+        router.push("/otp?flow=signup");
       }
     } catch (error) {
       // toast handled by interceptor
@@ -235,7 +236,8 @@ function RegisterForm() {
       const response = await authApi.organizerSignup(payload);
       if (response.status) {
         localStorage.setItem("registerEmail", organizerData.email);
-        router.push("/otpSinup");
+        localStorage.setItem("registerType", "ORGANIZER");
+        router.push("/otp?flow=signup");
       }
     } catch (error) {
       // toast handled by interceptor

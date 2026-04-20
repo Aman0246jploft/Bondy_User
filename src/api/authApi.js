@@ -2,9 +2,7 @@ import apiClient from "./apiClient";
 
 const authApi = {
     customerSignup: (data) => apiClient.post("/user/customer/signup", data),
-    customerVerifyOtp: (data) => apiClient.post("/user/customer/verify-otp", data),
     organizerSignup: (data) => apiClient.post("/user/organizer/signup", data),
-    organizerVerifyOtp: (data) => apiClient.post("/user/organizer/verify-otp", data),
     uploadFile: (formData) =>
         apiClient.post("/user/upload", formData, {
             headers: {
@@ -22,8 +20,7 @@ const authApi = {
         }
     }),
     loginInit: (data) => apiClient.post("/user/login/init", data),
-    loginVerify: (data) => apiClient.post("/user/login/verify", data),
-    resendOtp: (data) => apiClient.post("/user/resend-otp", data),
+    verifyUniversalOtp: (data) => apiClient.post("/user/verify-otp", data),
     resendUniversalOtp: (data) => apiClient.post("/user/resendOtp", data),
     getFaqs: () => apiClient.get("/faq/list", { skipToast: true }),
     getGlobalSetting: (key) => apiClient.get(`/globalsetting/${key}`, { skipToast: true }),
