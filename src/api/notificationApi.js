@@ -12,7 +12,10 @@ const notificationApi = {
     },
     deleteNotification: (notificationId) => {
         return apiClient.post("/notification/delete", { notificationId });
-    }
+    },
+    deleteMultipleNotifications: (notificationIds) => {
+        return apiClient.post("/notification/delete-multiple", { notificationIds });
+    },
 };
 
 export default notificationApi;

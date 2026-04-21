@@ -4,10 +4,15 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { Col, Row } from "react-bootstrap";
 import { useLanguage } from "@/context/LanguageContext";
+import { useRouter } from "next/navigation";
+import { useAuthGuard } from "@/context/AuthGuardContext";
+import AuthButton from "@/components/AuthButton";
 
 const ProgramCart = ({ programsArray, pagination }) => {
   const [programs, setPrograms] = useState([]);
   const { t } = useLanguage();
+  const { checkAuth } = useAuthGuard();
+  const router = useRouter();
   useEffect(() => {
     setPrograms(programsArray || []);
   }, [programsArray]);
@@ -96,13 +101,16 @@ const ProgramCart = ({ programsArray, pagination }) => {
                           </span>
                         </div>
                       </Link>
-                      <Link href="/profile">
+                      <span
+                        style={{ cursor: "pointer" }}
+                        onClick={() => checkAuth(() => router.push(`/profile?id=${program?.createdBy?._id}`))}
+                      >
                         <img
                           src={getFullImageUrl(program?.createdBy?.profileImage) || "/img/default-user.png"}
                           alt="profile"
                           onError={(e) => { e.target.src = "/img/default-user.png"; }}
                         />
-                      </Link>
+                      </span>
                     </div>
                     <div
                       className="program_time_grid"
@@ -143,16 +151,17 @@ const ProgramCart = ({ programsArray, pagination }) => {
                       {!program?.currentSchedule?.isFull ? (
                         <>
                           <span style={{ fontWeight: '700' }}>₮{program?.price}</span>
-                          <Link
-                            href={
+                          <AuthButton
+                            requiresAuth
+                            onClick={() => router.push(
                               program?.currentSchedule?._id
                                 ? `/eventbooking?id=${program._id}&scheduleId=${program.currentSchedule._id}`
                                 : `/eventbooking?id=${program._id}`
-                            }
+                            )}
                             className="common_btn"
                           >
                             {t("bookNow")}
-                          </Link>
+                          </AuthButton>
                         </>
                       ) : (
                         <>

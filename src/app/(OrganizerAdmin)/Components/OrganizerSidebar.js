@@ -60,6 +60,15 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="text">{t("personalInfo")}</span>
         </Link>
 
+         <Link
+          href="/Notifications"
+          className={`menu-item ${isActive("/Notification") ? "active" : ""}`}>
+          <span className="icon">
+            <img src="/img/bell-icon.svg" alt="" />
+          </span>
+          <span className="text">{t("notification")}</span>
+        </Link>
+
 
 
         <Link

@@ -21,6 +21,8 @@ import { Toaster } from "react-hot-toast";
 import LocationManager from "@/components/LocationManager";
 import { SocketProvider } from "@/context/SocketContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { AuthGuardProvider } from "@/context/AuthGuardContext";
+import AuthRequiredModal from "@/components/Modal/AuthRequiredModal";
 
 export default function RootLayout({ children }) {
   return (
@@ -29,7 +31,12 @@ export default function RootLayout({ children }) {
         <Toaster position="top-right" reverseOrder={false} />
         <LocationManager />
         <LanguageProvider>
-          <SocketProvider>{children}</SocketProvider>
+          <SocketProvider>
+            <AuthGuardProvider>
+              {children}
+              <AuthRequiredModal />
+            </AuthGuardProvider>
+          </SocketProvider>
         </LanguageProvider>
       </body>
     </html>

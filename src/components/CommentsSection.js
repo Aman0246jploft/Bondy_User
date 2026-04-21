@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuthGuard } from "@/context/AuthGuardContext";
 import { Button, Form, Spinner } from "react-bootstrap";
 import commentApi from "../api/commentApi";
 import { getFullImageUrl } from "../utils/imageHelper";
@@ -8,6 +9,7 @@ import { useLanguage } from "@/context/LanguageContext";
 
 const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }) => {
     const router = useRouter();
+    const { checkAuth } = useAuthGuard();
     const [showReplyForm, setShowReplyForm] = useState(false);
     const [replyContent, setReplyContent] = useState("");
     const [replies, setReplies] = useState([]);
@@ -39,38 +41,31 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
 
 
 
-    const handleReplySubmit = async (e) => {
+    const handleReplySubmit = (e) => {
         if (e) e.preventDefault();
         if (!replyContent.trim()) return;
-
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-        if (!token) {
-            window.location.href = "/login";
-            return;
-        }
-
-        setSubmitting(true);
-        try {
-            const response = await commentApi.createComment({
-                content: replyContent,
-                entityId,
-                entityModel,
-                parentCommentId: comment._id
-            });
-
-            if (response.status) {
-                setReplyContent("");
-                setShowReplyForm(false);
-                // Refresh replies
-                fetchReplies();
-                setShowReplies(true);
-                if (onReplyAdded) onReplyAdded();
+        checkAuth(async () => {
+            setSubmitting(true);
+            try {
+                const response = await commentApi.createComment({
+                    content: replyContent,
+                    entityId,
+                    entityModel,
+                    parentCommentId: comment._id
+                });
+                if (response.status) {
+                    setReplyContent("");
+                    setShowReplyForm(false);
+                    fetchReplies();
+                    setShowReplies(true);
+                    if (onReplyAdded) onReplyAdded();
+                }
+            } catch (error) {
+                console.error("Error submitting reply:", error);
+            } finally {
+                setSubmitting(false);
             }
-        } catch (error) {
-            console.error("Error submitting reply:", error);
-        } finally {
-            setSubmitting(false);
-        }
+        });
     };
 
     return (
@@ -106,7 +101,7 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
                     <button
                         className="btn btn-link p-0 text-decoration-none fw-semibold me-3"
                         style={{ color: "#999" }}
-                        onClick={() => setShowReplyForm(!showReplyForm)}
+                        onClick={() => checkAuth(() => setShowReplyForm(!showReplyForm))}
                     >
                         {t("reply")}
                     </button>
@@ -214,40 +209,36 @@ export default function CommentsSection({ entityId, entityModel }) {
         }
     }, [entityId]);
 
+    const { checkAuth } = useAuthGuard();
+
     const loadMore = () => {
         const nextPage = page + 1;
         setPage(nextPage);
         fetchComments(nextPage, true);
     };
 
-    const handleCommentSubmit = async (e) => {
+    const handleCommentSubmit = (e) => {
         if (e) e.preventDefault();
         if (!newComment.trim()) return;
-
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-        if (!token) {
-            window.location.href = "/login";
-            return;
-        }
-
-        setSubmitting(true);
-        try {
-            const response = await commentApi.createComment({
-                content: newComment,
-                entityId,
-                entityModel
-            });
-
-            if (response.status) {
-                setNewComment("");
-                fetchComments(1, false); // Refresh list
-                setPage(1);
+        checkAuth(async () => {
+            setSubmitting(true);
+            try {
+                const response = await commentApi.createComment({
+                    content: newComment,
+                    entityId,
+                    entityModel
+                });
+                if (response.status) {
+                    setNewComment("");
+                    fetchComments(1, false);
+                    setPage(1);
+                }
+            } catch (error) {
+                console.error("Error submitting comment:", error);
+            } finally {
+                setSubmitting(false);
             }
-        } catch (error) {
-            console.error("Error submitting comment:", error);
-        } finally {
-            setSubmitting(false);
-        }
+        });
     };
 
     if (loading) {

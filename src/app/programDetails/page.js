@@ -20,6 +20,8 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatDate } from "@/utils/dateFormater";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useAuthGuard } from "@/context/AuthGuardContext";
+import AuthButton from "@/components/AuthButton";
 
 function ProgramDetailsContent() {
   const router = useRouter();
@@ -47,6 +49,7 @@ function ProgramDetailsContent() {
   }, [id]);
 
   const { t, language } = useLanguage();
+  const { checkAuth } = useAuthGuard();
 
   const formatPrice = (amount) => {
     if (amount == null || amount === undefined) return t("priceNotAvailable") || "N/A";
@@ -59,14 +62,8 @@ function ProgramDetailsContent() {
     }
   };
 
-  const handleWishlistToggle = async () => {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token) {
-      window.location.href = "/login";
-      return;
-    }
-
+  const handleWishlistToggle = () => {
+    checkAuth(async () => {
     if (wishlistLoading) return;
     setWishlistLoading(true);
 
@@ -92,6 +89,7 @@ function ProgramDetailsContent() {
     } finally {
       setWishlistLoading(false);
     }
+    });
   };
 
   useEffect(() => {
@@ -185,16 +183,17 @@ function ProgramDetailsContent() {
                 <h4 className="mb-0">
                   <span className="price-text">{formatPrice(price)}</span> {t("onwards")}
                 </h4>
-                <Link
-                  href={
+                <AuthButton
+                  requiresAuth
+                  onClick={() => router.push(
                     currentSchedule?._id
                       ? `/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`
                       : `/eventbooking?id=${courseDetails._id}`
-                  }
+                  )}
                   className="common_btn"
                 >
                   {t("bookNow")}
-                </Link>
+                </AuthButton>
                 <Button className="book_mark_icon">
                   <img src="/img/share_icon.svg" />
                 </Button>
@@ -337,9 +336,7 @@ function ProgramDetailsContent() {
                       )}
                       <span
                         className="view_details"
-                        onClick={() =>
-                          router.push(`/profile?id=${createdBy?._id}`)
-                        }
+                        onClick={() => checkAuth(() => router.push(`/profile?id=${createdBy?._id}`))}
                       >
                         {t("viewDetails")}
                       </span>
@@ -370,16 +367,13 @@ function ProgramDetailsContent() {
                         <h4 className="mb-0">
                           <span className="price-text">{formatPrice(price)}</span>
                         </h4>
-                        <Link
-                          href={
-                            currentSchedule?._id
-                              ? `/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`
-                              : `/eventbooking?id=${courseDetails._id}`
-                          }
+                        <AuthButton
+                          requiresAuth
+                          onClick={() => router.push(`/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`)}
                           className="common_btn"
                         >
                           {t("bookNow")}
-                        </Link>
+                        </AuthButton>
                     <Button className="book_mark_icon">
                       <img src="/img/share_icon.svg" />
                     </Button>
@@ -434,12 +428,13 @@ function ProgramDetailsContent() {
                           ) : schedule.isFull ? (
                             <span className="badge bg-danger">{t("full")}</span>
                           ) : (
-                            <Link
-                              href={`/eventbooking?id=${courseDetails._id}&scheduleId=${schedule._id}`}
+                            <AuthButton
+                              requiresAuth
+                              onClick={() => router.push(`/eventbooking?id=${courseDetails._id}&scheduleId=${schedule._id}`)}
                               className="common_btn"
                             >
                               {t("bookNow")}
-                            </Link>
+                            </AuthButton>
                           )}
                         </div>
                       </div>

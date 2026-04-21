@@ -54,7 +54,8 @@ function ListingContent() {
     search: "",
     latitude: null,
     longitude: null,
-    date: ""
+    startDate: "",
+    endDate: "",
   });
 
   const totalPages = Math.ceil(total / LIMIT);
@@ -119,7 +120,8 @@ function ListingContent() {
           search: filterParams.search,
           latitude: filterParams.latitude,
           longitude: filterParams.longitude,
-          date: filterParams.date,
+          startDate: filterParams.startDate || undefined,
+          endDate: filterParams.endDate || undefined,
           categoryId: categoryId || ""
         };
 
@@ -158,9 +160,10 @@ function ListingContent() {
       search: newFilters.search || "",
       latitude: newFilters.latitude || null,
       longitude: newFilters.longitude || null,
-      date: newFilters.date || ""
+      startDate: newFilters.startDate || "",
+      endDate: newFilters.endDate || "",
     });
-    setPage(1); // Reset to first page on search
+    setPage(1);
   };
 
   const handlePageChange = (newPage) => {

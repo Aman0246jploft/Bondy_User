@@ -4,6 +4,9 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, EffectFade, Navigation } from "swiper/modules";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { DateRange } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 
 import "swiper/css";
 import "swiper/css/effect-fade";
@@ -16,12 +19,21 @@ const HeroSlider = ({ setView, onSearch }) => {
   const [isReady, setIsReady] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState(null);
-  const [dateFilter, setDateFilter] = useState("all");
+  // const [dateFilter, setDateFilter] = useState("all");
   const [resetKey, setResetKey] = useState(0);
 
   // Custom Date Dropdown State
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const [dateFilter, setDateFilter] = useState("all");
+  const [dateRange, setDateRange] = useState([
+    {
+      startDate: null,
+      endDate: null,
+      key: "selection",
+    },
+  ]);
 
   // Close custom dropdown on outside click
   useEffect(() => {
@@ -85,7 +97,15 @@ const HeroSlider = ({ setView, onSearch }) => {
       params.latitude = location.latitude;
       params.longitude = location.longitude;
     }
-    if (dateFilter !== "all") params.filter = dateFilter;
+    // if (dateFilter !== "all") params.filter = dateFilter;
+
+    if (dateRange[0].startDate) {
+      params.startDate = dateRange[0].startDate.toISOString();
+    }
+
+    if (dateRange[0].endDate) {
+      params.endDate = dateRange[0].endDate.toISOString();
+    }
 
     if (onSearch) {
       onSearch(params);
@@ -96,6 +116,7 @@ const HeroSlider = ({ setView, onSearch }) => {
     setKeyword("");
     setLocation(null);
     setDateFilter("all");
+    setDateRange([{ startDate: null, endDate: null, key: "selection" }]);
     setResetKey((prev) => prev + 1);
 
     if (onSearch) {
@@ -124,7 +145,8 @@ const HeroSlider = ({ setView, onSearch }) => {
         autoplay={{ delay: 5000 }}
         navigation={{ prevEl: ".prev-el", nextEl: ".next-el" }}
         loop
-        className="h-100">
+        className="h-100"
+      >
         {slides.map((img, index) => (
           <SwiperSlide key={index}>
             <div
@@ -158,22 +180,22 @@ const HeroSlider = ({ setView, onSearch }) => {
             className="hero-content"
             variants={containerVariants}
             initial="hidden"
-            animate="visible">
+            animate="visible"
+          >
             <motion.h1 variants={itemVariants}>
               {t("heroTitle1")} <br />
               <span>{t("heroTitle2")}</span>
             </motion.h1>
 
-            <motion.p variants={itemVariants}>
-              {t("heroSubtitle")}
-            </motion.p>
+            <motion.p variants={itemVariants}>{t("heroSubtitle")}</motion.p>
 
             {/* ---------- SEARCH CARD ---------- */}
             <motion.div
               className="search-card"
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 80, delay: 0.5 }}>
+              transition={{ type: "spring", stiffness: 80, delay: 0.5 }}
+            >
               <div className="search-fields ">
                 <div className="search-field one_field">
                   <img src="/img/event_icon.svg" />
@@ -181,10 +203,12 @@ const HeroSlider = ({ setView, onSearch }) => {
                     <small>{t("eventcategory")}</small>
                     <input
                       type="text"
-                       placeholder={t("eventTypePlaceholders")}
+                      placeholder={t("eventTypePlaceholders")}
                       value={keyword}
                       onChange={(e) => setKeyword(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleSearchClick()
+                      }
                     />
                   </div>
                 </div>
@@ -195,7 +219,11 @@ const HeroSlider = ({ setView, onSearch }) => {
                   <img src="/img/loc_icon.svg" />
                   <div style={{ width: "100%", overflow: "hidden" }}>
                     <small>{t("where")}</small>
-                    <div onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}>
+                    <div
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleSearchClick()
+                      }
+                    >
                       <VenueAutocomplete
                         key={resetKey}
                         onPlaceSelected={handleVenueSelected}
@@ -207,7 +235,7 @@ const HeroSlider = ({ setView, onSearch }) => {
                 </div>
 
                 <div className="divider" />
-                <div className="search-field three_field">
+                {/* <div className="search-field three_field">
                   <img src="/img/date_icon.svg" alt="date" />
                   <div style={{ width: "100%" }}>
                     <small>{t("When")}</small>
@@ -231,34 +259,129 @@ const HeroSlider = ({ setView, onSearch }) => {
                       <option value="past" style={{ backgroundColor: "#222", color: "#fff" }}>{t("past")}</option>
                     </select>
                   </div>
+                </div> */}
+                <div
+                  className="search-field three_field"
+                  style={{ position: "relative" }}
+                >
+                  <img src="/img/date_icon.svg" alt="date" />
+                  <div style={{ width: "100%" }}>
+                    <small>{t("When")}</small>
+
+                    <input
+                      type="text"
+                      readOnly
+                      placeholder={t("selectDateRange")}
+                      value={
+                        dateRange[0].startDate && dateRange[0].endDate
+                          ? `${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`
+                          : ""
+                      }
+                      onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+                      style={{
+                        color: "#aaa", // 👈 grey color
+                        cursor: "pointer",
+                        background: "transparent",
+                        border: "none",
+                      }}
+                    />
+
+                    {isDateDropdownOpen && (
+                      <div
+                        ref={dropdownRef}
+                        style={{
+                          position: "absolute",
+                          bottom: "calc(100% + 10px)",
+                          left: "-60px",
+                          zIndex: 9999,
+                          borderRadius: "12px",
+                          overflow: "hidden",
+                          boxShadow: "0 -8px 32px rgba(0,0,0,0.7)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          transform: "scale(0.82)",
+                          transformOrigin: "bottom left",
+                        }}
+                      >
+                        <style>{`
+          .rdr-dark .rdrCalendarWrapper { background: #141428; color: #fff; }
+          .rdr-dark .rdrDateDisplayWrapper { display: none; }
+          .rdr-dark .rdrDateInput { background: #141428; border-color: rgba(255,255,255,0.12); }
+          .rdr-dark .rdrDateInput input { color: #ccc; }
+          .rdr-dark .rdrMonthAndYearWrapper { background: #141428; }
+          .rdr-dark .rdrMonthAndYearPickers select { color: #fff; background: #141428; }
+          .rdr-dark .rdrMonthAndYearPickers select option { background: #141428; }
+          .rdr-dark .rdrNextPrevButton { background: #1e1e38; }
+          .rdr-dark .rdrNextPrevButton:hover { background: #2a2a4a; }
+          .rdr-dark .rdrPprevButton i { border-color: transparent #aaa transparent transparent; }
+          .rdr-dark .rdrNextButton i { border-color: transparent transparent transparent #aaa; }
+          .rdr-dark .rdrWeekDay { color: rgba(160,160,160,0.65); font-size: 12px; }
+          .rdr-dark .rdrMonth { background: #141428; }
+          .rdr-dark .rdrMonthName { color: rgba(160,160,160,0.65); }
+          .rdr-dark .rdrDay:not(.rdrDayPassive) .rdrDayNumber span { color: #fff; }
+          .rdr-dark .rdrDayPassive .rdrDayNumber span { color: rgba(255,255,255,0.18); }
+          .rdr-dark .rdrDayDisabled { background: transparent; }
+          .rdr-dark .rdrDayDisabled .rdrDayNumber span { color: rgba(255,255,255,0.18) !important; }
+          .rdr-dark .rdrDayToday .rdrDayNumber span:after { background: #00b4b4; }
+          .rdr-dark .rdrDay:not(.rdrDayPassive):not(.rdrDayDisabled):hover .rdrDayNumber span { color: #fff; }
+          .rdr-dark .rdrDefined .rdrDayNumber span { color: #fff; }
+        `}</style>
+                        <div className="rdr-dark">
+                          <DateRange
+                            editableDateInputs={true}
+                            onChange={(item) => {
+                              const { startDate, endDate } = item.selection;
+                              if (endDate >= startDate) {
+                                setDateRange([item.selection]);
+                              }
+                            }}
+                            moveRangeOnFirstSelection={false}
+                            ranges={dateRange}
+                            minDate={new Date()}
+                            color="#00b4b4"
+                            rangeColors={["#00b4b4"]}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="search-actions" style={{ display: 'flex', gap: '8px' }}>
+              <div
+                className="search-actions"
+                style={{ display: "flex", gap: "8px" }}
+              >
                 <button className="icon-btn teal" onClick={handleSearchClick}>
                   <Search size={18} />
                 </button>
 
-                {(keyword || location || dateFilter !== "all") && (
+                {(keyword || location || dateRange[0].startDate) && (
                   <button
                     className="icon-btn bg-danger text-white border-0"
                     onClick={handleReset}
                     title="Reset Filters"
-                    style={{ backgroundColor: '#dc3545', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{
+                      backgroundColor: "#dc3545",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                   >
-                    <span style={{ fontSize: '18px', fontWeight: 'bold' }}>×</span>
+                    <span style={{ fontSize: "18px", fontWeight: "bold" }}>
+                      ×
+                    </span>
                   </button>
                 )}
 
                 {/* 👇 SWITCH TO GRID VIEW */}
                 <button
                   className="icon-btn outline"
-                  onClick={() => setView("grid")}>
+                  onClick={() => setView("grid")}
+                >
                   <img src="/img/location_icon.svg" />
                 </button>
               </div>
             </motion.div>
-
           </motion.div>
         )}
       </AnimatePresence>

@@ -394,16 +394,44 @@ function MessageContent() {
             });
         };
 
+        const handleChatBlocked = ({ chatId, blockedBy, isBlocked }) => {
+            setActiveChat((prev) => {
+                if (!prev || prev._id !== chatId) return prev;
+                return { ...prev, isBlocked, blockedBy };
+            });
+            setChats((prev) =>
+                prev.map((c) =>
+                    c._id === chatId ? { ...c, isBlocked, blockedBy } : c,
+                ),
+            );
+        };
+
+        const handleChatUnblocked = ({ chatId, isBlocked }) => {
+            setActiveChat((prev) => {
+                if (!prev || prev._id !== chatId) return prev;
+                return { ...prev, isBlocked: false, blockedBy: null };
+            });
+            setChats((prev) =>
+                prev.map((c) =>
+                    c._id === chatId ? { ...c, isBlocked: false, blockedBy: null } : c,
+                ),
+            );
+        };
+
         socket.on("receive_message", handleReceiveMessage);
         socket.on("messages_read_update", handleReadUpdate);
         socket.on("typing", handleTyping);
         socket.on("stop_typing", handleStopTyping);
+        socket.on("chat_blocked", handleChatBlocked);
+        socket.on("chat_unblocked", handleChatUnblocked);
 
         return () => {
             socket.off("receive_message", handleReceiveMessage);
             socket.off("messages_read_update", handleReadUpdate);
             socket.off("typing", handleTyping);
             socket.off("stop_typing", handleStopTyping);
+            socket.off("chat_blocked", handleChatBlocked);
+            socket.off("chat_unblocked", handleChatUnblocked);
         };
     }, [socket]);
 
@@ -788,17 +816,17 @@ function MessageContent() {
 
                                                         <div className="msg-box">
                                                             <div className="msg-meta">
-                                                                <span className="msg-time">
+                                                                <span className="msg-time" style={{ fontSize: "11px", color: isMyMessage ? "rgba(255,255,255,0.7)" : "rgba(150,150,150,0.9)", display: "flex", alignItems: "center", gap: "3px" }}>
                                                                     {new Date(m.createdAt).toLocaleTimeString([], {
                                                                         hour: "2-digit",
                                                                         minute: "2-digit",
                                                                     })}
                                                                     {isMyMessage && (
-                                                                        <span className="read-status ms-1">
+                                                                        <span className="read-status ms-1" style={{ fontWeight: 700, fontSize: "11px" }}>
                                                                             {m.readBy?.some((id) => id !== getMyId()) ? (
                                                                                 <span style={{ color: "#34b7f1" }}>✓✓</span>
                                                                             ) : (
-                                                                                <span>✓✓</span>
+                                                                                <span style={{ color: "rgba(255,255,255,0.5)" }}>✓✓</span>
                                                                             )}
                                                                         </span>
                                                                     )}
@@ -1060,7 +1088,6 @@ function MessageContent() {
                                     const res = await blockUserApi.blockUser({ toUser: otherUserId });
                                     setShowBlockModal(false);
                                     if (res.status === true) {
-                                        // Update local state to reflect block
                                         const myId = getMyId();
                                         setActiveChat(prev => ({ ...prev, blockedBy: { _id: myId }, isBlocked: true }));
                                         setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, blockedBy: { _id: myId }, isBlocked: true } : c));

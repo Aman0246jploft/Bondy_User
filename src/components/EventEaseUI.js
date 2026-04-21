@@ -1,10 +1,14 @@
+"use client";
 import Link from "next/link";
 import React from "react";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import { useLanguage } from "@/context/LanguageContext";
+import { useRouter } from "next/navigation";
+import AuthButton from "@/components/AuthButton";
 
 const EventEaseUI = () => {
   const { t } = useLanguage();
+  const router = useRouter();
   return (
     <div className="eventEase-section">
       <Container>
@@ -70,12 +74,12 @@ const EventEaseUI = () => {
             <div className="cta-box">
               <h2 className="cta-title">{t("readyToGetStarted")}</h2>
               <p className="cta-desc">{t("ctaDesc")}</p>
-              <Link href="/Explore" className="btn-teal">
+              <AuthButton requiresAuth onClick={() => router.push("/Explore")} className="btn-teal">
                 {t("startExploringBtn")}
-              </Link>
-              <Link href="/BasicInfo" className="btn-white">
+              </AuthButton>
+              <AuthButton requiresAuth onClick={() => router.push("/BasicInfo")} className="btn-white">
                 {t("createFirstEventBtn")}
-              </Link>
+              </AuthButton>
             </div>
           </Col>
         </Row>

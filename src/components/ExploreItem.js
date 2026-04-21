@@ -22,7 +22,8 @@ export default function ExploreItem({
   search,
   latitude,
   longitude,
-  date,
+  startDate,
+  endDate,
   placement,
 }) {
   const [items, setItems] = useState([]);
@@ -33,7 +34,7 @@ export default function ExploreItem({
   useEffect(() => {
     // Reset to page 1 if type, filter, category, or search params change
     setCurrentPage(1);
-  }, [type, filter, categoryId, search, latitude, longitude, date, placement]);
+  }, [type, filter, categoryId, search, latitude, longitude, startDate, endDate, placement]);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -48,7 +49,8 @@ export default function ExploreItem({
             search: search,
             latitude: latitude,
             longitude: longitude,
-            date: date,
+            startDate: startDate,
+            endDate: endDate,
             placement: placement,
           });
           const eventData = response?.data?.data || response?.data || response;
@@ -74,7 +76,8 @@ export default function ExploreItem({
             search: search,
             latitude: latitude,
             longitude: longitude,
-            date: date,
+            startDate: startDate,
+            endDate: endDate,
           });
           const courseData = response?.data?.data || response?.data || response;
           if (courseData?.courses) {
@@ -102,7 +105,8 @@ export default function ExploreItem({
     search,
     latitude,
     longitude,
-    date,
+    startDate,
+    endDate,
     placement,
   ]);
 

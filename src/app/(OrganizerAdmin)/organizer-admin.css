@@ -16,6 +16,30 @@ body {
   margin-top: 20px;
 }
 
+.notification-cards {
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(8px);
+}
+
+.notification-cards:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary-teal);
+  background: rgba(35, 173, 164, 0.08);
+}
+
+.unread-notif {
+  border-color: var(--primary-teal);
+  background: rgba(35, 173, 164, 0.12);
+}
+
 .mb-20 {
   margin-bottom: 20px;
 }

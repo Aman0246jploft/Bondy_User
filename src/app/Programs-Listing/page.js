@@ -62,7 +62,9 @@ function ListingContent() {
     search: "",
     latitude: null,
     longitude: null,
-    filter: "" // additional filters from Field component
+    filter: "",
+    startDate: "",
+    endDate: "",
   });
 
   const totalPages = Math.ceil(total / LIMIT);
@@ -84,6 +86,8 @@ function ListingContent() {
           search: filterParams.search,
           latitude: filterParams.latitude,
           longitude: filterParams.longitude,
+          startDate: filterParams.startDate || undefined,
+          endDate: filterParams.endDate || undefined,
         };
 
         // geolocation for "nearYou" ONLY if no manual location is provided
@@ -122,9 +126,11 @@ function ListingContent() {
       search: newFilters.search || "",
       latitude: newFilters.latitude || null,
       longitude: newFilters.longitude || null,
-      filter: newFilters.filter || ""
+      filter: newFilters.filter || "",
+      startDate: newFilters.startDate || "",
+      endDate: newFilters.endDate || "",
     });
-    setPage(1); // Reset to first page on search
+    setPage(1);
   };
 
   const handlePageChange = (newPage) => {

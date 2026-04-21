@@ -12,9 +12,6 @@ export default function Sidebar({ toggleSidebar }) {
   const router = useRouter();
 
 
-  console.log("000000022111")
-  console.log("444444555", t)
-
   const isActive = (path) => pathname === path;
 
   const handleLogout = (e) => {
