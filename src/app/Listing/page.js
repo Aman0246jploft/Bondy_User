@@ -82,12 +82,12 @@ function ListingContent() {
     displayTitle = categoryDetail.name.charAt(0).toUpperCase() + categoryDetail.name.slice(1);
     displaySubtitle = t("listingDiscoverIn", { category: categoryDetail.name });
   }
-
-  useEffect(() => {
-    if (displayTitle) {
-      document.title = `${displayTitle} | Bondy`;
-    }
-  }, [displayTitle]);
+  
+    useEffect(() => {
+      if (meta?.title) {
+        document.title = `${meta.title} | Bondy`;
+      }
+    }, [meta]);
 
   // Fetch Category Details if categoryId is present
   useEffect(() => {
