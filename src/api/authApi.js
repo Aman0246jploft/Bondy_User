@@ -20,6 +20,7 @@ const authApi = {
         }
     }),
     loginInit: (data) => apiClient.post("/user/login/init", data),
+    socialLogin: (data) => apiClient.post("/user/social-login", data),
     verifyUniversalOtp: (data) => apiClient.post("/user/verify-otp", data),
     resendUniversalOtp: (data) => apiClient.post("/user/resendOtp", data),
     getFaqs: () => apiClient.get("/faq/list", { skipToast: true }),
