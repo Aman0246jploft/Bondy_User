@@ -26,17 +26,14 @@ export default function RootLayout({ children }) {
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Toaster position="top-right" reverseOrder={false} />
         <LocationManager />
-        <LanguageProvider>
-          <SocketProvider>
-            <AuthGuardProvider>
-              {children}
-              <AuthRequiredModal />
-            </AuthGuardProvider>
-          </SocketProvider>
-        </LanguageProvider>
         <GoogleProvider>
           <LanguageProvider>
-            <SocketProvider>{children}</SocketProvider>
+            <SocketProvider>
+              <AuthGuardProvider>
+                {children}
+                <AuthRequiredModal />
+              </AuthGuardProvider>
+            </SocketProvider>
           </LanguageProvider>
         </GoogleProvider>
       </body>
