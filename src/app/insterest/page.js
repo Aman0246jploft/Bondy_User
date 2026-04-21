@@ -5,6 +5,7 @@ import { Col, Container, Row, Button } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 import {
@@ -21,6 +22,7 @@ export default function InterestPage() {
 }
 
 function InterestPageContent() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [categories, setCategories] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -79,7 +81,7 @@ function InterestPageContent() {
 
   const handleContinue = async () => {
     if (selectedIds.length === 0) {
-      toast.error("Please select at least one interest");
+      toast.error(t("pleaseSelectAtLeastOneInterest"));
       return;
     }
 
@@ -121,7 +123,7 @@ function InterestPageContent() {
       const response = await authApi.updateProfile(payload);
 
       if (response.status) {
-        toast.success("Interests updated successfully");
+        toast.success(t("interestsUpdatedSuccessfully"));
         router.push("/"); // Redirect to home or dashboard
       }
     } catch (error) {

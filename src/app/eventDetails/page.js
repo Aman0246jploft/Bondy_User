@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import eventApi from "@/api/eventApi";
 import wishlistApi from "@/api/wishlistApi";
+import { useAuthGuard } from "@/context/AuthGuardContext";
+import AuthButton from "@/components/AuthButton";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import { Container, Row, Col, Button } from "react-bootstrap";
@@ -31,6 +33,8 @@ function EventDetailsContent() {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const { t } = useLanguage();
+  const { checkAuth } = useAuthGuard();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -59,13 +63,8 @@ function EventDetailsContent() {
   }, [event]);
 
 
-  const handleWishlistToggle = async () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token) {
-      window.location.href = "/login";
-      return;
-    }
-
+  const handleWishlistToggle = () => {
+    checkAuth(async () => {
     if (wishlistLoading) return;
     setWishlistLoading(true);
 
@@ -91,6 +90,7 @@ function EventDetailsContent() {
     } finally {
       setWishlistLoading(false);
     }
+    });
   };
 
   const mediaItems = [
@@ -151,12 +151,13 @@ function EventDetailsContent() {
                 <h4 className="mb-0">
                   <span className="price-text">₮{event?.ticketPrice} </span>
                 </h4>
-                <Link
-                  href={`/eventbooking?eventId=${event?._id}`}
+                <AuthButton
+                  requiresAuth
+                  onClick={() => router.push(`/eventbooking?eventId=${event?._id}`)}
                   className="common_btn"
                 >
                   {t("bookTicketNow")}
-                </Link>
+                </AuthButton>
                 <Button className="book_mark_icon">
                   <img src="/img/share_icon.svg" />
                 </Button>
@@ -266,9 +267,16 @@ function EventDetailsContent() {
                 </div>
                 <div className="map-container">
                   <Map
-                    latitude={event?.venueAddress?.latitude}
-                    longitude={event?.venueAddress?.longitude}
+                    latitude={event?.venueAddress?.latitude ?? event?.venueAddress?.coordinates?.[1]}
+                    longitude={event?.venueAddress?.longitude ?? event?.venueAddress?.coordinates?.[0]}
                     title={event?.eventTitle}
+                    address={event?.venueAddress?.address}
+                    venueName={event?.venueName}
+                    imageUrl={event?.posterImage?.[0]}
+                    ticketPrice={event?.ticketPrice}
+                    startDate={event?.startDate}
+                    startTime={event?.startTime}
+                    endTime={event?.endTime}
                   />
                 </div>
 
@@ -326,12 +334,13 @@ function EventDetailsContent() {
                     <h4 className="mb-0">
                       <span className="price-text">₮{event?.ticketPrice} </span>
                     </h4>
-                    <Link
-                      href={`/eventbooking?eventId=${event?._id}`}
+                    <AuthButton
+                      requiresAuth
+                      onClick={() => router.push(`/eventbooking?eventId=${event?._id}`)}
                       className="common_btn"
                     >
                       {t("bookTicketNow")}
-                    </Link>
+                    </AuthButton>
                     <Button className="book_mark_icon">
                       <img src="/img/share_icon.svg" />
                     </Button>
@@ -390,13 +399,14 @@ function EventDetailsContent() {
                         )}
                       </div>
                     </div>
-                    <a
-                      href={`/eventAttendees?id=${event?._id}`}
+                    <AuthButton
+                      requiresAuth
+                      onClick={() => router.push(`/eventAttendees?id=${event?._id}`)}
                       className="text-teal text-decoration-none small"
-                      style={{ color: "#26a69a" }}
+                      style={{ color: "#26a69a", background: "none", border: "none", padding: 0, cursor: "pointer" }}
                     >
                       {t("viewAll")}
-                    </a>
+                    </AuthButton>
                   </div>
 
                   <hr className="border-secondary opacity-25 my-4" />
@@ -455,9 +465,13 @@ function EventDetailsContent() {
                     {event?.createdBy?.firstName} {event?.createdBy?.lastName}
                   </h5>
                 </div>
-                <Link href={`/profile?id=${event?.createdBy?._id}`} className="btn-book py-2 px-4 btn text-white text-decoration-none">
+                <AuthButton
+                  requiresAuth
+                  onClick={() => router.push(`/profile?id=${event?.createdBy?._id}`)}
+                  className="btn-book py-2 px-4 btn text-white text-decoration-none"
+                >
                   {t("viewDetails")}
-                </Link>
+                </AuthButton>
               </div>
             </div>
           </Col>

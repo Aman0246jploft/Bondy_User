@@ -16,6 +16,8 @@ import { Toaster } from "react-hot-toast";
 import LocationManager from "@/components/LocationManager";
 import { SocketProvider } from "@/context/SocketContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { AuthGuardProvider } from "@/context/AuthGuardContext";
+import AuthRequiredModal from "@/components/Modal/AuthRequiredModal";
 import GoogleProvider from "@/components/GoogleProvider";
 
 export default function RootLayout({ children }) {
@@ -24,6 +26,14 @@ export default function RootLayout({ children }) {
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Toaster position="top-right" reverseOrder={false} />
         <LocationManager />
+        <LanguageProvider>
+          <SocketProvider>
+            <AuthGuardProvider>
+              {children}
+              <AuthRequiredModal />
+            </AuthGuardProvider>
+          </SocketProvider>
+        </LanguageProvider>
         <GoogleProvider>
           <LanguageProvider>
             <SocketProvider>{children}</SocketProvider>

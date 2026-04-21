@@ -48,12 +48,12 @@ function page() {
 
       const res = await apiClient.post("/user/update-profile", payload);
       if (res.status === 200) {
-        toast.success("Profile updated successfully");
+        toast.success(t("profileUpdatedSuccessfully"));
         fetchProfile(); // Refresh data
       }
     } catch (error) {
       console.error("Update profile error", error);
-      toast.error(error.response?.data?.message || "Failed to update profile");
+      toast.error(error.response?.data?.message || t("failedToUpdateProfile"));
     }
   };
 
@@ -147,7 +147,7 @@ function page() {
       const payload = { documents };
 
       const res = await apiClient.post("/verification/submit", payload);
-      if (res.status === 200) {
+      if (res.status === true) {
         toast.success(t("verificationSubmittedSuccessfully"));
         setStatus("pending");
       }
@@ -195,7 +195,7 @@ function page() {
               <Row>
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    {/* <label className="text-white mb-2">Government ID</label>
+                    <label className="text-white mb-2">Government ID</label>
                     <div
                       className="doc_upload_sec mt-0"
                       onClick={() =>
@@ -235,7 +235,7 @@ function page() {
                         onChange={(e) => handleFileChange(e, "Gov ID")}
                         disabled={status === "approved"}
                       />
-                    </div> */}
+                    </div>
                   </div>
                 </Col>
 
@@ -327,7 +327,7 @@ function page() {
                 </Col>
               </Row>
 
-              {status !== "approved" && (
+              {/* {status !== "approved" && ( */}
                 <div className="d-flex gap-2 justify-content-end mt-4">
                   <button
                     type="submit"
@@ -336,7 +336,7 @@ function page() {
                                         {loading ? t("submitting") : t("submitForVerification")}
                   </button>
                 </div>
-              )}
+              {/* )} */}
 
               {/* Document History / Status List */}
               {userData?.documents?.length > 0 && (

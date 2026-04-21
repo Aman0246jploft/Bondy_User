@@ -7,7 +7,6 @@ import {
   Tabs,
   Tab,
   Form,
-  Pagination,
   Modal,
   Spinner,
 } from "react-bootstrap";
@@ -111,7 +110,7 @@ function page() {
         setPromoPackages(res?.data?.packages || []);
       }
     } catch (err) {
-      toast.error("Failed to load promotion packages");
+      toast.error(t("failedToLoadPromotionPackages"));
     } finally {
       setLoadingPackages(false);
     }
@@ -126,7 +125,7 @@ function page() {
 
   const handleCheckout = async () => {
     if (!selectedPackage) {
-      toast.error("Please select a promotion package first.");
+      toast.error(t("pleaseSelectPromotionPackageFirst"));
       return;
     }
     setCheckingOut(true);
@@ -136,7 +135,7 @@ function page() {
         packageId: selectedPackage._id,
       });
       if (res?.status) {
-        toast.success("Promotion activated successfully");
+        toast.success(t("promotionActivatedSuccessfully"));
         closePromoModal();
         fetchEvents();
       }
@@ -396,36 +395,57 @@ function page() {
           </div>
 
           {totalPages > 1 && (
-            <div className="d-flex justify-content-center mt-4">
-              <Pagination>
-                <Pagination.First
-                  onClick={() => handlePageChange(1)}
+            <div className="d-flex justify-content-between align-items-center px-3 py-3" style={{ borderTop: "1px solid #2a2a2a" }}>
+              <span style={{ color: "#888", fontSize: 13 }}>
+                {t("showingTransactions", {
+                  start: Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total),
+                  end: Math.min(pagination.page * pagination.limit, pagination.total),
+                  total: pagination.total,
+                })}
+              </span>
+              <div className="d-flex gap-2">
+                <button
+                  className="common_btn"
+                  style={{ padding: "6px 14px", fontSize: 13 }}
                   disabled={pagination.page === 1}
-                />
-                <Pagination.Prev
                   onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page === 1}
-                />
-
-                {[...Array(totalPages)].map((_, idx) => (
-                  <Pagination.Item
-                    key={idx + 1}
-                    active={idx + 1 === pagination.page}
-                    onClick={() => handlePageChange(idx + 1)}
-                  >
-                    {idx + 1}
-                  </Pagination.Item>
-                ))}
-
-                <Pagination.Next
+                >
+                  ← {t("previous")}
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - pagination.page) <= 1)
+                  .reduce((acc, p, idx, arr) => {
+                    if (idx > 0 && p - arr[idx - 1] > 1) acc.push("...");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, idx) =>
+                    p === "..." ? (
+                      <span key={`ellipsis-${idx}`} style={{ alignSelf: "center", color: "#666" }}>...</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => handlePageChange(p)}
+                        className="common_btn"
+                        style={{
+                          padding: "6px 12px",
+                          fontSize: 13,
+                          opacity: pagination.page === p ? 1 : 0.5,
+                        }}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+                <button
+                  className="common_btn"
+                  style={{ padding: "6px 14px", fontSize: 13 }}
+                  disabled={pagination.page === totalPages}
                   onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page === totalPages}
-                />
-                <Pagination.Last
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={pagination.page === totalPages}
-                />
-              </Pagination>
+                >
+                  {t("next")} →
+                </button>
+              </div>
             </div>
           )}
         </div>

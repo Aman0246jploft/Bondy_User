@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 
-export default function Map({ latitude, longitude, title }) {
+export default function Map({ latitude, longitude, title, address, venueName, imageUrl, ticketPrice, startDate, startTime, endTime }) {
   const mapRef = useRef(null);
   const googleMapRef = useRef(null);
+  const infoWindowRef = useRef(null);
+  const markerRef = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load Google Maps script
@@ -17,7 +19,15 @@ export default function Map({ latitude, longitude, title }) {
     }
 
     const scriptId = "google-maps-script";
-    if (document.getElementById(scriptId)) return;
+    if (document.getElementById(scriptId)) {
+      const check = setInterval(() => {
+        if (window.google && window.google.maps) {
+          setIsLoaded(true);
+          clearInterval(check);
+        }
+      }, 100);
+      return () => clearInterval(check);
+    }
 
     const script = document.createElement("script");
     script.id = scriptId;
@@ -66,17 +76,96 @@ export default function Map({ latitude, longitude, title }) {
       googleMapRef.current.setCenter(position);
     }
 
-    // Add Marker
-    new window.google.maps.Marker({
+    // Remove previous marker/infowindow
+    if (markerRef.current) markerRef.current.setMap(null);
+    if (infoWindowRef.current) infoWindowRef.current.close();
+
+    // Build InfoWindow HTML
+    const formatDate = (d) => {
+      if (!d) return "";
+      return new Date(d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+    };
+    const formatTime = (t) => {
+      if (!t) return "";
+      const [h, m] = t.split(":");
+      const hour = parseInt(h);
+      return `${hour % 12 || 12}:${m} ${hour >= 12 ? "PM" : "AM"}`;
+    };
+
+    const imgHtml = imageUrl
+      ? `<img src="${imageUrl}" alt="" style="width:100%;height:110px;object-fit:cover;border-radius:8px 8px 0 0;display:block;" onerror="this.style.display='none'" />`
+      : "";
+
+    const dateLine = startDate
+      ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+           <span style="font-size:14px;">📅</span>
+           <span style="font-size:12px;color:#ccc;">${formatDate(startDate)}${startTime ? ` &nbsp;${formatTime(startTime)}` : ""}${endTime ? ` – ${formatTime(endTime)}` : ""}</span>
+         </div>`
+      : "";
+
+    const addressLine = address
+      ? `<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;">
+           <span style="font-size:14px;">📍</span>
+           <span style="font-size:12px;color:#ccc;">${address}</span>
+         </div>`
+      : "";
+
+    const priceLine = ticketPrice !== undefined && ticketPrice !== null
+      ? `<div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+           <span style="font-size:14px;">🎟️</span>
+           <span style="font-size:13px;font-weight:700;color:#23ada4;">₮${ticketPrice}</span>
+         </div>`
+      : "";
+
+    const infoContent = `
+      <div style="font-family:sans-serif;min-width:220px;max-width:260px;background:#1a1a2e;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.6);">
+        ${imgHtml}
+        <div style="padding:12px 14px 14px;">
+          <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.3;">${title || "Event"}</div>
+          ${venueName ? `<div style="font-size:11px;color:#888;margin-bottom:8px;">${venueName}</div>` : ""}
+          ${dateLine}
+          ${addressLine}
+          ${priceLine}
+        </div>
+      </div>`;
+
+    // Create InfoWindow
+    infoWindowRef.current = new window.google.maps.InfoWindow({
+      content: infoContent,
+      disableAutoPan: false,
+    });
+
+    // Create Marker
+    const marker = new window.google.maps.Marker({
       position,
       map: googleMapRef.current,
       title: title || "Venue",
       icon: {
         url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
-      }
+      },
+      animation: window.google.maps.Animation.DROP,
+    });
+    markerRef.current = marker;
+
+    // Open on click
+    marker.addListener("click", () => {
+      infoWindowRef.current.open({ anchor: marker, map: googleMapRef.current });
     });
 
-  }, [isLoaded, latitude, longitude, title]);
+    // Open on hover
+    marker.addListener("mouseover", () => {
+      infoWindowRef.current.open({ anchor: marker, map: googleMapRef.current });
+    });
+
+    // Close on mouse out
+    marker.addListener("mouseout", () => {
+      infoWindowRef.current.close();
+    });
+
+    // Auto-open on load
+    infoWindowRef.current.open({ anchor: marker, map: googleMapRef.current });
+
+  }, [isLoaded, latitude, longitude, title, address, venueName, imageUrl, ticketPrice, startDate, startTime, endTime]);
 
   const { t } = useLanguage();
 

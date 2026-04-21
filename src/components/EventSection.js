@@ -145,9 +145,8 @@ const EventSection = ({
                         <div className="time_main">
                           <div className="timing_box">
                             <span>
-                              <img src="/img/Stopwatch.svg" alt="timer" /> Time
-                              to end
-                            </span>
+                                <img src="/img/Stopwatch.svg" alt={t("timerAlt")} /> {t("timeToEndLabel")}
+                              </span>
                             <span>06:34:15</span>
                             {/* Logic for countdown can be added later if needed */}
                           </div>
@@ -161,13 +160,13 @@ const EventSection = ({
                           <img src="/img/date_icon.svg" alt="date" />{" "}
                           {item.startDate
                             ? new Date(item.startDate).toLocaleDateString()
-                            : "Date TBD"}
+                            : t("dateTBD")}
                         </span>
                         <span>
                           <img src="/img/loc_icon.svg" alt="location" />{" "}
                           {item.venueAddress
-                            ? item.venueAddress.city || "Location"
-                            : "Online"}
+                            ? item.venueAddress.city || t("locationLabel")
+                            : t("onlineLabel")}
                         </span>
                       </div>
 
@@ -176,7 +175,7 @@ const EventSection = ({
                       </div> */}
                       <div className="price-tag">
                         {/* from{" "} */}
-                        {item.ticketPrice ? `₮${item.ticketPrice}` : "Free"}
+                        {item.ticketPrice ? `₮${item.ticketPrice}` : t("freeLabel")}
                       </div>
                     </div>
                   </div>

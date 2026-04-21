@@ -1,8 +1,11 @@
 "use client";
 import React, { useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 const VerifyDropdwons = () => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const { t } = useLanguage();
 
   return (
     <div className="verified-wrapper">
@@ -18,15 +21,15 @@ const VerifyDropdwons = () => {
               <img src="/img/shield.svg" />
             </div>
             <div>
-              <h3 className="verified-title-main">Verified Organizer</h3>
+              <h3 className="verified-title-main">{t("verifiedOrganizer")}</h3>
               <p className="verified-name">Esther Howard</p>
-              <p className="verified-date">Verified on: Jan 2024</p>
+              <p className="verified-date">{t("verifiedOnDate", { date: "Jan 2024" })}</p>
             </div>
           </div>
 
           <div className="verified-divider"></div>
 
-          <h4 className="verified-section-title">What's verified</h4>
+          <h4 className="verified-section-title">{t("whatsVerified")}</h4>
           <ul className="verified-list">
             <li className="verified-list-item">
               <svg
@@ -42,7 +45,7 @@ const VerifyDropdwons = () => {
               >
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
-              Identity verified (Gov ID checked)
+              {t("identityVerifiedDesc")}
             </li>
             <li className="verified-list-item">
               <svg
@@ -58,7 +61,7 @@ const VerifyDropdwons = () => {
               >
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
-              Contact verified (Phone email)
+              {t("contactVerifiedDesc")}
             </li>
             <li className="verified-list-item">
               <svg
@@ -74,7 +77,7 @@ const VerifyDropdwons = () => {
               >
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
-              Payout verified (Bank/QPay merchant linked)
+              {t("payoutVerifiedDesc")}
             </li>
             <li className="verified-list-item">
               <svg
@@ -90,16 +93,13 @@ const VerifyDropdwons = () => {
               >
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
-              Business verified
+              {t("businessVerifiedDesc")}
             </li>
           </ul>
 
           <div className="verified-divider"></div>
 
-          <p className="verified-footer">
-            Verified doesn't guarantee event quality or that changes won't
-            happen.
-          </p>
+          <p className="verified-footer">{t("verifiedDisclaimer")}</p>
         </div>
       )}
     </div>

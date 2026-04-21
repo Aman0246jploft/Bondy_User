@@ -23,7 +23,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
     e.preventDefault();
     localStorage.removeItem("token");
     localStorage.removeItem("userProfile");
-    toast.success("Logged out successfully");
+    toast.success(t("loggedOutSuccessfully"));
     router.push("/login");
   };
 
@@ -58,6 +58,15 @@ export default function OrganizerSidebar({ toggleSidebar }) {
             <img src="/img/user-icon.svg" alt="" />
           </span>
           <span className="text">{t("personalInfo")}</span>
+        </Link>
+
+         <Link
+          href="/Notifications"
+          className={`menu-item ${isActive("/Notification") ? "active" : ""}`}>
+          <span className="icon">
+            <img src="/img/bell-icon.svg" alt="" />
+          </span>
+          <span className="text">{t("notification")}</span>
         </Link>
 
 

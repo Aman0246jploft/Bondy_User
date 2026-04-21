@@ -181,7 +181,7 @@ function page() {
               </li>
               <li>
                 <h6>{t("pricePerTicketLabel")}</h6>
-                <p>{eventData.ticketPrice}</p>
+                <p>₮{eventData.ticketPrice}</p>
               </li>
               <li>
                 <h6>{t("totalTicketsLabel")}</h6>

@@ -10,6 +10,7 @@ import Field from "../../components/Field";
 import { Container, Pagination } from "react-bootstrap";
 import eventApi from "@/api/eventApi";
 import categoryApi from "@/api/categoryApi";
+import { useLanguage } from "@/context/LanguageContext";
 
 /* ── helpers ───────────────────────────────────────────── */
 const SECTION_META = {
@@ -42,6 +43,7 @@ function ListingContent() {
   const searchParams = useSearchParams();
   const type = searchParams.get("type") || "all"; // Default to all if category might be present
   const categoryId = searchParams.get("category");
+  const { t } = useLanguage();
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,25 +54,41 @@ function ListingContent() {
     search: "",
     latitude: null,
     longitude: null,
-    date: ""
+    startDate: "",
+    endDate: "",
   });
 
   const totalPages = Math.ceil(total / LIMIT);
 
   // Determine metadata display
   let meta = SECTION_META[type] || SECTION_META.all;
-  if (categoryId && categoryDetail) {
-    meta = {
-      title: categoryDetail.name.charAt(0).toUpperCase() + categoryDetail.name.slice(1),
-      subtitle: `Discover the best events in ${categoryDetail.name} 🌟`,
-    };
-  }
+  // map to translation keys for title/subtitle
+  const titleKeyMap = {
+    recommended: "recommended",
+    nearYou: "nearYou",
+    week: "happeningSoon",
+    all: "events",
+  };
+  const subtitleKeyMap = {
+    recommended: "recommendedSubtitle",
+    nearYou: "nearYouSubtitle",
+    week: "happeningSoonSubtitle",
+    all: "allSubtitle",
+  };
 
-  useEffect(() => {
-    if (meta?.title) {
-      document.title = `${meta.title} | Bondy`;
-    }
-  }, [meta]);
+  let displayTitle = t(titleKeyMap[type] || titleKeyMap.all);
+  let displaySubtitle = t(subtitleKeyMap[type] || subtitleKeyMap.all);
+
+  if (categoryId && categoryDetail) {
+    displayTitle = categoryDetail.name.charAt(0).toUpperCase() + categoryDetail.name.slice(1);
+    displaySubtitle = t("listingDiscoverIn", { category: categoryDetail.name });
+  }
+  
+    useEffect(() => {
+      if (meta?.title) {
+        document.title = `${meta.title} | Bondy`;
+      }
+    }, [meta]);
 
   // Fetch Category Details if categoryId is present
   useEffect(() => {
@@ -102,7 +120,8 @@ function ListingContent() {
           search: filterParams.search,
           latitude: filterParams.latitude,
           longitude: filterParams.longitude,
-          date: filterParams.date,
+          startDate: filterParams.startDate || undefined,
+          endDate: filterParams.endDate || undefined,
           categoryId: categoryId || ""
         };
 
@@ -141,9 +160,10 @@ function ListingContent() {
       search: newFilters.search || "",
       latitude: newFilters.latitude || null,
       longitude: newFilters.longitude || null,
-      date: newFilters.date || ""
+      startDate: newFilters.startDate || "",
+      endDate: newFilters.endDate || "",
     });
-    setPage(1); // Reset to first page on search
+    setPage(1);
   };
 
   const handlePageChange = (newPage) => {
@@ -158,8 +178,8 @@ function ListingContent() {
       {/* ── Banner ─────────────────────────────── */}
       <div className="listing_page">
         <div className="breadcrumb_text">
-          <h1>{meta.title}</h1>
-          <p>{meta.subtitle}</p>
+          <h1>{displayTitle}</h1>
+          <p>{displaySubtitle}</p>
         </div>
         <Header />
       </div>
@@ -169,8 +189,8 @@ function ListingContent() {
         <Container>
           <Field
             onSearch={handleSearch}
-            label="Event Name/Type"
-            placeholder="e.g. music festival"
+            label={t("eventType")}
+            placeholder={t("eventTypePlaceholder")}
           />
         </Container>
       </div>
@@ -179,9 +199,9 @@ function ListingContent() {
       <section className="recommended-section">
         <div className="container">
           {loading ? (
-            <p className="text-center py-5">Loading…</p>
+            <p className="text-center py-5">{t("loading")}</p>
           ) : events.length === 0 ? (
-            <p className="text-center py-5">No events found.</p>
+            <p className="text-center py-5">{t("noEventsFound")}</p>
           ) : (
             <div className="row gy-5">
               {events.map((item, index) => (
@@ -225,24 +245,23 @@ function ListingContent() {
                               <img src="/img/date_icon.svg" alt="date" />{" "}
                               {item.startDate
                                 ? new Date(item.startDate).toLocaleDateString()
-                                : "Date TBD"}
+                                : t("dateTBD")}
                             </span>
                             <span>
                               <img src="/img/loc_icon.svg" alt="location" />{" "}
                               {item.venueAddress
                                 ? item.venueAddress.city
                                   ? item.venueAddress.city.length > 20
-                                    ? item.venueAddress.city.substring(0, 20) +
-                                    "..."
+                                    ? item.venueAddress.city.substring(0, 20) + "..."
                                     : item.venueAddress.city
-                                  : "Location"
-                                : "Online"}
+                                  : t("locationLabel")
+                                : t("onlineLabel")}
                             </span>
                           </div>
 
                           <div className="price-tag">
                             {/* from{" "} */}
-                            {item.ticketPrice ? `$${item.ticketPrice}` : "Free"}
+                            {item.ticketPrice ? `$${item.ticketPrice}` : t("freeLabel")}
                           </div>
                         </div>
                       </div>

@@ -72,14 +72,14 @@ function page() {
   const handleInvite = async (e) => {
     e.preventDefault();
     if (!inviteEmail.trim()) {
-      toast.error("Please enter an email address");
+      toast.error(t("pleaseEnterEmailAddress"));
       return;
     }
     setInviting(true);
     try {
       const res = await referralApi.invite(inviteEmail.trim());
-      if (res?.status) {
-        toast.success(`Invite sent to ${inviteEmail}! 🎉`);
+        if (res?.status) {
+        toast.success(t("inviteSentTo", { email: inviteEmail }));
         setInviteEmail("");
         fetchStats();
       }

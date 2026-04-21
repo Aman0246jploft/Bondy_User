@@ -11,7 +11,7 @@ import categoryApi from "@/api/categoryApi";
 import { useLanguage } from "@/context/LanguageContext";
 
 function ExploreContent() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [selected, setSelected] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeTab, setActiveTab] = useState("Events");
@@ -125,7 +125,7 @@ function ExploreContent() {
                     onChange={() => handleToggle(cat._id)}
                   />
                   <label htmlFor={`chk-${cat._id}`} className="category-label">
-                    {cat.name}
+                    {language === "mn" && cat.name_thi ? cat.name_thi : cat.name}
                   </label>
                 </div>
               ))
@@ -166,7 +166,8 @@ function ExploreContent() {
                         search={searchParams.search}
                         latitude={searchParams.latitude}
                         longitude={searchParams.longitude}
-                        date={searchParams.date}
+                        startDate={searchParams.startDate}
+                        endDate={searchParams.endDate}
                       />
                     </Tab.Pane>
                     <Tab.Pane eventKey="Program">
@@ -178,7 +179,8 @@ function ExploreContent() {
                         search={searchParams.search}
                         latitude={searchParams.latitude}
                         longitude={searchParams.longitude}
-                        date={searchParams.date}
+                        startDate={searchParams.startDate}
+                        endDate={searchParams.endDate}
                       />
                     </Tab.Pane>
                   </Tab.Content>
