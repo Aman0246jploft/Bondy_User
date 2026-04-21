@@ -1,6 +1,7 @@
 "use client";
-import React from "react";
+import React, { useContext } from "react";
 import { useAuthGuard } from "@/context/AuthGuardContext";
+import { AuthGuardContext } from "@/context/AuthGuardContext";
 
 /**
  * Drop-in replacement for any <button> or <a> that needs auth.
@@ -15,12 +16,15 @@ import { useAuthGuard } from "@/context/AuthGuardContext";
  *   <AuthButton onClick={handleShare}>Share</AuthButton>   ← no auth guard, works like normal button
  */
 export default function AuthButton({ requiresAuth, onClick, children, ...rest }) {
-  const { checkAuth } = useAuthGuard();
+  const ctx = useContext(AuthGuardContext);
+  
+  // Only call the hook if context exists (safe for pre-rendering)
+  const { checkAuth } = ctx ? useAuthGuard() : { checkAuth: undefined };
 
   const handleClick = (e) => {
-    if (requiresAuth) {
+    if (requiresAuth && checkAuth) {
       checkAuth(onClick ? () => onClick(e) : undefined);
-    } else {
+    } else if (!requiresAuth) {
       if (onClick) onClick(e);
     }
   };

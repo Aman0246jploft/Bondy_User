@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 
-const AuthGuardContext = createContext(null);
+export const AuthGuardContext = createContext(null);
 
 export function AuthGuardProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

@@ -1,13 +1,13 @@
 "use client";
-import React, {useEffect, useState} from "react";
-import {Container} from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import { Container } from "react-bootstrap";
 import EventTicketscart from "./EventTicketscart";
 import PayNow from "./Modal/PayNow";
 import bookingApi from "@/api/bookingApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
 
-export default function TicketBooking({item, type, scheduleId}) {
+export default function TicketBooking({ item, type, scheduleId }) {
     const [step, setStep] = useState(1); // 1: Tickets, 2: Payment, 3: Review
     const [qty, setQty] = useState(1); // Default to 1
     const [selectedMethod, setSelectedMethod] = useState("card");
@@ -235,7 +235,7 @@ export default function TicketBooking({item, type, scheduleId}) {
                             </div>
                         )}
 
-                        <h5 className="text-start" style={{marginTop: "20px", display: "inline-block"}}>
+                        <h5 className="text-start" style={{ marginTop: "20px", display: "inline-block" }}>
                             {t("priceDetails")}
                         </h5>
                         <div className="price_box">
@@ -294,7 +294,7 @@ export default function TicketBooking({item, type, scheduleId}) {
                                 <div
                                     className="payment_method_item"
                                     onClick={() => setSelectedMethod("card")}
-                                    style={{cursor: "pointer"}}
+                                    style={{ cursor: "pointer" }}
                                 >
                                     <div className="method_left">
                                         <div
@@ -324,7 +324,7 @@ export default function TicketBooking({item, type, scheduleId}) {
                                 <div
                                     className="payment_method_item"
                                     onClick={() => setSelectedMethod("qpay")}
-                                    style={{cursor: "pointer"}}
+                                    style={{ cursor: "pointer" }}
                                 >
                                     <div className="method_left">
                                         <div
@@ -344,13 +344,12 @@ export default function TicketBooking({item, type, scheduleId}) {
                                 <div
                                     className="payment_method_item"
                                     onClick={() => setSelectedMethod("social")}
-                                    style={{cursor: "pointer"}}
+                                    style={{ cursor: "pointer" }}
                                 >
                                     <div className="method_left">
                                         <div
-                                            className={`radio_outer ${
-                                                selectedMethod === "social" ? "active_radio" : ""
-                                            }`}
+                                            className={`radio_outer ${selectedMethod === "social" ? "active_radio" : ""
+                                                }`}
                                         >
                                             {selectedMethod === "social" && <div className="radio_inner"></div>}
                                         </div>
@@ -415,18 +414,17 @@ export default function TicketBooking({item, type, scheduleId}) {
 
                             {/* Lower Section: FanProtect Card */}
                             <div className="protection_card">
-                                    <div className="guarantee_row refund_content">
-                                        <img src="/img/white_shield.svg" />
-                                        <h4>{t("fanProtectTitle")}</h4>
+                                <div className="guarantee_row refund_content">
+                                    <img src="/img/white_shield.svg" />
+                                    <h4>{t("fanProtectTitle")}</h4>
+                                </div>
+                                <div className="refund_row">
+                                    <img src="/img/dollaricon.svg" />
+                                    <div className="refund_content">
+                                        <h4>{t("easyRefundTitle")}</h4>
+                                        <p>{t("easyRefundDesc")}</p>
                                     </div>
-
-                                    <div className="refund_row">
-                                        <img src="/img/dollaricon.svg" />
-                                        <div className="refund_content">
-                                            <h4>{t("easyRefundTitle")}</h4>
-                                            <p>{t("easyRefundDesc")}</p>
-                                        </div>
-                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="tickets_btn">
