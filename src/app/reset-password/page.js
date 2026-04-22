@@ -57,7 +57,6 @@ export default function ResetPasswordPage() {
     // OTP Handlers
     const handleOtpChange = (element, index) => {
         if (isNaN(element.value)) return false;
-
         const newOtp = [...otp];
         newOtp[index] = element.value;
         setOtp(newOtp);
