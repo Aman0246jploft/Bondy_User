@@ -8,10 +8,11 @@ import authApi from "@/api/authApi";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { formatTime } from "@/utils/timeHelper";
 import { useLanguage } from "@/context/LanguageContext";
 
 function page() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { eventData } = useEventContext();
   const [publishing, setPublishing] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -112,6 +113,7 @@ function page() {
               <li>
                 <h6>{t("startDate")}</h6>
                 <p>{eventData.startDate} {eventData.startTime}</p>
+                              <p>{eventData.startDate} {formatTime(eventData.startTime, true, language)}</p>
               </li>
               <li>
                 <h6>{t("tagsLabel")}</h6>
@@ -141,6 +143,7 @@ function page() {
                 <span>{eventData.startDate}</span>
                 <span className="mx-2 text-secondary">•</span>
                 <span>{eventData.startTime}</span>
+                              <span>{formatTime(eventData.startTime, true, language)}</span>
               </p>
             </li>
             <li>
@@ -152,6 +155,7 @@ function page() {
                 <span>{eventData.endDate}</span>
                 <span className="mx-2 text-secondary">•</span>
                 <span>{eventData.endTime}</span>
+                              <span>{formatTime(eventData.endTime, true, language)}</span>
               </p>
             </li>
             <li>

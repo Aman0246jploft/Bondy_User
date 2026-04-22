@@ -49,7 +49,7 @@ function Page() {
   useEffect(() => {
     fetchWishlist(activeTab, 1);
     document.title = `${t("myFavorite")} - Bondy`;
-  }, [activeTab]);
+  }, [activeTab, t]);
 
   const handleTabSelect = (k) => {
     setActiveTab(k);
@@ -65,17 +65,16 @@ function Page() {
 
   const handleRemove = async (e, entityId) => {
     e.preventDefault(); // Prevent link navigation if wrapped
-    if (!confirm(t("removeFavoriteConfirm") || "Are you sure you want to remove this item?")) return;
 
     try {
       const response = await wishlistApi.removeFromWishlist({ entityId });
       if (response.status) {
-        toast.success(t("removedFromWishlist") || "Removed from wishlist");
+        toast.success(t("removedFromWishlist"));
         fetchWishlist(activeTab, pagination.page); // Refresh list
       }
     } catch (error) {
       console.error("Error removing item:", error);
-      toast.error(t("failedToRemoveItem") || "Failed to remove item");
+      toast.error(t("failedToRemoveItem"));
     }
   };
 
@@ -87,15 +86,14 @@ function Page() {
     const title = isEvent ? entity.eventTitle || entity.title : entity.courseTitle || entity.title;
 
     // Date Logic: Check startDate on entity (Event) or first schedule (Course)
-    let date = t("dateNA") || "Date N/A";
+    let date = t("dateNA");
     if (entity.startDate) {
       date = formatDate(entity.startDate);
     } else if (entity.schedules && entity.schedules.length > 0 && entity.schedules[0].startDate) {
       date = formatDate(entity.schedules[0].startDate);
     }
 
-    const location = entity.venueAddress ? entity.venueAddress.city || entity.venueAddress.address : t("locationNA") || "Location N/A";
-    const price = entity.price ? `$${entity.price}` : t("free") || "Free";
+    const location = entity.venueAddress ? entity.venueAddress.city || entity.venueAddress.address : t("locationNA");
 
     const image = getFullImageUrl(
       entity.posterImage?.[0] || entity.posterImage || entity.galleryImages?.[0] || entity.image
@@ -103,7 +101,7 @@ function Page() {
     const link = isEvent ? `/eventDetails?id=${entity._id}` : `/programDetails?id=${entity._id}`;
 
     return (
-      <Col md={3} key={item._id}>
+      <Col xl={3} lg={4} sm={6} xs={12} key={item._id}>
         <div className="event_main_cart">
           <div className="recommended-card">
             <img src={image || "/img/imageholder.png"} alt={title} />
@@ -127,20 +125,21 @@ function Page() {
               {/* <div className="price-tag">from {price}</div> */}
             </div>
           </div>
-          <span
+          <button
+            type="button"
             className="bookmark-btn"
             onClick={(e) => handleRemove(e, entity._id)}
-            style={{ cursor: "pointer" }}
+            aria-label={t("removeFavoriteConfirm")}
           >
-            <img src="/img/bookmark.svg" /> {/* Keeping the filled/active logic implicit as this IS the favorites page */}
-          </span>
+            <img src="/img/bookmark.svg" alt={t("myFavorite")} />
+          </button>
         </div>
       </Col>
     );
   };
 
   return (
-    <div>
+    <div className="wishlist-page">
       <div className="cards">
         <div className="card-title mb-4">
           <h3>{t("myFavorite")}</h3>
@@ -150,7 +149,7 @@ function Page() {
           id="wishlist-tabs"
           activeKey={activeTab}
           onSelect={handleTabSelect}
-          className="mb-4"
+          className="mb-4 ticket-tabs wishlist-tabs"
         >
           <Tab eventKey="Event" title={t("events")}>
             {/* Content rendered below to share grid logic */}
@@ -174,7 +173,7 @@ function Page() {
               </Row>
             ) : (
               <div className="text-center my-5">
-                <p>{t("noItemsFound")?.replace("{type}", activeTab === "Event" ? t("events") : t("courses")) || `No ${activeTab.toLowerCase()}s found in your wishlist.`}</p>
+                <p>{t("noItemsFound").replace("{type}", activeTab === "Event" ? t("events") : t("courses"))}</p>
               </div>
             )}
 
@@ -189,7 +188,7 @@ function Page() {
                   {t("previous")}
                 </button>
                 <span className="align-self-center">
-                  {t("pageOf")?.replace("{current}", pagination.page).replace("{total}", pagination.totalPages) || `Page ${pagination.page} of ${pagination.totalPages}`}
+                  {t("pageOf").replace("{current}", pagination.page).replace("{total}", pagination.totalPages)}
                 </span>
                 <button
                   className="btn btn-outline-primary ms-2"

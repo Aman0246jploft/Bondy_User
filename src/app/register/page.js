@@ -11,6 +11,10 @@ import toast from "react-hot-toast";
 import GuestRoute from "@/components/GuestRoute";
 import { useLanguage } from "@/context/LanguageContext";
 
+const STRONG_PASSWORD_REGEX =
+  /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,6 +25,8 @@ function RegisterForm() {
   const fileRef = useRef(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [customerErrors, setCustomerErrors] = useState({});
+  const [organizerErrors, setOrganizerErrors] = useState({});
 
   // Customer Form State
   const [customerData, setCustomerData] = useState({
@@ -55,24 +61,140 @@ function RegisterForm() {
     }
   }, [searchParams]);
 
+  const validatePassword = (password) => {
+    if (!password) return t("passwordRequired");
+    if (!STRONG_PASSWORD_REGEX.test(password)) return t("passwordComplexity");
+    return "";
+  };
+
+  const validateEmail = (email) => {
+    if (!email.trim()) return t("emailRequired");
+    if (!EMAIL_REGEX.test(email.trim())) return t("invalidEmail");
+    return "";
+  };
+
+  const validateCustomerForm = (data) => {
+    const errors = {};
+    const emailError = validateEmail(data.email);
+    if (emailError) errors.email = emailError;
+    if (!data.contactNumber) errors.contactNumber = t("contactNumberRequired");
+
+    const passwordError = validatePassword(data.password);
+    if (passwordError) errors.password = passwordError;
+
+    if (!data.confirmPassword) {
+      errors.confirmPassword = t("confirmPasswordRequired");
+    } else if (data.password !== data.confirmPassword) {
+      errors.confirmPassword = t("passwordsNotMatch");
+    }
+
+    return errors;
+  };
+
+  const validateOrganizerForm = (data) => {
+    const errors = {};
+    if (!data.firstName.trim()) errors.firstName = t("firstNameRequired");
+    if (!data.lastName.trim()) errors.lastName = t("lastNameRequired");
+
+    const emailError = validateEmail(data.email);
+    if (emailError) errors.email = emailError;
+
+    if (!data.contactNumber) errors.contactNumber = t("contactNumberRequired");
+
+    const passwordError = validatePassword(data.password);
+    if (passwordError) errors.password = passwordError;
+
+    if (!data.confirmPassword) {
+      errors.confirmPassword = t("confirmPasswordRequired");
+    } else if (data.password !== data.confirmPassword) {
+      errors.confirmPassword = t("passwordsNotMatch");
+    }
+
+    if (!data.acceptTerms) errors.acceptTerms = t("acceptTerms");
+
+    return errors;
+  };
+
   const handleCustomerChange = (e) => {
     const { name, value } = e.target;
-    setCustomerData((prev) => ({ ...prev, [name]: value }));
+    setCustomerData((prev) => {
+      const next = { ...prev, [name]: value };
+      const nextErrors = { ...customerErrors };
+
+      if (name === "email") {
+        nextErrors.email = validateEmail(value);
+      }
+
+      if (name === "password") {
+        nextErrors.password = validatePassword(value);
+        if (next.confirmPassword) {
+          nextErrors.confirmPassword =
+            value === next.confirmPassword ? "" : t("passwordsNotMatch");
+        }
+      }
+
+      if (name === "confirmPassword") {
+        nextErrors.confirmPassword = value
+          ? value === next.password
+            ? ""
+            : t("passwordsNotMatch")
+          : t("confirmPasswordRequired");
+      }
+
+      setCustomerErrors(nextErrors);
+      return next;
+    });
   };
 
   const handleOrganizerChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setOrganizerData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setOrganizerData((prev) => {
+      const nextValue = type === "checkbox" ? checked : value;
+      const next = {
+        ...prev,
+        [name]: nextValue,
+      };
+      const nextErrors = { ...organizerErrors };
+
+      if (name === "firstName") nextErrors.firstName = value.trim() ? "" : t("firstNameRequired");
+      if (name === "lastName") nextErrors.lastName = value.trim() ? "" : t("lastNameRequired");
+      if (name === "email") nextErrors.email = validateEmail(value);
+      if (name === "password") {
+        nextErrors.password = validatePassword(value);
+        if (next.confirmPassword) {
+          nextErrors.confirmPassword =
+            value === next.confirmPassword ? "" : t("passwordsNotMatch");
+        }
+      }
+      if (name === "confirmPassword") {
+        nextErrors.confirmPassword = value
+          ? value === next.password
+            ? ""
+            : t("passwordsNotMatch")
+          : t("confirmPasswordRequired");
+      }
+      if (name === "acceptTerms") {
+        nextErrors.acceptTerms = checked ? "" : t("acceptTerms");
+      }
+
+      setOrganizerErrors(nextErrors);
+      return next;
+    });
   };
 
   const handlePhoneChange = (value, role) => {
     if (role === "Customer") {
       setCustomerData((prev) => ({ ...prev, contactNumber: value }));
+      setCustomerErrors((prev) => ({
+        ...prev,
+        contactNumber: value ? "" : t("contactNumberRequired"),
+      }));
     } else {
       setOrganizerData((prev) => ({ ...prev, contactNumber: value }));
+      setOrganizerErrors((prev) => ({
+        ...prev,
+        contactNumber: value ? "" : t("contactNumberRequired"),
+      }));
     }
   };
 
@@ -106,33 +228,13 @@ function RegisterForm() {
   const handleCustomerSignup = async (e) => {
     e.preventDefault();
 
-    // Client-side validation
-    if (!customerData.email.trim()) {
-      toast.error(t("emailRequired"));
+    const errors = validateCustomerForm(customerData);
+    setCustomerErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast.error(Object.values(errors)[0]);
       return;
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(customerData.email.trim())) {
-      toast.error(t("invalidEmail"));
-      return;
-    }
-    if (!customerData.contactNumber) {
-      toast.error(t("contactNumberRequired"));
-      return;
-    }
-    if (!customerData.password) {
-      toast.error(t("passwordRequired"));
-      return;
-    }
-  
-    if (!customerData.confirmPassword) {
-      toast.error(t("confirmPasswordRequired"));
-      return;
-    }
-    if (customerData.password !== customerData.confirmPassword) {
-      toast.error(t("passwordsNotMatch"));
-      return;
-    }
+
     setLoading(true);
     try {
       let finalCountryCode = "+1";
@@ -169,52 +271,13 @@ function RegisterForm() {
   const handleOrganizerSignup = async (e) => {
     e.preventDefault();
 
-    // Client-side validation
-    if (!organizerData.firstName.trim()) {
-      toast.error(t("firstNameRequired"));
+    const errors = validateOrganizerForm(organizerData);
+    setOrganizerErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast.error(Object.values(errors)[0]);
       return;
     }
-    if (!organizerData.lastName.trim()) {
-      toast.error(t("lastNameRequired"));
-      return;
-    }
-    if (!organizerData.email.trim()) {
-      toast.error(t("emailRequired"));
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(organizerData.email.trim())) {
-      toast.error(t("invalidEmail"));
-      return;
-    }
-    if (!organizerData.contactNumber) {
-      toast.error(t("contactNumberRequired"));
-      return;
-    }
-    if (!organizerData.password) {
-      toast.error(t("passwordRequired"));
-      return;
-    }
-    if (organizerData.password.length < 6) {
-      toast.error(t("passwordMinLength"));
-      return;
-    }
-    if (!organizerData.confirmPassword) {
-      toast.error(t("confirmPasswordRequired"));
-      return;
-    }
-    if (organizerData.password !== organizerData.confirmPassword) {
-      toast.error(t("passwordsNotMatch"));
-      return;
-    }
-    // if (!organizerData.businessType) {
-    //   toast.error("Please select a business type");
-    //   return;
-    // }
-    if (!organizerData.acceptTerms) {
-      toast.error(t("acceptTerms"));
-      return;
-    }
+
     setLoading(true);
     try {
       let finalCountryCode = "+1";
@@ -315,6 +378,9 @@ function RegisterForm() {
                                   onChange={handleCustomerChange}
                                   aria-required="true"
                                 />
+                                {customerErrors.email && (
+                                  <div className="text-danger small mt-1">{customerErrors.email}</div>
+                                )}
                               </Form.Group>
 
                               <Form.Group className="mb-3">
@@ -329,6 +395,9 @@ function RegisterForm() {
                                   dropdownClass="phone_input_dropdown"
                                   buttonClass="phone_input_button"
                                 />
+                                {customerErrors.contactNumber && (
+                                  <div className="text-danger small mt-1">{customerErrors.contactNumber}</div>
+                                )}
                               </Form.Group>
 
                               <Form.Group className="mb-3">
@@ -356,6 +425,9 @@ function RegisterForm() {
                                     />
                                   </button>
                                 </div>
+                                {customerErrors.password && (
+                                  <div className="text-danger small mt-1">{customerErrors.password}</div>
+                                )}
                               </Form.Group>
 
                               <Form.Group className="mb-3">
@@ -376,13 +448,16 @@ function RegisterForm() {
                                     <img
                                       src={
                                         show2
-                                          ? "/img/unlock.svg"
-                                          : "/img/lock.svg"
+                                          ? "/img/lock.svg"
+                                          : "/img/unlock.svg"
                                       }
                                       alt="toggle confirm password"
                                     />
                                   </button>
                                 </div>
+                                {customerErrors.confirmPassword && (
+                                  <div className="text-danger small mt-1">{customerErrors.confirmPassword}</div>
+                                )}
                               </Form.Group>
 
                               <button
@@ -440,6 +515,9 @@ function RegisterForm() {
                                       onChange={handleOrganizerChange}
                                       aria-required="true"
                                     />
+                                    {organizerErrors.firstName && (
+                                      <div className="text-danger small mt-1">{organizerErrors.firstName}</div>
+                                    )}
                                   </Form.Group>
                                 </Col>
                                 <Col md={6}>
@@ -452,6 +530,9 @@ function RegisterForm() {
                                       onChange={handleOrganizerChange}
                                       aria-required="true"
                                     />
+                                    {organizerErrors.lastName && (
+                                      <div className="text-danger small mt-1">{organizerErrors.lastName}</div>
+                                    )}
                                   </Form.Group>
                                 </Col>
                               </Row>
@@ -465,6 +546,9 @@ function RegisterForm() {
                                   onChange={handleOrganizerChange}
                                   aria-required="true"
                                 />
+                                {organizerErrors.email && (
+                                  <div className="text-danger small mt-1">{organizerErrors.email}</div>
+                                )}
                               </Form.Group>
 
                               <Form.Group className="mb-3">
@@ -479,6 +563,9 @@ function RegisterForm() {
                                   dropdownClass="phone_input_dropdown"
                                   buttonClass="phone_input_button"
                                 />
+                                {organizerErrors.contactNumber && (
+                                  <div className="text-danger small mt-1">{organizerErrors.contactNumber}</div>
+                                )}
                               </Form.Group>
 
                               <Form.Group className="mb-3">
@@ -506,6 +593,9 @@ function RegisterForm() {
                                     />
                                   </button>
                                 </div>
+                                {organizerErrors.password && (
+                                  <div className="text-danger small mt-1">{organizerErrors.password}</div>
+                                )}
                               </Form.Group>
 
                               <Form.Group className="mb-3">
@@ -526,13 +616,16 @@ function RegisterForm() {
                                     <img
                                       src={
                                         show2
-                                          ? "/img/unlock.svg"
-                                          : "/img/lock.svg"
+                                          ? "/img/lock.svg"
+                                          : "/img/unlock.svg"
                                       }
                                       alt="toggle confirm password"
                                     />
                                   </button>
                                 </div>
+                                {organizerErrors.confirmPassword && (
+                                  <div className="text-danger small mt-1">{organizerErrors.confirmPassword}</div>
+                                )}
                               </Form.Group>
 
                               {/* <Form.Group className="mb-3">
@@ -608,6 +701,9 @@ function RegisterForm() {
                                     {t("acceptTermsConditions")}
                                   </label>
                                 </div>
+                                {organizerErrors.acceptTerms && (
+                                  <div className="text-danger small mt-1">{organizerErrors.acceptTerms}</div>
+                                )}
                               </Form.Group>
 
                               <button

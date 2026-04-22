@@ -18,6 +18,7 @@ import courseApi from "@/api/courseApi";
 import wishlistApi from "@/api/wishlistApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatDate } from "@/utils/dateFormater";
+import { formatTime } from "@/utils/timeHelper";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthGuard } from "@/context/AuthGuardContext";
@@ -116,6 +117,7 @@ function ProgramDetailsContent() {
     shortdesc,
     price,
     duration,
+    durationTranslation,
     currentSchedule,
     schedules,
     venueAddress,
@@ -146,7 +148,7 @@ function ProgramDetailsContent() {
               <div className="header-box">
                 <h1 className="event-title">{courseTitle}</h1>
                 <p className="event-meta">
-                  {duration || "N/A"} •{" "}
+                  {(language === "mn" ? durationTranslation || duration : duration) || "N/A"} •{" "}
                   {currentSchedule
                     ? `${formatDate(currentSchedule.startDate)} – ${formatDate(
                         currentSchedule.endDate,
@@ -257,7 +259,7 @@ function ProgramDetailsContent() {
                       {currentSchedule
                         ? `${formatDate(
                             currentSchedule.startDate,
-                          )} ${t("at")} ${currentSchedule.startTime} ${t("to")} ${currentSchedule.endTime}`
+                          )} ${t("at")} ${formatTime(currentSchedule.startTime, true, language)} ${t("to")} ${formatTime(currentSchedule.endTime, true, language)}`
                         : t("detailedTimingNotAvailable")}
                     </span>
                   </div>
@@ -409,6 +411,7 @@ function ProgramDetailsContent() {
                           <div className="upcming_session_content">
                             <span>
                               {dayName} • {schedule.startTime} {t("to")} {schedule.endTime}
+                                                          {dayName} • {formatTime(schedule.startTime, true, language)} {t("to")} {formatTime(schedule.endTime, true, language)}
                             </span>
                             <h6>
                               {courseTitle} ({t("sessionLabel")} {idx + 1})

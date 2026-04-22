@@ -10,7 +10,7 @@ import AuthButton from "@/components/AuthButton";
 
 const ProgramCart = ({ programsArray, pagination }) => {
   const [programs, setPrograms] = useState([]);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { checkAuth } = useAuthGuard();
   const router = useRouter();
   useEffect(() => {
@@ -121,8 +121,8 @@ const ProgramCart = ({ programsArray, pagination }) => {
                         marginBottom: '15px'
                       }}
                     >
-                      <div title={program?.duration} style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
-                        <img src="/img/session_icon.svg" style={{ width: '16px', height: '16px' }} /> {program?.duration}
+                      <div title={language === "mn" ? program?.durationTranslation || program?.duration : program?.duration} style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
+                        <img src="/img/session_icon.svg" style={{ width: '16px', height: '16px' }} /> {language === "mn" ? program?.durationTranslation || program?.duration : program?.duration}
                       </div>
                       <div title={`${program?.schedules?.length} sessions`} style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
                         <img src="/img/time_icon.svg" style={{ width: '16px', height: '16px' }} />

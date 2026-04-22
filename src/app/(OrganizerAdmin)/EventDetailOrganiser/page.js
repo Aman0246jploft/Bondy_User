@@ -5,11 +5,12 @@ import { Col, Row, Spinner } from "react-bootstrap";
 import { useSearchParams } from "next/navigation";
 import eventApi from "@/api/eventApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { formatTime } from "@/utils/timeHelper";
 import { useLanguage } from "@/context/LanguageContext";
 
 function ExpandableText({ text, limit = 200, className = "" }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   if (!text) return <p className={className}>{t("na")}</p>;
 
   const shouldShowToggle = text.length > limit;
@@ -61,7 +62,7 @@ function EventDetailsContent() {
     }
   };
 
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     if (eventId) {
@@ -183,6 +184,7 @@ function EventDetailsContent() {
                   })}
                   <span className="mx-2">•</span>
                   {event.startTime || "N/A"}
+                                  {formatTime(event.startTime, true, language) || "N/A"}
                 </p>
               </div>
               <div>
@@ -198,6 +200,7 @@ function EventDetailsContent() {
                   })}
                   <span className="mx-2">•</span>
                   {event.endTime || "N/A"}
+                                  {formatTime(event.endTime, true, language) || "N/A"}
                 </p>
               </div>
             </li>
@@ -236,7 +239,7 @@ function EventDetailsContent() {
             {event.duration && (
               <li>
                 <h6>{t("duration")}</h6>
-                <p>{event.duration}</p>
+                <p>{language === "mn" ? event.durationTranslation || event.duration : event.duration}</p>
               </li>
             )}
           </ul>

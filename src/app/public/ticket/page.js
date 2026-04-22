@@ -6,6 +6,7 @@ import bookingApi from "@/api/bookingApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import QRCode from "react-qr-code";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatTime } from "@/utils/timeHelper";
 
 const ExpandableText = ({ text, limit = 100 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -136,23 +137,6 @@ function PublicTicketContent() {
     });
   };
 
-  const formatEventTime = (time) => {
-    if (!time) return "";
-    try {
-      const [hours, minutes] = time.split(":");
-      const date = new Date();
-      date.setHours(parseInt(hours), parseInt(minutes));
-      const locale = language === "mn" ? "mn-MN" : "en-US";
-      return date.toLocaleTimeString(locale, {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch (e) {
-      return time;
-    }
-  };
-
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "100vh", background: "#000" }}>
@@ -275,7 +259,7 @@ function PublicTicketContent() {
                       <p style={{ color: "#fff" }}>
                         <strong>{formatEventDate(item?.startDate)}</strong>
                         <br />
-                        <span>{formatEventTime(item?.startTime)} - {formatEventTime(item?.endTime)}</span>
+                        <span>{formatTime(item?.startTime, true, language)} - {formatTime(item?.endTime, true, language)}</span>
                       </p>
                     ) : (
                       <p style={{ color: "#fff" }}>
@@ -283,7 +267,7 @@ function PublicTicketContent() {
                           <>
                             <strong>{formatEventDate(selectedSchedule.startDate)} - {formatEventDate(selectedSchedule.endDate)}</strong>
                             <br />
-                            <span>{formatEventTime(selectedSchedule.startTime)} - {formatEventTime(selectedSchedule.endTime)}</span>
+                            <span>{formatTime(selectedSchedule.startTime, true, language)} - {formatTime(selectedSchedule.endTime, true, language)}</span>
                           </>
                         ) : (
                           <span>{t("multipleSchedules") || "Check course schedule"}</span>

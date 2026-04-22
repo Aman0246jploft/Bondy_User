@@ -60,6 +60,7 @@ function BookingPageContent() {
               shortdesc: evt.shortdesc,
               price: evt.ticketPrice,
               duration: evt.duration,
+              durationTranslation: evt.durationTranslation,
               posterImage: evt.posterImage,
               venueAddress: evt.venueAddress,
               startDate: evt.startDate,
@@ -81,6 +82,7 @@ function BookingPageContent() {
               shortdesc: course.shortdesc,
               price: course.price,
               duration: course.duration,
+              durationTranslation: course.durationTranslation,
               posterImage: course.posterImage,
               venueAddress: course.venueAddress,
               schedules: course.schedules,
@@ -171,7 +173,7 @@ function BookingPageContent() {
               <div className="header-box">
                 <h1 className="event-title">{bookingItem.title}</h1>
                 <p className="event-meta">
-                  {bookingItem.duration ? `${bookingItem.duration} • ` : ""}
+                  {(language === "mn" ? bookingItem.durationTranslation || bookingItem.duration : bookingItem.duration) ? `${language === "mn" ? bookingItem.durationTranslation || bookingItem.duration : bookingItem.duration} • ` : ""}
                   {bookingItem.categoryName
                     ? `${bookingItem.categoryName} • `
                     : ""}

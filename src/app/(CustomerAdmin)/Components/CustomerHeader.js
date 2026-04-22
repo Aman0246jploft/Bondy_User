@@ -6,10 +6,11 @@ import authApi from "@/api/authApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 
 import { useLanguage } from "@/context/LanguageContext";
+import { useSocket } from "@/context/SocketContext";
 
 function CustomerHeader() {
   const { t } = useLanguage();
-  console.log("heaerdddd>>000000000>>>>", t)
+  const { unreadNotificationCount } = useSocket();
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
@@ -43,8 +44,31 @@ function CustomerHeader() {
 
         {/* Right Actions */}
         <div className="topbar-actions">
-          <Link href="/Notification" className="bell-btn">
+          <Link href="/Notification" className="bell-btn" style={{ position: "relative" }}>
             <img src="/img/bell-icon.svg" alt="Notifications" />
+            {unreadNotificationCount > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-4px",
+                  right: "-6px",
+                  background: "#e74c3c",
+                  color: "#fff",
+                  borderRadius: "50%",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  minWidth: "16px",
+                  height: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  lineHeight: 1,
+                  padding: "0 3px",
+                }}
+              >
+                {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+              </span>
+            )}
           </Link>
 
           <LanguageSelector />

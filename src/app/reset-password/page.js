@@ -8,6 +8,9 @@ import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import GuestRoute from "@/components/GuestRoute";
 
+const STRONG_PASSWORD_REGEX =
+    /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
+
 export default function ResetPasswordPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
@@ -29,6 +32,7 @@ export default function ResetPasswordPage() {
         newPassword: "",
         confirmPassword: "",
     });
+    const [passwordErrors, setPasswordErrors] = useState({});
 
     useEffect(() => {
         const storedEmail = localStorage.getItem("resetEmail");
@@ -119,21 +123,55 @@ export default function ResetPasswordPage() {
     };
 
     // Password handlers
+    const validateNewPassword = (password) => {
+        if (!password) return t("passwordRequired");
+        if (!STRONG_PASSWORD_REGEX.test(password)) return t("passwordComplexity");
+        return "";
+    };
+
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormData((prev) => {
+            const next = { ...prev, [name]: value };
+            const nextErrors = { ...passwordErrors };
+
+            if (name === "newPassword") {
+                nextErrors.newPassword = validateNewPassword(value);
+                if (next.confirmPassword) {
+                    nextErrors.confirmPassword =
+                        value === next.confirmPassword ? "" : t("passwordsNotMatch");
+                }
+            }
+
+            if (name === "confirmPassword") {
+                nextErrors.confirmPassword = value
+                    ? value === next.newPassword
+                        ? ""
+                        : t("passwordsNotMatch")
+                    : t("confirmPasswordRequired");
+            }
+
+            setPasswordErrors(nextErrors);
+            return next;
+        });
     };
 
     const handleResetPassword = async (e) => {
         e.preventDefault();
 
-        if (formData.newPassword.length < 6) {
-            toast.error(t("passwordMinLength"));
-            return;
+        const errors = {};
+        const newPasswordError = validateNewPassword(formData.newPassword);
+        if (newPasswordError) errors.newPassword = newPasswordError;
+
+        if (!formData.confirmPassword) {
+            errors.confirmPassword = t("confirmPasswordRequired");
+        } else if (formData.newPassword !== formData.confirmPassword) {
+            errors.confirmPassword = t("passwordsNotMatch");
         }
 
-        if (formData.newPassword !== formData.confirmPassword) {
-            toast.error(t("passwordsNotMatch"));
+        setPasswordErrors(errors);
+        if (Object.keys(errors).length > 0) {
+            // toast.error(Object.values(errors)[0]);
             return;
         }
 
@@ -259,7 +297,6 @@ export default function ResetPasswordPage() {
                                                             value={formData.newPassword}
                                                             onChange={handlePasswordChange}
                                                             aria-required="true"
-                                                            minLength={6}
                                                         />
                                                         <button
                                                             type="button"
@@ -272,8 +309,11 @@ export default function ResetPasswordPage() {
                                                             />
                                                         </button>
                                                     </div>
+                                                    {passwordErrors.newPassword && (
+                                                        <div className="text-danger small mt-1">{passwordErrors.newPassword}</div>
+                                                    )}
                                                         <small className="text-muted">
-                                                        {t("minimumCharacters")}
+                                                        {t("passwordComplexity")}
                                                     </small>
                                                 </Form.Group>
 
@@ -300,6 +340,9 @@ export default function ResetPasswordPage() {
                                                             />
                                                         </button>
                                                     </div>
+                                                    {passwordErrors.confirmPassword && (
+                                                        <div className="text-danger small mt-1">{passwordErrors.confirmPassword}</div>
+                                                    )}
                                                 </Form.Group>
 
                                                 <button

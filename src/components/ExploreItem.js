@@ -6,6 +6,8 @@ import courseApi from "@/api/courseApi";
 import ProgramCart from "./ProgramCart";
 import PaginationComponent from "./PaginationComponent";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { formatTime } from "@/utils/timeHelper";
+import { useLanguage } from "@/context/LanguageContext";
 
 const categories = [
   { label: "Upcoming", value: "upcoming" },
@@ -26,6 +28,7 @@ export default function ExploreItem({
   endDate,
   placement,
 }) {
+  const { language } = useLanguage();
   const [items, setItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -292,13 +295,14 @@ export default function ExploreItem({
                                   className="info-icon"
                                   alt="icon"
                                 />
-                                {new Date(
+                                {/* {new Date(
                                   `1970-01-01T${item.startTime}`,
                                 ).toLocaleTimeString("en-US", {
                                   hour: "numeric",
                                   minute: "2-digit",
                                   hour12: true,
-                                })}
+                                })} */}
+                                 {formatTime(item.startTime, true, language)}
                               </div>
                             )}
                           </div>

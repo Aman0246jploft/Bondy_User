@@ -10,9 +10,10 @@ import apiClient from "../../../api/apiClient";
 import eventApi from "../../../api/eventApi";
 import notificationApi from "../../../api/notificationApi";
 import { getFullImageUrl } from "../../../utils/imageHelper";
+import { formatTime } from "../../../utils/timeHelper";
 
 function page() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [stats, setStats] = useState({
     totalDraftEvents: 0,
     totalPendingEvents: 0,
@@ -226,6 +227,7 @@ function page() {
                       </svg>
                     </span>{" "}
                     <span>{event.startTime}</span>
+                                      <span>{formatTime(event.startTime, true, language)}</span>
                   </p>
                   <p>
                     {t("totalBookingRevenue")} <span>₮{event.totalRevenue || 0}</span>

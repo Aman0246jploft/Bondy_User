@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
 
 function CoursesManagement() {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [categories, setCategories] = useState([]);
@@ -272,7 +272,7 @@ function CoursesManagement() {
                                                     {t(course.enrollmentType?.toLowerCase()) || course.enrollmentType || t("ongoing")}
                                                 </span>
                                                 <p className="text-truncate-1" style={{ maxWidth: "200px" }}>
-                                                    {t("duration")} <span>{course.duration || "N/A"}</span>
+                                                    {t("duration")} <span>{(language === "mn" ? course.durationTranslation || course.duration : course.duration) || "N/A"}</span>
                                                 </p>
                                             </div>
                                         </div>

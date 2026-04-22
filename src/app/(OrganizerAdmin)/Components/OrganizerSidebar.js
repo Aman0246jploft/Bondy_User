@@ -5,9 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useEventContext } from "@/context/EventContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { useSocket } from "@/context/SocketContext";
 
 export default function OrganizerSidebar({ toggleSidebar }) {
   const { t } = useLanguage();
+  const { unreadNotificationCount } = useSocket();
   const [collapsed, setCollapsed] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const pathname = usePathname();
@@ -63,8 +65,19 @@ export default function OrganizerSidebar({ toggleSidebar }) {
          <Link
           href="/Notifications"
           className={`menu-item ${isActive("/Notification") ? "active" : ""}`}>
-          <span className="icon">
+          <span className="icon" style={{ position: "relative" }}>
             <img src="/img/bell-icon.svg" alt="" />
+            {unreadNotificationCount > 0 && (
+              <span style={{
+                position: "absolute", top: "-6px", right: "-6px",
+                background: "#e74c3c", color: "#fff", borderRadius: "50%",
+                fontSize: "10px", fontWeight: 700, minWidth: "16px", height: "16px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                lineHeight: 1, padding: "0 3px"
+              }}>
+                {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+              </span>
+            )}
           </span>
           <span className="text">{t("notification")}</span>
         </Link>
