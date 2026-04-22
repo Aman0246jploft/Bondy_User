@@ -1253,6 +1253,58 @@ select:-webkit-autofill {
   border: none;
 }
 
+.wishlist-page .event_main_cart {
+  margin-bottom: 36px;
+}
+
+.wishlist-page .bookmark-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  z-index: 3;
+  cursor: pointer;
+}
+
+.wishlist-page .bookmark-btn img {
+  width: 18px;
+  height: 18px;
+}
+
+.wishlist-page .wishlist-tabs.nav.nav-tabs {
+  border: 0;
+  gap: 10px;
+}
+
+.wishlist-page .wishlist-tabs.nav.nav-tabs .nav-link {
+  border: 1px solid #3a3a3a;
+  border-radius: 999px;
+  color: #b8b8b8;
+  background: #1d1d1d;
+  padding: 10px 22px;
+  font-weight: 600;
+}
+
+.wishlist-page .wishlist-tabs.nav.nav-tabs .nav-link:hover {
+  border-color: var(--primary-teal);
+  color: var(--white);
+}
+
+.wishlist-page .wishlist-tabs.nav.nav-tabs .nav-link.active {
+  background: var(--primary-teal);
+  border-color: var(--primary-teal);
+  color: var(--white);
+}
+
 .recommended-card {
   position: relative;
   overflow: hidden;
@@ -4811,6 +4863,22 @@ cursor: pointer;
   font-family: "Inter", sans-serif;
 }
 
+.compplete_profile_sec .interest-scroll-area {
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+}
+
+.compplete_profile_sec .interest-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.compplete_profile_sec .interest-scroll-area::-webkit-scrollbar-thumb {
+  background: #4f4f4f;
+  border-radius: 999px;
+}
+
 .interest-container .chip {
   display: flex;
   align-items: center;
@@ -4846,6 +4914,10 @@ cursor: pointer;
 }
 
 @media (max-width: 480px) {
+  .compplete_profile_sec .interest-scroll-area {
+    max-height: 260px;
+  }
+
   .interest-container {
     gap: 8px;
     padding: 20px 10px;

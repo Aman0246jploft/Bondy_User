@@ -102,8 +102,8 @@ function PersonalInfoContent() {
       }
     };
     fetchProfile();
-    document.title = `Personal Info - Bondy`;
-  }, []);
+    document.title = t("personalInfoPageTitle");
+  }, [t]);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -192,11 +192,11 @@ function PersonalInfoContent() {
         const filePath = response.data.files[0];
         setProfileData((prev) => ({ ...prev, profileImage: filePath }));
         setPreview(getFullImageUrl(filePath));
-        toast.success(t("imageUploadedSuccessfully") || "Image uploaded successfully");
+        toast.success(t("imageUploadedSuccessfully"));
       }
     } catch (error) {
       console.error("Upload failed:", error);
-      toast.error(t("imageUploadFailed") || "Image upload failed");
+      toast.error(t("imageUploadFailed"));
     } finally {
       setLoading(false);
     }
@@ -207,15 +207,15 @@ function PersonalInfoContent() {
 
     // Validation
     const newErrors = {};
-    if (!profileData.firstName) newErrors.firstName = t("firstNameRequired") || "First name is required";
-    if (!profileData.lastName) newErrors.lastName = t("lastNameRequired") || "Last name is required";
-    if (!profileData.country) newErrors.country = t("countryRequired") || "Country is required";
-    if (!profileData.state) newErrors.state = t("stateRequired") || "State is required";
-    if (!profileData.city) newErrors.city = t("cityRequired") || "City is required";
+    if (!profileData.firstName) newErrors.firstName = t("firstNameRequired");
+    if (!profileData.lastName) newErrors.lastName = t("lastNameRequired");
+    if (!profileData.country) newErrors.country = t("countryRequired");
+    if (!profileData.state) newErrors.state = t("stateRequired");
+    if (!profileData.city) newErrors.city = t("cityRequired");
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error(t("pleaseFixErrors") || "Please fix the errors in the form");
+      toast.error(t("pleaseFixErrors"));
       return;
     }
 
@@ -258,12 +258,12 @@ function PersonalInfoContent() {
 
       const response = await authApi.updateProfile(updatePayload);
       if (response.status) {
-        toast.success(t("profileUpdatedSuccessfully") || "Profile updated successfully");
+        toast.success(t("profileUpdatedSuccessfully"));
         setErrors({});
       }
     } catch (error) {
       console.error("Update failed:", error);
-      toast.error(error.message || t("failedToUpdateProfile") || "Failed to update profile");
+      toast.error(error.message || t("failedToUpdateProfile"));
     } finally {
       setLoading(false);
     }
@@ -293,7 +293,7 @@ function PersonalInfoContent() {
                 />
               </div>
               <div className="personal-profile-info">
-                <h4>{t("HeyUser") || t("heyUser")} {profileData.firstName || "User"}!</h4>
+                <h4>{t("heyUser")} {profileData.firstName || t("defaultUser") }!</h4>
                 <p>{profileData.email}</p>
               </div>
             </div>
@@ -390,7 +390,7 @@ function PersonalInfoContent() {
                   value={profileData.country}
                   onChange={handleCountryChange}
                 >
-                  <option value="">{t("selectCountry") || "Select Country"}</option>
+                  <option value="">{t("selectCountry")}</option>
                   {countries.map((c) => (
                     <option key={c.isoCode} value={c.name}>
                       {c.name}
@@ -413,7 +413,7 @@ function PersonalInfoContent() {
                   onChange={handleStateChange}
                   disabled={!profileData.country}
                 >
-                  <option value="">{t("selectState") || "Select State"}</option>
+                  <option value="">{t("selectState")}</option>
                   {states.map((s) => (
                     <option key={s.isoCode} value={s.name}>
                       {s.name}
@@ -438,7 +438,7 @@ function PersonalInfoContent() {
                   onChange={handleCityChange}
                   disabled={!profileData.state}
                 >
-                  <option value="">{t("selectCity") || "Select City"}</option>
+                  <option value="">{t("selectCity")}</option>
                   {cities.map((city) => (
                     <option key={city.name} value={city.name}>
                       {city.name}
@@ -481,7 +481,7 @@ function PersonalInfoContent() {
                   dropdownClass="phone_input_dropdown"
                   buttonClass="phone_input_button"
                 />
-                <label className="phone-field-label">{t("contactNumber") || "Contact Number"}</label>
+                <label className="phone-field-label">{t("contactNumber")}</label>
               </div>
             </Col>
 
@@ -495,7 +495,7 @@ function PersonalInfoContent() {
                   {t("discard")}
                 </button>
                 <button className="custom-btn" type="submit" disabled={loading}>
-                  {loading ? t("saving") || "Saving..." : t("saveChanges") || "Save Changes"}
+                  {loading ? t("saving") : t("saveChanges")}
                 </button>
               </div>
             </Col>

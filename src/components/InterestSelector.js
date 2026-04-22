@@ -15,6 +15,8 @@ const InterestSelector = ({ categories = [], selectedIds = [], onToggle }) => {
                 src={getFullImageUrl(item.image)}
                 alt={item.name}
                 style={{ width: "24px", height: "24px", borderRadius: "50%", objectFit: "cover" }}
+                onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
+                
               />
             ) : (
               <div style={{ width: "24px", height: "24px", background: "#eee", borderRadius: "50%" }} />

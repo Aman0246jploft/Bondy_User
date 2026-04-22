@@ -448,8 +448,8 @@ function RegisterForm() {
                                     <img
                                       src={
                                         show2
-                                          ? "/img/unlock.svg"
-                                          : "/img/lock.svg"
+                                          ? "/img/lock.svg"
+                                          : "/img/unlock.svg"
                                       }
                                       alt="toggle confirm password"
                                     />
@@ -616,8 +616,8 @@ function RegisterForm() {
                                     <img
                                       src={
                                         show2
-                                          ? "/img/unlock.svg"
-                                          : "/img/lock.svg"
+                                          ? "/img/lock.svg"
+                                          : "/img/unlock.svg"
                                       }
                                       alt="toggle confirm password"
                                     />

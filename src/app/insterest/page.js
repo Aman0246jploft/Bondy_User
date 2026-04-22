@@ -164,11 +164,13 @@ function InterestPageContent() {
                   </p>
                 </div>
                 <main>
-                  <InterestSelector
-                    categories={categories}
-                    selectedIds={selectedIds}
-                    onToggle={handleToggle}
-                  />
+                  <div className="interest-scroll-area">
+                    <InterestSelector
+                      categories={categories}
+                      selectedIds={selectedIds}
+                      onToggle={handleToggle}
+                    />
+                  </div>
                   <Button
                     onClick={handleContinue}
                     className="common_btn w-100 mt-4 border-0"

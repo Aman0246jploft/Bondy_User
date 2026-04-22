@@ -56,34 +56,7 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="text">{t("personalInfo")}</span>
         </Link>
 
-        <Link
-          href="/MyTickets"
-          className={`menu-item ${isActive("/MyTickets") ? "active" : ""}`}>
-          <span className="icon">
-            <img src="/img/ticket-icon.svg" alt="" />
-          </span>
-          <span className="text">{t("tickets")}</span>
-        </Link>
-
-        <Link
-          href="/Payment"
-          className={`menu-item ${isActive("/Payment") ? "active" : ""}`}>
-          <span className="icon">
-            <img src="/img/wallet-icon.svg" alt="" />
-          </span>
-          <span className="text">{t("payment")}</span>
-        </Link>
-
-        <Link
-          href="/Messagee"
-          className={`menu-item ${isActive("/Messagee") ? "active" : ""}`}>
-          <span className="icon">
-            <img src="/img/message-icon.svg" alt="" />
-          </span>
-          <span className="text">{t("messages")}</span>
-        </Link>
-
-        <Link
+         <Link
           href="/Notification"
           className={`menu-item ${isActive("/Notification") ? "active" : ""}`}>
           <span className="icon" style={{ position: "relative" }}>
@@ -102,6 +75,39 @@ export default function Sidebar({ toggleSidebar }) {
           </span>
           <span className="text">{t("notification")}</span>
         </Link>
+
+        <Link
+          href="/MyTickets"
+          className={`menu-item ${isActive("/MyTickets") ? "active" : ""}`}>
+          <span className="icon">
+            <img src="/img/ticket-icon.svg" alt="" />
+          </span>
+          <span className="text">{t("tickets")}</span>
+        </Link>
+
+        <Link
+          href="/Payment"
+          className={`menu-item ${isActive("/Payment") ? "active" : ""}`}
+          onClick={(e) => e.preventDefault()}
+          aria-disabled="true"
+          tabIndex={-1}
+          style={{ pointerEvents: "none", opacity: 0.6, cursor: "not-allowed" }}>
+          <span className="icon">
+            <img src="/img/wallet-icon.svg" alt="" />
+          </span>
+          <span className="text">{t("payment")}</span>
+        </Link>
+
+        <Link
+          href="/Messagee"
+          className={`menu-item ${isActive("/Messagee") ? "active" : ""}`}>
+          <span className="icon">
+            <img src="/img/message-icon.svg" alt="" />
+          </span>
+          <span className="text">{t("messages")}</span>
+        </Link>
+
+       
 
         <Link
           href="/MyFavorite"
