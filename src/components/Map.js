@@ -7,6 +7,7 @@ export default function Map({ latitude, longitude, title, address, venueName, im
   const infoWindowRef = useRef(null);
   const markerRef = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { t, language } = useLanguage();
 
   // Load Google Maps script
   useEffect(() => {
@@ -89,7 +90,8 @@ export default function Map({ latitude, longitude, title, address, venueName, im
       if (!t) return "";
       const [h, m] = t.split(":");
       const hour = parseInt(h);
-      return `${hour % 12 || 12}:${m} ${hour >= 12 ? "PM" : "AM"}`;
+      const suffix = language === "mn" ? " Цаг" : " H";
+      return `${hour.toString().padStart(2, "0")}:${m}${suffix}`;
     };
 
     const imgHtml = imageUrl
@@ -165,9 +167,7 @@ export default function Map({ latitude, longitude, title, address, venueName, im
     // Auto-open on load
     infoWindowRef.current.open({ anchor: marker, map: googleMapRef.current });
 
-  }, [isLoaded, latitude, longitude, title, address, venueName, imageUrl, ticketPrice, startDate, startTime, endTime]);
-
-  const { t } = useLanguage();
+  }, [isLoaded, latitude, longitude, title, address, venueName, imageUrl, ticketPrice, startDate, startTime, endTime, language]);
 
   return (
     <div

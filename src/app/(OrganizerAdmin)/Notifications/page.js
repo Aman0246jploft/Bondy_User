@@ -5,9 +5,11 @@ import notificationApi from "@/api/notificationApi";
 import { toast } from "react-hot-toast";
 
 import { useLanguage } from "@/context/LanguageContext";
+import { useSocket } from "@/context/SocketContext";
 
 export default function NotificationPage() {
   const { t } = useLanguage();
+    const { fetchUnreadNotificationCount } = useSocket();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -33,6 +35,7 @@ export default function NotificationPage() {
 
   useEffect(() => {
     fetchNotifications();
+      fetchUnreadNotificationCount();
     document.title = `Notification - Bondy`;
   }, []);
 
@@ -44,6 +47,7 @@ export default function NotificationPage() {
         setNotifications((prev) =>
           prev.map((n) => ({ ...n, isRead: true }))
         );
+        fetchUnreadNotificationCount();
       }
     } catch (error) {
       toast.error(t("failedToMarkAllRead") || "Failed to mark all as read");

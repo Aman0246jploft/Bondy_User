@@ -46,6 +46,8 @@ export const translations = {
     confirmPasswordRequired: "Confirm password is required",
     passwordsNotMatch: "Passwords do not match",
     passwordMinLength: "Password must be at least 6 characters",
+    passwordComplexity:
+      "Password must be at least 8 characters and include uppercase, lowercase, number, and special character",
     acceptTerms: "Please accept Terms & Conditions",
     confirmPassword: "Confirm Password",
     iAgreeWith: "I agree with",
@@ -1082,6 +1084,8 @@ export const translations = {
     confirmPasswordRequired: "Нууц үг баталгаажуулах шаардлагатай",
     passwordsNotMatch: "Нууц үг таарахгүй байна",
     passwordMinLength: "Нууц үг дор хаяж 6 тэмдэгт байх ёстой",
+    passwordComplexity:
+      "Нууц үг дор хаяж 8 тэмдэгттэй, том үсэг, жижиг үсэг, тоо болон тусгай тэмдэгт агуулсан байх ёстой",
     acceptTerms: "Үйлчилгээний нөхцлийг зөвшөөрнө үү",
     confirmPassword: "Нууц үг баталгаажуулах",
     iAgreeWith: "Би зөвшөөрч байна",

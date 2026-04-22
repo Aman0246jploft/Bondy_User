@@ -1,6 +1,8 @@
 import React from "react";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatTime } from "@/utils/timeHelper";
+
 
 const EventTicketscart = ({ item }) => {
   const posterImage =
@@ -8,7 +10,7 @@ const EventTicketscart = ({ item }) => {
       ? item.posterImage[0]
       : null;
 
-  const { t } = useLanguage();
+  const { t,language } = useLanguage();
 
   return (
     <section className="recommended-section event_booking_card p-0">
@@ -22,6 +24,7 @@ const EventTicketscart = ({ item }) => {
                   : "/img/event_image.png"
               }
               alt={item?.title || "Image"}
+               onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
             />
           </div>
 
@@ -32,7 +35,7 @@ const EventTicketscart = ({ item }) => {
               </h5>
 
               <ul className="list_event text-capitalize">
-                <li>{item?.duration || t("durationNotAvailable")}</li>
+                <li>{(language === "mn" ? item?.durationTranslation || item?.duration : item?.duration) || t("durationNotAvailable")}</li>
                 <li>{item?.categoryName || t("categoryPlaceholder")}</li>
                 <li>{item?.status || t("statusPlaceholder")}</li>
                 {/* <li>7:30 PM</li> */}

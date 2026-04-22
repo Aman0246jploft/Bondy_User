@@ -22,6 +22,7 @@ import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
 
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { formatTime } from "@/utils/timeHelper";
 
 function EventDetailsContent() {
   const searchParams = useSearchParams();
@@ -32,7 +33,7 @@ function EventDetailsContent() {
   const [attendees, setAttendees] = useState(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { checkAuth } = useAuthGuard();
   const router = useRouter();
 
@@ -109,16 +110,7 @@ function EventDetailsContent() {
       year: "numeric",
     });
 
-    const formatTime = (time) => {
-      if (!time) return "";
-      const [h, m] = time.split(":");
-      const hour = parseInt(h);
-      const ampm = hour >= 12 ? "pm" : "am";
-      const h12 = hour % 12 || 12;
-      return `${String(h12).padStart(2, "0")}:${m} ${ampm}`;
-    };
-
-    return `${dateStr} at ${formatTime(sTime)} to ${formatTime(eTime)}`;
+    return `${dateStr} at ${formatTime(sTime, true, language)} to ${formatTime(eTime, true, language)}`;
   };
 
   return (
@@ -134,7 +126,7 @@ function EventDetailsContent() {
                   <br />
                 </h1>
                 <p className="event-meta">
-                  {event?.duration} • {event?.eventCategory?.name} •{" "}
+                  {language === "mn" ? event?.durationTranslation || event?.duration : event?.duration} • {event?.eventCategory?.name} •{" "}
                   {event?.status}
                 </p>
                 <Button className="book_mark_icon" onClick={handleWishlistToggle} disabled={wishlistLoading}>
