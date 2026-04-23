@@ -172,6 +172,135 @@ select:-webkit-autofill {
   left: 15px;
 }
 
+.interest-dropdown-field {
+  margin-bottom: 32px;
+}
+
+.interest-dropdown-label {
+  display: block;
+  color: #999;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.interest-dropdown-trigger {
+  width: 100%;
+  min-height: 60px;
+  border-radius: 15px;
+  border: 1px solid #737373;
+  background: #1a1a1a;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  text-align: left;
+}
+
+.interest-dropdown-trigger.open {
+  border-color: var(--primary-teal);
+}
+
+.interest-dropdown-value {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.interest-dropdown-value.placeholder {
+  color: #999;
+}
+
+.interest-dropdown-caret {
+  color: #999;
+  flex-shrink: 0;
+}
+
+.interest-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: #111;
+  border: 1px solid #2e2e2e;
+  border-radius: 16px;
+  padding: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.interest-dropdown-option {
+  display: block;
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.interest-dropdown-option.selected,
+.interest-dropdown-option:hover {
+  background: rgba(35, 173, 164, 0.12);
+}
+
+.interest-dropdown-option-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.interest-dropdown-option-main input {
+  accent-color: var(--primary-teal);
+}
+
+.interest-dropdown-option-image,
+.interest-dropdown-option-image img,
+.interest-dropdown-option-image-placeholder {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.interest-dropdown-option-image img {
+  object-fit: cover;
+}
+
+.interest-dropdown-option-image-placeholder {
+  display: inline-block;
+  background: #333;
+}
+
+.interest-dropdown-option-text {
+  color: #fff;
+  font-size: 14px;
+}
+
+.interest-dropdown-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.interest-dropdown-chip {
+  background: rgba(35, 173, 164, 0.15);
+  color: #7ee2db;
+  border: 1px solid rgba(35, 173, 164, 0.3);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.interest-dropdown-empty {
+  color: #999;
+  padding: 14px 10px;
+  text-align: center;
+}
+
 .custom-tel-input {
   border-radius: 15px;
   background-color: #1a1a1a;

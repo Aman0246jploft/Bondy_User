@@ -8,6 +8,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import VenueAutocomplete from "../app/(OrganizerAdmin)/Components/VenueAutocomplete";
 import { useLanguage } from "@/context/LanguageContext";
+import { toUtcDateRangeValue } from "@/utils/dateRangePayload";
 
 export default function Field({ onSearch, label = "Search", placeholder = "Search here..." }) {
    const { t } = useLanguage()
@@ -56,8 +57,8 @@ export default function Field({ onSearch, label = "Search", placeholder = "Searc
         searchParams.filter = "all";
       }
 
-      if (dateRange[0].startDate) searchParams.startDate = dateRange[0].startDate.toISOString();
-      if (dateRange[0].endDate) searchParams.endDate = dateRange[0].endDate.toISOString();
+      if (dateRange[0].startDate) searchParams.startDate = toUtcDateRangeValue(dateRange[0].startDate, "start");
+      if (dateRange[0].endDate) searchParams.endDate = toUtcDateRangeValue(dateRange[0].endDate, "end");
 
       onSearch(searchParams);
     }
@@ -70,7 +71,14 @@ export default function Field({ onSearch, label = "Search", placeholder = "Searc
     setResetKey((prev) => prev + 1);
 
     if (onSearch) {
-      onSearch({});
+      onSearch({
+        search: "",
+        filter: "all",
+        latitude: null,
+        longitude: null,
+        startDate: "",
+        endDate: "",
+      });
     }
   };
 

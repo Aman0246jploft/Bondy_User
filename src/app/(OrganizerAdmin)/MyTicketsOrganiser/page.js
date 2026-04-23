@@ -87,7 +87,7 @@ function page() {
         const d = new Date(dateStr);
         const locale = language === "mn" ? "mn-MN" : "en-US";
         dateStr = d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' }) +
-          " " + d.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
+          " " + d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false });
       }
     } catch (e) {
       dateStr = "N/A";
@@ -147,7 +147,7 @@ function page() {
                       <circle cx="2" cy="2" r="2" fill="#999999" />
                     </svg>
                   </span>{" "}
-                  <span>{new Date(ticket.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span>{new Date(ticket.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
                 </p>
                 <p>
                   {t("totalPaid")} <span>₮{ticket.totalAmount}</span>

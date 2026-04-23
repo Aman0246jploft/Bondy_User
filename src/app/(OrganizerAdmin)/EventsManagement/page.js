@@ -15,9 +15,10 @@ import eventApi from "@/api/eventApi";
 import promotionsApi from "@/api/promotionsApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatTime } from "@/utils/timeHelper";
 
 function page() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { clearEventData } = useEventContext();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,10 +41,10 @@ function page() {
   const fetchStats = async () => {
     try {
       const response = await eventApi.getOrganizerStats();
-      if (response.data) {
+      if (response?.data) {
         setStats({
-          totalRevenue: response.data.totalRevenue,
-          totalAttendees: response.data.totalAttendees,
+          totalRevenue: response?.data?.totalRevenue,
+          totalAttendees: response?.data?.totalAttendees,
         });
       }
     } catch (error) {
@@ -92,6 +93,7 @@ function page() {
   };
 
   const totalPages = Math.ceil(pagination.total / pagination.limit);
+  const locale = language === "mn" ? "mn-MN" : "en-US";
 
   // ---- Promotion Modal Handlers ----
   const isFeaturedActive = (event) =>
@@ -283,7 +285,7 @@ function page() {
                                 {t("featuredUntil")}{" "}
                                 {new Date(
                                   event.featuredExpiry,
-                                ).toLocaleDateString("en-GB", {
+                                ).toLocaleDateString(locale, {
                                   day: "numeric",
                                   month: "short",
                                   year: "numeric",
@@ -314,7 +316,7 @@ function page() {
                         {t("createDate")}{" "}
                         <span>
                           {new Date(event.createdAt).toLocaleDateString(
-                            "en-GB",
+                            locale,
                             {
                               day: "numeric",
                               month: "short",
@@ -333,12 +335,10 @@ function page() {
                           </svg>
                         </span>{" "}
                         <span>
-                          {new Date(event.startDate).toLocaleTimeString(
-                            "en-US",
-                            {
-                              hour: "numeric",
-                              minute: "2-digit",
-                            },
+                          {formatTime(
+                            new Date(event.startDate).toTimeString().slice(0, 5),
+                            true,
+                            language,
                           )}
                         </span>
                       </p>

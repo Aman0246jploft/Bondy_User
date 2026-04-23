@@ -12,6 +12,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useLanguage } from "@/context/LanguageContext";
 import { Country, State, City } from "country-state-city";
 import { getCoordinatesFromAddress } from "@/utils/locationHelper";
+import InterestSelector from "@/components/InterestSelector";
 
 function PersonalInfoContent() {
   const { t } = useLanguage();
@@ -37,15 +38,25 @@ function PersonalInfoContent() {
   const [countries] = useState(Country.getAllCountries());
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [errors, setErrors] = useState({});
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await authApi.getSelfProfile();
-        if (response.status) {
-          const profile = response.data.user;
+        const [profileResponse, categoriesResponse] = await Promise.all([
+          authApi.getSelfProfile(),
+          authApi.getCategoryList(),
+        ]);
+
+        if (categoriesResponse?.status) {
+          setCategories(categoriesResponse.data.categories || []);
+        }
+
+        if (profileResponse.status) {
+          const profile = profileResponse.data.user;
           const location = profile.location || {};
 
           let countryCode = profile.countryCode || "";
@@ -94,6 +105,9 @@ function PersonalInfoContent() {
             longitude: location.coordinates?.[0] || 0,
             address: location.address || "",
           });
+          setSelectedCategoryIds(
+            (profile.categories || []).map((category) => category._id || category),
+          );
           setPreview(getFullImageUrl(profile.profileImage));
         }
       } catch (error) {
@@ -244,6 +258,7 @@ function PersonalInfoContent() {
         contactNumber: finalContactNumber,
         countryCode: finalCountryCode,
         profileImage: profileData.profileImage,
+        categories: selectedCategoryIds,
         location: {
           latitude: Number(profileData.latitude) || 0,
           longitude: Number(profileData.longitude) || 0,
@@ -481,6 +496,24 @@ function PersonalInfoContent() {
                   buttonClass="phone_input_button"
                 />
                 <label className="phone-field-label">{t("contactNumber") || "Contact Number"}</label>
+              </div>
+            </Col>
+
+            <Col md={12}>
+              <div className="mb-4">
+                <h5 className="mb-2">{t("interestCategories")}</h5>
+                <p className="text-secondary mb-3 small">{t("interestCategoriesHelper")}</p>
+                <div className="interest-scroll-area">
+                  <InterestSelector
+                    categories={categories}
+                    selectedIds={selectedCategoryIds}
+                    onToggle={(id) => {
+                      setSelectedCategoryIds((prev) =>
+                        prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+                      );
+                    }}
+                  />
+                </div>
               </div>
             </Col>
 

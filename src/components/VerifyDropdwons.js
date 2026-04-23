@@ -2,27 +2,28 @@
 import React, { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 
-const VerifyDropdwons = () => {
+const VerifyDropdwons = ({ fullName }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const { t } = useLanguage();
+  const displayName = fullName?.trim() || "Bondy";
 
   return (
     <div className="verified-wrapper">
       {/* Clickable Icon */}
       <div className="verified-trigger" onClick={() => setIsOpen(!isOpen)}>
-        <img src="/img/veriy_icon.svg" />
+        <img src="/img/veriy_icon.svg" alt={t("verifiedOrganizer")} />
       </div>
 
       {isOpen && (
         <div className="verified-dropdown">
           <div className="verified-header">
             <div className="verified-icon-box">
-              <img src="/img/shield.svg" />
+              <img src="/img/shield.svg" alt={t("verifiedOrganizer")} />
             </div>
             <div>
               <h3 className="verified-title-main">{t("verifiedOrganizer")}</h3>
-              <p className="verified-name">Esther Howard</p>
+              <p className="verified-name">{displayName}</p>
               <p className="verified-date">{t("verifiedOnDate", { date: "Jan 2024" })}</p>
             </div>
           </div>

@@ -36,7 +36,7 @@ function parseJwt(token) {
 import { useLanguage } from "@/context/LanguageContext";
 
 function MessageeContent() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { socket, isSocketConnected, onlineUsers } = useSocket();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("userId");
@@ -695,9 +695,10 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
                         <div className="right-info">
                           {chat.lastMessage?.createdAt && (
                             <small>
-                              {new Date(chat.lastMessage.createdAt).toLocaleTimeString([], {
+                              {new Date(chat.lastMessage.createdAt).toLocaleTimeString(language === "mn" ? "mn-MN" : "en-US", {
                                 hour: "2-digit",
                                 minute: "2-digit",
+                                hour12: false,
                               })}
                             </small>
                           )}
@@ -836,9 +837,10 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
                             <div className="msg-box">
                               <div className="msg-meta">
                                 <span className="msg-time" style={{ fontSize: "11px", color: isMyMessage ? "rgba(255,255,255,0.7)" : "rgba(150,150,150,0.9)", display: "flex", alignItems: "center", gap: "3px" }}>
-                                  {new Date(m.createdAt).toLocaleTimeString([], {
+                                  {new Date(m.createdAt).toLocaleTimeString(language === "mn" ? "mn-MN" : "en-US", {
                                     hour: "2-digit",
                                     minute: "2-digit",
+                                    hour12: false,
                                   })}
                                   {isMyMessage && (
                                     <span className="read-status ms-1" style={{ fontWeight: 700, fontSize: "11px" }}>

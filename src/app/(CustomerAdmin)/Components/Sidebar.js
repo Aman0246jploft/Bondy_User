@@ -135,6 +135,7 @@ export default function Sidebar({ toggleSidebar }) {
           </span>
           <span className="text">{t("settings")}</span>
         </Link>
+
         <Link href="#" className="menu-item" onClick={handleLogout}>
           <span className="icon">
             <img src="/img/logout-icon.svg" alt="" />

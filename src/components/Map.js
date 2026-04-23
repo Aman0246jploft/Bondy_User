@@ -149,19 +149,9 @@ export default function Map({ latitude, longitude, title, address, venueName, im
     });
     markerRef.current = marker;
 
-    // Open on click
+    // Keep popup stable: open on click and let user close manually if needed.
     marker.addListener("click", () => {
       infoWindowRef.current.open({ anchor: marker, map: googleMapRef.current });
-    });
-
-    // Open on hover
-    marker.addListener("mouseover", () => {
-      infoWindowRef.current.open({ anchor: marker, map: googleMapRef.current });
-    });
-
-    // Close on mouse out
-    marker.addListener("mouseout", () => {
-      infoWindowRef.current.close();
     });
 
     // Auto-open on load

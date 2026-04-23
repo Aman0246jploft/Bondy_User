@@ -14,6 +14,7 @@ import "swiper/css/navigation";
 // import HeroSearchFilter from "./HeroSearchFilter";
 import { useLanguage } from "@/context/LanguageContext";
 import VenueAutocomplete from "../app/(OrganizerAdmin)/Components/VenueAutocomplete";
+import { toUtcDateRangeValue } from "@/utils/dateRangePayload";
 const HeroSlider = ({ setView, onSearch }) => {
   const { t } = useLanguage();
   const [isReady, setIsReady] = useState(false);
@@ -100,11 +101,11 @@ const HeroSlider = ({ setView, onSearch }) => {
     // if (dateFilter !== "all") params.filter = dateFilter;
 
     if (dateRange[0].startDate) {
-      params.startDate = dateRange[0].startDate.toISOString();
+      params.startDate = toUtcDateRangeValue(dateRange[0].startDate, "start");
     }
 
     if (dateRange[0].endDate) {
-      params.endDate = dateRange[0].endDate.toISOString();
+      params.endDate = toUtcDateRangeValue(dateRange[0].endDate, "end");
     }
 
     if (onSearch) {
@@ -120,7 +121,14 @@ const HeroSlider = ({ setView, onSearch }) => {
     setResetKey((prev) => prev + 1);
 
     if (onSearch) {
-      onSearch(null);
+      onSearch({
+        search: "",
+        filter: "all",
+        latitude: null,
+        longitude: null,
+        startDate: "",
+        endDate: "",
+      });
     }
   };
 
