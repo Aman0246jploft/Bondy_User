@@ -260,7 +260,11 @@ function ProfileContent() {
                       {userProfile?.firstName} {userProfile?.lastName}
                       <span className="verified-badge">
                         {userProfile?.organizerVerificationStatus ===
-                          "approved" && <VerifyDropdwons />}
+                          "approved" && (
+                            <VerifyDropdwons
+                              fullName={`${userProfile?.firstName || ""} ${userProfile?.lastName || ""}`}
+                            />
+                          )}
                       </span>
                     </h2>
                     <p className="designation">

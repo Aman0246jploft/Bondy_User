@@ -16,7 +16,7 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function HomePage() {
 
   const [view, setView] = useState("hero"); // hero | grid
-  const [searchParams, setSearchParams] = useState(null);
+  const [searchParams, setSearchParams] = useState({});
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -57,7 +57,7 @@ export default function HomePage() {
         <EventSection type="recommended" extraParams={{ ...searchParams, placement: "homePage" }} />
         <EventSection type="nearYou" extraParams={{ ...searchParams, placement: "homePage" }} />
         <EventSection type="week" extraParams={{ ...searchParams, placement: "homePage" }} />
-        <CourseSection type="featured" />
+        <CourseSection type="featured" extraParams={{ ...searchParams, placement: "homePage" }} />
       </div>
 
       <Categories />

@@ -274,9 +274,16 @@ function ProgramDetailsContent() {
                 </div>
                 <div className="map-container">
                   <Map
-                    latitude={courseDetails.venueAddress?.latitude}
-                    longitude={courseDetails.venueAddress?.longitude}
+                    latitude={courseDetails.venueAddress?.latitude ?? courseDetails.venueAddress?.coordinates?.[1]}
+                    longitude={courseDetails.venueAddress?.longitude ?? courseDetails.venueAddress?.coordinates?.[0]}
                     title={courseTitle}
+                    address={venueAddress?.address}
+                    venueName={courseDetails?.venueName}
+                    imageUrl={images?.[0]}
+                    ticketPrice={price}
+                    startDate={currentSchedule?.startDate}
+                    startTime={currentSchedule?.startTime}
+                    endTime={currentSchedule?.endTime}
                   />
                 </div>
 

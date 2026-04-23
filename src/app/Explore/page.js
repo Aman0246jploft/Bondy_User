@@ -51,15 +51,17 @@ function ExploreContent() {
     const lat = searchParams_url.get("latitude");
     const lng = searchParams_url.get("longitude");
     const filter = searchParams_url.get("filter") || "upcoming";
-    const date = searchParams_url.get("date");
+    const startDate = searchParams_url.get("startDate");
+    const endDate = searchParams_url.get("endDate");
 
-    const newParams = { ...searchParams };
+    const newParams = {};
     if (search) newParams.search = search;
     if (lat && lng) {
       newParams.latitude = lat;
       newParams.longitude = lng;
     }
-    if (date) newParams.date = date;
+    if (startDate) newParams.startDate = startDate;
+    if (endDate) newParams.endDate = endDate;
 
     setSearchParams(newParams);
     setActiveFilter(filter);
@@ -88,6 +90,8 @@ function ExploreContent() {
     setSearchParams(params);
     if (params.filter && params.filter !== "all") {
       setActiveFilter(params.filter);
+    } else {
+      setActiveFilter("upcoming");
     }
   };
 

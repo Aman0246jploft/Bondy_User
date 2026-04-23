@@ -8,7 +8,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useSocket } from "@/context/SocketContext";
 
 export default function NotificationPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
     const { fetchUnreadNotificationCount } = useSocket();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -123,11 +123,11 @@ export default function NotificationPage() {
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
     if (days === 0) {
-      return `${t("todayAt")} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `${t("todayAt")} ${date.toLocaleTimeString(language === "mn" ? "mn-MN" : "en-US", { hour: '2-digit', minute: '2-digit', hour12: false })}`;
     } else if (days === 1) {
-      return `${t("yesterdayAt")} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `${t("yesterdayAt")} ${date.toLocaleTimeString(language === "mn" ? "mn-MN" : "en-US", { hour: '2-digit', minute: '2-digit', hour12: false })}`;
     } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleString(language === "mn" ? "mn-MN" : "en-US", { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
     }
   };
 

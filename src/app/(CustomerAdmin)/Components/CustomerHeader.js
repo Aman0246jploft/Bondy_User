@@ -44,7 +44,7 @@ function CustomerHeader() {
 
         {/* Right Actions */}
         <div className="topbar-actions">
-          <Link href="/Notification" className="bell-btn" style={{ position: "relative" }}>
+          {/* <Link href="/Notification" className="bell-btn" style={{ position: "relative" }}>
             <img src="/img/bell-icon.svg" alt="Notifications" />
             {unreadNotificationCount > 0 && (
               <span
@@ -69,7 +69,7 @@ function CustomerHeader() {
                 {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
               </span>
             )}
-          </Link>
+          </Link> */}
 
           <LanguageSelector />
 

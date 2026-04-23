@@ -1,14 +1,43 @@
 "use client";
 import Link from "next/link";
-import React from "react";
-import { Container, Row, Col, Button } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import { Container, Row, Col } from "react-bootstrap";
 import { useLanguage } from "@/context/LanguageContext";
 import { useRouter } from "next/navigation";
 import AuthButton from "@/components/AuthButton";
+import authApi from "@/api/authApi";
 
 const EventEaseUI = () => {
   const { t } = useLanguage();
   const router = useRouter();
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchSelfProfile = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const response = await authApi.getSelfProfile();
+        if (response?.status && isMounted) {
+          setUserRole(response?.data?.user?.userRole || response?.data?.user?.role || null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch self profile:", error);
+      }
+    };
+
+    fetchSelfProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const shouldHideCreateFirstEventButton = userRole === "CUSTOMER";
+
   return (
     <div className="eventEase-section">
       <Container>
@@ -77,9 +106,11 @@ const EventEaseUI = () => {
               <AuthButton requiresAuth onClick={() => router.push("/Explore")} className="btn-teal">
                 {t("startExploringBtn")}
               </AuthButton>
-              <AuthButton requiresAuth onClick={() => router.push("/BasicInfo")} className="btn-white">
-                {t("createFirstEventBtn")}
-              </AuthButton>
+              {!shouldHideCreateFirstEventButton && (
+                <AuthButton requiresAuth onClick={() => router.push("/BasicInfo")} className="btn-white">
+                  {t("createFirstEventBtn")}
+                </AuthButton>
+              )}
             </div>
           </Col>
         </Row>
