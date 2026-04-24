@@ -91,40 +91,39 @@ function page() {
         <h4 className="line-title">
           <span>{t("eventDetails")}</span>
         </h4>
-        <Row>
-          <Col md={2}>
-            <div className="event-dtl-card">
-              <div className="event-dtl-card-img">
-                <img
-                  src={getFullImageUrl(eventData.posterImage[0]) || "/img/org-img/event-dtl-img.png"}
-                  alt="Event Poster"
-                  onError={(e) => { e.target.src = "/img/org-img/event-dtl-img.png" }}
-                />
-              </div>
-              <h3>{eventData.eventTitle || "Event Title"}</h3>
+        <div>
+          {/* Image + Title side by side */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "16px", flexWrap: "wrap", marginBottom: "16px" }}>
+            <div className="event-dtl-card-img" style={{ flexShrink: 0 }}>
+              <img
+                src={getFullImageUrl(eventData.posterImage[0]) || "/img/org-img/event-dtl-img.png"}
+                alt="Event Poster"
+                onError={(e) => { e.target.src = "/img/org-img/event-dtl-img.png" }}
+              />
             </div>
-          </Col>
-          <Col md={10}>
-            <ul className="event-dtl-rgt">
-              <li>
-                <h6>{t("category")}</h6>
-                <p>{getCategoryName(eventData.eventCategory)}</p>
-              </li>
-              <li>
-                <h6>{t("startDate")}</h6>
-                <p>{eventData.startDate} {eventData.startTime}</p>
-                              <p>{eventData.startDate} {formatTime(eventData.startTime, true, language)}</p>
-              </li>
-              <li>
-                <h6>{t("tagsLabel")}</h6>
-                <p>{eventData.tags && eventData.tags.join(", ")}</p>
-              </li>
-              <li>
-                <span className="status-badge pending">{eventData.isDraft ? t("draftLabel") : t("reviewLabel")}</span>
-              </li>
-            </ul>
-          </Col>
-        </Row>
+            <h3 style={{ flex: 1, minWidth: 0, wordBreak: "break-word", overflowWrap: "anywhere", margin: 0, alignSelf: "center" }}>
+              {eventData.eventTitle || "Event Title"}
+            </h3>
+          </div>
+          {/* Category / Start Date / Tags below image */}
+          <ul className="event-dtl-rgt">
+            <li>
+              <h6>{t("category")}</h6>
+              <p>{getCategoryName(eventData.eventCategory)}</p>
+            </li>
+            <li>
+              <h6>{t("startDate")}</h6>
+              <p>{eventData.startDate} {formatTime(eventData.startTime, true, language)}</p>
+            </li>
+            <li>
+              <h6>{t("tagsLabel")}</h6>
+              <p style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>{eventData.tags && eventData.tags.join(", ")}</p>
+            </li>
+            <li>
+              <span className="status-badge pending">{eventData.isDraft ? t("draftLabel") : t("reviewLabel")}</span>
+            </li>
+          </ul>
+        </div>
         <div className="time-location common-dtl-list mt-20">
           <h4 className="line-title">
             <span>{t("dateTimeLocation")}</span>

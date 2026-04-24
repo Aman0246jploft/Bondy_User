@@ -151,7 +151,8 @@ function CoursesManagement() {
       }
     } catch (err) {
       toast.error(
-        t("failedToLoadPackages") || "Failed to load promotion packages",
+        t("failedToLoadPromotionPackages") ||
+          "Failed to load promotion packages",
       );
     } finally {
       setLoadingPackages(false);
@@ -359,7 +360,7 @@ function CoursesManagement() {
                         </Link>
                       )}
 
-                      <Link href={`/course-details/${course._id}`}>
+                      <Link href={`/programDetails?id=${course._id}`}>
                         {t("viewDetails")}{" "}
                         <img src="/img/Arrow-Right.svg" alt="arrow" />
                       </Link>
@@ -435,7 +436,7 @@ function CoursesManagement() {
           style={{ background: "#1a1a1a", border: "1px solid #333" }}
         >
           <Modal.Title style={{ color: "#fff" }}>
-            🚀 Promote:{" "}
+            🚀 {t("promote")}: {" "}
             <span
               className="text-truncate-1"
               style={{
@@ -454,18 +455,17 @@ function CoursesManagement() {
             <div className="text-center py-5">
               <Spinner animation="border" variant="primary" />
               <p className="mt-3" style={{ color: "#999" }}>
-                Loading packages...
+                {t("loadingPromotionPackages")}
               </p>
             </div>
           ) : promoPackages.length === 0 ? (
             <p className="text-center py-4" style={{ color: "#999" }}>
-              No active promotion packages available at the moment.
+              {t("noPromotionPackagesCourse")}
             </p>
           ) : (
             <>
               <p style={{ color: "#999", marginBottom: "20px" }}>
-                Select a plan to boost your course's visibility across the
-                platform.
+                {t("boostCourseVisibility")}
               </p>
               <Row className="gx-3 gy-3">
                 {promoPackages.map((pkg) => {
@@ -502,8 +502,8 @@ function CoursesManagement() {
                             marginBottom: "12px",
                           }}
                         >
-                          {pkg.durationInDays} day
-                          {pkg.durationInDays > 1 ? "s" : ""}
+                          {pkg.durationInDays}{" "}
+                          {pkg.durationInDays > 1 ? t("days") : t("day")}
                         </p>
                         {isSelected && (
                           <div
@@ -514,7 +514,7 @@ function CoursesManagement() {
                               fontSize: "13px",
                             }}
                           >
-                            ✓ Selected
+                            ✓ {t("selected")}
                           </div>
                         )}
                       </div>
@@ -538,11 +538,11 @@ function CoursesManagement() {
                 >
                   <div>
                     <p style={{ color: "#999", margin: 0, fontSize: "13px" }}>
-                      Selected Plan
+                      {t("selectedPlan")}
                     </p>
                     <p style={{ color: "#fff", margin: 0, fontWeight: 600 }}>
                       {selectedPackage.name} — {selectedPackage.durationInDays}{" "}
-                      days
+                      {selectedPackage.durationInDays > 1 ? t("days") : t("day")}
                     </p>
                   </div>
                   <h4 style={{ color: "#23ada4", margin: 0 }}>
@@ -565,7 +565,7 @@ function CoursesManagement() {
             onClick={closePromoModal}
             style={{ padding: "10px 24px" }}
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             className="custom-btn"
@@ -576,10 +576,10 @@ function CoursesManagement() {
             {checkingOut ? (
               <>
                 <Spinner animation="border" size="sm" className="me-2" />
-                Processing...
+                {t("processing")}
               </>
             ) : (
-              "Confirm & Pay"
+              t("confirmPay")
             )}
           </button>
         </Modal.Footer>

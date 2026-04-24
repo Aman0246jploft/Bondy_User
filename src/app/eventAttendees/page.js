@@ -7,12 +7,14 @@ import { Container, Form, InputGroup } from "react-bootstrap";
 import { FaSearch, FaArrowLeft } from "react-icons/fa";
 import Header from "@/components/Header";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 function EventAttendeesContent() {
   const searchParams = useSearchParams();
   const eventId = searchParams.get("id");
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [attendees, setAttendees] = useState([]);
   const [host, setHost] = useState(null);
@@ -27,10 +29,10 @@ function EventAttendeesContent() {
       try {
         setLoading(true);
         const response = await eventApi.getAllAttendees(eventId, search);
-        if (response.status) {
-          setAttendees(response.data.attendees || []);
-          setHost(response.data.host);
-          setEventTitle(response.data.eventTitle);
+        if (response?.status) {
+          setAttendees(response?.data?.attendees || []);
+          setHost(response?.data?.host);
+          setEventTitle(response?.data?.eventTitle);
         }
       } catch (error) {
         console.error("Error fetching attendees:", error);
@@ -45,11 +47,11 @@ function EventAttendeesContent() {
 
   useEffect(() => {
     if (eventTitle) {
-      document.title = `${eventTitle} Attendees | Bondy`;
+      document.title = `${eventTitle} ${t("attendees")} | Bondy`;
     } else {
-      document.title = 'Event Attendees | Bondy';
+      document.title = `${t("eventAttendeesTitle")} | Bondy`;
     }
-  }, [eventTitle]);
+  }, [eventTitle, t]);
 
   return (
     <>
@@ -66,7 +68,7 @@ function EventAttendeesContent() {
             >
               <FaArrowLeft size={20} />
             </button>
-            <h2 className="mb-0 fw-bold" style={{ marginTop: "50px" }}>Event Attendees</h2>
+            <h2 className="mb-0 fw-bold" style={{ marginTop: "50px" }}>{t("eventAttendeesTitle")}</h2>
           </div>
 
           <div className="mb-4">
@@ -75,7 +77,7 @@ function EventAttendeesContent() {
                 <FaSearch />
               </InputGroup.Text>
               <Form.Control
-                placeholder="Search attendees..."
+                placeholder={t("searchAttendeesPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="bg-dark text-white border-secondary"
@@ -86,7 +88,7 @@ function EventAttendeesContent() {
           {loading ? (
             <div className="text-center py-5">
               <div className="spinner-border text-light" role="status">
-                <span className="visually-hidden">Loading...</span>
+                <span className="visually-hidden">{t("loading")}</span>
               </div>
             </div>
           ) : (
@@ -121,17 +123,17 @@ function EventAttendeesContent() {
                     <h6 className="mb-0 text-white fw-semibold">
                       {host.firstName} {host.lastName}
                     </h6>
-                    <small className="text-secondary">Host / Organizer</small>
+                    <small className="text-secondary">{t("hostOrganizer")}</small>
                   </div>
                   {host.isVerified && (
-                    <span className="badge bg-success">Verified</span>
+                    <span className="badge bg-success">{t("verified")}</span>
                   )}
                 </div>
               )}
 
               {/* Attendees List */}
               <h5 className="mb-3 text-white">
-                Attendees ({attendees.length})
+                {t("attendees")} ({attendees.length})
               </h5>
 
               {attendees.length === 0 ? (
@@ -139,7 +141,7 @@ function EventAttendeesContent() {
                   className="text-center py-5 rounded-3"
                   style={{ backgroundColor: "#1a1a2e" }}
                 >
-                  <p className="text-secondary mb-0">No attendees found.</p>
+                  <p className="text-secondary mb-0">{t("noAttendeesFound")}</p>
                 </div>
               ) : (
                 <div className="d-flex flex-column gap-2">
@@ -190,7 +192,7 @@ function EventAttendeesContent() {
                           }}
                         >
                           {attendee.ticketsBought}{" "}
-                          {attendee.ticketsBought === 1 ? "Ticket" : "Tickets"}
+                          {attendee.ticketsBought === 1 ? t("ticket") : t("tickets")}
                         </span>
                       </div>
                     </div>
@@ -206,8 +208,10 @@ function EventAttendeesContent() {
 }
 
 export default function EventAttendeesPage() {
+  const { t } = useLanguage();
+
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t("loading")}</div>}>
       <EventAttendeesContent />
     </Suspense>
   );

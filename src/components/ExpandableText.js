@@ -13,7 +13,15 @@ const ExpandableText = ({ text, limit = 250, className = "section-text" }) => {
 
   return (
     <div className={className}>
-      <p style={{ marginBottom: "5px", color: "inherit" }}>
+      <p
+        style={{
+          marginBottom: "5px",
+          color: "inherit",
+          whiteSpace: "pre-wrap",
+          overflowWrap: "anywhere",
+          wordBreak: "break-word"
+        }}
+      >
         {displayedText}
         {!isExpanded && shouldTruncate && "..."}
       </p>
