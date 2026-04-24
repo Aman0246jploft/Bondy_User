@@ -2915,12 +2915,22 @@ footer .social_icon img {
   padding: 120px 0 60px;
 }
 
+.event-page-wrapper .header-box,
+.event-page-wrapper .event-desc,
+.details_Event_box,
+.crowd_main .Insights_box .insights-card,
+.sponsor-card {
+  min-width: 0;
+}
+
 .event-page-wrapper .event-title {
   color: var(--white);
   font-size: clamp(24px, 4vw, 42px);
   font-style: normal;
   font-weight: 700;
   line-height: 1.2;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .event-page-wrapper .event-title::first-letter {
@@ -2933,6 +2943,8 @@ footer .social_icon img {
   font-style: normal;
   font-weight: 700;
   line-height: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .event-page-wrapper .event-desc {
@@ -2943,6 +2955,7 @@ footer .social_icon img {
   line-height: normal;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .event-page-wrapper .price-text {
@@ -3023,6 +3036,8 @@ footer .social_icon img {
   font-style: normal;
   font-weight: 400;
   line-height: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 a.view-map {
@@ -3154,6 +3169,8 @@ a.view-map {
   font-style: normal;
   font-weight: 510;
   line-height: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .sponsor-img {
@@ -3199,6 +3216,8 @@ a.view-map {
   font-style: normal;
   font-weight: 700;
   line-height: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .details_Event_box .section-text {
@@ -3209,6 +3228,7 @@ a.view-map {
   line-height: 21px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .details_Event_box .gallery-grid {

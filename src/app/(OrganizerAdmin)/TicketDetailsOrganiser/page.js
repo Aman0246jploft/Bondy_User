@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { useEffect, useState, Suspense, useRef } from "react";
-import { Col, Row, Container, Spinner, Badge } from "react-bootstrap";
+import { Col, Row, Spinner } from "react-bootstrap";
 import { useSearchParams } from "next/navigation";
 import bookingApi from "@/api/bookingApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
@@ -15,10 +15,6 @@ const ExpandableText = ({ text, limit = 100 }) => {
 
   if (!text) return null;
   if (text.length <= limit) return <p>{text}</p>;
-
-  useEffect(() => {
-    document.title = "Ticket Details - Bondy";
-  }, []);
 
 
   return (
@@ -49,7 +45,6 @@ function TicketDetailsContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [ticketInfo, setTicketInfo] = useState(null);
-  const [ticketInfoFull, setTicketInfoFull] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copyStatus, setCopyStatus] = useState("");
   const ticketRef = useRef(null);
@@ -60,13 +55,16 @@ function TicketDetailsContent() {
     }
   }, [id]);
 
+  useEffect(() => {
+    document.title = "Ticket Details - Bondy";
+  }, []);
+
   const fetchTicketDetail = async (transactionId) => {
     setLoading(true);
     try {
       const res = await bookingApi.getTicketDetail(transactionId);
       if (res.status && res.data) {
         setTicketInfo(res?.data?.ticket);
-        setTicketInfoFull(res?.data);
       }
     } catch (error) {
       console.error("Error fetching ticket details:", error);
@@ -223,14 +221,14 @@ function TicketDetailsContent() {
                 <div className="ticket-dtl-card-img mx-auto mx-lg-0 mb-4">
                   <img
                     src={getFullImageUrl(item?.posterImage?.[0])}
-                    alt={title}
+                    alt={title || "Ticket poster"}
                     className="img-fluid"
                     onError={(e) => {
                       e.target.src = "/img/sidebar-logo.svg";
                     }}
                   />
                 </div>
-                <h3>{title}</h3>
+                <h3 className="ticket-title-wrap">{title || "N/A"}</h3>
                 <div className="mt-3">
                   {getStatusBadge(ticketInfo?.status)}
                 </div>
@@ -264,11 +262,11 @@ function TicketDetailsContent() {
                   </div>
                 </div>
 
-                <div className="tickt-dtl-bottom mt-auto">
+                <div className="tickt-dtl-bottom mt-3"  >
                   <Row className="g-4">
                     <Col md={3} sm={6}>
                       <h6>{t("orderTrackingCode") || "Booking ID"}</h6>
-                      <p className="text-truncate" title={ticketInfo?.bookingId}>{ticketInfo?.bookingId}</p>
+                      <p className="ticket-text-wrap" title={ticketInfo?.bookingId}>{ticketInfo?.bookingId}</p>
                     </Col>
                     <Col md={3} sm={6}>
                       <h6>{t("orderDate") || "Booking Date"}</h6>
@@ -276,7 +274,7 @@ function TicketDetailsContent() {
                     </Col>
                     <Col md={3} sm={6}>
                       <h6>{t("ticketType") || "Ticket"}</h6>
-                      <p>{item?.ticketName || item?.enrollmentType || "General"}</p>
+                      <p className="ticket-text-wrap">{item?.ticketName || item?.enrollmentType || "General"}</p>
                     </Col>
                     <Col md={3} sm={6}>
                       <h6>{t("quantity") || "Qty"}</h6>
@@ -352,7 +350,7 @@ function TicketDetailsContent() {
                     <Col md={6}>
                       <div className="info-box">
                         <h6>{t("dressCode") || "Dress Code"}</h6>
-                        <p>{item.dressCode}</p>
+                        <p className="ticket-text-wrap">{item.dressCode}</p>
                       </div>
                     </Col>
                   )}
@@ -384,7 +382,7 @@ function TicketDetailsContent() {
               <Col md={6}>
                 <div className="customer-info-simple">
                   <h6 className="text-secondary mb-1 text-uppercase small letter-spacing-1">{t("customer") || "Customer"}</h6>
-                  <h4 className="mb-0">{ticketInfo?.userId?.firstName} {ticketInfo?.userId?.lastName}</h4>
+                  <h4 className="mb-0 ticket-text-wrap">{ticketInfo?.userId?.firstName} {ticketInfo?.userId?.lastName}</h4>
                   <p className="text-secondary small mt-1">{t("totalPaid") || "Total Paid"}: <span className="text-white fw-bold">₮{ticketInfo?.totalAmount}</span></p>
                 </div>
               </Col>
@@ -411,6 +409,45 @@ function TicketDetailsContent() {
           </div>
         </div>
       </div>
+      <style jsx>{`
+        .ticket-title-wrap,
+        .ticket-text-wrap,
+        :global(.ticket-details-wrapper .info-box p),
+        :global(.ticket-details-wrapper .info-box span),
+        :global(.ticket-details-wrapper .tickt-dtl-bottom p),
+        :global(.ticket-details-wrapper .tickt-dtl-bottom h6) {
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
+
+        :global(.ticket-details-wrapper .ticket-dtl-card),
+        :global(.ticket-details-wrapper .ticket-dtl-main),
+        :global(.ticket-details-wrapper .tickt-dtl-bottom .col-md-3),
+        :global(.ticket-details-wrapper .info-box) {
+          min-width: 0;
+        }
+
+        @media (max-width: 991px) {
+          :global(.ticket-details-wrapper .ticket-dtl-card) {
+            text-align: left !important;
+          }
+
+          :global(.ticket-details-wrapper .tickt-dtl-info) {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+
+          :global(.ticket-details-wrapper .tickt-dtl-info-btns),
+          :global(.ticket-details-wrapper .tickt-dtl-info-btns > div) {
+            width: 100%;
+          }
+
+          :global(.ticket-details-wrapper .tickt-dtl-info-btns .common_btn) {
+            width: 100%;
+            justify-content: center;
+          }
+        }
+      `}</style>
     </div>
   );
 }

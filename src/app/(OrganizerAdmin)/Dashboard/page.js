@@ -79,7 +79,7 @@ function page() {
 
   const fetchNotifications = async () => {
     try {
-      const response = await notificationApi.getMyNotifications({ pageNo: 1, size: 5 });
+      const response = await notificationApi.getMyNotifications({ pageNo: 1, limit: 5 });
       if (response?.status || response?.status === "SUCCESS") {
         setNotifications(response.data.notifications || []);
       }

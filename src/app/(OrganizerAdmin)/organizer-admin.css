@@ -801,6 +801,44 @@ input[type="number"]::-webkit-outer-spin-button {
   font-weight: 700;
 }
 
+.event-preview-title {
+  width: 100%;
+  margin-bottom: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.event-preview-title span {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.event-preview-title-marquee {
+  display: flex;
+  gap: 2rem;
+  mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+}
+
+.event-preview-title-marquee span {
+  padding-right: 2rem;
+  animation: eventPreviewMarquee 14s linear infinite;
+}
+
+.event-preview-title-marquee:hover span {
+  animation-play-state: paused;
+}
+
+@keyframes eventPreviewMarquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(calc(-100% - 2rem));
+  }
+}
+
 .event-dtl-rgt {
   padding-left: 0;
   margin-bottom: 0;

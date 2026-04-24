@@ -109,57 +109,57 @@ function EventDetailsContent() {
         <h4 className="line-title">
           <span>{t("eventOverview")}</span>
         </h4>
-        <Row className="align-items-start">
-          <Col md={3}>
-            <div className="event-dtl-card">
-              <div className="event-dtl-card-img" style={{ borderRadius: "12px", overflow: "hidden", boxShadow: "0 4px 15px rgba(0,0,0,0.3)" }}>
-                <img
-                  src={getFullImageUrl(event.posterImage?.[0]) || "/img/sidebar-logo.svg"}
-                  alt={event.eventTitle}
-                  style={{ width: "100%", height: "auto", minHeight: "200px", objectFit: "cover" }}
-                  onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
-                />
-              </div>
-              <h3 className="mt-3" style={{ fontSize: "1.5rem", fontWeight: "700" }}>{event.eventTitle}</h3>
+        <div>
+          {/* Image + Title side by side */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "16px", flexWrap: "wrap", marginBottom: "16px" }}>
+            <div className="event-dtl-card-img" style={{ borderRadius: "12px", overflow: "hidden", boxShadow: "0 4px 15px rgba(0,0,0,0.3)", flexShrink: 0 }}>
+              <img
+                src={getFullImageUrl(event.posterImage?.[0]) || "/img/sidebar-logo.svg"}
+                alt={event.eventTitle}
+                style={{ width: "100%", height: "auto", minHeight: "200px", objectFit: "cover" }}
+                onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
+              />
             </div>
-          </Col>
-          <Col md={9}>
-            <ul className="event-dtl-rgt custom-grid-list">
-              <li>
-                <h6>{t("category")}</h6>
-                <p>{event.eventCategory?.name || t("na")}</p>
-              </li>
-              <li>
-                <h6>{t("createdDate")}</h6>
-                <p>
-                  {new Date(event.createdAt).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </p>
-              </li>
-              <li>
-                <h6>{t("organizerName")}</h6>
-                <p>
-                  {event.createdBy?.firstName
-                    ? `${event.createdBy.firstName} ${event.createdBy.lastName || ""}`
-                    : event.createdBy?.username || "N/A"}
-                </p>
-              </li>
-              <li>
-                <h6>{t("tags")}</h6>
-                <ExpandableText text={event.tags?.join(", ")} limit={50} />
-              </li>
-              <li>
-                <h6>{t("status")}</h6>
-                <span className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}>
-                  {event.status ? t(event.status.toLowerCase()) : t("upcoming")}
-                </span>
-              </li>
-            </ul>
-          </Col>
-        </Row>
+            <h3 style={{ flex: 1, minWidth: 0, wordBreak: "break-word", overflowWrap: "anywhere", margin: 0, alignSelf: "center", fontSize: "1.5rem", fontWeight: "700" }}>
+              {event.eventTitle}
+            </h3>
+          </div>
+          {/* Metadata below image */}
+          <ul className="event-dtl-rgt custom-grid-list">
+            <li>
+              <h6>{t("category")}</h6>
+              <p>{event.eventCategory?.name || t("na")}</p>
+            </li>
+            <li>
+              <h6>{t("createdDate")}</h6>
+              <p>
+                {new Date(event.createdAt).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </p>
+            </li>
+            <li>
+              <h6>{t("organizerName")}</h6>
+              <p>
+                {event.createdBy?.firstName
+                  ? `${event.createdBy.firstName} ${event.createdBy.lastName || ""}`
+                  : event.createdBy?.username || "N/A"}
+              </p>
+            </li>
+            <li>
+              <h6>{t("tags")}</h6>
+              <ExpandableText text={event.tags?.join(", ")} limit={50} />
+            </li>
+            <li>
+              <h6>{t("status")}</h6>
+              <span className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}>
+                {event.status ? t(event.status.toLowerCase()) : t("upcoming")}
+              </span>
+            </li>
+          </ul>
+        </div>
 
         <div className="time-location common-dtl-list mt-40">
           <h4 className="line-title">
@@ -183,8 +183,7 @@ function EventDetailsContent() {
                     year: "numeric",
                   })}
                   <span className="mx-2">•</span>
-                  {event.startTime || "N/A"}
-                                  {formatTime(event.startTime, true, language) || "N/A"}
+                  {formatTime(event.startTime, true, language) || "N/A"}
                 </p>
               </div>
               <div>
@@ -199,8 +198,7 @@ function EventDetailsContent() {
                     year: "numeric",
                   })}
                   <span className="mx-2">•</span>
-                  {event.endTime || "N/A"}
-                                  {formatTime(event.endTime, true, language) || "N/A"}
+                  {formatTime(event.endTime, true, language) || "N/A"}
                 </p>
               </div>
             </li>
@@ -322,7 +320,7 @@ function EventDetailsContent() {
         )}
 
         {event.shortTeaserVideo && event.shortTeaserVideo.length > 0 && (
-          <div className="teaser-video mt-40">
+          <div className="teaser-video mt-40"  style={{ maxWidth: "300px",maxHight:"300px"}}>
             <h4 className="line-title">
               <span>{t("teaserVideo")}</span>
             </h4>
