@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import GuestRoute from "@/components/GuestRoute";
 import { useLanguage } from "@/context/LanguageContext";
+import { useGoogleLogin } from "@react-oauth/google";
 
 const STRONG_PASSWORD_REGEX =
   /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
@@ -25,6 +26,7 @@ function RegisterForm() {
   const fileRef = useRef(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [customerErrors, setCustomerErrors] = useState({});
   const [organizerErrors, setOrganizerErrors] = useState({});
 
@@ -310,8 +312,93 @@ function RegisterForm() {
   };
 
   useEffect(() => {
-        document.title = `${t("signUp")} | Bondy`;
-    }, [t]);
+    document.title = `${t("signUp")} | Bondy`;
+  }, [t]);
+
+  const handlePostLoginRedirect = async () => {
+    try {
+      const profileRes = await authApi.getSelfProfile();
+      if (profileRes.status) {
+        const profile = profileRes.data.user;
+        if (!profile.firstName || !profile.lastName) return router.push("/completeprofile");
+        if (!profile.categories || profile.categories.length === 0) return router.push("/insterest");
+        router.push("/");
+      } else {
+        router.push("/completeprofile");
+      }
+    } catch {
+      router.push("/completeprofile");
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setGoogleLoading(true);
+      try {
+        const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        if (!userInfoRes.ok) throw new Error("Failed to fetch Google user info");
+        const userInfo = await userInfoRes.json();
+        const roleType = selectedTab === "Organizer" ? "ORGANIZER" : "CUSTOMER";
+        const response = await authApi.socialLogin({
+          socialId: userInfo.sub,
+          socialType: "GOOGLE",
+          type: roleType,
+          email: userInfo.email || "",
+          firstName: userInfo.given_name || "",
+          lastName: userInfo.family_name || "",
+          profileImage: userInfo.picture || "",
+        });
+        if (response.status) {
+          if (response.data.token) localStorage.setItem("token", response.data.token);
+          await handlePostLoginRedirect();
+        }
+      } catch (error) {
+        // handled by interceptor
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: () => toast.error("Google sign-up failed. Please try again."),
+  });
+
+  const SocialButtons = () => (
+    <>
+      <div className="other_text">
+        <span></span>
+        <h6>{t("orSignUpWith")}</h6>
+        <span></span>
+      </div>
+      <div className="social_icon">
+        <button
+          type="button"
+          disabled
+          title="Apple login coming soon"
+          style={{ background: "none", border: "none", padding: 0, opacity: 0.4, cursor: "not-allowed" }}
+        >
+          <img src="/img/app_icon.svg" alt="apple" />
+        </button>
+        <button
+          type="button"
+          onClick={() => googleLogin()}
+          disabled={googleLoading}
+          title="Sign up with Google"
+          style={{ background: "none", border: "none", padding: 0, opacity: googleLoading ? 0.6 : 1, cursor: "pointer" }}
+        >
+          <img src="/img/google_icon.svg" alt="google" />
+        </button>
+        <button
+          type="button"
+          disabled
+          title="Facebook login coming soon"
+          style={{ background: "none", border: "none", padding: 0, opacity: 0.4, cursor: "not-allowed" }}
+        >
+          <img src="/img/facebook_icon.svg" alt="facebook" />
+        </button>
+      </div>
+    </>
+  );
 
   return (
     <GuestRoute>
@@ -469,26 +556,7 @@ function RegisterForm() {
                               </button>
                             </Form>
 
-                            <div className="other_text">
-                              <span></span>
-                              <h6>{t("orSignUpWith")}</h6>
-                              <span></span>
-                            </div>
-
-                            <div className="social_icon">
-                              <Link href="">
-                                <img src="/img/app_icon.svg" alt="apple" />
-                              </Link>
-                              <Link href="">
-                                <img src="/img/google_icon.svg" alt="google" />
-                              </Link>
-                              <Link href="">
-                                <img
-                                  src="/img/facebook_icon.svg"
-                                  alt="facebook"
-                                />
-                              </Link>
-                            </div>
+                            <SocialButtons />
 
                             <div className="other_signup">
                               <span>
@@ -715,30 +783,11 @@ function RegisterForm() {
                               </button>
                             </Form>
 
-                            <div className="other_text">
-                              <span></span>
-                              <h6>{t("orSignUpWith")}</h6>
-                              <span></span>
-                            </div>
-
-                            <div className="social_icon">
-                              <Link href="">
-                                <img src="/img/app_icon.svg" alt="apple" />
-                              </Link>
-                              <Link href="">
-                                <img src="/img/google_icon.svg" alt="google" />
-                              </Link>
-                              <Link href="">
-                                <img
-                                  src="/img/facebook_icon.svg"
-                                  alt="facebook"
-                                />
-                              </Link>
-                            </div>
+                            <SocialButtons />
 
                             <div className="other_signup">
                               <span>
-                                {t("alreadyHaveAccount")} {" "}
+                                {t("alreadyHaveAccount")}{" "}
                                 <Link href="/login">{t("login")}</Link>
                               </span>
                             </div>
