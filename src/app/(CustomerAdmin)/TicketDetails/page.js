@@ -8,32 +8,37 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import QRCode from "react-qr-code";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatTime } from "@/utils/timeHelper";
+import toast from "react-hot-toast";
 
-const ExpandableText = ({ text, limit = 100 }) => {
+const ExpandableText = ({ text, limit = 100, forceExpanded = false, hideToggle = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useLanguage();
 
   if (!text) return null;
   if (text.length <= limit) return <p>{text}</p>;
 
+  const expanded = forceExpanded || isExpanded;
+
   return (
     <div>
       <p>
-        {isExpanded ? text : `${text.substring(0, limit)}...`}
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="btn-link-teal ms-2"
-          style={{
-            background: "none",
-            border: "none",
-            color: "var(--primary-teal)",
-            fontSize: "0.875rem",
-            padding: 0,
-            textDecoration: "underline",
-          }}
-        >
-          {isExpanded ? t("viewLess") || "View Less" : t("viewMore") || "View More"}
-        </button>
+        {expanded ? text : `${text.substring(0, limit)}...`}
+        {!hideToggle && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="btn-link-teal ms-2"
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--primary-teal)",
+              fontSize: "0.875rem",
+              padding: 0,
+              textDecoration: "underline",
+            }}
+          >
+            {isExpanded ? t("viewLess") || "View Less" : t("viewMore") || "View More"}
+          </button>
+        )}
       </p>
     </div>
   );
@@ -46,7 +51,7 @@ function TicketDetailsContent() {
   const [ticketInfo, setTicketInfo] = useState(null);
   const [ticketInfoFull, setTicketInfoFull] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [copyStatus, setCopyStatus] = useState("");
+  const [isSharingImage, setIsSharingImage] = useState(false);
   const ticketRef = useRef(null);
 
   useEffect(() => {
@@ -71,11 +76,13 @@ function TicketDetailsContent() {
     }
   };
 
-  const handleDownloadTicket = async () => {
+  const downloadTicketImage = async () => {
     try {
       if (!ticketRef.current) return;
       const html2canvas = (await import("html2canvas")).default;
-      const { jsPDF } = await import("jspdf");
+
+      setIsSharingImage(true);
+      await new Promise((resolve) => setTimeout(resolve, 80));
 
       const canvas = await html2canvas(ticketRef.current, {
         scale: 2,
@@ -83,45 +90,29 @@ function TicketDetailsContent() {
         backgroundColor: "#1a1a1a",
       });
 
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const imageUrl = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = imageUrl;
+      link.download = `Ticket-${ticketInfo?.bookingId || "details"}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Ticket-${ticketInfo?.bookingId || "details"}.pdf`);
+      toast.success(t("ticketImageDownloaded") || "Ticket image downloaded");
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      console.error("Error generating ticket image:", error);
+      toast.error(t("shareLinkCopyFailed") || "Could not download ticket");
+    } finally {
+      setIsSharingImage(false);
     }
+  };
+
+  const handleDownloadTicket = async () => {
+    await downloadTicketImage();
   };
 
   const handleShare = async () => {
-    try {
-      const res = await bookingApi.getShareAndDownloadUrls(id);
-      if (res.status && res.data) {
-        const shareUrl = res.data.shareUrl;
-        await navigator.clipboard.writeText(shareUrl);
-        setCopyStatus(t("linkCopied") || "Share link copied to clipboard!");
-        setTimeout(() => setCopyStatus(""), 3000);
-      }
-    } catch (error) {
-      console.error("Error sharing ticket:", error);
-    }
-  };
-
-  const handleDownloadLink = async () => {
-    try {
-      const res = await bookingApi.getShareAndDownloadUrls(id);
-      if (res.status && res.data) {
-        const downloadUrl = res.data.downloadUrl;
-        await navigator.clipboard.writeText(downloadUrl);
-        setCopyStatus(t("downloadLinkCopied") || "Download link copied to clipboard!");
-        window.open(downloadUrl, "_blank");
-        setTimeout(() => setCopyStatus(""), 3000);
-      }
-    } catch (error) {
-      console.error("Error generating download link:", error);
-    }
+    await downloadTicketImage();
   };
 
   const getStatusBadge = (status) => {
@@ -189,11 +180,6 @@ function TicketDetailsContent() {
           {t("backToTicket") || "Back to Tickets"}
         </Link>
         <div className="d-flex align-items-center gap-3">
-          {copyStatus && (
-            <span className="text-teal small animate__animated animate__fadeIn">
-              {copyStatus}
-            </span>
-          )}
           <button
             className="common_btn d-flex align-items-center"
             type="button"
@@ -289,7 +275,7 @@ function TicketDetailsContent() {
                     <img src="/img/Map-Point.svg" alt="" className="me-2" />
                     {t("location") || "Location"}
                   </h6>
-                  <ExpandableText text={fullAddress} />
+                  <ExpandableText text={fullAddress} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
                 </div>
               </Col>
 
@@ -324,7 +310,7 @@ function TicketDetailsContent() {
               <Col md={12}>
                 <div className="info-box">
                   <h6>{t("description") || "Description"}</h6>
-                  <ExpandableText text={item?.shortdesc || item?.longdesc} limit={200} />
+                  <ExpandableText text={item?.shortdesc || item?.longdesc} limit={200} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
                 </div>
               </Col>
 
@@ -350,7 +336,7 @@ function TicketDetailsContent() {
                     <Col md={12}>
                       <div className="info-box">
                         <h6>{t("addOns") || "Add-ons"}</h6>
-                        <ExpandableText text={item.addOns} limit={150} />
+                        <ExpandableText text={item.addOns} limit={150} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
                       </div>
                     </Col>
                   )}
@@ -361,7 +347,7 @@ function TicketDetailsContent() {
                 <Col md={12}>
                   <div className="info-box">
                     <h6>{t("whatYouWillLearn") || "What you will learn"}</h6>
-                    <ExpandableText text={item.whatYouWillLearn} limit={200} />
+                    <ExpandableText text={item.whatYouWillLearn} limit={200} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
                   </div>
                 </Col>
               )}
