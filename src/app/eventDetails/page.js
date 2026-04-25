@@ -94,6 +94,33 @@ function EventDetailsContent() {
     });
   };
 
+  const handleShare = async () => {
+    const shareUrl = eventId
+      ? `${window.location.origin}${window.location.pathname}?id=${eventId}`
+      : window.location.href;
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = shareUrl;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+
+      toast.success(t("shareLinkCopied"));
+    } catch (error) {
+      console.error("Share failed:", error);
+      toast.error(t("shareLinkCopyFailed"));
+    }
+  };
+
   const mediaItems = [
     ...(event?.shortTeaserVideo || []).map((url) => ({ type: "video", url })),
     ...(event?.posterImage || []).map((url) => ({ type: "image", url })),
@@ -150,7 +177,7 @@ function EventDetailsContent() {
                 >
                   {t("bookTicketNow")}
                 </AuthButton>
-                <Button className="book_mark_icon">
+                <Button className="book_mark_icon" onClick={handleShare}>
                   <img src="/img/share_icon.svg" />
                 </Button>
               </div>
@@ -333,7 +360,7 @@ function EventDetailsContent() {
                     >
                       {t("bookTicketNow")}
                     </AuthButton>
-                    <Button className="book_mark_icon">
+                    <Button className="book_mark_icon" onClick={handleShare}>
                       <img src="/img/share_icon.svg" />
                     </Button>
                   </div>

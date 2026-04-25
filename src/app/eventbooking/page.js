@@ -11,6 +11,7 @@ import eventApi from "@/api/eventApi";
 import bookingApi from "@/api/bookingApi";
 import courseApi from "@/api/courseApi";
 import wishlistApi from "@/api/wishlistApi";
+import toast from "react-hot-toast";
 
 function BookingPageContent() {
   const searchParams = useSearchParams();
@@ -139,6 +140,31 @@ function BookingPageContent() {
     }
   };
 
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = shareUrl;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+
+      toast.success(t("shareLinkCopied"));
+    } catch (error) {
+      console.error("Share failed:", error);
+      toast.error(t("shareLinkCopyFailed"));
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -195,7 +221,7 @@ function BookingPageContent() {
                   <span className="price-text">₮{bookingItem.price}</span>{" "}
                   <span>{t("onwards")}</span>
                 </h4>
-                <Button className="book_mark_icon">
+                <Button className="book_mark_icon" onClick={handleShare}>
                   <img src="/img/share_icon.svg" />
                 </Button>
               </div>

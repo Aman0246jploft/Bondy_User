@@ -41,9 +41,9 @@ function OrganizerHeader() {
 
         {/* Right Actions */}
         <div className="topbar-actions">
-          <Link href="" className="bell-btn">
+          {/* <Link href="" className="bell-btn">
             <img src="/img/bell-icon.svg" alt="Notifications" />
-          </Link>
+          </Link> */}
 
           <LanguageSelector />
 
