@@ -8,7 +8,8 @@ export const translations = {
     signUp: "Sign Up",
     // Authentication
     signIn: "Sign In",
-    addOns: "Addons",
+    addOns: "Add-ons",
+    minAge: "Min age",
     // Auth Required Modal
     authRequiredTitle: "Account Required",
     activePromotion: "Active Promotion",
@@ -1071,7 +1072,8 @@ export const translations = {
     organizers: "Зохион байгуулагчид",
     contactUs: "Холбоо барих",
     signUp: "Бүртгүүлэх",
-    addOns:"Нэмэлтүүд",
+    addOns: "Нэмэлтүүд",
+    minAge: "Доод нас",
     // Auth Required Modal
     authRequiredTitle: "Бүртгэл шаардлагатай",
     authRequiredDesc: "Энэ функцийг ашиглахын тулд нэвтэрч орно уу.",
