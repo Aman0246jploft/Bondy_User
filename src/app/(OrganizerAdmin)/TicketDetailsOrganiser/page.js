@@ -195,29 +195,19 @@ function TicketDetailsContent() {
 
   return (
     <div className="ticket-details-wrapper">
-      <div className="d-flex gap-3 align-items-center justify-content-between mb-4">
+      <div className="ticket-page-toolbar d-flex gap-3 align-items-center justify-content-between mb-4 flex-wrap">
         <Link href="/MyTicketsOrganiser" className="back-btn mb-0">
           <img src="/img/arrow-left-white.svg" alt="Back" className="me-2" />
           {t("backToTicket") || "Back to Tickets"}
         </Link>
-        <div className="d-flex align-items-center gap-3">
-          <button
-            className="common_btn d-flex align-items-center"
-            type="button"
-            onClick={handleShare}
-          >
-            <img src="/img/share-icon.svg" className="me-2" alt="" />
-            {t("share") || "Share"}
-          </button>
-        </div>
       </div>
 
-      <div ref={ticketRef} className="cards p-0 overflow-hidden">
-        <div className="p-4 p-md-5">
-          <Row className="g-4">
-            <Col lg={4} xl={3}>
-              <div className="ticket-dtl-card text-center text-lg-start">
-                <div className="ticket-dtl-card-img mx-auto mx-lg-0 mb-4">
+      <div ref={ticketRef} className="cards ticket-details-card p-0 overflow-hidden">
+        <div className="p-4 p-md-4 p-xl-5">
+          <div className="ticket-hero-grid">
+            <div>
+              <div className="ticket-dtl-card h-100">
+                <div className="ticket-dtl-card-img mx-auto mx-lg-0 mb-0">
                   <img
                     src={getFullImageUrl(item?.posterImage?.[0])}
                     alt={title || "Ticket poster"}
@@ -227,71 +217,70 @@ function TicketDetailsContent() {
                     }}
                   />
                 </div>
-                <h3 className="ticket-title-wrap">{title || "N/A"}</h3>
-                <div className="mt-3">
-                  {getStatusBadge(ticketInfo?.status)}
-                </div>
               </div>
-            </Col>
+            </div>
 
-            <Col lg={8} xl={9}>
-              <div className="ticket-dtl-main h-100 d-flex flex-column">
-                <div className="tickt-dtl-info d-flex justify-content-between align-items-center mb-5">
-                  <h4 className="mb-0">{t("ticketDetails") || "Ticket Information"}</h4>
-                  <div className="tickt-dtl-info-btns" data-html2canvas-ignore="true">
-                    <div className="d-flex gap-2">
+            <div>
+              <div className="ticket-dtl-main h-100 d-flex flex-column gap-4">
+                <div className="ticket-header-block">
+                  <div className="ticket-heading-row">
+                    <div className="ticket-heading-copy">
+                      <div className="mb-2">{getStatusBadge(ticketInfo?.status)}</div>
+                      <h1 className="ticket-page-title">{title || "N/A"}</h1>
+                      <p className="ticket-subtitle mb-0">
+                        {isEvent ? (t("eventDetails") || "Event details") : (t("courseDetails") || "Course details")}
+                      </p>
+                    </div>
+                    <div className="ticket-action-group" data-html2canvas-ignore="true">
                       <button
-                        className="common_btn d-flex align-items-center"
+                        className="common_btn d-flex align-items-center justify-content-center"
                         type="button"
                         onClick={handleDownloadTicket}
                       >
                         <img src="/img/download-arrow.svg" className="me-2" alt="" />
                         {t("downloadTicket") || "Download PDF"}
                       </button>
-                      {/* <button
-                        className="btn-link-teal d-flex align-items-center p-2 border rounded"
+                      <button
+                        className="common_btn d-flex align-items-center justify-content-center"
                         type="button"
-                        onClick={handleDownloadLink}
-                        title={t("getDownloadLink") || "Get Public Download Link"}
-                        style={{ background: "rgba(0, 128, 128, 0.1)", border: "1px solid var(--primary-teal)" }}
+                        onClick={handleShare}
                       >
-                        <img src="/img/link-icon.svg" width="18" height="18" alt="Link" />
-                      </button> */}
+                        <img src="/img/share-icon.svg" className="me-2" alt="" />
+                        {t("share") || "Share"}
+                      </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="tickt-dtl-bottom mt-3"  >
-                  <Row className="g-4">
-                    <Col md={3} sm={6}>
-                      <h6>{t("orderTrackingCode") || "Booking ID"}</h6>
-                      <p className="ticket-text-wrap" title={ticketInfo?.bookingId}>{ticketInfo?.bookingId}</p>
-                    </Col>
-                    <Col md={3} sm={6}>
-                      <h6>{t("orderDate") || "Booking Date"}</h6>
-                      <p>{formatEventDate(ticketInfo?.createdAt)}</p>
-                    </Col>
-                    <Col md={3} sm={6}>
-                      <h6>{t("ticketType") || "Ticket"}</h6>
-                      <p className="ticket-text-wrap">{item?.ticketName || item?.enrollmentType || "General"}</p>
-                    </Col>
-                    <Col md={3} sm={6}>
-                      <h6>{t("quantity") || "Qty"}</h6>
-                      <p>{ticketInfo?.qty} {t("ticketsSuffix") || "Tickets"}</p>
-                    </Col>
-                  </Row>
+                <div className="ticket-summary-grid">
+                  <div className="ticket-summary-item">
+                    <h6>{t("orderTrackingCode") || "Booking ID"}</h6>
+                    <p className="ticket-text-wrap" title={ticketInfo?.bookingId}>{ticketInfo?.bookingId}</p>
+                  </div>
+                  <div className="ticket-summary-item">
+                    <h6>{t("orderDate") || "Booking Date"}</h6>
+                    <p>{formatEventDate(ticketInfo?.createdAt)}</p>
+                  </div>
+                  <div className="ticket-summary-item">
+                    <h6>{t("ticketType") || "Ticket"}</h6>
+                    <p className="ticket-text-wrap">{item?.ticketName || item?.enrollmentType || "General"}</p>
+                  </div>
+                  <div className="ticket-summary-item">
+                    <h6>{t("quantity") || "Qty"}</h6>
+                    <p>{ticketInfo?.qty} {t("ticketsSuffix") || "Tickets"}</p>
+                  </div>
                 </div>
               </div>
-            </Col>
-          </Row>
+            </div>
+          </div>
 
-          <div className="event-dtl mt-5 pt-4 border-top border-secondary">
-            <h4 className="line-title">
+          <div className="event-dtl ticket-section-block mt-4 mt-lg-5">
+            <h4 className="line-title mb-3">
               <span>{isEvent ? t("eventDetails") : t("courseDetails")}</span>
             </h4>
             <Row className="g-4 mt-2">
               <Col md={6}>
-                <div className="info-box">
+                <div className="info-box ticket-panel-box">
                   <h6>
                     <img src="/img/Map-Point.svg" alt="" className="me-2" />
                     {t("location") || "Location"}
@@ -301,7 +290,7 @@ function TicketDetailsContent() {
               </Col>
 
               <Col md={6}>
-                <div className="info-box">
+                <div className="info-box ticket-panel-box">
                   <h6>
                     <img src="/img/white-calendar.svg" alt="" className="me-2" />
                     {t("timeSlots") || "Time Slots"}
@@ -329,7 +318,7 @@ function TicketDetailsContent() {
               </Col>
 
               <Col md={12}>
-                <div className="info-box">
+                <div className="info-box ticket-panel-box">
                   <h6>{t("description") || "Description"}</h6>
                   <ExpandableText text={item?.shortdesc || item?.longdesc} limit={200} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
                 </div>
@@ -339,7 +328,7 @@ function TicketDetailsContent() {
                 <>
                   {item?.ageRestriction && (
                     <Col md={6}>
-                      <div className="info-box">
+                      <div className="info-box ticket-panel-box">
                         <h6>{t("ageRestriction") || "Age Restriction"}</h6>
                         <p>{item.ageRestriction.type === "MIN_AGE" ? `${t("minAge") || "Min age"}: ${item.ageRestriction.minAge}+` : t("noRestriction")}</p>
                       </div>
@@ -347,7 +336,7 @@ function TicketDetailsContent() {
                   )}
                   {item?.dressCode && (
                     <Col md={6}>
-                      <div className="info-box">
+                      <div className="info-box ticket-panel-box">
                         <h6>{t("dressCode") || "Dress Code"}</h6>
                         <p className="ticket-text-wrap">{item.dressCode}</p>
                       </div>
@@ -355,7 +344,7 @@ function TicketDetailsContent() {
                   )}
                   {item?.addOns && (
                     <Col md={12}>
-                      <div className="info-box">
+                      <div className="info-box ticket-panel-box">
                         <h6>{t("addOns") || "Add-ons"}</h6>
                         <ExpandableText text={item.addOns} limit={150} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
                       </div>
@@ -366,7 +355,7 @@ function TicketDetailsContent() {
 
               {!isEvent && item?.whatYouWillLearn && (
                 <Col md={12}>
-                  <div className="info-box">
+                  <div className="info-box ticket-panel-box">
                     <h6>{t("whatYouWillLearn") || "What you will learn"}</h6>
                     <ExpandableText text={item.whatYouWillLearn} limit={200} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
                   </div>
@@ -375,18 +364,17 @@ function TicketDetailsContent() {
             </Row>
           </div>
 
-          {/* Simple Clean Footer instead of Merchant Rubbish */}
-          <div className="ticket-footer mt-5 pt-4 border-top border-secondary">
+          <div className="ticket-footer ticket-section-block mt-4">
             <Row className="align-items-center">
               <Col md={6}>
-                <div className="customer-info-simple">
+                <div className="customer-info-simple ticket-panel-box h-100">
                   <h6 className="text-secondary mb-1 text-uppercase small letter-spacing-1">{t("customer") || "Customer"}</h6>
                   <h4 className="mb-0 ticket-text-wrap">{ticketInfo?.userId?.firstName} {ticketInfo?.userId?.lastName}</h4>
                   <p className="text-secondary small mt-1">{t("totalPaid") || "Total Paid"}: <span className="text-white fw-bold">₮{ticketInfo?.totalAmount}</span></p>
                 </div>
               </Col>
               <Col md={6} className="text-md-end mt-4 mt-md-0">
-                <div className="qr-container p-0 bg-transparent border-0 d-inline-block">
+                <div className="qr-container ticket-panel-box p-3 bg-transparent border-0 d-inline-block">
                   {ticketInfo?.qrCodeData ? (
                     <div className="qr-wrapper">
                       <div className="qr-box p-2 bg-white rounded-3 shadow-lg" style={{ width: "140px", height: "140px" }}>
@@ -409,6 +397,120 @@ function TicketDetailsContent() {
         </div>
       </div>
       <style jsx>{`
+        .ticket-details-card {
+          background: rgba(255, 255, 255, 0.02);
+          border-radius: 24px;
+        }
+
+        .ticket-hero-grid {
+          display: grid;
+          grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+          gap: 1.5rem;
+          align-items: start;
+          min-width: 0;
+        }
+
+        .ticket-hero-grid > * {
+          min-width: 0;
+        }
+
+        .ticket-dtl-card {
+          height: 100%;
+        }
+
+        .ticket-dtl-card-img {
+          width: 100%;
+          aspect-ratio: 4 / 5;
+          overflow: hidden;
+          border-radius: 22px;
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        .ticket-dtl-card-img img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .ticket-header-block {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .ticket-heading-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .ticket-heading-copy {
+          flex: 1 1 320px;
+          min-width: 0;
+        }
+
+        .ticket-page-title {
+          margin: 0;
+          font-size: clamp(1.5rem, 3vw, 2.5rem);
+          line-height: 1.12;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+          max-width: 100%;
+        }
+
+        .ticket-subtitle {
+          color: rgba(255, 255, 255, 0.72);
+          font-size: 0.95rem;
+        }
+
+        .ticket-action-group {
+          display: flex;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+          flex: 0 0 auto;
+        }
+
+        .ticket-action-group :global(.common_btn) {
+          min-width: 170px;
+        }
+
+        .ticket-summary-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 1rem;
+        }
+
+        .ticket-summary-item,
+        .ticket-panel-box {
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 18px;
+          padding: 1rem 1.1rem;
+        }
+
+        .ticket-summary-item h6,
+        .ticket-panel-box h6 {
+          margin-bottom: 0.55rem;
+        }
+
+        .ticket-summary-item p,
+        .ticket-panel-box p {
+          margin-bottom: 0;
+        }
+
+        .ticket-section-block {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .ticket-footer :global(.row) {
+          --bs-gutter-y: 1rem;
+        }
+
         .ticket-title-wrap,
         .ticket-text-wrap,
         :global(.ticket-details-wrapper .info-box p),
@@ -421,29 +523,48 @@ function TicketDetailsContent() {
 
         :global(.ticket-details-wrapper .ticket-dtl-card),
         :global(.ticket-details-wrapper .ticket-dtl-main),
-        :global(.ticket-details-wrapper .tickt-dtl-bottom .col-md-3),
         :global(.ticket-details-wrapper .info-box) {
           min-width: 0;
         }
 
+        @media (max-width: 1199px) {
+          .ticket-summary-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
         @media (max-width: 991px) {
+          .ticket-hero-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .ticket-dtl-card-img {
+            max-width: 320px;
+            margin: 0 auto;
+          }
+
           :global(.ticket-details-wrapper .ticket-dtl-card) {
             text-align: left !important;
           }
 
-          :global(.ticket-details-wrapper .tickt-dtl-info) {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-
-          :global(.ticket-details-wrapper .tickt-dtl-info-btns),
-          :global(.ticket-details-wrapper .tickt-dtl-info-btns > div) {
+          .ticket-heading-row,
+          .ticket-action-group,
+          .ticket-action-group :global(.common_btn) {
             width: 100%;
           }
 
-          :global(.ticket-details-wrapper .tickt-dtl-info-btns .common_btn) {
-            width: 100%;
-            justify-content: center;
+          .ticket-action-group {
+            justify-content: stretch;
+          }
+
+          .ticket-action-group :global(.common_btn) {
+            min-width: 0;
+          }
+        }
+
+        @media (max-width: 575px) {
+          .ticket-summary-grid {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
