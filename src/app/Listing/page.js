@@ -7,7 +7,8 @@ import Header from "../../components/Header";
 import FAQ from "../../components/FAQ";
 import Footer from "../../components/Footer";
 import Field from "../../components/Field";
-import { Container, Pagination } from "react-bootstrap";
+import { Container } from "react-bootstrap";
+import PaginationComponent from "@/components/PaginationComponent";
 import eventApi from "@/api/eventApi";
 import categoryApi from "@/api/categoryApi";
 import { useLanguage } from "@/context/LanguageContext";
@@ -273,39 +274,11 @@ function ListingContent() {
           )}
 
           {/* ── Pagination ────────────────────── */}
-          {totalPages > 1 && (
-            <div className="d-flex justify-content-center mt-5 mb-5">
-              <Pagination>
-                <Pagination.First
-                  onClick={() => handlePageChange(1)}
-                  disabled={page === 1}
-                />
-                <Pagination.Prev
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page === 1}
-                />
-
-                {[...Array(totalPages)].map((_, idx) => (
-                  <Pagination.Item
-                    key={idx + 1}
-                    active={idx + 1 === page}
-                    onClick={() => handlePageChange(idx + 1)}
-                  >
-                    {idx + 1}
-                  </Pagination.Item>
-                ))}
-
-                <Pagination.Next
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page === totalPages}
-                />
-                <Pagination.Last
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={page === totalPages}
-                />
-              </Pagination>
-            </div>
-          )}
+          <PaginationComponent
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </section>
 
