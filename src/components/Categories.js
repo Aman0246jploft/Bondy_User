@@ -12,6 +12,12 @@ const Categories = () => {
     "bg-sports",
     "bg-esports",
   ];
+  const featuredCardImages = [
+    "/img/fetures_img01.png",
+    "/img/fetures_img03.png",
+    "/img/fetures_img04.png",
+    "/img/fetures_img06.png",
+  ];
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -35,7 +41,7 @@ const Categories = () => {
       title: t("events"),
       count: `${stats?.totalEvents || 0} ${(stats?.totalEvents || 0) === 1 ? t("concert") : t("concerts")}`,
       bg: "bg-events",
-      img: "/img/fetures_img02.png",
+      img: "/img/fetures_img06.png",
       path: "/Listing?type=all",
     },
     {
@@ -52,7 +58,7 @@ const Categories = () => {
     title: cat.name,
     count: `${cat.eventCount || 0} ${(cat.eventCount || 0) === 1 ? t("event") : t("events")}`,
     bg: featuredCardBackgrounds[index % featuredCardBackgrounds.length],
-    img: "/img/fetures_img01.png",
+    img: cat.posterImage || featuredCardImages[index % featuredCardImages.length],
     path: `/Listing?category=${cat._id}`,
   }));
 
