@@ -16,8 +16,8 @@ export default function TermsConditions() {
         const fetchTerms = async () => {
             try {
                 const response = await globalSettingApi.getTermsConditions();
-                if (response.status) {
-                   setContent(response.data.value.replace(/&nbsp;/g, " "));
+                if (response?.status) {
+                   setContent(response?.data?.value.replace(/&nbsp;/g, " "));
                 }
             } catch (error) {
                 console.error("Error fetching terms & conditions:", error);

@@ -70,7 +70,7 @@ function Page() {
       try {
         // Fetch Categories
         const catRes = await apiClient.get("/category/list?type=course&limit=100");
-        if (catRes.data && catRes.data.categories) {
+        if (catRes?.data && catRes?.data?.categories) {
           setCategories(catRes.data.categories);
         }
 
@@ -78,7 +78,7 @@ function Page() {
         if (courseId) {
           try {
             const courseRes = await courseApi.getCourseDetails(courseId);
-            if (courseRes.data && courseRes.data) {
+            if (courseRes?.data && courseRes?.data) {
               loadCourseForEdit(courseRes.data);
             }
           } catch (error) {

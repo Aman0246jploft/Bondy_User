@@ -37,11 +37,11 @@ function page() {
     try {
       setLoading(true);
       const res = await userSettingApi.getUserSetting();
-      if (res.status && res.data) {
-        setSettings(res.data);
+      if (res?.status && res?.data) {
+        setSettings(res?.data);
 
         // Find matching language from choices
-        const matchedLang = languages.find(l => l.dbLabel === res.data.language);
+        const matchedLang = languages.find(l => l.dbLabel === res?.data?.language);
         if (matchedLang) {
           setCurrentLang(matchedLang);
           if (changeLanguage) changeLanguage(matchedLang.code);

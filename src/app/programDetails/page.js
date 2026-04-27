@@ -37,9 +37,9 @@ function ProgramDetailsContent() {
       const fetchDetails = async () => {
         try {
           const response = await courseApi.getCourseDetails(id);
-          if (response && response.data) {
-            setCourseDetails(response.data);
-            setIsWishlisted(response.data.isWishlisted || false);
+          if (response && response?.data) {
+            setCourseDetails(response?.data);
+            setIsWishlisted(response?.data?.isWishlisted || false);
           }
         } catch (error) {
           console.error("Error fetching course details:", error);

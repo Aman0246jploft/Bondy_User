@@ -27,8 +27,8 @@ export default function BondyHeader() {
       if (token) {
         try {
           const response = await authApi.getSelfProfile();
-          if (response.status) {
-            setUserProfile(response.data.user);
+          if (response?.status) {
+            setUserProfile(response?.data?.user);
           }
         } catch (error) {
           console.error("Header Profile Fetch Error:", error);

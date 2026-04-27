@@ -22,8 +22,8 @@ const CommentItem = ({ comment, entityId, entityModel, onReplyAdded, depth = 0 }
         setLoadingReplies(true);
         try {
             const response = await commentApi.getReplies({ parentCommentId: comment._id, page: 1, limit: 100 });
-            if (response.status) {
-                setReplies(response.data.comments || []);
+            if (response?.status) {
+                setReplies(response?.data?.comments || []);
             }
         } catch (error) {
             console.error("Error fetching replies:", error);

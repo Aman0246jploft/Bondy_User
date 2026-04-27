@@ -67,7 +67,7 @@ function TicketDetailsContent() {
     setLoading(true);
     try {
       const res = await bookingApi.getTicketDetail(transactionId);
-      if (res.status && res.data) {
+      if (res?.status && res?.data) {
         setTicketInfo(res?.data?.ticket);
       }
     } catch (error) {
@@ -123,8 +123,8 @@ function TicketDetailsContent() {
   const handleDownloadLink = async () => {
     try {
       const res = await bookingApi.getShareAndDownloadUrls(id);
-      if (res.status && res.data) {
-        const downloadUrl = res.data.downloadUrl;
+      if (res?.status && res?.data) {
+        const downloadUrl = res?.data?.downloadUrl;
         await navigator.clipboard.writeText(downloadUrl);
         toast.success(t("downloadLinkCopied") || "Download link copied to clipboard!");
         window.open(downloadUrl, "_blank");

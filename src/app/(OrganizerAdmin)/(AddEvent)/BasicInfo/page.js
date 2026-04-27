@@ -35,7 +35,7 @@ function BasicInfoContent() {
     setLoading(true);
     try {
       const response = await eventApi.getEventDetails(eventId);
-      if (response.data && response.data.event) {
+      if (response?.data && response?.data?.event) {
         loadEventForEdit(response.data.event);
       }
     } catch (error) {
@@ -50,7 +50,7 @@ function BasicInfoContent() {
   const fetchCategories = async () => {
     try {
       const response = await authApi.getCategoryList({ type: "event" });
-      if (response.data && response.data.categories) {
+      if (response?.data && response?.data?.categories) {
         setCategories(response.data.categories);
       }
     } catch (error) {
@@ -116,9 +116,9 @@ function BasicInfoContent() {
     try {
       const response = await authApi.uploadFile(formData);
       if (
-        response.data &&
-        response.data.files &&
-        response.data.files.length > 0
+        response?.data &&
+        response?.data?.files &&
+        response?.data?.files.length > 0
       ) {
         updateEventData({ posterImage: [response.data.files[0]] });
         toast.success(t("imageUploadedSuccessfully"));

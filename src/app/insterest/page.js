@@ -37,16 +37,16 @@ function InterestPageContent() {
           authApi.getSelfProfile(),
         ]);
 
-        if (catRes.status) {
+        if (catRes?.status) {
           setCategories(catRes.data.categories);
         }
 
-        if (profileRes.status) {
-          const profileData = profileRes.data.user;
+        if (profileRes?.status) {
+          const profileData = profileRes?.data?.user;
           setProfile(profileData);
           // Ensure we only store IDs
-          const existingInterests = (profileData.categories || []).map(
-            (cat) => cat._id || cat,
+          const existingInterests = (profileData?.categories || []).map(
+            (cat) => cat?._id || cat,
           );
           setSelectedIds(existingInterests);
         }
@@ -122,7 +122,7 @@ function InterestPageContent() {
 
       const response = await authApi.updateProfile(payload);
 
-      if (response.status) {
+      if (response?.status) {
         toast.success(t("interestsUpdatedSuccessfully"));
         router.push("/"); // Redirect to home or dashboard
       }

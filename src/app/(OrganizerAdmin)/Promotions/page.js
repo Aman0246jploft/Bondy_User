@@ -28,7 +28,7 @@ export default function PromotionsPage() {
         setEventPackages(eventRes?.data?.packages || []);
       }
       if (courseRes?.status) {
-        setCoursePackages(courseRes?.data || []);
+        setCoursePackages(courseRes?.data?.packages || []);
       }
     } catch (error) {
       console.error("Error fetching promotion packages:", error);

@@ -53,7 +53,7 @@ export default function Footer() {
     setLoading(true);
     try {
       const response = await stayUpdatedApi.signup({ email });
-      if (response.status === true) {
+      if (response?.status === true) {
         setEmail("");
         toast.success(t("thanksForSigningUp"));
       }

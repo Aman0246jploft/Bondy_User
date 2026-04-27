@@ -66,9 +66,9 @@ function page() {
       }
 
       const res = await bookingApi.getTicketList(params);
-      if (res.status && res.data) {
-        setTickets(res.data.tickets);
-        setPagination(res.data.pagination);
+      if (res?.status && res?.data) {
+        setTickets(res?.data?.tickets);
+        setPagination(res?.data?.pagination);
       }
     } catch (error) {
       console.error("Error fetching tickets:", error);

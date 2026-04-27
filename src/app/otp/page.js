@@ -75,7 +75,7 @@ function OTPContent() {
         type: type || "CUSTOMER",
       });
 
-      if (response.status) {
+      if (response?.status) {
         // Clear stored data
         if (flow === "login") {
           localStorage.removeItem("loginEmail");
@@ -86,19 +86,19 @@ function OTPContent() {
         }
 
         // Save token
-        if (response.data.token) {
-          localStorage.setItem("token", response.data.token);
+        if (response?.data?.token) {
+          localStorage.setItem("token", response?.data?.token);
         }
 
         // Determine destination
         let nextPath = "/";
         try {
           const profileRes = await authApi.getSelfProfile();
-          if (profileRes.status) {
-            const profile = profileRes.data.user;
-            if (!profile.firstName || !profile.lastName) {
+          if (profileRes?.status) {
+            const profile = profileRes?.data?.user;
+            if (!profile?.firstName || !profile?.lastName) {
               nextPath = "/completeprofile";
-            } else if (!profile.categories || profile.categories.length === 0) {
+            } else if (!profile?.categories || profile?.categories.length === 0) {
               nextPath = "/insterest";
             } else {
               nextPath = "/";

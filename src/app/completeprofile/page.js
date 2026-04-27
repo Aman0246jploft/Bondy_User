@@ -44,13 +44,13 @@ function CompleteProfileContent() {
       try {
         const response = await authApi.getSelfProfile();
 
-        if (response.status) {
-          const profile = response.data.user;
+        if (response?.status) {
+          const profile = response?.data?.user;
           setProfileData({
-            firstName: profile.firstName || "",
-            lastName: profile.lastName || "",
-            gender: profile.gender || "",
-            dob: profile.dob ? new Date(profile.dob) : null,
+            firstName: profile?.firstName || "",
+            lastName: profile?.lastName || "",
+            gender: profile?.gender || "",
+            dob: profile?.dob ? new Date(profile.dob) : null,
             bio: profile.bio || "",
             profileImage: profile.profileImage || "",
             location: profile.location || null,
@@ -80,9 +80,9 @@ function CompleteProfileContent() {
     try {
       setLoading(true);
       const response = await authApi.uploadFile(formData);
-      if (response.status) {
+      if (response?.status) {
         // Response format: { data: { files: ["path/to/img"] } }
-        const filePath = response.data.files[0];
+        const filePath = response?.data?.files[0];
         setProfileData((prev) => ({ ...prev, profileImage: filePath }));
         setPreview(getFullImageUrl(filePath));
       }
@@ -150,7 +150,7 @@ function CompleteProfileContent() {
         location: formatLocationForApi(profileData.location), // Format for API
       });
 
-      if (response.status) {
+      if (response?.status) {
         router.push("/insterest");
       }
     } catch (error) {

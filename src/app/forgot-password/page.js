@@ -30,7 +30,7 @@ export default function ForgotPasswordPage() {
     try {
       const response = await authApi.forgotPasswordInit({ email });
 
-      if (response.status) {
+      if (response?.status) {
         // Store email for the reset password page
         localStorage.setItem("resetEmail", email);
         toast.success(t("otpSentToEmail"));

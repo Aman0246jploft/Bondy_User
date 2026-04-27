@@ -27,8 +27,8 @@ function Page() {
       const response = await authApi.getCategoryList({
         type: "support_ticket",
       });
-      if (response.status && response.data) {
-        setCategories(response.data.categories);
+      if (response?.status && response?.data) {
+        setCategories(response?.data?.categories);
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -43,8 +43,8 @@ function Page() {
       if (selectedStatus) params.status = selectedStatus;
 
       const response = await supportTicketApi.getMyTickets(params);
-      if (response.status && response.data) {
-        setTickets(response.data.tickets);
+      if (response?.status && response?.data) {
+        setTickets(response?.data?.tickets);
       }
     } catch (error) {
       console.error("Error fetching tickets:", error);

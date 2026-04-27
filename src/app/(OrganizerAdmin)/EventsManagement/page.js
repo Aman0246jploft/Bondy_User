@@ -62,12 +62,12 @@ function page() {
       };
 
       const response = await eventApi.getOrganizerEvents(params);
-      if (response.data) {
-        setEvents(response.data.events);
+      if (response?.data) {
+        setEvents(response?.data?.events);
         setPagination((prev) => ({
           ...prev,
-          total: response.data.total,
-          page: response.data.page,
+          total: response?.data?.total,
+          page: response?.data?.page,
         }));
       }
     } catch (error) {
