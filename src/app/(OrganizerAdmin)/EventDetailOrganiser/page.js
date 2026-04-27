@@ -51,9 +51,9 @@ function EventDetailsContent() {
     try {
       setLoading(true);
       const response = await eventApi.getEventDetails(eventId);
-      if (response && response.data && response.status) {
-        setEvent(response.data.event);
-        setAttendees(response.data.attendees);
+      if (response && response?.data && response?.status) {
+        setEvent(response?.data?.event);
+        setAttendees(response?.data?.attendees);
       }
     } catch (error) {
       console.error("Failed to fetch event details", error);

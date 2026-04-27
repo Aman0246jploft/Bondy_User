@@ -35,11 +35,11 @@ function page() {
         formData.append("files", file);
         const response = await authApi.uploadFile(formData);
         if (
-          response.data &&
-          response.data.files &&
-          response.data.files.length > 0
+          response?.data &&
+          response?.data?.files &&
+          response?.data?.files.length > 0
         ) {
-          newLinks.push(response.data.files[0]);
+          newLinks.push(response?.data?.files[0]);
         }
       }
 
@@ -78,9 +78,9 @@ function page() {
         formData.append("files", file);
         const response = await authApi.uploadFile(formData);
         if (
-          response.data &&
-          response.data.files &&
-          response.data.files.length > 0
+          response?.data &&
+          response?.data?.files &&
+          response?.data?.files.length > 0
         ) {
           newLinks.push(response.data.files[0]);
         }

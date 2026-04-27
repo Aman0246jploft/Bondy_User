@@ -43,7 +43,7 @@ export default function Page() {
         password: formData.password,
         type: roleType,
       });
-      if (response.status) {
+      if (response?.status) {
         localStorage.setItem("loginEmail", formData.email);
         localStorage.setItem("loginType", roleType);
         router.push("/otp?flow=login");
@@ -58,10 +58,10 @@ export default function Page() {
   const handlePostLoginRedirect = async () => {
     try {
       const profileRes = await authApi.getSelfProfile();
-      if (profileRes.status) {
-        const profile = profileRes.data.user;
-        if (!profile.firstName || !profile.lastName) return router.push("/completeprofile");
-        if (!profile.categories || profile.categories.length === 0) return router.push("/insterest");
+      if (profileRes?.status) {
+        const profile = profileRes?.data?.user;
+        if (!profile?.firstName || !profile?.lastName) return router.push("/completeprofile");
+        if (!profile?.categories || profile?.categories.length === 0) return router.push("/insterest");
         router.push("/");
       } else {
         router.push("/completeprofile");
@@ -89,8 +89,8 @@ export default function Page() {
           lastName: userInfo.family_name || "",
           profileImage: userInfo.picture || "",
         });
-        if (response.status) {
-          if (response.data.token) localStorage.setItem("token", response.data.token);
+        if (response?.status) {
+          if (response?.data?.token) localStorage.setItem("token", response?.data?.token);
           await handlePostLoginRedirect();
         }
       } catch (error) {

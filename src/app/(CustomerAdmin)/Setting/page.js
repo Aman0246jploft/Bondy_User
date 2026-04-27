@@ -47,7 +47,7 @@ function page() {
     try {
       setLoading(true);
       const res = await userSettingApi.getUserSetting();
-      if (res.status && res.data) {
+      if (res?.status && res?.data) {
         setSettings(res.data);
 
         // Find matching language from choices

@@ -24,8 +24,8 @@ const FollowListModal = ({ show, onHide, userId, type }) => {
                 ? await authApi.getFollowers(params)
                 : await authApi.getFollowing(params);
 
-            if (response.status) {
-                const data = type === "followers" ? response.data.followers : response.data.following;
+            if (response?.status) {
+                const data = type === "followers" ? response?.data?.followers : response?.data?.following;
                 if (data.length === 0) {
                     if (pageNum === 1) setList([]);
                     setHasMore(false);
@@ -67,7 +67,7 @@ const FollowListModal = ({ show, onHide, userId, type }) => {
                 ? await authApi.unfollowUser({ toUser: targetUserId })
                 : await authApi.followUser({ toUser: targetUserId });
 
-            if (response.status) {
+            if (response?.status) {
                 setList(prev => {
                     const newList = [...prev];
                     newList[index] = { ...newList[index], isFollowed: !isCurrentlyFollowed };

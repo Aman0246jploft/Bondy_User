@@ -14,8 +14,8 @@ export default function FAQ() {
     const fetchFaqs = async () => {
       try {
         const response = await authApi.getFaqs();
-        if (response.status) {
-          setFaqs(response.data.faqs);
+        if (response?.status) {
+          setFaqs(response?.data?.faqs);
         }
       } catch (error) {
         console.error("Failed to fetch FAQs:", error);

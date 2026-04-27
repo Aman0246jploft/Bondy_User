@@ -106,10 +106,10 @@ function ListingContent() {
         }
 
         const response = await courseApi.getCourses(params);
-        if (response.data) {
+        if (response?.data) {
           // Backend structure might be { totalCourses, courses, ... }
-          setCourses(response.data.courses || []);
-          setTotal(response.data.totalCourses || 0);
+          setCourses(response?.data?.courses || []);
+          setTotal(response?.data?.totalCourses || 0);
         }
       } catch (err) {
         console.error("Error fetching courses:", err);
@@ -123,12 +123,12 @@ function ListingContent() {
 
   const handleSearch = (newFilters) => {
     setFilterParams({
-      search: newFilters.search || "",
-      latitude: newFilters.latitude || null,
-      longitude: newFilters.longitude || null,
-      filter: newFilters.filter || "",
-      startDate: newFilters.startDate || "",
-      endDate: newFilters.endDate || "",
+      search: newFilters?.search || "",
+      latitude: newFilters?.latitude || null,
+      longitude: newFilters?.longitude || null,
+      filter: newFilters?.filter || "",
+      startDate: newFilters?.startDate || "",
+      endDate: newFilters?.endDate || "",
     });
     setPage(1);
   };

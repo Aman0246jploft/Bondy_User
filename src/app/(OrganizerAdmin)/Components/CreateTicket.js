@@ -31,8 +31,8 @@ export default function CreateTicket(props) {
       const response = await authApi.getCategoryList({
         type: "support_ticket",
       });
-      if (response.status && response.data) {
-        setCategories(response.data.categories);
+      if (response?.status && response?.data) {
+        setCategories(response?.data?.categories);
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -72,7 +72,7 @@ export default function CreateTicket(props) {
       };
 
       const response = await supportTicketApi.createTicket(payload);
-      if (response?.status === true || response.status === 201) {
+      if (response?.status === true || response?.status === 201) {
         toast.success(t("ticketCreatedSuccessfully"));
         props.onHide();
         // Reset form

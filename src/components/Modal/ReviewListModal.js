@@ -23,8 +23,8 @@ const ReviewListModal = ({ show, onHide, entityId, entityModel }) => {
             const params = { organizerId: entityId, page: pageNum, limit: 10 };
             const response = await reviewApi.getReviews(params);
 
-            if (response.status) {
-                const data = response.data.reviews || [];
+            if (response?.status) {
+                const data = response?.data?.reviews || [];
                 if (data.length === 0) {
                     if (pageNum === 1) setReviews([]);
                     setHasMore(false);

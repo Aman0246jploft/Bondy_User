@@ -53,14 +53,14 @@ function PersonalInfoContent() {
         ]);
 
         if (categoriesResponse?.status) {
-          setCategories(categoriesResponse.data.categories || []);
+          setCategories(categoriesResponse?.data?.categories || []);
         }
 
-        if (profileResponse.status) {
-          const profile = profileResponse.data.user;
-          const location = profile.location || {};
+        if (profileResponse?.status) {
+          const profile = profileResponse?.data?.user;
+          const location = profile?.location || {};
 
-          let countryCode = profile.countryCode || "";
+          let countryCode = profile?.countryCode || "";
           let stateCode = "";
           let initialStates = [];
           let initialCities = [];
@@ -86,30 +86,30 @@ function PersonalInfoContent() {
           }
 
           setProfileData({
-            firstName: profile.firstName || "",
-            lastName: profile.lastName || "",
-            email: profile.email || "",
-            state: location.state || "",
+            firstName: profile?.firstName || "",
+            lastName: profile?.lastName || "",
+            email: profile?.email || "",
+            state: location?.state || "",
             stateCode: stateCode,
-            city: location.city || "",
-            country: location.country || "",
+            city: location?.city || "",
+            country: location?.country || "",
             countryCode: countryCode,
-            dob: profile.dob ? profile.dob.split("T")[0] : "",
-            contactNumber: profile.contactNumber
-              ? profile.countryCode
+            dob: profile?.dob ? profile.dob.split("T")[0] : "",
+            contactNumber: profile?.contactNumber
+              ? profile?.countryCode
                 ? `${profile.countryCode}${profile.contactNumber}`
                 : profile.contactNumber
               : "",
-            zipcode: location.zipcode || "",
-            profileImage: profile.profileImage || "",
-            latitude: location.coordinates?.[1] || 0,
-            longitude: location.coordinates?.[0] || 0,
-            address: location.address || "",
+            zipcode: location?.zipcode || "",
+            profileImage: profile?.profileImage || "",
+            latitude: location?.coordinates?.[1] || 0,
+            longitude: location?.coordinates?.[0] || 0,
+            address: location?.address || "",
           });
           setSelectedCategoryIds(
-            (profile.categories || []).map((category) => category._id || category),
+            (profile?.categories || []).map((category) => category._id || category),
           );
-          setPreview(getFullImageUrl(profile.profileImage));
+          setPreview(getFullImageUrl(profile?.profileImage));
         }
       } catch (error) {
         console.error("Failed to fetch profile:", error);
@@ -202,8 +202,8 @@ function PersonalInfoContent() {
     try {
       setLoading(true);
       const response = await authApi.uploadFile(formData);
-      if (response.status) {
-        const filePath = response.data.files[0];
+      if (response?.status) {
+        const filePath = response?.data?.files[0];
         setProfileData((prev) => ({ ...prev, profileImage: filePath }));
         setPreview(getFullImageUrl(filePath));
         toast.success(t("imageUploadedSuccessfully"));
@@ -272,13 +272,13 @@ function PersonalInfoContent() {
       };
 
       const response = await authApi.updateProfile(updatePayload);
-      if (response.status) {
+      if (response?.status) {
         toast.success(t("profileUpdatedSuccessfully"));
         setErrors({});
       }
     } catch (error) {
       console.error("Update failed:", error);
-      toast.error(error.message || t("failedToUpdateProfile"));
+      toast.error(error?.message || t("failedToUpdateProfile"));
     } finally {
       setLoading(false);
     }

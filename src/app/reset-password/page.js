@@ -88,8 +88,8 @@ export default function ResetPasswordPage() {
                 otp: otpValue,
             });
 
-                if (response.status) {
-                setResetToken(response.data.token);
+                if (response?.status) {
+                setResetToken(response?.data?.token);
                 setStep(2);
                 toast.success(t("otpVerifiedNowSetNewPassword"));
             }
@@ -110,7 +110,7 @@ export default function ResetPasswordPage() {
                 type: "FORGOT_PASSWORD",
             });
 
-            if (response.status) {
+            if (response?.status) {
                 toast.success(t("otpResentSuccessfully"));
                 setResendTimer(60);
                 setCanResend(false);
@@ -183,7 +183,7 @@ export default function ResetPasswordPage() {
                 resetToken: resetToken,
             });
 
-                if (response.status) {
+                if (response?.status) {
                 setStep(3);
                 toast.success(t("passwordResetSuccessful"));
 

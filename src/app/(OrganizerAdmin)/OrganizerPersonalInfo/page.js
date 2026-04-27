@@ -271,7 +271,7 @@ function PersonalInfoContent() {
       };
 
       const response = await authApi.updateProfile(updatePayload);
-      if (response.status) {
+      if (response?.status) {
         toast.success(t("profileUpdateSuccess") || "Profile updated successfully");
         setErrors({});
       }

@@ -62,14 +62,14 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 const res = await bookingApi.calculateBooking(payload);
                 console.log("Booking breakdown response:", res);
 
-                if (res.status) {
+                if (res?.status) {
                     setPriceBreakdown({
-                        basePrice: res.data.breakdown.basePrice,
-                        taxes: res.data.breakdown.taxAmount,
-                        discount: res.data.breakdown.discountAmount,
-                        totalAmount: res.data.breakdown.totalAmount,
-                        promoMessage: res.data.breakdown.promoMessage || null,
-                        promoApplied: res.data.breakdown.promoApplied || false,
+                        basePrice: res?.data?.breakdown?.basePrice,
+                        taxes: res?.data?.breakdown?.taxAmount,
+                        discount: res?.data?.breakdown?.discountAmount,
+                        totalAmount: res?.data?.breakdown?.totalAmount,
+                        promoMessage: res?.data?.breakdown?.promoMessage || null,
+                        promoApplied: res?.data?.breakdown?.promoApplied || false,
                     });
                 }
             } catch (error) {
@@ -104,28 +104,28 @@ export default function TicketBooking({ item, type, scheduleId }) {
 
             if (res.status) {
                 setPriceBreakdown({
-                    basePrice: res.data.breakdown.basePrice,
-                    taxes: res.data.breakdown.taxAmount,
-                    discount: res.data.breakdown.discountAmount,
-                    totalAmount: res.data.breakdown.totalAmount,
-                    promoMessage: res.data.breakdown.promoMessage || null,
-                    promoApplied: res.data.breakdown.promoApplied || false,
+                    basePrice: res?.data?.breakdown?.basePrice,
+                    taxes: res?.data?.breakdown?.taxAmount,
+                    discount: res?.data?.breakdown?.discountAmount,
+                    totalAmount: res?.data?.breakdown?.totalAmount,
+                    promoMessage: res?.data?.breakdown?.promoMessage || null,
+                    promoApplied: res?.data?.breakdown?.promoApplied || false,
                 });
 
-                if (res.data.breakdown.promoApplied) {
+                if (res?.data?.breakdown?.promoApplied) {
                     setAppliedPromoCode(promoCode);
-                    toast.success(res.data.breakdown.promoMessage || t("promoApplied"));
+                    toast.success(res?.data?.breakdown?.promoMessage || t("promoApplied"));
                 } else {
                     setAppliedPromoCode("");
-                    toast.error(res.data.breakdown.promoMessage || t("invalidPromo"));
+                    toast.error(res?.data?.breakdown?.promoMessage || t("invalidPromo"));
                 }
             } else {
-                toast.error(res.message || t("invalidPromo"));
+                toast.error(res?.message || t("invalidPromo"));
                 setAppliedPromoCode("");
                 setPriceBreakdown((prev) => ({
                     ...prev,
                     promoApplied: false,
-                    promoMessage: res.message || t("invalidPromo"),
+                    promoMessage: res?.message || t("invalidPromo"),
                 }));
             }
         } catch (error) {

@@ -23,8 +23,8 @@ export default function HomePage() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setSearchParams({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
+            latitude: position?.coords?.latitude,
+            longitude: position?.coords?.longitude,
             filter: "nearYou"
           });
         },

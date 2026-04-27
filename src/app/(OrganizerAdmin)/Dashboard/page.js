@@ -34,8 +34,8 @@ function page() {
       const response = await organizerApi.getDashboardData();
       console.log("response122", response)
 
-      if (response && response.status === true) {
-        setStats(response.data);
+      if (response && response?.status === true) {
+        setStats(response?.data);
       }
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -45,10 +45,10 @@ function page() {
   const fetchProfile = async () => {
     try {
       const res = await apiClient.get("/user/selfProfile");
-      if (res.data && res.data.user) {
-        const profile = res.data.user;
+      if (res?.data && res?.data?.user) {
+        const profile = res?.data?.user;
         setUserData(profile);
-        setStatus(profile.organizerVerificationStatus || "none");
+        setStatus(profile?.organizerVerificationStatus || "none");
       }
     } catch (error) {
       console.error("Error fetching profile", error);
@@ -58,8 +58,8 @@ function page() {
   const fetchUpcomingEvents = async () => {
     try {
       const response = await eventApi.getOrganizerEvents({ status: "Upcoming", limit: 4 });
-      if (response && response.status === true) {
-        setUpcomingEvents(response.data.events);
+      if (response && response?.status === true) {
+        setUpcomingEvents(response?.data?.events);
       }
     } catch (error) {
       console.error("Error fetching upcoming events:", error);
@@ -69,8 +69,8 @@ function page() {
   const fetchAnalytics = async () => {
     try {
       const response = await organizerApi.getAnalyticsStats();
-      if (response && response.status === true) {
-        setAnalyticsData(response.data);
+      if (response && response?.status === true) {
+        setAnalyticsData(response?.data);
       }
     } catch (error) {
       console.error("Error fetching analytics stats:", error);
@@ -81,7 +81,7 @@ function page() {
     try {
       const response = await notificationApi.getMyNotifications({ pageNo: 1, limit: 5 });
       if (response?.status || response?.status === "SUCCESS") {
-        setNotifications(response.data.notifications || []);
+        setNotifications(response?.data?.notifications || []);
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);

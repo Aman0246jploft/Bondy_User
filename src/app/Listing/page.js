@@ -96,8 +96,8 @@ function ListingContent() {
       const fetchCategory = async () => {
         try {
           const res = await categoryApi.getCategoryDetails(categoryId);
-          if (res.data && res.data.category) {
-            setCategoryDetail(res.data.category);
+          if (res?.data && res?.data?.category) {
+            setCategoryDetail(res?.data?.category);
           }
         } catch (err) {
           console.error("Error fetching category details:", err);
@@ -141,9 +141,9 @@ function ListingContent() {
         }
 
         const response = await eventApi.getEvents(params);
-        if (response.data) {
-          setEvents(response.data.events || []);
-          setTotal(response.data.total || 0);
+        if (response?.data) {
+          setEvents(response?.data?.events || []);
+          setTotal(response?.data?.total || 0);
         }
       } catch (err) {
         console.error("Error fetching events:", err);

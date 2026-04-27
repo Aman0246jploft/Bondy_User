@@ -213,10 +213,10 @@ function RegisterForm() {
       const formData = new FormData();
       formData.append("files", file);
       const response = await authApi.uploadFile(formData);
-      if (response.status) {
+      if (response?.status) {
         setOrganizerData((prev) => ({
           ...prev,
-          documents: response.data.files.map((uploadedFile) => ({
+          documents: response?.data?.files.map((uploadedFile) => ({
             file: uploadedFile,
             name: "Business Proof",
           })),
@@ -258,7 +258,7 @@ function RegisterForm() {
         confirmPassword: customerData.confirmPassword,
       };
       const response = await authApi.customerSignup(payload);
-      if (response.status) {
+      if (response?.status) {
         localStorage.setItem("registerEmail", customerData.email);
         localStorage.setItem("registerType", "CUSTOMER");
         router.push("/otp?flow=signup");
@@ -299,7 +299,7 @@ function RegisterForm() {
         countryCode: finalCountryCode,
       };
       const response = await authApi.organizerSignup(payload);
-      if (response.status) {
+      if (response?.status) {
         localStorage.setItem("registerEmail", organizerData.email);
         localStorage.setItem("registerType", "ORGANIZER");
         router.push("/otp?flow=signup");
@@ -318,8 +318,8 @@ function RegisterForm() {
   const handlePostLoginRedirect = async () => {
     try {
       const profileRes = await authApi.getSelfProfile();
-      if (profileRes.status) {
-        const profile = profileRes.data.user;
+      if (profileRes?.status) {
+        const profile = profileRes?.data?.user;
         if (!profile.firstName || !profile.lastName) return router.push("/completeprofile");
         if (!profile.categories || profile.categories.length === 0) return router.push("/insterest");
         router.push("/");
@@ -350,8 +350,8 @@ function RegisterForm() {
           lastName: userInfo.family_name || "",
           profileImage: userInfo.picture || "",
         });
-        if (response.status) {
-          if (response.data.token) localStorage.setItem("token", response.data.token);
+        if (response?.status) {
+          if (response?.data?.token) localStorage.setItem("token", response.data.token);
           await handlePostLoginRedirect();
         }
       } catch (error) {

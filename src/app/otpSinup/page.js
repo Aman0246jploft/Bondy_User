@@ -61,22 +61,22 @@ export default function OTPPage() {
         otp: otpValue,
       });
 
-      if (response.status) {
+      if (response?.status) {
         // Clear registration email
         localStorage.removeItem("registerEmail");
         // Save token if returned
-        if (response.data.token) {
-          localStorage.setItem("token", response.data.token);
+        if (response?.data?.token) {
+          localStorage.setItem("token", response?.data?.token);
         }
 
         // Check if profile is complete to determine next step
         try {
           const profileRes = await authApi.getSelfProfile();
-          if (profileRes.status) {
-            const profile = profileRes.data.user;
-            if (!profile.firstName || !profile.lastName) {
+          if (profileRes?.status) {
+            const profile = profileRes?.data?.user;
+            if (!profile?.firstName || !profile?.lastName) {
               setRedirectPath("/completeprofile");
-            } else if (!profile.categories || profile.categories.length === 0) {
+            } else if (!profile?.categories || profile?.categories.length === 0) {
               setRedirectPath("/insterest");
             } else {
               setRedirectPath("/");

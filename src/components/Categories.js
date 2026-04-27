@@ -60,9 +60,9 @@ const Categories = () => {
     const fetchStats = async () => {
       try {
         const response = await categoryApi.getCategoryStats();
-        if (response.data) {
-          setStats(response.data);
-          console.log("Category Statistics Fetched:", response.data);
+        if (response?.data) {
+          setStats(response?.data);
+          console.log("Category Statistics Fetched:", response?.data);
         }
       } catch (error) {
         console.error("Error calling category stats API:", error);

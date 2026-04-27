@@ -49,46 +49,46 @@ function BookingPageContent() {
       try {
         if (eventId) {
           const response = await eventApi.getEventDetails(eventId);
-          if (response.status && response.data?.event) {
-            const evt = response.data.event;
+          if (response?.status && response?.data?.event) {
+            const evt = response?.data?.event;
             setBookingType("EVENT");
-            setIsWishlisted(evt.isWishlisted || false);
+            setIsWishlisted(evt?.isWishlisted || false);
             setBookingItem({
-              _id: evt._id,
-              title: evt.eventTitle,
-              categoryName: evt.eventCategory?.name,
-              status: evt.status,
-              shortdesc: evt.shortdesc,
-              price: evt.ticketPrice,
-              duration: evt.duration,
-              durationTranslation: evt.durationTranslation,
-              posterImage: evt.posterImage,
-              venueAddress: evt.venueAddress,
-              startDate: evt.startDate,
-              endDate: evt.endDate,
+              _id: evt?._id,
+              title: evt?.eventTitle,
+              categoryName: evt?.eventCategory?.name,
+              status: evt?.status,
+              shortdesc: evt?.shortdesc,
+              price: evt?.ticketPrice,
+              duration: evt?.duration,
+              durationTranslation: evt?.durationTranslation,
+              posterImage: evt?.posterImage,
+              venueAddress: evt?.venueAddress,
+              startDate: evt?.startDate,
+              endDate: evt?.endDate,
               original: evt,
             });
           }
         } else if (courseId) {
           const response = await courseApi.getCourseDetails(courseId);
-          if (response && response.data) {
-            const course = response.data;
+          if (response?.data) {
+            const course = response?.data;
             setBookingType("COURSE");
-            setIsWishlisted(course.isWishlisted || false);
+            setIsWishlisted(course?.isWishlisted || false);
             setBookingItem({
-              _id: course._id,
-              title: course.courseTitle,
-              categoryName: course.courseCategory?.name,
-              status: course.status || "Active",
-              shortdesc: course.shortdesc,
-              price: course.price,
-              duration: course.duration,
-              durationTranslation: course.durationTranslation,
-              posterImage: course.posterImage,
-              venueAddress: course.venueAddress,
-              schedules: course.schedules,
-              currentSchedule: course.currentSchedule,
-              enrollmentType: course.enrollmentType,
+              _id: course?._id,
+              title: course?.courseTitle,
+              categoryName: course?.courseCategory?.name,
+              status: course?.status || "Active",
+              shortdesc: course?.shortdesc,
+              price: course?.price,
+              duration: course?.duration,
+              durationTranslation: course?.durationTranslation,
+              posterImage: course?.posterImage,
+              venueAddress: course?.venueAddress,
+              schedules: course?.schedules,
+              currentSchedule: course?.currentSchedule,
+              enrollmentType: course?.enrollmentType,
               original: course,
             });
           }
@@ -121,7 +121,7 @@ function BookingPageContent() {
 
       if (isWishlisted) {
         const response = await wishlistApi.removeFromWishlist({ entityId });
-        if (response.status) {
+        if (response?.status) {
           setIsWishlisted(false);
         }
       } else {
@@ -129,7 +129,7 @@ function BookingPageContent() {
           entityId,
           entityModel
         });
-        if (response.status) {
+        if (response?.status) {
           setIsWishlisted(true);
         }
       }

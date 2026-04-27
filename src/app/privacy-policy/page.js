@@ -16,8 +16,8 @@ export default function PrivacyPolicy() {
         const fetchPolicy = async () => {
             try {
                 const response = await globalSettingApi.getPrivacyPolicy();
-                if (response.status) {
-                    setContent(response.data.value.replace(/&nbsp;/g, " "));
+                if (response?.status) {
+                    setContent(response?.data?.value.replace(/&nbsp;/g, " "));
                 }
             } catch (error) {
                 console.error("Error fetching privacy policy:", error);

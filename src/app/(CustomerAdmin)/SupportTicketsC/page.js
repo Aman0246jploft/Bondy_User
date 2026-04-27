@@ -28,7 +28,7 @@ function Page() {
       const response = await authApi.getCategoryList({
         type: "support_ticket",
       });
-      if (response.status && response.data) {
+      if (response?.status && response?.data) {
         setCategories(response.data.categories);
       }
     } catch (error) {
@@ -44,7 +44,7 @@ function Page() {
       if (selectedStatus) params.status = selectedStatus;
 
       const response = await supportTicketApi.getMyTickets(params);
-      if (response.status && response.data) {
+      if (response?.status && response?.data) {
         setTickets(response.data.tickets);
       }
     } catch (error) {

@@ -23,8 +23,8 @@ function page() {
     const fetchCategories = async () => {
       try {
         const response = await authApi.getCategoryList({ type: "event" });
-        if (response.data && response.data.categories) {
-          setCategories(response.data.categories);
+        if (response?.data && response?.data?.categories) {
+          setCategories(response?.data?.categories);
         }
       } catch (error) {
         console.error("Error fetching categories:", error);

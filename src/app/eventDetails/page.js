@@ -42,12 +42,12 @@ function EventDetailsContent() {
       if (!eventId) return;
       try {
         const response = await eventApi.getEventDetails(eventId);
-        if (response.status) {
-          setEvent(response.data.event);
-          setReviews(response.data.reviews || []);
-          setComments(response.data.comments || []);
-          setAttendees(response.data.attendees);
-          setIsWishlisted(response.data.event.isWishlisted || false);
+        if (response?.status) {
+          setEvent(response?.data?.event);
+          setReviews(response?.data?.reviews || []);
+          setComments(response?.data?.comments || []);
+          setAttendees(response?.data?.attendees);
+          setIsWishlisted(response?.data?.event?.isWishlisted || false);
         }
       } catch (error) {
         console.error("Error fetching event details:", error);
@@ -72,8 +72,8 @@ function EventDetailsContent() {
     try {
       if (isWishlisted) {
         const response = await wishlistApi.removeFromWishlist({ entityId: eventId });
-        if (response.status === true) {
-          toast.success(response.message)
+        if (response?.status === true) {
+          toast.success(response?.message)
           setIsWishlisted(false);
         }
       } else {
@@ -81,9 +81,9 @@ function EventDetailsContent() {
           entityId: eventId,
           entityModel: "Event"
         });
-        if (response.status === true) {
+        if (response?.status === true) {
           setIsWishlisted(true);
-          toast.success(response.message)
+          toast.success(response?.message)
         }
       }
     } catch (error) {

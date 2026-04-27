@@ -44,8 +44,8 @@ function ProfileContent() {
         try {
           setLoading(true);
           const response = await authApi.getUserProfileById(userId);
-          if (response.status) {
-            setUserProfile(response.data.user);
+          if (response?.status) {
+            setUserProfile(response?.data?.user);
           }
         } catch (error) {
           console.error("Error fetching user profile:", error);
@@ -65,8 +65,8 @@ function ProfileContent() {
     const fetchCurrentUser = async () => {
       try {
         const response = await authApi.getSelfProfile();
-        if (response.status) {
-          setCurrentUserRole(response.data.user.role);
+        if (response?.status) {
+          setCurrentUserRole(response?.data?.user?.role);
         }
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -86,7 +86,7 @@ function ProfileContent() {
   const handleFollow = async () => {
     try {
       const response = await authApi.followUser({ toUser: userId });
-      if (response.status) {
+      if (response?.status) {
         setUserProfile((prev) => ({
           ...prev,
           isFollowed: true,
@@ -101,7 +101,7 @@ function ProfileContent() {
   const handleUnfollow = async () => {
     try {
       const response = await authApi.unfollowUser({ toUser: userId });
-      if (response.status) {
+      if (response?.status) {
         setUserProfile((prev) => ({
           ...prev,
           isFollowed: false,
@@ -151,8 +151,8 @@ function ProfileContent() {
       if (actionType === "block") {
         const res = await blockUserApi.blockUser({ toUser: userId });
         setShowConfirm(false);
-        if (res.status === true) {
-          toast.success(res.message);
+        if (res?.status === true) {
+          toast.success(res?.message);
         } else {
         }
       }

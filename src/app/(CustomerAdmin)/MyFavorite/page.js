@@ -30,13 +30,13 @@ function Page() {
         page: page,
         limit: pagination.limit,
       });
-      if (response && response.data) {
-        setWishlistItems(response.data.docs || []);
+      if (response && response?.data) {
+        setWishlistItems(response?.data?.docs || []);
         setPagination({
-          page: response.data.page,
-          limit: response.data.limit,
-          totalPages: response.data.totalPages,
-          totalDocs: response.data.totalDocs,
+          page: response?.data?.page,
+          limit: response?.data?.limit,
+          totalPages: response?.data?.totalPages,
+          totalDocs: response?.data?.totalDocs,
         });
       }
     } catch (error) {
@@ -68,7 +68,7 @@ function Page() {
 
     try {
       const response = await wishlistApi.removeFromWishlist({ entityId });
-      if (response.status) {
+      if (response?.status) {
         toast.success(t("removedFromWishlist"));
         fetchWishlist(activeTab, pagination.page); // Refresh list
       }

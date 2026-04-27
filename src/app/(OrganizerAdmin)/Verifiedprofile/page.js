@@ -77,12 +77,12 @@ function page() {
   const fetchProfile = async () => {
     try {
       const res = await apiClient.get("/user/selfProfile");
-      if (res.data && res.data.user) {
-        const profile = res.data.user;
+      if (res?.data && res?.data?.user) {
+        const profile = res?.data?.user;
         setUserData(profile);
-        setStatus(profile.organizerVerificationStatus || "none");
+        setStatus(profile?.organizerVerificationStatus || "none");
 
-        if (profile.documents && profile.documents.length > 0) {
+        if (profile?.documents && profile?.documents.length > 0) {
           profile.documents.forEach((doc) => {
             const docObj = {
               file: doc.file,

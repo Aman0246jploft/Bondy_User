@@ -30,7 +30,7 @@ const MAX = 100;
     const fetchFeatureFee = async () => {
       try {
         const response = await authApi.getGlobalSetting("FEATURE_EVENT_FEE");
-        if (response.status && response.data && response.data.value) {
+        if (response?.status && response?.data && response?.data?.value) {
           setFeatureFee(Number(response.data.value));
         }
       } catch (error) {
