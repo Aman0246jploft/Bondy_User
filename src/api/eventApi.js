@@ -6,6 +6,9 @@ const eventApi = {
         // params should include: page, limit, filter, categoryId, search, latitude, longitude
         return apiClient.get("/event/list", { params, skipToast: true });
     },
+    getTopEvents: (params) => {
+        return apiClient.get("/event/top/list", { params, skipToast: true });
+    },
     getOrganizerEvents: (params) => {
         return apiClient.get("/event/organizer/list", { params, skipToast: true });
     },

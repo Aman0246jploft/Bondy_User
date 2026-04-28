@@ -52,6 +52,19 @@ const ProgramCart = ({ programsArray, pagination }) => {
     },
   ];
 
+  const trimTo30CharsNoSpaceCount = (text = "") => {
+  let count = 0;
+  let result = "";
+
+  for (let char of text) {
+    if (char !== " ") count++; // ignore spaces
+    if (count > 40) break;
+    result += char;
+  }
+
+  return count >= 40 ? result + "" : result;
+};
+
   return (
     <section className="recommended-section program_page">
       <div className="container">
@@ -64,12 +77,24 @@ const ProgramCart = ({ programsArray, pagination }) => {
                     <span className="event-badge">{t("featured")}</span>
                   )}
                   <img
-                    src={getFullImageUrl(program?.posterImage?.[0]) || "/img/sidebar-logo.svg"}
+                    src={
+                      getFullImageUrl(program?.posterImage?.[0]) ||
+                      "/img/sidebar-logo.svg"
+                    }
                     alt={program?.courseTitle}
-                    onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
+                    onError={(e) => {
+                      e.target.src = "/img/sidebar-logo.svg";
+                    }}
                   />
                 </div>
-                <div className="card-overlay">
+
+                <div
+                  className="card-overlay"
+                  style={{
+                    width: "300px",
+                    height: "200px",
+                  }}
+                >
                   <div className="overlay-content program_cart">
                     <div className="program_cart_inner">
                       <Link href={`/programDetails?id=${program?._id}`}>
@@ -77,24 +102,24 @@ const ProgramCart = ({ programsArray, pagination }) => {
                           <h4
                             title={program?.courseTitle}
                             style={{
-                              display: '-webkit-box',
+                              display: "-webkit-box",
                               WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              wordBreak: 'break-word',
-                              minHeight: '2.8em' // Optional: maintain consistent height
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              wordBreak: "break-word",
+                              minHeight: "2.8em", // Optional: maintain consistent height
                             }}
                           >
-                            {program?.courseTitle}
+                            {trimTo30CharsNoSpaceCount(program?.courseTitle)}
                           </h4>
                           <span
                             title={program?.courseCategory?.categoryName}
                             style={{
-                              display: 'block',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
+                              display: "block",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
                             }}
                           >
                             {program?.courseCategory?.categoryName}
@@ -103,61 +128,114 @@ const ProgramCart = ({ programsArray, pagination }) => {
                       </Link>
                       <span
                         style={{ cursor: "pointer" }}
-                        onClick={() => checkAuth(() => router.push(`/profile?id=${program?.createdBy?._id}`))}
+                        onClick={() =>
+                          checkAuth(() =>
+                            router.push(
+                              `/profile?id=${program?.createdBy?._id}`,
+                            ),
+                          )
+                        }
                       >
                         <img
-                          src={getFullImageUrl(program?.createdBy?.profileImage) || "/img/default-user.png"}
+                          src={
+                            getFullImageUrl(program?.createdBy?.profileImage) ||
+                            "/img/default-user.png"
+                          }
                           alt="profile"
-                          onError={(e) => { e.target.src = "/img/default-user.png"; }}
+                          onError={(e) => {
+                            e.target.src = "/img/default-user.png";
+                          }}
                         />
                       </span>
                     </div>
                     <div
                       className="program_time_grid"
                       style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '12px 10px',
-                        marginBottom: '15px'
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "12px 10px",
+                        marginBottom: "15px",
                       }}
                     >
-                      <div title={language === "mn" ? program?.durationTranslation || program?.duration : program?.duration} style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
-                        <img src="/img/session_icon.svg" style={{ width: '16px', height: '16px' }} /> {language === "mn" ? program?.durationTranslation || program?.duration : program?.duration}
+                      <div
+                        title={
+                          language === "mn"
+                            ? program?.durationTranslation || program?.duration
+                            : program?.duration
+                        }
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          color: "var(--white, #fff)",
+                        }}
+                      >
+                        <img
+                          src="/img/session_icon.svg"
+                          style={{ width: "16px", height: "16px" }}
+                        />{" "}
+                        {language === "mn"
+                          ? program?.durationTranslation || program?.duration
+                          : program?.duration}
                       </div>
-                      <div title={`${program?.schedules?.length} sessions`} style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--white, #fff)' }}>
-                        <img src="/img/time_icon.svg" style={{ width: '16px', height: '16px' }} />
+                      <div
+                        title={`${program?.schedules?.length} sessions`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          color: "var(--white, #fff)",
+                        }}
+                      >
+                        <img
+                          src="/img/time_icon.svg"
+                          style={{ width: "16px", height: "16px" }}
+                        />
                         {program?.schedules?.length} {t("sessions")}
                       </div>
 
                       <div
                         title={`${formatDate(program?.currentSchedule?.startDate)} – ${formatDate(program?.currentSchedule?.endDate)}`}
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          gridColumn: 'span 2',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          color: 'var(--white, #fff)'
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          gridColumn: "span 2",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          color: "var(--white, #fff)",
                         }}
                       >
-                        <img src="/img/0date_icon.svg" style={{ width: '16px', height: '16px' }} />{" "}
+                        <img
+                          src="/img/0date_icon.svg"
+                          style={{ width: "16px", height: "16px" }}
+                        />{" "}
                         {formatDate(program?.currentSchedule?.startDate)} –{" "}
                         {formatDate(program?.currentSchedule?.endDate)}
                       </div>
                     </div>
-                    <div className="price_align" style={{ marginTop: 'auto' }}>
+                    <div className="price_align" style={{ marginTop: "auto" }}>
                       {!program?.currentSchedule?.isFull ? (
                         <>
-                          <span style={{ fontWeight: '700' }}>₮{program?.price}</span>
+                          <span style={{ fontWeight: "700" }}>
+                            ₮{program?.price}
+                          </span>
                           <AuthButton
                             requiresAuth
-                            onClick={() => router.push(
-                              program?.currentSchedule?._id
-                                ? `/eventbooking?id=${program._id}&scheduleId=${program.currentSchedule._id}`
-                                : `/eventbooking?id=${program._id}`
-                            )}
+                            onClick={() =>
+                              router.push(
+                                program?.currentSchedule?._id
+                                  ? `/eventbooking?id=${program._id}&scheduleId=${program.currentSchedule._id}`
+                                  : `/eventbooking?id=${program._id}`,
+                              )
+                            }
                             className="common_btn"
                           >
                             {t("bookNow")}
@@ -165,10 +243,12 @@ const ProgramCart = ({ programsArray, pagination }) => {
                         </>
                       ) : (
                         <>
-                          <span className="redText" style={{ fontWeight: '700' }}>{t("seatsFull")}</span>
-                          {/* <Link href="" className="common_btn">
-                            Join Waitlist
-                          </Link> */}
+                          <span
+                            className="redText"
+                            style={{ fontWeight: "700" }}
+                          >
+                            {t("seatsFull")}
+                          </span>
                         </>
                       )}
                     </div>

@@ -159,6 +159,8 @@ function ProgramDetailsContent() {
     .filter(Boolean)
     .map(getFullImageUrl);
 
+  const hasSingleMedia = images.length <= 1;
+
   const locationString = venueAddress
     ? `${venueAddress.address}, ${venueAddress.city}, ${venueAddress.state}`
     : "Location not available";
@@ -236,23 +238,31 @@ function ProgramDetailsContent() {
                 modules={[Autoplay]}
                 spaceBetween={20}
                 slidesPerView={1}
-                centeredSlides={true}
-                loop={true}
+                centeredSlides={!hasSingleMedia}
+                loop={!hasSingleMedia}
                 speed={800}
-                autoplay={{
-                  delay: 3000,
-                  disableOnInteraction: false,
-                }}
-                breakpoints={{
-                  768: {
-                    slidesPerView: 2,
-                    spaceBetween: 20,
-                  },
-                  1024: {
-                    slidesPerView: 3,
-                    spaceBetween: 20,
-                  },
-                }}
+                autoplay={
+                  hasSingleMedia
+                    ? false
+                    : {
+                        delay: 3000,
+                        disableOnInteraction: false,
+                      }
+                }
+                breakpoints={
+                  hasSingleMedia
+                    ? {}
+                    : {
+                        768: {
+                          slidesPerView: 2,
+                          spaceBetween: 20,
+                        },
+                        1024: {
+                          slidesPerView: 3,
+                          spaceBetween: 20,
+                        },
+                      }
+                }
                 className="mySwiper"
               >
                 {images.map((img, index) => (

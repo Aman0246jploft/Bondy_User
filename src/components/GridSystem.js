@@ -6,11 +6,16 @@ import { useEffect, useState } from "react";
 import Mapview from "./Mapview";
 import HeroSearchFilter from "./HeroSearchFilter";
 import VenueAutocomplete from "@/app/(OrganizerAdmin)/Components/VenueAutocomplete";
+import { toUtcDateRangeValue } from "@/utils/dateRangePayload";
 
 export default function GridSystem({ setView, searchParams, onSearch }) {
   const [isReady, setIsReady] = useState(false);
   const [keyword, setKeyword] = useState(searchParams?.search || "");
   const [location, setLocation] = useState(null); // VenueAutocomplete handles this
+  const [dateSelection, setDateSelection] = useState({
+    startDate: null,
+    endDate: null,
+  });
 
   useEffect(() => {
     setIsReady(true);
@@ -18,12 +23,22 @@ export default function GridSystem({ setView, searchParams, onSearch }) {
 
   const handleSearchClick = () => {
     if (onSearch) {
-      onSearch({
-        ...searchParams,
-        search: keyword,
-        latitude: location?.latitude || searchParams?.latitude,
-        longitude: location?.longitude || searchParams?.longitude,
-      });
+      const payload = {
+        search: keyword.trim(),
+        filter: location ? "nearYou" : "all",
+        latitude: location?.latitude || null,
+        longitude: location?.longitude || null,
+      };
+
+      if (dateSelection.startDate) {
+        payload.startDate = toUtcDateRangeValue(dateSelection.startDate, "start");
+      }
+
+      if (dateSelection.endDate) {
+        payload.endDate = toUtcDateRangeValue(dateSelection.endDate, "end");
+      }
+
+      onSearch(payload);
     }
   };
 
@@ -67,7 +82,7 @@ export default function GridSystem({ setView, searchParams, onSearch }) {
 
                 <div className="divider" />
 
-                <HeroSearchFilter />
+                <HeroSearchFilter onDateChange={setDateSelection} />
               </div>
 
               <div className="search-actions">

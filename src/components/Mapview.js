@@ -2,15 +2,129 @@ import React, { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Col, Row } from "react-bootstrap";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import eventApi from "../api/eventApi";
+import authApi from "../api/authApi";
 
 export default function Mapview({ searchParams }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [profileCoords, setProfileCoords] = useState(null);
   const mapRef = useRef(null);
   const googleMapRef = useRef(null);
   const markersRef = useRef([]);
+  const infoWindowRef = useRef(null);
+  const idleListenerRef = useRef(null);
+  const debounceRef = useRef(null);
+  const latestFetchIdRef = useRef(0);
+  const router = useRouter();
+
+  const getDistanceInKm = (lat1, lng1, lat2, lng2) => {
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const earthRadiusKm = 6371;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return earthRadiusKm * c;
+  };
+
+  const getEffectiveCenter = () => {
+    const latFromSearch = Number(searchParams?.latitude);
+    const lngFromSearch = Number(searchParams?.longitude);
+    if (!Number.isNaN(latFromSearch) && !Number.isNaN(lngFromSearch)) {
+      return { lat: latFromSearch, lng: lngFromSearch };
+    }
+
+    if (profileCoords?.lat !== undefined && profileCoords?.lng !== undefined) {
+      return profileCoords;
+    }
+
+    return null;
+  };
+
+  const buildMapDrivenParams = (baseParams = {}) => {
+    const params = {
+      limit: 20,
+      page: 1,
+      ...baseParams,
+    };
+
+    // Map view should not force recommended.
+    if (String(params.filter || "").toLowerCase() === "recommended") {
+      delete params.filter;
+    }
+
+    const map = googleMapRef.current;
+    if (map) {
+      const center = map.getCenter();
+      const bounds = map.getBounds();
+
+      if (center) {
+        params.latitude = center.lat();
+        params.longitude = center.lng();
+      }
+
+      if (center && bounds) {
+        const northEast = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        params.north = northEast.lat();
+        params.east = northEast.lng();
+        params.south = sw.lat();
+        params.west = sw.lng();
+        params.northEastLat = northEast.lat();
+        params.northEastLng = northEast.lng();
+        params.southWestLat = sw.lat();
+        params.southWestLng = sw.lng();
+
+        const radiusFromCenterToEdge = getDistanceInKm(
+          center.lat(),
+          center.lng(),
+          northEast.lat(),
+          northEast.lng(),
+        );
+        // Keep radius practical and avoid zero.
+        params.radius = Math.max(1, Math.min(500, Math.ceil(radiusFromCenterToEdge)));
+      }
+    } else {
+      const effectiveCenter = getEffectiveCenter();
+      if (effectiveCenter) {
+        params.latitude = effectiveCenter.lat;
+        params.longitude = effectiveCenter.lng;
+      }
+    }
+
+    return params;
+  };
+
+  const fetchMapEvents = async (overrideParams = {}) => {
+    const fetchId = ++latestFetchIdRef.current;
+    setLoading(true);
+    try {
+      const params = buildMapDrivenParams({ ...searchParams, ...overrideParams });
+      const response = await eventApi.getEvents(params);
+      const fetchedEvents = response?.data?.events || response?.data?.data?.events || [];
+
+      if (fetchId === latestFetchIdRef.current) {
+        setEvents(Array.isArray(fetchedEvents) ? fetchedEvents : []);
+      }
+    } catch (error) {
+      if (fetchId === latestFetchIdRef.current) {
+        setEvents([]);
+      }
+      console.error("Error fetching map events:", error);
+    } finally {
+      if (fetchId === latestFetchIdRef.current) {
+        setLoading(false);
+      }
+    }
+  };
 
   // 1. Load Google Maps script (similar to VenueAutocomplete)
   useEffect(() => {
@@ -33,38 +147,46 @@ export default function Mapview({ searchParams }) {
     document.head.appendChild(script);
   }, []);
 
-  // 2. Fetch Events
+  // Fetch profile location for default map center.
   useEffect(() => {
-    const fetchEventData = async () => {
-      setLoading(true);
+    const loadProfileLocation = async () => {
       try {
-        let currentParams = { limit: 20, page: 1, ...searchParams };
-
-        // Try Near You first
-        const nearRes = await eventApi.getEvents({ ...currentParams, filter: "nearyou" });
-        if (nearRes.data?.events?.length > 0) {
-          setEvents(nearRes.data.events);
-        } else {
-          // Fallback to Recommended
-          const recommendedRes = await eventApi.getEvents({ ...currentParams, filter: "recommended" });
-          setEvents(recommendedRes.data?.events || []);
+        const response = await authApi.getSelfProfile();
+        const user = response?.data?.user || response?.user;
+        const coordinates = user?.location?.coordinates;
+        if (Array.isArray(coordinates) && coordinates.length >= 2) {
+          setProfileCoords({
+            lng: Number(coordinates[0]),
+            lat: Number(coordinates[1]),
+            city: user?.location?.city || "",
+            country: user?.location?.country || "",
+          });
         }
       } catch (error) {
-        console.error("Error fetching map events:", error);
-      } finally {
-        setLoading(false);
+        // Keep graceful fallback when user is not logged in.
+        setProfileCoords(null);
       }
     };
-    fetchEventData();
-  }, [searchParams]);
+
+    loadProfileLocation();
+  }, []);
+
+  // 2. Pan map when profile/initial location is resolved. List updates via idle only.
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const effectiveCenter = getEffectiveCenter();
+    if (googleMapRef.current && effectiveCenter) {
+      googleMapRef.current.panTo(effectiveCenter);
+    }
+  }, [profileCoords, isLoaded]);
 
   // 3. Initialize & Update Map
   useEffect(() => {
     if (!isLoaded || !mapRef.current) return;
 
-    const center = events.length > 0 && events[0].venueAddress?.coordinates
-      ? { lat: events[0].venueAddress.coordinates[1], lng: events[0].venueAddress.coordinates[0] }
-      : { lat: 37.33, lng: -121.88 };
+    const effectiveCenter = getEffectiveCenter();
+    const center = effectiveCenter || { lat: 37.33, lng: -121.88 };
 
     // Initialize Map if not already done
     if (!googleMapRef.current) {
@@ -93,8 +215,19 @@ export default function Mapview({ searchParams }) {
         mapTypeControl: false,
         streetViewControl: false,
       });
-    } else {
-      googleMapRef.current.setCenter(center);
+
+      // Fetch fresh events whenever map stops moving (zoom/pan complete).
+      idleListenerRef.current = googleMapRef.current.addListener("idle", () => {
+        if (debounceRef.current) {
+          clearTimeout(debounceRef.current);
+        }
+        debounceRef.current = setTimeout(() => {
+          fetchMapEvents();
+        }, 120);
+      });
+
+      // Initial fetch once map is ready.
+      fetchMapEvents();
     }
 
     // Clear old markers
@@ -102,7 +235,9 @@ export default function Mapview({ searchParams }) {
     markersRef.current = [];
 
     // Add new markers
-    const infoWindow = new window.google.maps.InfoWindow();
+    if (!infoWindowRef.current) {
+      infoWindowRef.current = new window.google.maps.InfoWindow();
+    }
 
     events.forEach((event) => {
       const coords = event.venueAddress?.coordinates;
@@ -137,8 +272,8 @@ export default function Mapview({ searchParams }) {
             </div>
           </div>
         `;
-        infoWindow.setContent(content);
-        infoWindow.open(googleMapRef.current, marker);
+        infoWindowRef.current.setContent(content);
+        infoWindowRef.current.open(googleMapRef.current, marker);
       });
 
       marker.addListener("click", () => {
@@ -148,7 +283,22 @@ export default function Mapview({ searchParams }) {
       markersRef.current.push(marker);
     });
 
-  }, [isLoaded, events]);
+    return () => {
+      markersRef.current.forEach((m) => m.setMap(null));
+      markersRef.current = [];
+    };
+  }, [isLoaded, events, searchParams]);
+
+  useEffect(() => {
+    return () => {
+      if (idleListenerRef.current) {
+        window.google?.maps?.event?.removeListener(idleListenerRef.current);
+      }
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="main-wrapper">
@@ -168,6 +318,8 @@ export default function Mapview({ searchParams }) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
                     className="event-card shadow"
+                    onClick={() => router.push(`/eventDetails?id=${event._id}`)}
+                    style={{ cursor: "pointer" }}
                   >
                     <div className="img-container">
                       <img

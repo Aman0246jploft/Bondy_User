@@ -127,6 +127,8 @@ function EventDetailsContent() {
     ...(event?.mediaLinks || []).map((url) => ({ type: "image", url })),
   ];
 
+  const hasSingleMedia = mediaItems.length <= 1;
+
   const formatEventDateTime = (start, sTime, eTime) => {
     if (!start) return "";
     const date = new Date(start);
@@ -191,24 +193,32 @@ function EventDetailsContent() {
               <Swiper
                 modules={[Autoplay]}
                 spaceBetween={20}
-                slidesPerView={1.5}
-                centeredSlides={true}
-                loop={true}
-                autoplay={{
-                  delay: 3000,
-                  disableOnInteraction: false,
-                }}
+                slidesPerView={hasSingleMedia ? 1 : 1.5}
+                centeredSlides={!hasSingleMedia}
+                loop={!hasSingleMedia}
+                autoplay={
+                  hasSingleMedia
+                    ? false
+                    : {
+                        delay: 3000,
+                        disableOnInteraction: false,
+                      }
+                }
                 speed={800}
-                breakpoints={{
-                  768: {
-                    slidesPerView: 2,
-                    spaceBetween: 20,
-                  },
-                  1024: {
-                    slidesPerView: 2.5,
-                    spaceBetween: 20,
-                  },
-                }}
+                breakpoints={
+                  hasSingleMedia
+                    ? {}
+                    : {
+                        768: {
+                          slidesPerView: 2,
+                          spaceBetween: 20,
+                        },
+                        1024: {
+                          slidesPerView: 2.5,
+                          spaceBetween: 20,
+                        },
+                      }
+                }
               >
                 {mediaItems && mediaItems?.map((item, index) => (
                   <SwiperSlide key={index}>
