@@ -36,6 +36,33 @@ const HeroSlider = ({ setView, onSearch }) => {
     },
   ]);
 
+  const getTodayDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  };
+
+  const handleDateInputClick = () => {
+    if (!isDateDropdownOpen && !dateRange[0].startDate && !dateRange[0].endDate) {
+      const today = getTodayDate();
+      setDateRange([{ startDate: today, endDate: today, key: "selection" }]);
+    }
+    setIsDateDropdownOpen((prev) => !prev);
+  };
+
+  const getDateRangeInputValue = () => {
+    const start = dateRange[0].startDate;
+    const end = dateRange[0].endDate;
+    if (!start && !end) return "";
+    if (start && end && start.toDateString() === end.toDateString()) {
+      return start.toLocaleDateString();
+    }
+    if (start && end) {
+      return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+    }
+    return start ? start.toLocaleDateString() : "";
+  };
+
   // Close custom dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event) {
@@ -280,12 +307,8 @@ const HeroSlider = ({ setView, onSearch }) => {
                       type="text"
                       readOnly
                       placeholder={t("selectDateRange")}
-                      value={
-                        dateRange[0].startDate && dateRange[0].endDate
-                          ? `${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`
-                          : ""
-                      }
-                      onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+                      value={getDateRangeInputValue()}
+                      onClick={handleDateInputClick}
                       style={{
                         color: "#aaa", // 👈 grey color
                         cursor: "pointer",
@@ -344,7 +367,7 @@ const HeroSlider = ({ setView, onSearch }) => {
                             }}
                             moveRangeOnFirstSelection={false}
                             ranges={dateRange}
-                            minDate={new Date()}
+                            minDate={getTodayDate()}
                             color="#00b4b4"
                             rangeColors={["#00b4b4"]}
                           />

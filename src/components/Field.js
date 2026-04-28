@@ -20,6 +20,33 @@ export default function Field({ onSearch, label = "Search", placeholder = "Searc
   const [resetKey, setResetKey] = useState(0);
   const dropdownRef = useRef(null);
 
+  const getTodayDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  };
+
+  const handleDateInputClick = () => {
+    if (!isDateDropdownOpen && !dateRange[0].startDate && !dateRange[0].endDate) {
+      const today = getTodayDate();
+      setDateRange([{ startDate: today, endDate: today, key: "selection" }]);
+    }
+    setIsDateDropdownOpen((v) => !v);
+  };
+
+  const getDateRangeInputValue = () => {
+    const start = dateRange[0].startDate;
+    const end = dateRange[0].endDate;
+    if (!start && !end) return "";
+    if (start && end && start.toDateString() === end.toDateString()) {
+      return start.toLocaleDateString();
+    }
+    if (start && end) {
+      return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+    }
+    return start ? start.toLocaleDateString() : "";
+  };
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -134,12 +161,8 @@ export default function Field({ onSearch, label = "Search", placeholder = "Searc
                   type="text"
                   readOnly
                   placeholder={t("selectDateRange")}
-                  value={
-                    dateRange[0].startDate && dateRange[0].endDate
-                      ? `${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`
-                      : ""
-                  }
-                  onClick={() => setIsDateDropdownOpen((v) => !v)}
+                  value={getDateRangeInputValue()}
+                  onClick={handleDateInputClick}
                   style={{ color: "#aaa", cursor: "pointer", background: "transparent", border: "none", outline: "none", width: "100%" }}
                 />
 
@@ -188,7 +211,7 @@ export default function Field({ onSearch, label = "Search", placeholder = "Searc
                         }}
                         moveRangeOnFirstSelection={false}
                         ranges={dateRange}
-                        minDate={new Date()}
+                        minDate={getTodayDate()}
                         color="#00b4b4"
                         rangeColors={["#00b4b4"]}
                       />
