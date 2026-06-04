@@ -107,6 +107,7 @@ function ListingContent() {
 
         const response = await courseApi.getCourses(params);
         if (response?.data) {
+          console.log("======>", response.data)
           // Backend structure might be { totalCourses, courses, ... }
           setCourses(response?.data?.courses || []);
           setTotal(response?.data?.totalCourses || 0);
@@ -143,7 +144,7 @@ function ListingContent() {
   return (
     <>
       <div className="listing_page">
-          <div className="breadcrumb_text">
+        <div className="breadcrumb_text">
           <h1>{meta.titleKey ? t(meta.titleKey) : meta.title}</h1>
           <p
             style={{

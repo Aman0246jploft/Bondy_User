@@ -549,7 +549,7 @@ select:-webkit-autofill {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4599,7 +4599,7 @@ a.view-map {
 }
 
 .view_details {
-    background: #1abc9c;
+  background: #1abc9c;
   color: #fff;
   font-family: "SF Pro", sans-serif;
   font-size: 13px;
@@ -4614,7 +4614,7 @@ a.view-map {
 .view_details:hover {
   color: #1abc9c;
   border-bottom: 1px solid #1abc9c;
-cursor: pointer;  
+  cursor: pointer;
 }
 
 .item_org img {
@@ -4840,7 +4840,8 @@ cursor: pointer;
   border: 1px solid #737373;
   border-radius: 29px;
   padding: 0 15px; */
-  display: block; /* Fixed empty ruleset lint */
+  display: block;
+  /* Fixed empty ruleset lint */
 }
 
 .common_field .form-control::placeholder {
@@ -6447,4 +6448,10 @@ a.merchant-linked {
   .hero-content h1 br {
     display: none;
   }
+}
+
+
+
+.text-muted {
+  color: #a1a1a1 !important;
 }

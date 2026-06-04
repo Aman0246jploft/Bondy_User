@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { Button, Col, Form, Row } from "react-bootstrap";
+import { Col, Form, Row } from "react-bootstrap";
 import LocationMap from "../Components/LocationMap";
 import VenueAutocomplete from "../Components/VenueAutocomplete";
 import apiClient from "../../../api/apiClient";
@@ -10,15 +10,58 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { getFullImageUrl } from "../../../utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
+import Link from "next/link";
 
+const TrashIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: "pointer", color: "#e53e3e" }}>
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    <line x1="10" y1="11" x2="10" y2="17"></line>
+    <line x1="14" y1="11" x2="14" y2="17"></line>
+  </svg>
+);
+
+const EditIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: "pointer", color: "#23ada4", marginRight: "10px" }}>
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path>
+  </svg>
+);
+
+const CourseContextDummy = {
+  venueAddress: {
+    latitude: 47.9188,
+    longitude: 106.9176,
+    city: "Ulaanbaatar",
+    country: "Mongolia",
+    address: "",
+    state: "",
+    zipcode: "",
+  }
+};
+
+// Create a small provider mockup if needed, but we can also just update state
 function Page() {
-  const inputRef = useRef(null);
   const router = useRouter();
-  const [courseId, setCourseId] = useState(null);
+  const { t } = useLanguage();
 
+  const [step, setStep] = useState(1);
+  const [courseId, setCourseId] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [refundPolicies, setRefundPolicies] = useState([]);
+
+  // Batch Form Overlay State
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [editingBatchIndex, setEditingBatchIndex] = useState(null);
+  const [batchForm, setBatchForm] = useState({
+    batchName: "",
+    startTime: "",
+    endTime: "",
+    days: [],
+    seats: 10,
+  });
 
   const [formData, setFormData] = useState({
     courseTitle: "",
@@ -26,14 +69,16 @@ function Page() {
     totalSeats: "",
     price: "",
     shortdesc: "",
+    longdesc: "",
     whatYouWillLearn: "",
     isFeatured: false,
-    // firstClassDate: "",
-    posterImage: [], // Array of strings (URLs)
-    galleryImages: [], // Array of strings (URLs)
+    posterImage: [],
+    mediaLinks: [], // Image Gallery
+    shortTeaserVideo: [], // Teaser Video
+    venueName: "",
     venueAddress: {
-      latitude: 0,
-      longitude: 0,
+      latitude: 47.9188,
+      longitude: 106.9176,
       city: "",
       country: "",
       address: "",
@@ -41,135 +86,41 @@ function Page() {
       zipcode: "",
     },
     enrollmentType: "Ongoing",
-    schedules: [
-      {
-        startDate: "",
-        endDate: "",
-        startTime: "",
-        endTime: "",
-      },
-    ],
+    startDate: "",
+    endDate: "",
+    totalSessions: "",
+    batches: [],
+    refundPolicy: "",
+    bookingCutOff: "",
+    isDraft: false,
   });
 
-  // Get courseId from URL on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const id = urlParams.get('courseId');
+  const [noEndDate, setNoEndDate] = useState(false);
 
-      setCourseId(id);
+  // Track eventData helper context internally for LocationMap dependency compatibility
+  const [eventData, setEventData] = useState({
+    venueAddress: formData.venueAddress
+  });
+
+  const updateEventData = (updated) => {
+    if (updated.venueAddress) {
+      setFormData(prev => ({
+        ...prev,
+        venueAddress: { ...prev.venueAddress, ...updated.venueAddress }
+      }));
+      setEventData(prev => ({
+        ...prev,
+        venueAddress: { ...prev.venueAddress, ...updated.venueAddress }
+      }));
     }
-    document.title = t("addEditCourseTitle");
-  }, []);
-
-  const { t } = useLanguage();
-
-  // Fetch Categories and Location on Mount
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch Categories
-        const catRes = await apiClient.get("/category/list?type=course&limit=100");
-        if (catRes?.data && catRes?.data?.categories) {
-          setCategories(catRes.data.categories);
-        }
-
-        // If editing, fetch course details
-        if (courseId) {
-          try {
-            const courseRes = await courseApi.getCourseDetails(courseId);
-            if (courseRes?.data && courseRes?.data) {
-              loadCourseForEdit(courseRes.data);
-            }
-          } catch (error) {
-            console.error("Error fetching course details", error);
-              toast.error(t("failedToLoadCourseDetails"));
-          }
-        } else {
-          // Fetch Location only for new courses
-          try {
-            const location = await fetchCurrentLocation();
-            setFormData((prev) => ({
-              ...prev,
-              venueAddress: { ...prev.venueAddress, ...location },
-            }));
-          } catch (locErr) {
-            console.warn("Could not fetch location automatically", locErr);
-            // toast.error("Could not fetch current location. Please enter address manually.");
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching initial data", error);
-        toast.error(t("errorLoadingPageData"));
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-
-    if (courseId !== null) {
-      fetchData();
-    } else if (courseId === null && typeof window !== 'undefined') {
-      // Initially load without courseId
-      fetchData();
-    }
-  }, [courseId]);
-
-  // Load course data for editing
-  const loadCourseForEdit = (course) => {
-
-    const transformedCourse = { ...course };
-
-    // Transform GeoJSON venueAddress to flat structure
-    if (course.venueAddress && course.venueAddress.type === "Point") {
-      transformedCourse.venueAddress = {
-        latitude: course.venueAddress.coordinates[1],
-        longitude: course.venueAddress.coordinates[0],
-        city: course.venueAddress.city || "",
-        country: course.venueAddress.country || "",
-        address: course.venueAddress.address || "",
-        state: course.venueAddress.state || "",
-        zipcode: course.venueAddress.zipcode || "",
-      };
-    }
-
-    // Extract IDs from populated fields
-    if (transformedCourse.courseCategory && typeof transformedCourse.courseCategory === 'object') {
-      transformedCourse.courseCategory = transformedCourse.courseCategory._id;
-    }
-    if (transformedCourse.createdBy && typeof transformedCourse.createdBy === 'object') {
-      transformedCourse.createdBy = transformedCourse.createdBy._id;
-    }
-
-    // Format dates for input fields (YYYY-MM-DD) and clean schedule objects
-    if (transformedCourse.schedules && transformedCourse.schedules.length > 0) {
-      transformedCourse.schedules = transformedCourse.schedules.map(sched => {
-        // Only keep the fields we need for editing
-        return {
-          startDate: sched.startDate ? new Date(sched.startDate).toISOString().split('T')[0] : "",
-          endDate: sched.endDate ? new Date(sched.endDate).toISOString().split('T')[0] : "",
-          startTime: sched.startTime || "",
-          endTime: sched.endTime || "",
-          presentCount: sched.presentCount || 0,
-        };
-      });
-    }
-
-    // Remove computed/server-generated fields
-    const fieldsToRemove = [
-      '_id', 'createdAt', 'updatedAt', '__v',
-      'currentSchedule', 'sessionStatus', 'isAvailable',
-      'duration', 'acquiredSeats', 'leftSeats', 'isBooked',
-      'totalRevenue', 'totalEnrollments'
-    ];
-    fieldsToRemove.forEach(field => delete transformedCourse[field]);
-
-
-    setFormData(transformedCourse);
-
-  
-
   };
 
+  // Sync internal context compatibility state with changes
+  useEffect(() => {
+    setEventData({ venueAddress: formData.venueAddress });
+  }, [formData.venueAddress]);
+
+  // Handle manual input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     const limits = {
@@ -180,653 +131,1094 @@ function Page() {
       totalSeats: 9,
     };
 
-    if (limits[name] && value.length > limits[name]) {
+    if (limits[name] && value.toString().length > limits[name]) {
       return;
     }
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleScheduleChange = (index, field, value) => {
-    const updatedSchedules = [...formData.schedules];
-    updatedSchedules[index][field] = value;
-    setFormData((prev) => ({ ...prev, schedules: updatedSchedules }));
-  };
-
-  const handleAddressChange = (e) => {
-    const { value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      venueAddress: { ...prev.venueAddress, address: value },
-    }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      localStorage.setItem("courseCreationData", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const handleVenueSelected = (venueAddressData) => {
-    setFormData((prev) => ({
-      ...prev,
-      venueAddress: {
-        ...prev.venueAddress,
-        ...venueAddressData,
-      },
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        venueAddress: {
+          ...prev.venueAddress,
+          ...venueAddressData,
+        },
+      };
+      localStorage.setItem("courseCreationData", JSON.stringify(updated));
+      return updated;
+    });
   };
 
-  const handleEnrollmentTypeSelect = (type) => {
-    setFormData((prev) => ({
-      ...prev,
-      enrollmentType: type,
-      // If switching to fixedStart, ensure only 1 schedule is kept
-      schedules: type === "fixedStart" ? [prev.schedules[0]] : prev.schedules,
-    }));
-  };
+  // Fetch initial configuration data
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get("courseId");
+    if (id) {
+      setCourseId(id);
+    }
 
-  const addScheduleSlot = () => {
-    setFormData((prev) => ({
-      ...prev,
-      schedules: [
-        ...prev.schedules,
-        { startDate: "", endDate: "", startTime: "", endTime: "" },
-      ],
-    }));
-  };
+    const fetchData = async () => {
+      try {
+        const catRes = await apiClient.get("/category/list?type=course&limit=100");
+        if (catRes?.data && catRes?.data?.categories) {
+          setCategories(catRes.data.categories);
+        }
 
+        const refundRes = await apiClient.get("/event/refund-policies", { skipToast: true });
+        if (refundRes?.status && Array.isArray(refundRes.data)) {
+          setRefundPolicies(refundRes.data);
+        }
+      } catch (err) {
+        console.error("Error loading config:", err);
+      }
+    };
+    fetchData();
+    document.title = t("addEditCourseTitle") || "Create Course";
+  }, []);
 
-  const removeScheduleSlot = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      schedules: prev.schedules.filter((_, i) => i !== index),
-    }));
-  };
+  // Fetch course details if editing
+  useEffect(() => {
+    if (!courseId) {
+      setInitialLoading(false);
+      return;
+    }
 
+    const fetchDetails = async () => {
+      try {
+        const res = await courseApi.getCourseDetails(courseId);
+        if (res?.data) {
+          const course = res.data;
+          const transformed = { ...course };
+
+          if (course.venueAddress && course.venueAddress.type === "Point") {
+            transformed.venueAddress = {
+              latitude: course.venueAddress.coordinates[1],
+              longitude: course.venueAddress.coordinates[0],
+              city: course.venueAddress.city || "",
+              country: course.venueAddress.country || "",
+              address: course.venueAddress.address || "",
+              state: course.venueAddress.state || "",
+              zipcode: course.venueAddress.zipcode || "",
+            };
+          }
+
+          if (transformed.courseCategory && typeof transformed.courseCategory === "object") {
+            transformed.courseCategory = transformed.courseCategory._id;
+          }
+
+          // Format Dates
+          if (transformed.startDate) transformed.startDate = transformed.startDate.split("T")[0];
+          if (transformed.endDate) transformed.endDate = transformed.endDate.split("T")[0];
+
+          if (transformed.endDate === "2099-12-31") {
+            setNoEndDate(true);
+          } else {
+            setNoEndDate(false);
+          }
+
+          setFormData(transformed);
+        }
+      } catch (err) {
+        console.error("Error loading details:", err);
+        toast.error("Failed to load course details");
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    fetchDetails();
+  }, [courseId]);
+
+  // Asset Upload Handlers
   const handleImageUpload = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-
     const uploadData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      if (files[i].size > maxSize) {
-        toast.error(`${t("imageExceedsLimit")}: ${files[i].name}`);
-        return;
-      }
-      if (!allowedTypes.includes(files[i].type)) {
-        toast.error(`${t("invalidImageFormat")}: ${files[i].name}`);
-        return;
-      }
-      uploadData.append("files", files[i]);
-    }
+    uploadData.append("files", files[0]);
 
     try {
       setLoading(true);
-      // Using /user/upload endpoint based on controllerUser.js
       const response = await apiClient.post("/user/upload", uploadData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       if (response.status && response.data && response.data.files) {
-        // Enforce single image: replace instead of append
         setFormData(prev => ({
           ...prev,
           posterImage: [response.data.files[0]]
         }));
         toast.success(t("imageUploadedSuccessfully"));
       }
-    } catch (error) {
-      console.error("Upload error", error);
-        toast.error(t("imageUploadFailed"));
+    } catch (err) {
+      toast.error(t("imageUploadFailed"));
     } finally {
       setLoading(false);
     }
   };
 
   const handleGalleryUpload = async (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if ((formData.mediaLinks || []).length + files.length > 5) {
+      toast.error("Max 5 gallery images allowed");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const newLinks = [];
+      for (const file of files) {
+        const uploadData = new FormData();
+        uploadData.append("files", file);
+        const response = await apiClient.post("/user/upload", uploadData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        if (response.status && response.data?.files) {
+          newLinks.push(response.data.files[0]);
+        }
+      }
+      setFormData(prev => ({
+        ...prev,
+        mediaLinks: [...(prev.mediaLinks || []), ...newLinks]
+      }));
+      toast.success("Gallery images uploaded successfully");
+    } catch (err) {
+      toast.error("Failed to upload gallery images");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVideoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
     const uploadData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      if (files[i].size > maxSize) {
-        toast.error(`${t("galleryImageExceedsLimit")}: ${files[i].name}`);
-        return;
-      }
-      if (!allowedTypes.includes(files[i].type)) {
-        toast.error(`${t("invalidImageFormat")}: ${files[i].name}`);
-        return;
-      }
-      uploadData.append("files", files[i]);
-    }
+    uploadData.append("files", file);
 
     try {
       setLoading(true);
       const response = await apiClient.post("/user/upload", uploadData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
-      if (response.status && response.data && response.data.files) {
-        setFormData(prev => {
-          const combined = [...prev.galleryImages, ...response.data.files];
-          if (combined.length > 5) {
-            toast.error(t("maxGalleryImagesExceeded"));
-            return {
-              ...prev,
-              galleryImages: combined.slice(0, 5)
-            };
-          }
-          return {
-            ...prev,
-            galleryImages: combined
-          };
-        });
-        toast.success(t("galleryImagesUploadedSuccessfully"));
+      if (response.status && response.data?.files) {
+        setFormData(prev => ({
+          ...prev,
+          shortTeaserVideo: [response.data.files[0]]
+        }));
+        toast.success("Teaser video uploaded successfully");
       }
-    } catch (error) {
-      console.error("Upload error", error);
-        toast.error(t("failedToUploadGalleryImages"));
+    } catch (err) {
+      toast.error("Failed to upload teaser video");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async () => {
-    // Validation 1: Required fields
-    if (!formData.courseTitle || !formData.courseCategory || !formData.totalSeats || !formData.price || !formData.shortdesc || !formData.whatYouWillLearn || !formData.venueAddress?.address) {
-      toast.error(t("pleaseFillRequiredFieldsCourse"));
-      return;
-    }
+  // Batches CRUD
+  const openAddBatch = () => {
+    setBatchForm({
+      batchName: "",
+      startTime: "",
+      endTime: "",
+      days: [],
+      seats: formData.enrollmentType === "Ongoing" ? (parseInt(formData.totalSeats) || 10) : 10,
+    });
+    setEditingBatchIndex(null);
+    setShowBatchModal(true);
+  };
 
-    // Validation 2: Image upload
-    if (formData.posterImage.length === 0) {
-      toast.error(t("pleaseUploadAtLeastOneImage"));
-      return;
-    }
+  const openEditBatch = (index) => {
+    setBatchForm(formData.batches[index]);
+    setEditingBatchIndex(index);
+    setShowBatchModal(true);
+  };
 
-    // Validation 3: Price validation
-    if (Number(formData.price) < 0) {
-      toast.error(t("priceMustBeNonNegative"));
-      return;
-    }
-
-    // Validation 4: Total seats validation
-    if (Number(formData.totalSeats) < 1) {
-      toast.error(t("totalSeatsAtLeastOne"));
-      return;
-    }
-
-    // Validation 5: Schedule validation
-    if (!formData.schedules || formData.schedules.length === 0) {
-      toast.error(t("pleaseAddAtLeastOneSchedule"));
-      return;
-    }
-
-    // Validation 6: Schedule date and time validation
-    for (let i = 0; i < formData.schedules.length; i++) {
-      const sched = formData.schedules[i];
-
-      if (!sched.startDate || !sched.endDate || !sched.startTime || !sched.endTime) {
-        toast.error(t("pleaseFillScheduleFields").replace("{index}", String(i + 1)));
-        return;
+  const saveBatch = () => {
+    let formToSave = { ...batchForm };
+    if (formData.enrollmentType === "Ongoing") {
+      if (!formToSave.batchName) {
+        const idx = editingBatchIndex !== null ? editingBatchIndex : (formData.batches || []).length;
+        formToSave.batchName = `Class Time ${idx + 1}`;
       }
-
-      // Check if start date is before end date
-      if (new Date(sched.startDate) > new Date(sched.endDate)) {
-        toast.error(t("scheduleStartBeforeEnd"));
-        return;
-      }
-
-      // Check if start date is the same and start time is before end time
-      if (sched.startDate === sched.endDate) {
-        const [startH, startM] = sched.startTime.split(':').map(Number);
-        const [endH, endM] = sched.endTime.split(':').map(Number);
-        const startMins = startH * 60 + startM;
-        const endMins = endH * 60 + endM;
-
-        if (startMins >= endMins) {
-          toast.error(t("scheduleStartTimeBeforeEnd"));
-          return;
-        }
-      }
+      formToSave.seats = formToSave.seats || parseInt(formData.totalSeats) || 10;
     }
 
-    // Validation 7: Enrollment type vs schedules count
-    if (formData.enrollmentType === 'fixedStart' && formData.schedules.length !== 1) {
-      toast.error(t("fixedStartCoursesSingleSchedule"));
+    if (!formToSave.batchName || !formToSave.startTime || !formToSave.endTime || !formToSave.days.length || !formToSave.seats) {
+      toast.error("Please fill all required schedule fields");
       return;
     }
 
+    const updated = [...(formData.batches || [])];
+    if (editingBatchIndex !== null) {
+      updated[editingBatchIndex] = formToSave;
+    } else {
+      updated.push(formToSave);
+    }
+
+    setFormData(prev => ({ ...prev, batches: updated }));
+    setShowBatchModal(false);
+    toast.success(editingBatchIndex !== null ? "Schedule updated" : "Schedule added");
+  };
+
+  const removeBatch = (index) => {
+    const updated = formData.batches.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, batches: updated }));
+    toast.success("Schedule removed");
+  };
+
+  // Submit / Save Actions
+  const handleSaveDraft = async () => {
     setLoading(true);
     try {
-      const isEditMode = !!courseId;
-
-      // Construct payload
-      let payload = {
+      const payload = {
         ...formData,
-        totalSeats: Number(formData.totalSeats),
-        price: Number(formData.price),
+        isDraft: true,
+        price: formData.price ? Number(formData.price) : 0,
+        totalSeats: formData.totalSeats ? Number(formData.totalSeats) : 0,
+        totalSessions: formData.enrollmentType === "Ongoing" ? 9999 : (formData.totalSessions ? Number(formData.totalSessions) : 0),
+        endDate: formData.enrollmentType === "Ongoing" && noEndDate ? "2099-12-31" : formData.endDate,
         venueAddress: formatLocationForApi(formData.venueAddress) || formData.venueAddress,
       };
 
-      // Clean payload - extract IDs from populated fields if needed
-      if (payload.courseCategory && typeof payload.courseCategory === 'object') {
+      if (payload.courseCategory && typeof payload.courseCategory === "object") {
         payload.courseCategory = payload.courseCategory._id;
       }
 
-      // Remove server-generated and immutable fields
-      const fieldsToRemove = ['_id', 'createdAt', 'updatedAt', '__v', 'createdBy', 'totalRevenue', 'totalEnrollments', 'leftSeats', 'duration'];
+      const fieldsToRemove = ["_id", "createdAt", "updatedAt", "__v", "createdBy", "totalRevenue", "totalEnrollments", "leftSeats", "duration"];
       fieldsToRemove.forEach(field => delete payload[field]);
 
-      if (isEditMode) {
-        // Update existing course
-        const res = await courseApi.updateCourse(courseId, payload);
-        if (res.status) {
-          toast.success(t("courseUpdatedSuccess"));
-          router.push("/CoursesManagement");
-        }
+      let res;
+      if (courseId) {
+        res = await courseApi.updateCourse(courseId, payload);
       } else {
-        // Create new course
-        const res = await apiClient.post("/course/create", payload);
-        if (res.status) {
-          toast.success(t("courseCreatedSuccess"));
-          router.push("/CoursesManagement");
-        }
+        res = await apiClient.post("/course/create", payload);
       }
-    } catch (error) {
-      console.error("Course operation error", error);
-      // toast.error is handled by interceptor usually, but safe to log
+
+      if (res.status) {
+        toast.success(t("draftSavedSuccessfully") || "Draft saved successfully");
+        router.push("/CoursesManagement");
+      }
+    } catch (err) {
+      toast.error("Failed to save draft");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    setLoading(true);
+    try {
+      const payload = {
+        ...formData,
+        isDraft: false,
+        price: Number(formData.price),
+        totalSeats: Number(formData.totalSeats) || 0,
+        totalSessions: formData.enrollmentType === "Ongoing" ? 9999 : Number(formData.totalSessions),
+        endDate: formData.enrollmentType === "Ongoing" && noEndDate ? "2099-12-31" : formData.endDate,
+        venueAddress: formatLocationForApi(formData.venueAddress) || formData.venueAddress,
+      };
+
+      if (payload.courseCategory && typeof payload.courseCategory === "object") {
+        payload.courseCategory = payload.courseCategory._id;
+      }
+
+      const fieldsToRemove = ["_id", "createdAt", "updatedAt", "__v", "createdBy", "totalRevenue", "totalEnrollments", "leftSeats", "duration"];
+      fieldsToRemove.forEach(field => delete payload[field]);
+
+      let res;
+      if (courseId) {
+        res = await courseApi.updateCourse(courseId, payload);
+      } else {
+        res = await apiClient.post("/course/create", payload);
+      }
+
+      if (res.status) {
+        toast.success(formData.enrollmentType === "Ongoing" ? "Class published successfully" : "Course published successfully");
+        router.push("/CoursesManagement");
+      }
+    } catch (err) {
+      toast.error(formData.enrollmentType === "Ongoing" ? "Failed to publish class" : "Failed to publish course");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const validateStep = (currentStep) => {
+    if (currentStep === 1) {
+      if (formData.enrollmentType === "Ongoing") {
+        if (!formData.courseTitle || !formData.courseCategory || !formData.shortdesc || !formData.longdesc) {
+          toast.error("Please fill all required basic info fields");
+          return false;
+        }
+      } else {
+        if (!formData.courseTitle || !formData.courseCategory || !formData.shortdesc || !formData.longdesc || !formData.whatYouWillLearn) {
+          toast.error("Please fill all required basic info fields");
+          return false;
+        }
+      }
+      if (!formData.posterImage || formData.posterImage.length === 0) {
+        toast.error(formData.enrollmentType === "Ongoing" ? "Please upload a class poster" : "Please upload a course poster");
+        return false;
+      }
+    } else if (currentStep === 2) {
+      if (formData.enrollmentType === "Ongoing") {
+        if (!formData.startDate || !formData.venueName || !formData.venueAddress?.address) {
+          toast.error("Please fill all location & start date fields");
+          return false;
+        }
+        if (!noEndDate && !formData.endDate) {
+          toast.error("Please select an end date or check 'No end date'");
+          return false;
+        }
+        if (!formData.batches || formData.batches.length === 0) {
+          toast.error("Please add at least one weekly schedule class time");
+          return false;
+        }
+      } else {
+        if (!formData.startDate || !formData.endDate || !formData.totalSessions || !formData.venueName || !formData.venueAddress?.address) {
+          toast.error("Please fill all location & duration fields");
+          return false;
+        }
+        if (!formData.batches || formData.batches.length === 0) {
+          toast.error("Please add at least one batch schedule");
+          return false;
+        }
+      }
+    } else if (currentStep === 3) {
+      if (formData.enrollmentType === "Ongoing") {
+        if (!formData.price || formData.price < 0 || !formData.totalSeats || formData.totalSeats < 1 || !formData.refundPolicy) {
+          toast.error("Please configure valid price, capacity per session, and refund policy");
+          return false;
+        }
+      } else {
+        if (!formData.price || formData.price < 0 || !formData.refundPolicy) {
+          toast.error("Please configure a valid price and refund policy");
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  const goNext = () => {
+    if (validateStep(step)) {
+      setStep(step + 1);
+    }
+  };
+
+  const goBack = () => {
+    setStep(step - 1);
   };
 
   if (initialLoading) {
     return <div className="text-center p-5 text-white">{t("loading")}</div>;
   }
 
+  const activeCategory = categories.find(cat => cat._id === formData.courseCategory);
+
   return (
     <div>
       <Row className="justify-content-center">
-        <Col md={8}>
-          <Form className="row" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-            <div className="event-form-card">
-              <Row>
-                <Col md={12}>
-                  <div className="event-frm-bx upload">
-                    <div>
-                      <h5>{t("uploadPoster")} <span className="text-danger">*</span></h5>
-                      <p>{t("uploadPosterDesc")}</p>
-                    </div>
-                    <input type="file" id="upload" className="d-none" onChange={handleImageUpload} />
-                    <label htmlFor="upload">
-                      {loading ? t("uploading") : t("upload")}
-                    </label>
-                  </div>
-                  {formData.posterImage.length > 0 && (
-                    <div className="d-flex gap-2 mt-3 flex-wrap">
-                      {formData.posterImage.map((imgUrl, index) => (
-                        <div key={index} className="position-relative" style={{ width: '100px', height: '100px' }}>
-                          <img
-                            src={getFullImageUrl(imgUrl)}
-                            alt={`Preview ${index}`}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 d-flex align-items-center justify-content-center"
-                            style={{ width: '20px', height: '20px', borderRadius: '50%' }}
-                            onClick={() => {
-                              const newImages = formData.posterImage.filter((_, i) => i !== index);
-                              setFormData(prev => ({ ...prev, posterImage: newImages }));
-                            }}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Col>
+        <Col lg={10} md={12} xs={12}>
+          {/* Header */}
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <h2 className="text-white mb-0">
+              {courseId
+                ? (formData.enrollmentType === "Ongoing" ? "Edit Class" : "Edit Course")
+                : (formData.enrollmentType === "Ongoing" ? "Create Class" : "Create Course")}
+            </h2>
+            <button
+              type="button"
+              className="outline-btn"
+              onClick={handleSaveDraft}
+              style={{ padding: "8px 24px", borderRadius: "20px" }}
+            >
+              {t("saveDraft") || "Save Draft"}
+            </button>
+          </div>
 
+          {/* Steps Indicator */}
+          <ul className="event-steps mb-4">
+            <li className="steps-item">
+              <span className={`steps-link ${step >= 1 ? "active" : ""}`}>
+                <span className="steps-text">Basic Info</span>
+                <span className="steps-arrow"><img src="/img/Arrow-Right.svg" className="ms-3" /></span>
+              </span>
+            </li>
+            <li className="steps-item">
+              <span className={`steps-link ${step >= 2 ? "active" : ""}`}>
+                <span className="steps-text">Location & Schedule</span>
+                <span className="steps-arrow"><img src="/img/Arrow-Right.svg" className="ms-3" /></span>
+              </span>
+            </li>
+            <li className="steps-item">
+              <span className={`steps-link ${step >= 3 ? "active" : ""}`}>
+                <span className="steps-text">{formData.enrollmentType === "Ongoing" ? "Pricing & Capacity" : "Pricing"}</span>
+                <span className="steps-arrow"><img src="/img/Arrow-Right.svg" className="ms-3" /></span>
+              </span>
+            </li>
+            <li className="steps-item">
+              <span className={`steps-link ${step >= 4 ? "active" : ""}`}>
+                <span className="steps-text">Review</span>
+              </span>
+            </li>
+          </ul>
 
+          <div className="event-form-card">
+            {/* STEP 1: BASIC INFO */}
+            {step === 1 && (
+              <div>
+                {/* Enrollment Type Toggle Switcher */}
+                <div className="d-flex justify-content-center gap-3 mb-4">
+                  <button
+                    type="button"
+                    className={`custom-btn ${formData.enrollmentType === "Ongoing" ? "" : "outline-btn"}`}
+                    style={{ borderRadius: "20px", padding: "10px 24px", fontSize: "14px" }}
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, enrollmentType: "Ongoing" }));
+                    }}
+                    disabled={!!courseId}
+                  >
+                    Ongoing Class
+                  </button>
+                  <button
+                    type="button"
+                    className={`custom-btn ${formData.enrollmentType === "fixedStart" ? "" : "outline-btn"}`}
+                    style={{ borderRadius: "20px", padding: "10px 24px", fontSize: "14px" }}
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, enrollmentType: "fixedStart" }));
+                    }}
+                    disabled={!!courseId}
+                  >
+                    Fixed Start Course
+                  </button>
+                </div>
 
-                <Col md={6}>
-                  <div className="event-frm-bx">
-                    <label className="form-label">{t("courseName")} <span className="text-danger">*</span></label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder={t("courseNamePlaceholder")}
-                      name="courseTitle"
-                      value={formData.courseTitle}
-                      onChange={handleChange}
-                      required
-                    />
-                    <div className="text-end mt-1">
-                      <small className="text-white">
-                        {(formData.courseTitle?.length || 0)}/100
-                      </small>
-                    </div>
-                  </div>
-                </Col>
-                <Col md={6}>
-                  <div className="event-frm-bx">
-                    <label className="form-label">{t("courseCategory")} <span className="text-danger">*</span></label>
-                    <select
-                      className="form-select"
-                      name="courseCategory"
-                      value={formData.courseCategory}
-                      onChange={handleChange}
-                      required
-                    >
-                      <option value="">{t("selectCourseCategory")}</option>
-                      {categories.map((cat) => (
-                        <option key={cat._id} value={cat._id}>
-                          {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </Col>
-                <Col md={6}>
-                  <div className="event-frm-bx">
-                    <label className="form-label">{t("quantityAvailable")} <span className="text-danger">*</span></label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      placeholder={t("enterQuantity")}
-                      name="totalSeats"
-                      value={formData.totalSeats}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </Col>
-                <Col md={12}>
-                  <div className="event-frm-bx">
-                    <label className="form-label">{t("venueAddressLabel")} <span className="text-danger">*</span></label>
-                    <VenueAutocomplete
-                      defaultValue={formData.venueAddress?.address}
-                      onPlaceSelected={handleVenueSelected}
-                      placeholder={t("venueAddressLabel")}
-                    />
-                  </div>
-                </Col>
-                {/* <Col md={12}>
-                  <LocationMap />
-                </Col> */}
+                <div className="event-frm-bx">
+                  <label className="form-label">
+                    {formData.enrollmentType === "Ongoing" ? "Class Name" : "Course Name"} <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="courseTitle"
+                    value={formData.courseTitle}
+                    onChange={handleChange}
+                    placeholder={formData.enrollmentType === "Ongoing" ? "Enter class name" : "Enter course name"}
+                  />
+                </div>
 
-                <Col md={12}>
-                  <div className="event-frm-bx">
-                    <label className="form-label">{t("shortDescriptionLabel")} <span className="text-danger">*</span></label>
-                    <textarea
-                      className="form-control"
-                      placeholder={t("shortDescriptionPlaceholder")}
-                      name="shortdesc"
-                      rows="3"
-                      value={formData.shortdesc}
-                      onChange={handleChange}
-                    ></textarea>
-                    <div className="text-end mt-1">
-                      <small className="text-white">
-                        {(formData.shortdesc?.length || 0)}/250
-                      </small>
-                    </div>
-                  </div>
-                </Col>
+                <div className="event-frm-bx">
+                  <label className="form-label">
+                    {formData.enrollmentType === "Ongoing" ? "Short Summary" : "Short Description"} <span className="text-danger">*</span>
+                  </label>
+                  <textarea
+                    className="form-control"
+                    name="shortdesc"
+                    value={formData.shortdesc}
+                    onChange={handleChange}
+                    placeholder={formData.enrollmentType === "Ongoing" ? "Brief summary of the class" : "Brief summary of the course"}
+                    rows={2}
+                  />
+                </div>
 
-                <Col md={12}>
+                <div className="event-frm-bx">
+                  <label className="form-label">
+                    {formData.enrollmentType === "Ongoing" ? "Full Description" : "Course Details"} <span className="text-danger">*</span>
+                  </label>
+                  <textarea
+                    className="form-control"
+                    name="longdesc"
+                    value={formData.longdesc}
+                    onChange={handleChange}
+                    placeholder={formData.enrollmentType === "Ongoing" ? "In-depth details about the class structure" : "In-depth details about the program structure"}
+                    rows={4}
+                  />
+                </div>
+
+                {formData.enrollmentType !== "Ongoing" && (
                   <div className="event-frm-bx">
-                    <label className="form-label">{t("whatYouWillLearn")} <span className="text-danger">*</span></label>
+                    <label className="form-label">What You'll Learn <span className="text-danger">*</span></label>
                     <textarea
                       className="form-control"
                       name="whatYouWillLearn"
-                      rows="4"
                       value={formData.whatYouWillLearn}
                       onChange={handleChange}
-                      placeholder={t("whatYouWillLearnPlaceholder")}
-                    ></textarea>
-                    <div className="text-end mt-1">
-                      <small className="text-white">
-                        {(formData.whatYouWillLearn?.length || 0)}/1000
-                      </small>
-                    </div>
-                  </div>
-                </Col>
-
-                {/* <Col md={12}>
-                  <div className="event-frm-bx">
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="isFeatured"
-                        checked={formData.isFeatured}
-                        onChange={(e) => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))}
-                      />
-                      <label className="form-check-label text-white" htmlFor="isFeatured">
-                        Mark as Featured Course
-                      </label>
-                    </div>
-                  </div>
-                </Col> */}
-
-                <Col md={12}>
-                  <div className="event-frm-bx upload">
-                    <div>
-                      <h5>{t("uploadGalleryTitle")}</h5>
-                      <p>{t("uploadGalleryDesc")}</p>
-                    </div>
-                    <input type="file" id="gallery-upload" className="d-none" multiple onChange={handleGalleryUpload} />
-                    <label htmlFor="gallery-upload">
-                      {loading ? t("uploading") : t("uploadGallery")}
-                    </label>
-                  </div>
-                  {formData.galleryImages.length > 0 && (
-                    <div className="d-flex gap-2 mt-3 flex-wrap">
-                      {formData.galleryImages.map((imgUrl, index) => (
-                        <div key={index} className="position-relative" style={{ width: '100px', height: '100px' }}>
-                          <img
-                            src={getFullImageUrl(imgUrl)}
-                            alt={`Gallery ${index}`}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 d-flex align-items-center justify-content-center"
-                            style={{ width: '20px', height: '20px', borderRadius: '50%' }}
-                            onClick={() => {
-                              const newImages = formData.galleryImages.filter((_, i) => i !== index);
-                              setFormData(prev => ({ ...prev, galleryImages: newImages }));
-                            }}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Col>
-
-              </Row>
-            </div>
-
-            <div className="event-form-card">
-
-
-              {/* Enrollment Type Toggle */}
-              <Col md={12} className="mb-4">
-                <div className="p-3 rounded" style={{ backgroundColor: "#2a2a2a" }}>
-                  <div
-                    className={`d-flex align-items-center p-3 mb-2 rounded cursor-pointer`}
-                    style={{
-                      backgroundColor: formData.enrollmentType === 'Ongoing' ? '#333' : 'transparent',
-                      cursor: 'pointer',
-                      border: formData.enrollmentType === 'Ongoing' ? '1px solid #00d084' : '1px solid #444'
-                    }}
-                    onClick={() => handleEnrollmentTypeSelect('Ongoing')}
-                  >
-                    <div className="me-3">
-                      <div style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        backgroundColor: formData.enrollmentType === 'Ongoing' ? '#00d084' : 'transparent',
-                        border: formData.enrollmentType === 'Ongoing' ? 'none' : '2px solid #666',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        {formData.enrollmentType === 'Ongoing' && <span style={{ color: 'white', fontWeight: 'bold' }}>✓</span>}
-                      </div>
-                    </div>
-                    <div>
-                      <h6 className="mb-0 text-white">{t("ongoingCourseLabel")}</h6>
-                      <small className="text-secondary">{t("ongoingCourseDesc")}</small>
-                    </div>
-                  </div>
-
-                  <div
-                    className="d-flex align-items-center p-3 rounded cursor-pointer"
-                    style={{
-                      backgroundColor: formData.enrollmentType === 'fixedStart' ? '#333' : 'transparent',
-                      cursor: 'pointer',
-                      border: formData.enrollmentType === 'fixedStart' ? '1px solid #00d084' : '1px solid #444'
-                    }}
-                    onClick={() => handleEnrollmentTypeSelect('fixedStart')}
-                  >
-                    <div className="me-3">
-                      <div style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        backgroundColor: formData.enrollmentType === 'fixedStart' ? '#00d084' : 'transparent',
-                        border: formData.enrollmentType === 'fixedStart' ? 'none' : '2px solid #666',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        {formData.enrollmentType === 'fixedStart' && <span style={{ color: 'white', fontWeight: 'bold' }}>✓</span>}
-                      </div>
-                    </div>
-                      <div className="d-flex flex-column">
-                      <span className="text-white fw-bold">{t("fixedStartCourseLabel")}</span>
-                      <span className="text-secondary small">{t("fixedStartCourseDesc")}</span>
-                    </div>
-                  </div>
-                </div>
-              </Col>
-
-
-
-              {formData.schedules.map((schedule, index) => (
-                <div key={index} className="mb-4 border-bottom pb-3">
-                  <Row>
-                    <Col md={6}>
-                      <div className="event-frm-bx">
-                        <label className="form-label">{t("startDate")} <span className="text-danger">*</span></label>
-                        <div className="date-input-wrapper">
-                          <input
-                            type="date"
-                            className="date-input form-control"
-                            value={schedule.startDate}
-                            min={new Date().toISOString().split("T")[0]}
-                            onChange={(e) => handleScheduleChange(index, 'startDate', e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </Col>
-                    <Col md={6}>
-                      <div className="event-frm-bx">
-                        <label className="form-label">{t("endDate")} <span className="text-danger">*</span></label>
-                        <div className="date-input-wrapper">
-                          <input
-                            type="date"
-                            className="date-input form-control"
-                            value={schedule.endDate}
-                            min={schedule.startDate || new Date().toISOString().split("T")[0]}
-                            onChange={(e) => handleScheduleChange(index, 'endDate', e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </Col>
-                    <Col md={6}>
-                      <div className="event-frm-bx">
-                        <label className="form-label">{t("startTime")} <span className="text-danger">*</span></label>
-                        <div className="date-input-wrapper">
-                          <input
-                            type="time"
-                            className="date-input form-control"
-                            value={schedule.startTime}
-                            onChange={(e) => handleScheduleChange(index, 'startTime', e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </Col>
-                    <Col md={6}>
-                      <div className="event-frm-bx">
-                        <label className="form-label">{t("endTime")} <span className="text-danger">*</span></label>
-                        <div className="date-input-wrapper">
-                          <input
-                            type="time"
-                            className="date-input form-control"
-                            value={schedule.endTime}
-                            onChange={(e) => handleScheduleChange(index, 'endTime', e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </Col>
-                  </Row>
-                  {formData.enrollmentType === 'Ongoing' && (
-                    <div className="d-flex justify-content-end">
-                      {index > 0 && (
-                        <Button variant="danger" size="sm" onClick={() => removeScheduleSlot(index)}>
-                          {t("removeSlot")}
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {formData.enrollmentType === 'Ongoing' && (
-                  <Col md={12}>
-                  <div className="event-frm-bx">
-                    <Button type="button" className="add-slot" onClick={addScheduleSlot}>
-                      {t("addAnotherSlot")}
-                    </Button>
-                  </div>
-                </Col>
-              )}
-
-              <Row>
-                <Col md={6}>
-                  <div className="event-frm-bx ">
-                    <label className="form-label">{t("sessionPrice")} <span className="text-danger">*</span></label>
-                    <input
-                      type="number"
-                      placeholder={t("sessionPricePlaceholder")}
-                      className="form-control text-white"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleChange}
-                      required
+                      placeholder="Key takeaways or skills acquired"
+                      rows={3}
                     />
                   </div>
-                </Col>
-              </Row>
-              <div className="d-flex gap-2 justify-content-center mt-2">
-                <button className="custom-btn" type="submit" disabled={loading}>
-                  {loading ? (courseId ? t("updating") : t("creating")) : (courseId ? t("updateCourse") : t("createCourse"))}
-                </button>
+                )}
+
+                {/* Categories */}
+                <div className="event-frm-bx">
+                  <label className="form-label">
+                    {formData.enrollmentType === "Ongoing" ? "Class Category" : "Course Category"} <span className="text-danger">*</span>
+                  </label>
+                  <div className="d-flex flex-wrap gap-2 mb-3">
+                    {categories.map((cat) => {
+                      const isSelected = formData.courseCategory === cat._id;
+                      return (
+                        <button
+                          key={cat._id}
+                          type="button"
+                          className={`custom-btn ${isSelected ? "" : "outline-btn"}`}
+                          style={{ borderRadius: "20px", padding: "8px 16px", fontSize: "14px" }}
+                          onClick={() => setFormData(prev => ({ ...prev, courseCategory: cat._id }))}
+                        >
+                          {cat.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Poster Image Upload */}
+                <div className="event-frm-bx upload mb-3">
+                  <div>
+                    <h5>
+                      {formData.enrollmentType === "Ongoing" ? "Upload Class Poster" : "Upload Course Poster"} <span className="text-danger">*</span>
+                    </h5>
+                    <p>Standard poster image for listings</p>
+                  </div>
+                  <input type="file" id="upload-poster" className="d-none" onChange={handleImageUpload} accept="image/*" />
+                  <label htmlFor="upload-poster" style={{ cursor: "pointer" }}>
+                    {loading ? "Uploading..." : "Upload Image"}
+                  </label>
+                </div>
+                {formData.posterImage && formData.posterImage.length > 0 && (
+                  <div className="mb-4">
+                    <img src={getFullImageUrl(formData.posterImage[0])} alt="Poster" style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }} />
+                  </div>
+                )}
+
+                {/* Gallery Images Upload */}
+                <div className="event-frm-bx upload mb-3">
+                  <div>
+                    <h5>Image Gallery (Optional)</h5>
+                    <p>Up to 5 images showing classrooms, facilities, etc.</p>
+                  </div>
+                  <input type="file" id="upload-gallery" className="d-none" multiple onChange={handleGalleryUpload} accept="image/*" />
+                  <label htmlFor="upload-gallery" style={{ cursor: "pointer" }}>
+                    Upload Photos
+                  </label>
+                </div>
+                <div className="d-flex gap-2 flex-wrap mb-4">
+                  {formData.mediaLinks && formData.mediaLinks.map((url, idx) => (
+                    <div key={idx} className="position-relative" style={{ width: "90px", height: "90px" }}>
+                      <img src={getFullImageUrl(url)} alt="Gallery" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, mediaLinks: prev.mediaLinks.filter((_, i) => i !== idx) }))}
+                        className="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 d-flex align-items-center justify-content-center"
+                        style={{ width: "20px", height: "20px", borderRadius: "50%" }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Teaser Video Upload */}
+                <div className="event-frm-bx upload mb-3">
+                  <div>
+                    <h5>Teaser Video (Optional)</h5>
+                    <p>Brief clip highlighting program details</p>
+                  </div>
+                  <input type="file" id="upload-video" className="d-none" onChange={handleVideoUpload} accept="video/*" />
+                  <label htmlFor="upload-video" style={{ cursor: "pointer" }}>
+                    Upload Video
+                  </label>
+                </div>
+                {formData.shortTeaserVideo && formData.shortTeaserVideo.length > 0 && (
+                  <div className="mb-4">
+                    <video src={getFullImageUrl(formData.shortTeaserVideo[0])} controls style={{ width: "100%", maxWidth: "320px", borderRadius: "12px" }} />
+                  </div>
+                )}
+
+                <div className="d-flex justify-content-end mt-4">
+                  <button type="button" onClick={goNext} className="custom-btn">Continue</button>
+                </div>
               </div>
-            </div>
-          </Form>
+            )}
+
+            {/* STEP 2: LOCATION & SCHEDULE */}
+            {step === 2 && (
+              <div>
+                <h5 className="text-white mb-3">
+                  {formData.enrollmentType === "Ongoing" ? "Class Duration" : "Course Duration"}
+                </h5>
+                <Row className="mb-4">
+                  <Col md={6} className="mb-3">
+                    <div className="event-frm-bx">
+                      <label className="form-label">Start Date <span className="text-danger">*</span></label>
+                      <div className="date-input-wrapper">
+                        <input
+                          type="date"
+                          className="date-input form-control"
+                          value={formData.startDate}
+                          onChange={handleChange}
+                          name="startDate"
+                          min={new Date().toISOString().split("T")[0]}
+                        />
+                        <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
+                          <img src="/img/white-calendar.svg" alt="calendar" />
+                        </span>
+                      </div>
+                    </div>
+                  </Col>
+
+                  {formData.enrollmentType === "Ongoing" ? (
+                    <Col md={6} className="mb-3 d-flex flex-column justify-content-center">
+                      <div className="form-check form-switch pt-3">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id="no-end-date-toggle"
+                          checked={noEndDate}
+                          onChange={(e) => {
+                            setNoEndDate(e.target.checked);
+                            if (e.target.checked) {
+                              setFormData(prev => ({ ...prev, endDate: "2099-12-31" }));
+                            } else {
+                              setFormData(prev => ({ ...prev, endDate: "" }));
+                            }
+                          }}
+                          style={{ cursor: "pointer" }}
+                        />
+                        <label className="form-check-label text-white ms-2" htmlFor="no-end-date-toggle" style={{ cursor: "pointer" }}>
+                          No end date (Ongoing indefinitely)
+                        </label>
+                      </div>
+
+                      {!noEndDate && (
+                        <div className="event-frm-bx mt-2">
+                          <label className="form-label">End Date <span className="text-danger">*</span></label>
+                          <div className="date-input-wrapper">
+                            <input
+                              type="date"
+                              className="date-input form-control"
+                              value={formData.endDate === "2099-12-31" ? "" : formData.endDate}
+                              onChange={handleChange}
+                              name="endDate"
+                              min={formData.startDate || new Date().toISOString().split("T")[0]}
+                            />
+                            <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
+                              <img src="/img/white-calendar.svg" alt="calendar" />
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </Col>
+                  ) : (
+                    <>
+                      <Col md={6} className="mb-3">
+                        <div className="event-frm-bx">
+                          <label className="form-label">End Date <span className="text-danger">*</span></label>
+                          <div className="date-input-wrapper">
+                            <input
+                              type="date"
+                              className="date-input form-control"
+                              value={formData.endDate}
+                              onChange={handleChange}
+                              name="endDate"
+                              min={formData.startDate || new Date().toISOString().split("T")[0]}
+                            />
+                            <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
+                              <img src="/img/white-calendar.svg" alt="calendar" />
+                            </span>
+                          </div>
+                        </div>
+                      </Col>
+                      <Col md={6} className="mb-3">
+                        <div className="event-frm-bx">
+                          <label className="form-label">Total Sessions <span className="text-danger">*</span></label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="totalSessions"
+                            value={formData.totalSessions}
+                            onChange={handleChange}
+                            placeholder="e.g. 12"
+                            min={1}
+                          />
+                        </div>
+                      </Col>
+                    </>
+                  )}
+                </Row>
+
+                <h5 className="text-white mb-3">Location</h5>
+                <div className="event-frm-bx mb-3">
+                  <label className="form-label">Venue Name <span className="text-danger">*</span></label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="venueName"
+                    value={formData.venueName}
+                    onChange={handleChange}
+                    placeholder="e.g. Creative Space"
+                  />
+                </div>
+
+                <div className="event-frm-bx mb-3">
+                  <label className="form-label">Address <span className="text-danger">*</span></label>
+                  <VenueAutocomplete
+                    defaultValue={formData.venueAddress?.address}
+                    onPlaceSelected={handleVenueSelected}
+                    placeholder="Search venue address"
+                  />
+                </div>
+
+                {/* Google Maps Selector Component */}
+                <div className="mb-4">
+                  <LocationMap />
+                </div>
+
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 className="text-white m-0">
+                    {formData.enrollmentType === "Ongoing" ? "Weekly Schedule" : "Batches"}
+                  </h5>
+                  <button type="button" onClick={openAddBatch} className="outline-btn" style={{ borderRadius: "20px", padding: "6px 16px" }}>
+                    {formData.enrollmentType === "Ongoing" ? "+ Add Class Time" : "+ Add Batch"}
+                  </button>
+                </div>
+
+                {/* Schedule List */}
+                <div className="mb-4">
+                  {formData.batches && formData.batches.length > 0 ? (
+                    formData.batches.map((batch, index) => (
+                      <div key={index} className="p-3 mb-2 rounded d-flex justify-content-between align-items-center" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.05)" }}>
+                        <div>
+                          <h6 className="text-white mb-1" style={{ color: "#23ada4" }}>
+                            {formData.enrollmentType === "Ongoing" ? batch.batchName : batch.batchName}
+                          </h6>
+                          <p className="small text-secondary mb-0">
+                            <strong>Time:</strong> {batch.startTime} - {batch.endTime} <br />
+                            <strong>Days:</strong> {batch.days.join(", ")} <br />
+                            <strong>Seats per Session:</strong> {batch.seats}
+                          </p>
+                        </div>
+                        <div>
+                          <button type="button" onClick={() => openEditBatch(index)} className="btn p-0 border-0 bg-transparent">
+                            <EditIcon />
+                          </button>
+                          <button type="button" onClick={() => removeBatch(index)} className="btn p-0 border-0 bg-transparent">
+                            <TrashIcon />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted small">
+                      {formData.enrollmentType === "Ongoing"
+                        ? "No class times configured. Please add at least one weekly class schedule."
+                        : "No batches configured. Please add at least one batch."}
+                    </p>
+                  )}
+                </div>
+
+                {/* Batch / Schedule Modal Dialog Form */}
+                {showBatchModal && (
+                  <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1050 }}>
+                    <div className="event-form-card" style={{ width: "95%", maxWidth: "500px", padding: "24px", background: "#1a1a1a", borderRadius: "16px", border: "1px solid rgba(35, 173, 164, 0.3)" }}>
+                      <h4 className="text-white mb-3">
+                        {editingBatchIndex !== null
+                          ? (formData.enrollmentType === "Ongoing" ? "Edit Class Time" : "Edit Batch")
+                          : (formData.enrollmentType === "Ongoing" ? "Add Class Time" : "Add Batch")}
+                      </h4>
+
+                      {formData.enrollmentType !== "Ongoing" && (
+                        <div className="event-frm-bx mb-3">
+                          <label className="form-label">Batch Name *</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={batchForm.batchName}
+                            onChange={(e) => setBatchForm(prev => ({ ...prev, batchName: e.target.value }))}
+                            placeholder="e.g. Morning Class"
+                          />
+                        </div>
+                      )}
+
+                      <Row className="mb-3">
+                        <Col xs={6}>
+                          <div className="event-frm-bx">
+                            <label className="form-label">Start Time *</label>
+                            <input
+                              type="time"
+                              className="form-control"
+                              value={batchForm.startTime}
+                              onChange={(e) => setBatchForm(prev => ({ ...prev, startTime: e.target.value }))}
+                            />
+                          </div>
+                        </Col>
+                        <Col xs={6}>
+                          <div className="event-frm-bx">
+                            <label className="form-label">End Time *</label>
+                            <input
+                              type="time"
+                              className="form-control"
+                              value={batchForm.endTime}
+                              onChange={(e) => setBatchForm(prev => ({ ...prev, endTime: e.target.value }))}
+                            />
+                          </div>
+                        </Col>
+                      </Row>
+
+                      <div className="event-frm-bx mb-3">
+                        <label className="form-label">Days *</label>
+                        <div className="d-flex flex-wrap gap-2">
+                          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(day => {
+                            const isSelected = batchForm.days.includes(day);
+                            return (
+                              <button
+                                type="button"
+                                key={day}
+                                className={`btn btn-sm ${isSelected ? "btn-success" : "btn-outline-secondary"}`}
+                                onClick={() => {
+                                  setBatchForm(prev => {
+                                    const newDays = prev.days.includes(day)
+                                      ? prev.days.filter(d => d !== day)
+                                      : [...prev.days, day];
+                                    return { ...prev, days: newDays };
+                                  });
+                                }}
+                                style={{ minWidth: "52px" }}
+                              >
+                                {day}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {formData.enrollmentType !== "Ongoing" && (
+                        <div className="event-frm-bx mb-4">
+                          <label className="form-label">Seats *</label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            value={batchForm.seats}
+                            onChange={(e) => setBatchForm(prev => ({ ...prev, seats: parseInt(e.target.value) || 0 }))}
+                            min={1}
+                          />
+                        </div>
+                      )}
+
+                      <div className="d-flex gap-2 justify-content-end">
+                        <button type="button" className="outline-btn" onClick={() => setShowBatchModal(false)}>Cancel</button>
+                        <button type="button" className="custom-btn" onClick={saveBatch}>Save</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="d-flex gap-2 justify-content-end mt-4">
+                  <button type="button" onClick={goBack} className="outline-btn">Back</button>
+                  <button type="button" onClick={goNext} className="custom-btn">Continue</button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: PRICING & CAPACITY */}
+            {step === 3 && (
+              <div>
+                <Row className="mb-4">
+                  <Col md={12} className="mb-3">
+                    <div className="event-frm-bx">
+                      <label className="form-label">
+                        {formData.enrollmentType === "Ongoing" ? "Price per Session" : "Price"} <span className="text-danger">*</span>
+                      </label>
+                      <div className="price-input-wrapper position-relative">
+                        <span className="price-symbol position-absolute" style={{ left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#23ada4', fontWeight: 'bold' }}>₮</span>
+                        <input
+                          type="number"
+                          className="form-control"
+                          style={{ paddingLeft: '30px' }}
+                          name="price"
+                          value={formData.price}
+                          onChange={handleChange}
+                          placeholder="0"
+                          min={0}
+                        />
+                      </div>
+                    </div>
+                  </Col>
+
+                  {formData.enrollmentType === "Ongoing" && (
+                    <>
+                      <Col md={12} className="mb-3">
+                        <div className="event-frm-bx">
+                          <label className="form-label">Capacity per Session <span className="text-danger">*</span></label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="totalSeats"
+                            value={formData.totalSeats}
+                            onChange={(e) => {
+                              handleChange(e);
+                              // Sync capacity to all batches if any are already defined
+                              if (formData.batches && formData.batches.length > 0) {
+                                const updatedBatches = formData.batches.map(b => ({
+                                  ...b,
+                                  seats: parseInt(e.target.value) || 0
+                                }));
+                                setFormData(prev => ({ ...prev, batches: updatedBatches }));
+                              }
+                            }}
+                            placeholder="Maximum students per session"
+                            min={1}
+                          />
+                        </div>
+                      </Col>
+
+                      <Col md={12} className="mb-3">
+                        <div className="event-frm-bx">
+                          <label className="form-label">Booking Cut-off</label>
+                          <select
+                            className="form-select"
+                            name="bookingCutOff"
+                            value={formData.bookingCutOff}
+                            onChange={handleChange}
+                            style={{
+                              backgroundColor: "#1a1a1a",
+                              color: "white",
+                              border: "1px solid rgba(35, 173, 164, 0.3)",
+                              height: "45px"
+                            }}
+                          >
+                            <option value="">Select Cut-off Time</option>
+                            <option value="1h">1 hour before session</option>
+                            <option value="2h">2 hours before session</option>
+                            <option value="4h">4 hours before session</option>
+                            <option value="12h">12 hours before session</option>
+                            <option value="24h">24 hours before session</option>
+                            <option value="48h">48 hours before session</option>
+                          </select>
+                        </div>
+                      </Col>
+                    </>
+                  )}
+
+                  <Col md={12} className="mb-3">
+                    <div className="event-frm-bx">
+                      <label className="form-label">{t("refundPolicyLabel")} <span className="text-danger">*</span></label>
+                      <select
+                        className="form-select"
+                        name="refundPolicy"
+                        value={formData.refundPolicy}
+                        onChange={handleChange}
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          color: "white",
+                          border: "1px solid rgba(35, 173, 164, 0.3)",
+                          height: "45px"
+                        }}
+                      >
+                        <option value="">Select Refund Policy</option>
+                        {refundPolicies.map((policy) => (
+                          <option key={policy} value={policy}>
+                            {policy}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </Col>
+                </Row>
+
+                <div className="d-flex gap-2 justify-content-end mt-4">
+                  <button type="button" onClick={goBack} className="outline-btn">Back</button>
+                  <button type="button" onClick={goNext} className="custom-btn">Continue</button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: REVIEW & PUBLISH */}
+            {step === 4 && (
+              <div className="text-white">
+                <h4 className="mb-4 pb-2 border-bottom border-secondary" style={{ color: "#23ada4" }}>
+                  {formData.enrollmentType === "Ongoing" ? "Review Class Summary" : "Review Course Summary"}
+                </h4>
+
+                <Row className="mb-3">
+                  <Col md={4} className="text-secondary font-weight-bold">
+                    {formData.enrollmentType === "Ongoing" ? "Class Title:" : "Course Title:"}
+                  </Col>
+                  <Col md={8}>{formData.courseTitle}</Col>
+                </Row>
+
+                <Row className="mb-3">
+                  <Col md={4} className="text-secondary font-weight-bold">Category:</Col>
+                  <Col md={8}>{activeCategory ? activeCategory.name : "-"}</Col>
+                </Row>
+
+                <Row className="mb-3">
+                  <Col md={4} className="text-secondary font-weight-bold">Duration:</Col>
+                  <Col md={8}>
+                    {formData.enrollmentType === "Ongoing"
+                      ? (noEndDate ? `Starts on ${formData.startDate} (Indefinite)` : `${formData.startDate} to ${formData.endDate}`)
+                      : `${formData.startDate} to ${formData.endDate} (${formData.totalSessions} Sessions)`}
+                  </Col>
+                </Row>
+
+                <Row className="mb-3">
+                  <Col md={4} className="text-secondary font-weight-bold">Venue Location:</Col>
+                  <Col md={8}>{formData.venueName} - {formData.venueAddress?.address}</Col>
+                </Row>
+
+                <Row className="mb-3">
+                  <Col md={4} className="text-secondary font-weight-bold">
+                    {formData.enrollmentType === "Ongoing" ? "Price & Refund (Session):" : "Price & Refund:"}
+                  </Col>
+                  <Col md={8}>
+                    ₮{formData.price} per session ({formData.refundPolicy})
+                  </Col>
+                </Row>
+
+                {formData.enrollmentType === "Ongoing" && (
+                  <>
+                    <Row className="mb-3">
+                      <Col md={4} className="text-secondary font-weight-bold">Capacity per Session:</Col>
+                      <Col md={8}>{formData.totalSeats} students</Col>
+                    </Row>
+                    {formData.bookingCutOff && (
+                      <Row className="mb-3">
+                        <Col md={4} className="text-secondary font-weight-bold">Booking Cut-off:</Col>
+                        <Col md={8}>{formData.bookingCutOff}</Col>
+                      </Row>
+                    )}
+                  </>
+                )}
+
+                <h5 className="text-white mb-2 mt-4" style={{ color: "#23ada4" }}>
+                  {formData.enrollmentType === "Ongoing" ? "Weekly Class Times" : "Configured Batches"}
+                </h5>
+                <div className="mb-4">
+                  {formData.batches && formData.batches.map((batch, index) => (
+                    <div key={index} className="p-2 mb-2 rounded bg-dark border border-secondary" style={{ fontSize: "14px" }}>
+                      <strong>{formData.enrollmentType === "Ongoing" ? batch.batchName : batch.batchName}</strong> • {batch.startTime} - {batch.endTime} • Days: {batch.days.join(", ")} • Seats: {batch.seats}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="d-flex gap-2 justify-content-end mt-5">
+                  <button type="button" onClick={goBack} className="outline-btn">Back</button>
+                  <button type="button" onClick={handleSubmit} className="custom-btn" disabled={loading}>
+                    {loading ? "Publishing..." : (formData.enrollmentType === "Ongoing" ? "Publish Class" : "Publish Course")}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </Col>
       </Row>
       <div style={{ height: 100 }}></div>

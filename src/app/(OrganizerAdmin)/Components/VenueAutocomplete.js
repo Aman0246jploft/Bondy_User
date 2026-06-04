@@ -285,6 +285,9 @@ const VenueAutocomplete = ({
   // Update input value when prop changes
   useEffect(() => {
     setInputValue(defaultValue || "");
+    if (inputRef.current) {
+      inputRef.current.value = defaultValue || "";
+    }
   }, [defaultValue]);
 
   if (error) {

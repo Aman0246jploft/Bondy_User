@@ -17,6 +17,7 @@ const eventApi = {
     getAllAttendees: (eventId, search) => apiClient.get(`/event/attendees/${eventId}`, { params: { search }, skipToast: true }),
     getOrganizerStats: () => apiClient.get("/event/organizer/stats", { skipToast: true }),
     updateEvent: (eventId, data) => apiClient.post(`/event/edit/${eventId}`, data),
+    getRefundPolicies: () => apiClient.get("/event/refund-policies", { skipToast: true }),
 };
 
 export default eventApi;

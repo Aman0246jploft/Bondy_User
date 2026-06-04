@@ -1,103 +1,114 @@
 "use client";
 import Link from "next/link";
-import React, { useState, useEffect } from "react";
-import authApi from "@/api/authApi";
+import React, { useEffect } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import { useEventContext } from "@/context/EventContext";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import { Range, getTrackBackground } from "react-range";
 import { useLanguage } from "@/context/LanguageContext";
-
+import eventApi from "@/api/eventApi";
 
 function page() {
   const { t } = useLanguage();
   const { eventData, updateEventData } = useEventContext();
   const router = useRouter();
-  // Dynamically import or require authApi if needed, or assume it is available in scope if I add the import at the top.
-  // Ideally, I should add the import at the top separately.
-  // Let's assume I will add `import authApi from "@/api/authApi";` at line 2.
-  // Wait, I can't add imports easily with replace in the middle.
-  // Let's replace the whole top section including imports.
 
-  const [featureFee, setFeatureFee] = useState(5.0); // Default fallback
+  // Normalize visibility
+  const visibility = eventData.visibility || "PUBLIC";
 
-const STEP = 1;
-const MIN = 0;
-const MAX = 100;
+  // Normalize age restriction
+  const getAgeString = () => {
+    if (typeof eventData.ageRestriction === "string") {
+      return eventData.ageRestriction;
+    }
+    // Handle legacy object if present
+    const minAge = eventData.ageRestriction?.minAge;
+    if (minAge === 18) return "18+";
+    if (minAge === 21) return "21+";
+    return "ALL";
+  };
 
-  useEffect(() => {
-    const fetchFeatureFee = async () => {
-      try {
-        const response = await authApi.getGlobalSetting("FEATURE_EVENT_FEE");
-        if (response?.status && response?.data && response?.data?.value) {
-          setFeatureFee(Number(response.data.value));
-        }
-      } catch (error) {
-        console.error("Error fetching feature fee:", error);
-      }
-    };
-    fetchFeatureFee();
-    document.title = t("ageRestrictionPageTitle");
-  }, []);
+  const activeAge = getAgeString();
 
-  // Local state for age slider if needed, or directly use eventData
-  // We'll trust eventData is the source of truth
+  const handleVisibilityChange = (value) => {
+    updateEventData({ visibility: value });
+  };
+
+  const handleAgeChange = (value) => {
+    updateEventData({ ageRestriction: value });
+  };
 
   const handleToggleChange = (e) => {
     const { name, checked } = e.target;
     updateEventData({ [name]: checked });
   };
 
-  const handleDressCodeChange = (e) => {
-    updateEventData({ dressCode: e.target.value });
-  };
-
-  const handleAgeTypeChange = (type) => {
-    // If All Ages, maybe reset minAge or just ignore it
-    updateEventData({
-      ageRestriction: {
-        ...eventData.ageRestriction,
-        type: type,
-        // Reset minAge if ALL_AGES? Or keep it? keeping it is safer for switching back
-      },
-    });
-  };
-
-  const handleMinAgeChange = (e) => {
-    updateEventData({
-      ageRestriction: {
-        ...eventData.ageRestriction,
-        minAge: parseInt(e.target.value),
-      },
-    });
-  };
-
-  const handleMaxAgeChange = (e) => {
-    updateEventData({
-      ageRestriction: {
-        ...eventData.ageRestriction,
-        maxAge: parseInt(e.target.value),
-      },
-    });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    updateEventData({ [name]: value });
   };
 
   const handleNext = (e) => {
     e.preventDefault();
-    // Validation if needed
-    router.push("/Gallery");
+    router.push("/EventPreview");
   };
+
+  const handleSaveDraft = async () => {
+    try {
+      const payload = { ...eventData, isDraft: true };
+      // Clean the payload
+      if (payload.eventCategory && typeof payload.eventCategory === 'object') {
+        payload.eventCategory = payload.eventCategory._id;
+      }
+      if (payload.createdBy && typeof payload.createdBy === 'object') {
+        payload.createdBy = payload.createdBy._id;
+      }
+      const fieldsToRemove = ['duration', 'status', 'totalAttendees', 'isBooked', 'totalRevenue', 'createdAt', 'updatedAt', '__v'];
+      fieldsToRemove.forEach(field => delete payload[field]);
+
+      const isEditMode = !!eventData._id;
+      let response;
+      if (isEditMode) {
+        const { _id, fetcherEvent, featureEventFee, createdBy, ...updatePayload } = payload;
+        response = await eventApi.updateEvent(_id, updatePayload);
+      } else {
+        response = await eventApi.createEvent(payload);
+      }
+      if (response.status) {
+        toast.success(t("draftSavedSuccessfully") || "Draft saved successfully");
+        router.push("/EventsManagement");
+      }
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      toast.error(error.response?.data?.message || "Failed to save draft");
+    }
+  };
+
+  useEffect(() => {
+    document.title = t("ageRestrictionPageTitle") || "Settings";
+  }, []);
 
   return (
     <div>
       <Row className="justify-content-center">
         <Col lg={10} md={12} xs={12}>
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <h2 className="text-white mb-0">{t("createEvent")}</h2>
+            <button
+              type="button"
+              className="outline-btn"
+              onClick={handleSaveDraft}
+              style={{ padding: "8px 24px", borderRadius: "20px" }}
+            >
+              {t("saveDraft") || "Save Draft"}
+            </button>
+          </div>
           <ul className="event-steps">
             <li className="steps-item">
               <Link href="/BasicInfo" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-01.svg" className="me-2" />
-                  Event Basic Info
+                  {t("eventBasicInfoStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -108,7 +119,7 @@ const MAX = 100;
               <Link href="/DateTime" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-02.svg" className="me-2" />
-                  Date, Time and Location
+                  {t("dateTimeStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -119,7 +130,7 @@ const MAX = 100;
               <Link href="/TicketsPricing" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-03.svg" className="me-2" />
-                  Tickets & Pricing
+                  {t("ticketsPricingStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -130,269 +141,126 @@ const MAX = 100;
               <Link href="/Agerestraction" className="steps-link active">
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-04.svg" className="me-2" />
-                  Age Restriction
-                </span>
-                <span className="steps-arrow">
-                  <img src="/img/Arrow-Right.svg" className="ms-3" />
-                </span>
-              </Link>
-            </li>
-            <li className="steps-item">
-              <Link href="/Gallery" className="steps-link">
-                <span className="steps-text">
-                  <img src="/img/org-img/step-icon-01.svg" className="me-2" />
-                  Gallery
-                </span>
-                <span className="steps-arrow">
-                  <img src="/img/Arrow-Right.svg" className="ms-3" />
+                  {t("ageRestrictionStep")}
                 </span>
               </Link>
             </li>
           </ul>
-          <Form className="row">
+          <Form onSubmit={handleNext}>
             <div className="event-form-card">
               <Row>
-                <Col md={12}>
-                  <div className="event-frm-bx d-flex justify-content-between align-items-center">
+                {/* Visibility */}
+                <Col md={12} className="mb-4">
+                  <div className="event-frm-bx">
+                    <label className="form-label">{t("visibilityLabel") || "Visibility"}</label>
+                    <div className="d-flex gap-3">
+                      <button
+                        type="button"
+                        className={`flex-grow-1 py-3 custom-btn ${visibility === "PUBLIC" ? "" : "outline-btn"}`}
+                        onClick={() => handleVisibilityChange("PUBLIC")}
+                      >
+                        {t("publicLabel") || "Public"}
+                      </button>
+                      <button
+                        type="button"
+                        className={`flex-grow-1 py-3 custom-btn ${visibility === "PRIVATE" ? "" : "outline-btn"}`}
+                        onClick={() => handleVisibilityChange("PRIVATE")}
+                      >
+                        {t("privateLabel") || "Private"}
+                      </button>
+                    </div>
+                  </div>
+                </Col>
+
+                {/* Age Restriction */}
+                <Col md={12} className="mb-4">
+                  <div className="event-frm-bx">
+                    <label className="form-label">{t("ageRestrictionLabel") || "Age Restriction"}</label>
+                    <div className="d-flex gap-3">
+                      <button
+                        type="button"
+                        className={`flex-grow-1 py-3 custom-btn ${activeAge === "ALL" ? "" : "outline-btn"}`}
+                        onClick={() => handleAgeChange("ALL")}
+                      >
+                        {t("allAges") || "All Ages"}
+                      </button>
+                      <button
+                        type="button"
+                        className={`flex-grow-1 py-3 custom-btn ${activeAge === "18+" ? "" : "outline-btn"}`}
+                        onClick={() => handleAgeChange("18+")}
+                      >
+                        18+
+                      </button>
+                      <button
+                        type="button"
+                        className={`flex-grow-1 py-3 custom-btn ${activeAge === "21+" ? "" : "outline-btn"}`}
+                        onClick={() => handleAgeChange("21+")}
+                      >
+                        21+
+                      </button>
+                    </div>
+                  </div>
+                </Col>
+
+                {/* Show Attendees Toggle */}
+                <Col md={12} className="mb-4">
+                  <div className="event-frm-bx d-flex justify-content-between align-items-center p-3" style={{ background: "#1a1a1a", borderRadius: "12px" }}>
                     <div>
-                      <label className="form-label mb-0">
-                        {t("accessAndPrivacyLabel")}
+                      <label className="form-label mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>
+                        {t("showAttendeesLabel") || "Show attendees"}
                       </label>
-                      <p className="text-white small mb-0">
-                        {t("accessAndPrivacyDesc")}
+                      <p className="text-secondary small mb-0 mt-1">
+                        {t("showAttendeesDesc") || "Let users see who's going"}
                       </p>
                     </div>
-                    <div className="form-check form-switch">
+                    <div className="form-check form-switch m-0">
                       <input
                         className="form-check-input"
                         type="checkbox"
-                        name="accessAndPrivacy"
-                        checked={eventData.accessAndPrivacy}
+                        name="showAttendees"
+                        checked={eventData.showAttendees !== false}
                         onChange={handleToggleChange}
-                        style={{ width: "3em", height: "1.5em" }}
+                        style={{ width: "3.2em", height: "1.6em", cursor: "pointer" }}
                       />
                     </div>
                   </div>
                 </Col>
 
-                <Col md={12}>
-                  <hr className="my-4" style={{ borderColor: "#333" }} />
-                </Col>
-
-                <Col md={12}>
-                  <div className="event-frm-bx">
-                    <label className="form-label">{t("ageRestrictionLabel")}</label>
-                    <div className="d-flex gap-3 mb-4">
-                        <button
-                        type="button"
-                        className={`custom-btn ${eventData.ageRestriction?.type === "ALL_AGES" ? "" : "outline-btn"}`}
-                        onClick={() => handleAgeTypeChange("ALL_AGES")}
-                        style={{ minWidth: "100px" }}>
-                        {t("allAges")}
-                      </button>
-                        <button
-                        type="button"
-                        className={`custom-btn ${eventData.ageRestriction?.type === "MIN_AGE" && eventData.ageRestriction?.minAge === 18 ? "" : "outline-btn"}`}
-                        onClick={() => {
-                          updateEventData({
-                            ageRestriction: { type: "MIN_AGE", minAge: 18,maxAge: 100, },
-                          });
-                        }}
-                        style={{ minWidth: "100px" }}>
-                        {t("age18Plus")}
-                      </button>
-                        <button
-                        type="button"
-                        className={`custom-btn ${eventData.ageRestriction?.type === "MIN_AGE" && eventData.ageRestriction?.minAge === 21 ? "" : "outline-btn"}`}
-                        onClick={() => {
-                          updateEventData({
-                            ageRestriction: { type: "MIN_AGE", minAge: 21,maxAge: 100, },
-                          });
-                        }}
-                        style={{ minWidth: "100px" }}>
-                        {t("age21Plus")}
-                      </button>
-                      {/* <button
-                        type="button"
-                        className={`custom-btn ${eventData.ageRestriction?.type === "RANGE" ? "" : "outline-btn"}`}
-                        onClick={() => {
-                          handleAgeTypeChange("RANGE");
-                          if (!eventData.ageRestriction.maxAge) {
-                            updateEventData({
-                              ageRestriction: {
-                                ...eventData.ageRestriction,
-                                type: "RANGE",
-                                minAge: 18,
-                                maxAge: 60,
-                              },
-                            });
-                          }
-                        }}
-                        style={{ minWidth: "100px" }}>
-                        Range
-                      </button> */}
-                    </div>
-
-                    {/* Single Slider for Custom Min Age */}
-                    {/* {eventData.ageRestriction?.type === "MIN_AGE" && (
-                      <div className="mt-3">
-                        <label className="form-label small text-white">
-                          Minimum Age: {eventData.ageRestriction.minAge}
-                        </label>
-                        <input
-                          type="range"
-                          className="form-range"
-                          min="0"
-                          max="100"
-                          value={eventData.ageRestriction.minAge}
-                          onChange={handleMinAgeChange}
-                        />
-                      </div>
-                    )} */}
-
-                   {eventData.ageRestriction?.type === "MIN_AGE" && (
-    <div className="mt-3">
-    <div className="d-flex justify-content-between text-white small mb-2">
-      <span>{t("minLabel")} {eventData.ageRestriction.minAge}</span>
-      <span>{t("maxLabel")} {eventData.ageRestriction.maxAge}</span>
-    </div>
-
-    <Range
-      values={[
-        eventData.ageRestriction.minAge,
-        eventData.ageRestriction.maxAge || 100,
-      ]}
-      step={STEP}
-      min={MIN}
-      max={MAX}
-      onChange={(values) => {
-        updateEventData({
-          ageRestriction: {
-            ...eventData.ageRestriction,
-            minAge: values[0],
-            maxAge: values[1],
-          },
-        });
-      }}
-      renderTrack={({ props, children }) => (
-        <div
-          {...props}
-          style={{
-            height: "6px",
-            width: "100%",
-            background: getTrackBackground({
-              values: [
-                eventData.ageRestriction.minAge,
-                eventData.ageRestriction.maxAge || 100,
-              ],
-              colors: ["#ccc", "#23ada4", "#ccc"], 
-              min: MIN,
-              max: MAX,
-            }),
-            borderRadius: "5px",
-          }}
-        >
-          {children}
-        </div>
-      )}
-     renderThumb={({ props }) => (
-  <div
-    {...props}
-    style={{
-      ...props.style,
-      height: "18px",
-      width: "18px",
-      borderRadius: "50%",
-      backgroundColor: "#23ada4",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-    }}
-  />
-)}
-    />
-  </div>
-)}
-
-                    {/* Dual Inputs/Sliders for Range */}
-                    {eventData.ageRestriction?.type === "RANGE" && (
-                      <div className="mt-3">
-                        <Row>
-                          <Col md={6}>
-                            <label className="form-label small text-white">
-                              Min Age: {eventData.ageRestriction.minAge}
-                            </label>
-                            <input
-                              type="range"
-                              className="form-range"
-                              min="0"
-                              max="100"
-                              value={eventData.ageRestriction.minAge}
-                              onChange={handleMinAgeChange}
-                            />
-                          </Col>
-                          <Col md={6}>
-                            <label className="form-label small text-white">
-                              Max Age: {eventData.ageRestriction.maxAge}
-                            </label>
-                            <input
-                              type="range"
-                              className="form-range"
-                              min="0"
-                              max="100"
-                              value={eventData.ageRestriction.maxAge}
-                              onChange={handleMaxAgeChange}
-                            />
-                          </Col>
-                        </Row>
-                      </div>
-                    )}
-                  </div>
-                </Col>
-
-                <Col md={12}>
-                  <div className="event-frm-bx">
-                    <label className="form-label">{t("dressCode")}</label>
+                {/* Entry Notes (Optional) */}
+                <Col md={12} className="mb-4">
+                  <div className="event-frm-bx p-3" style={{ background: "#1a1a1a", borderRadius: "12px" }}>
+                    <label className="form-label" style={{ fontSize: "16px", fontWeight: "600" }}>
+                      {t("entryNotesLabel") || "Entry Notes (Optional)"}
+                    </label>
                     <textarea
-                      className="form-control"
-                      name="dressCode"
-                      value={eventData.dressCode}
-                      onChange={handleDressCodeChange}
-                      placeholder={t("dressCodePlaceholder")}
-                      rows={4}></textarea>
+                      className="form-control mt-2"
+                      name="notes"
+                      value={eventData.notes || ""}
+                      onChange={handleInputChange}
+                      placeholder={t("entryNotesPlaceholder") || "Add any rules or information attendees should know..."}
+                      rows={3}
+                      style={{ background: "#242424", border: "1px solid rgba(255,255,255,0.1)", color: "white" }}
+                    />
                   </div>
                 </Col>
 
-                <Col md={12}>
-                  <hr className="my-4" style={{ borderColor: "#333" }} />
+                {/* Dress Code (Optional) */}
+                <Col md={12} className="mb-4">
+                  <div className="event-frm-bx p-3" style={{ background: "#1a1a1a", borderRadius: "12px" }}>
+                    <label className="form-label" style={{ fontSize: "16px", fontWeight: "600" }}>
+                      {t("dressCodeLabel") || "Dress Code (Optional)"}
+                    </label>
+                    <textarea
+                      className="form-control mt-2"
+                      name="dressCode"
+                      value={eventData.dressCode || ""}
+                      onChange={handleInputChange}
+                      placeholder={t("dressCodePlaceholder") || "Let attendees know what to wear..."}
+                      rows={3}
+                      style={{ background: "#242424", border: "1px solid rgba(255,255,255,0.1)", color: "white" }}
+                    />
+                  </div>
                 </Col>
-
-                {/* Feature Event - Only show during creation, not during edit */}
-                {/* {!eventData._id && (
-                  <>
-                    <Col md={12}>
-                      <div className="event-frm-bx d-flex justify-content-between align-items-center">
-                        <div>
-                          <label className="form-label mb-0">Feature Event</label>
-                          <p className="text-white small mb-0">
-                            Boost visibility on the homepage for $
-                            {featureFee.toFixed(2)}
-                          </p>
-                        </div>
-                        <div className="form-check form-switch">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            name="fetcherEvent"
-                            checked={eventData.fetcherEvent}
-                            onChange={handleToggleChange}
-                            style={{ width: "3em", height: "1.5em" }}
-                          />
-                        </div>
-                      </div>
-                    </Col>
-                  </>
-                )} */}
               </Row>
 
               <div className="d-flex gap-2 justify-content-end mt-4">
@@ -400,8 +268,7 @@ const MAX = 100;
                   {t("back")}
                 </Link>
                 <button
-                  type="button"
-                  onClick={handleNext}
+                  type="submit"
                   className="custom-btn">
                   {t("saveAndContinue")}
                 </button>

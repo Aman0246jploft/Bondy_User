@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
+import eventApi from "@/api/eventApi";
 
 function page() {
   const { t } = useLanguage();
@@ -119,6 +120,46 @@ function page() {
     <div>
       <Row className="justify-content-center">
         <Col lg={10} md={12} xs={12}>
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <h2 className="text-white mb-0">{t("createEvent")}</h2>
+            <button
+              type="button"
+              className="outline-btn"
+              onClick={async () => {
+                try {
+                  const payload = { ...eventData, isDraft: true };
+                  // Clean the payload
+                  if (payload.eventCategory && typeof payload.eventCategory === 'object') {
+                    payload.eventCategory = payload.eventCategory._id;
+                  }
+                  if (payload.createdBy && typeof payload.createdBy === 'object') {
+                    payload.createdBy = payload.createdBy._id;
+                  }
+                  const fieldsToRemove = ['duration', 'status', 'totalAttendees', 'isBooked', 'totalRevenue', 'createdAt', 'updatedAt', '__v'];
+                  fieldsToRemove.forEach(field => delete payload[field]);
+                  
+                  const isEditMode = !!eventData._id;
+                  let response;
+                  if (isEditMode) {
+                    const { _id, fetcherEvent, featureEventFee, createdBy, ...updatePayload } = payload;
+                    response = await eventApi.updateEvent(_id, updatePayload);
+                  } else {
+                    response = await eventApi.createEvent(payload);
+                  }
+                  if (response.status) {
+                    toast.success(t("draftSavedSuccessfully") || "Draft saved successfully");
+                    router.push("/EventsManagement");
+                  }
+                } catch (error) {
+                  console.error("Error saving draft:", error);
+                  toast.error(error.response?.data?.message || "Failed to save draft");
+                }
+              }}
+              style={{ padding: "8px 24px", borderRadius: "20px" }}
+            >
+              {t("saveDraft") || "Save Draft"}
+            </button>
+          </div>
           <ul className="event-steps">
             <li className="steps-item">
               <Link href="/BasicInfo" className="steps-link active">

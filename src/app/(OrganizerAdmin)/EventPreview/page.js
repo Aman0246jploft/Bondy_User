@@ -84,9 +84,9 @@ function page() {
   return (
     <div>
       <div className="cards event-details">
-        <Link href="/Gallery" className="back-btn">
+        <Link href="/Agerestraction" className="back-btn">
           <img src="/img/arrow-left-white.svg" alt={t("back")} />
-          {t("backToGallery")}
+          {t("backToSettings") || "Back to Settings"}
         </Link>
         <h4 className="line-title">
           <span>{t("eventDetails")}</span>
@@ -129,12 +129,12 @@ function page() {
             <span>{t("dateTimeLocation")}</span>
           </h4>
           <ul className="event-dtl-rgt">
-              <li>
-                <h6>{t("venueName")}</h6>
-                <p>{eventData.venueName}</p>
-              </li>
             <li>
-                <h6>
+              <h6>{t("venueName")}</h6>
+              <p>{eventData.venueName}</p>
+            </li>
+            <li>
+              <h6>
                 <img src="/img/white-calendar.svg" alt="" />
                 {t("startDate")}
               </h6>
@@ -142,11 +142,11 @@ function page() {
                 <span>{eventData.startDate}</span>
                 <span className="mx-2 text-secondary">•</span>
                 <span>{eventData.startTime}</span>
-                              <span>{formatTime(eventData.startTime, true, language)}</span>
+                <span>{formatTime(eventData.startTime, true, language)}</span>
               </p>
             </li>
             <li>
-                <h6>
+              <h6>
                 <img src="/img/white-calendar.svg" alt="" />
                 {t("endDate")}
               </h6>
@@ -154,11 +154,11 @@ function page() {
                 <span>{eventData.endDate}</span>
                 <span className="mx-2 text-secondary">•</span>
                 <span>{eventData.endTime}</span>
-                              <span>{formatTime(eventData.endTime, true, language)}</span>
+                <span>{formatTime(eventData.endTime, true, language)}</span>
               </p>
             </li>
             <li>
-                <h6>
+              <h6>
                 <img src="/img/Map-Point.svg" alt="" />
                 {t("location")}
               </h6>
@@ -173,7 +173,42 @@ function page() {
           <h4 className="line-title">
             <span>{t("ticketAndPricing")}</span>
           </h4>
-          <ul className="event-dtl-rgt">
+          {eventData.tickets && eventData.tickets.length > 0 ? (
+            eventData.tickets.map((ticket, index) => (
+              <div key={index} className="mb-4">
+                <h5 className="text-white mb-2" style={{ color: "#23ada4" }}>{t("ticketTitle") || `Ticket ${index + 1}`}: {ticket.ticketName}</h5>
+                <ul className="event-dtl-rgt">
+                  <li>
+                    <h6>{t("quantityAvailable")}</h6>
+                    <p>{ticket.qty}</p>
+                  </li>
+                  <li>
+                    <h6>{t("pricePerTicketLabel")}</h6>
+                    <p>₮{ticket.price}</p>
+                  </li>
+                  {ticket.ticketShortDesc && (
+                    <li>
+                      <h6>{t("shortDescription")}</h6>
+                      <p>{ticket.ticketShortDesc}</p>
+                    </li>
+                  )}
+                  {ticket.salesStart && (
+                    <li>
+                      <h6>{t("salesStartDateLabel")}</h6>
+                      <p>{ticket.salesStart.includes("T") ? ticket.salesStart.split("T")[0] : ticket.salesStart}</p>
+                    </li>
+                  )}
+                  {ticket.salesEnd && (
+                    <li>
+                      <h6>{t("salesEndDateLabel")}</h6>
+                      <p>{ticket.salesEnd.includes("T") ? ticket.salesEnd.split("T")[0] : ticket.salesEnd}</p>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            ))
+          ) : (
+            <ul className="event-dtl-rgt">
               <li>
                 <h6>{t("ticketName")}</h6>
                 <p>{eventData.ticketName}</p>
@@ -187,14 +222,6 @@ function page() {
                 <p>₮{eventData.ticketPrice}</p>
               </li>
               <li>
-                <h6>{t("totalTicketsLabel")}</h6>
-                <p>{eventData.totalTickets}</p>
-              </li>
-              <li>
-                <h6>{t("addons")}</h6>
-                <p>{eventData.addOns || "-"}</p>
-              </li>
-              <li>
                 <h6>{t("salesStartDateLabel")}</h6>
                 <p>{eventData.ticketSelesStartDate}</p>
               </li>
@@ -202,10 +229,13 @@ function page() {
                 <h6>{t("salesEndDateLabel")}</h6>
                 <p>{eventData.ticketSelesEndDate}</p>
               </li>
-              <li>
-                <h6>{t("refundPolicy")}</h6>
-                <p>{eventData.refundPolicy}</p>
-              </li>
+            </ul>
+          )}
+          <ul className="event-dtl-rgt mt-2">
+            <li>
+              <h6>{t("refundPolicy")}</h6>
+              <p>{eventData.refundPolicy}</p>
+            </li>
           </ul>
         </div>
         <div className="short-desc">
@@ -253,14 +283,14 @@ function page() {
           <Link href="/Gallery" className="outline-btn">
             {t("back")}
           </Link>
-          {/* <button
+          <button
             type="button"
-            className="custom-btn"
+            className="outline-btn"
             onClick={() => handlePublish(true)}
             disabled={publishing}
           >
-            {publishing ? "Saving..." : "Save / Draft"}
-          </button> */}
+            {publishing ? t("saving") || "Saving..." : t("saveDraft") || "Save Draft"}
+          </button>
           <button
             type="button"
             className="custom-btn publish-btn"

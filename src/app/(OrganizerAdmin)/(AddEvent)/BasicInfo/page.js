@@ -78,7 +78,7 @@ function BasicInfoContent() {
     let tagsArray = value.split(",").map((tag) => tag.trim());
 
     // Limit to 5 tags
-      if (tagsArray.length > 5) {
+    if (tagsArray.length > 5) {
       tagsArray = tagsArray.slice(0, 5);
       toast.error(t("maxTagsAllowed"));
     }
@@ -131,6 +131,94 @@ function BasicInfoContent() {
     }
   };
 
+  const handleGalleryImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const currentImageCount = (eventData.mediaLinks || []).length;
+    if (currentImageCount + files.length > 5) {
+      toast.error(t("maxGalleryImagesExceededDynamic", { count: currentImageCount }));
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const newLinks = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("files", file);
+        const response = await authApi.uploadFile(formData);
+        if (
+          response?.data &&
+          response?.data?.files &&
+          response?.data?.files.length > 0
+        ) {
+          newLinks.push(response?.data?.files[0]);
+        }
+      }
+
+      updateEventData({
+        mediaLinks: [...(eventData.mediaLinks || []), ...newLinks],
+      });
+      toast.success(t("imagesUploadedSuccessfully"));
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error(t("failedToUploadImage"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeGalleryImage = (index) => {
+    const updatedLinks = (eventData.mediaLinks || []).filter((_, i) => i !== index);
+    updateEventData({ mediaLinks: updatedLinks });
+  };
+
+  const handleVideoUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const currentVideoCount = (eventData.shortTeaserVideo || []).length;
+    if (currentVideoCount + files.length > 1) {
+      toast.error(t("onlyOneVideoAllowed"));
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const newLinks = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("files", file);
+        const response = await authApi.uploadFile(formData);
+        if (
+          response?.data &&
+          response?.data?.files &&
+          response?.data?.files.length > 0
+        ) {
+          newLinks.push(response.data.files[0]);
+        }
+      }
+
+      updateEventData({
+        shortTeaserVideo: [...(eventData.shortTeaserVideo || []), ...newLinks],
+      });
+      toast.success(t("videosUploadedSuccessfully"));
+    } catch (error) {
+      console.error("Error uploading video:", error);
+      toast.error(t("failedToUploadVideo"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeVideo = (index) => {
+    const updatedLinks = (eventData.shortTeaserVideo || []).filter(
+      (_, i) => i !== index,
+    );
+    updateEventData({ shortTeaserVideo: updatedLinks });
+  };
+
   const handleNext = (e) => {
     e.preventDefault();
     if (!eventData.eventTitle) {
@@ -173,11 +261,6 @@ function BasicInfoContent() {
       return;
     }
 
-    if (!eventData.tags || eventData.tags.length === 0 || (eventData.tags.length === 1 && eventData.tags[0] === "")) {
-      toast.error(t("atLeastOneTagRequired"));
-      return;
-    }
-
     router.push("/DateTime");
   };
 
@@ -190,12 +273,52 @@ function BasicInfoContent() {
     <div>
       <Row className="justify-content-center">
         <Col lg={10} md={12} xs={12}>
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <h2 className="text-white mb-0">{t("createEvent")}</h2>
+            <button
+              type="button"
+              className="outline-btn"
+              onClick={async () => {
+                try {
+                  const payload = { ...eventData, isDraft: true };
+                  // Clean the payload
+                  if (payload.eventCategory && typeof payload.eventCategory === 'object') {
+                    payload.eventCategory = payload.eventCategory._id;
+                  }
+                  if (payload.createdBy && typeof payload.createdBy === 'object') {
+                    payload.createdBy = payload.createdBy._id;
+                  }
+                  const fieldsToRemove = ['duration', 'status', 'totalAttendees', 'isBooked', 'totalRevenue', 'createdAt', 'updatedAt', '__v'];
+                  fieldsToRemove.forEach(field => delete payload[field]);
+
+                  const isEditMode = !!eventData._id;
+                  let response;
+                  if (isEditMode) {
+                    const { _id, fetcherEvent, featureEventFee, createdBy, ...updatePayload } = payload;
+                    response = await eventApi.updateEvent(_id, updatePayload);
+                  } else {
+                    response = await eventApi.createEvent(payload);
+                  }
+                  if (response.status) {
+                    toast.success(t("draftSavedSuccessfully") || "Draft saved successfully");
+                    router.push("/EventsManagement");
+                  }
+                } catch (error) {
+                  console.error("Error saving draft:", error);
+                  toast.error(error.response?.data?.message || "Failed to save draft");
+                }
+              }}
+              style={{ padding: "8px 24px", borderRadius: "20px" }}
+            >
+              {t("saveDraft") || "Save Draft"}
+            </button>
+          </div>
           <ul className="event-steps">
             <li className="steps-item">
               <Link href="/BasicInfo" className="steps-link active">
                 <span className="steps-text">
-                      <img src="/img/org-img/step-icon-01.svg" className="me-2" />
-                    {t("eventBasicInfoStep")}
+                  <img src="/img/org-img/step-icon-01.svg" className="me-2" />
+                  {t("eventBasicInfoStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -205,8 +328,8 @@ function BasicInfoContent() {
             <li className="steps-item">
               <Link href="/DateTime" className="steps-link">
                 <span className="steps-text">
-                      <img src="/img/org-img/step-icon-02.svg" className="me-2" />
-                    {t("dateTimeStep")}
+                  <img src="/img/org-img/step-icon-02.svg" className="me-2" />
+                  {t("dateTimeStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -216,8 +339,8 @@ function BasicInfoContent() {
             <li className="steps-item">
               <Link href="/TicketsPricing" className="steps-link">
                 <span className="steps-text">
-                      <img src="/img/org-img/step-icon-03.svg" className="me-2" />
-                    {t("ticketsPricingStep")}
+                  <img src="/img/org-img/step-icon-03.svg" className="me-2" />
+                  {t("ticketsPricingStep")}
                 </span>
                 <span className="steps-arrow">
                   <img src="/img/Arrow-Right.svg" className="ms-3" />
@@ -227,22 +350,8 @@ function BasicInfoContent() {
             <li className="steps-item">
               <Link href="/Agerestraction" className="steps-link">
                 <span className="steps-text">
-                      <img src="/img/org-img/step-icon-04.svg" className="me-2" />
-                    {t("ageRestrictionStep")}
-                </span>
-                <span className="steps-arrow">
-                  <img src="/img/Arrow-Right.svg" className="ms-3" />
-                </span>
-              </Link>
-            </li>
-            <li className="steps-item">
-              <Link href="/Gallery" className="steps-link">
-                <span className="steps-text">
-                      <img src="/img/org-img/step-icon-01.svg" className="me-2" />
-                    {t("galleryStep")}
-                </span>
-                <span className="steps-arrow">
-                  <img src="/img/Arrow-Right.svg" className="ms-3" />
+                  <img src="/img/org-img/step-icon-04.svg" className="me-2" />
+                  {t("ageRestrictionStep")}
                 </span>
               </Link>
             </li>
@@ -395,17 +504,86 @@ function BasicInfoContent() {
                   </small>
                 </div>
               </div>
-              <div className="event-frm-bx">
-                <label className="form-label">{t("tagsLabel")} <span className="text-danger">*</span></label>
+              {/* Image Gallery (Optional) */}
+              <div className="event-frm-bx upload mt-4">
+                <div>
+                  <h5>{t("mediaAndGalleryTitle") || "Image Gallery (Optional)"}</h5>
+                  <p>{t("mediaAndGalleryDesc") || "Upload images or videos of the event"}</p>
+                </div>
                 <input
-                  type="text"
-                  className="form-control"
-                  placeholder={t("tagsPlaceholder")}
-                  onChange={handleTagsChange}
-                  value={eventData.tags && eventData.tags.join(", ")}
+                  type="file"
+                  id="upload-gallery"
+                  className="d-none"
+                  multiple
+                  onChange={handleGalleryImageUpload}
+                  accept="image/*"
                 />
+                <label htmlFor="upload-gallery">
+                  {uploading ? t("uploading") : t("upload")}
+                </label>
               </div>
-              <div className="d-flex gap-2 justify-content-end mt-2">
+              <div className="upload-images mt-2">
+                {(eventData.mediaLinks || []).map((link, index) => (
+                  <div className="images-innr" key={index}>
+                    <img
+                      src={getFullImageUrl(link)}
+                      alt={`gallery-${index}`}
+                    />
+                    <button
+                      type="button"
+                      className="close-btn"
+                      onClick={() => removeGalleryImage(index)}>
+                      <img src="/img/org-img/close.svg" alt="Remove" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Teaser Video Upload (Optional) */}
+              <div className="event-frm-bx upload mt-4">
+                <div>
+                  <h5>{t("shortTeaserClipsTitle") || "Teaser Video Upload (Optional)"}</h5>
+                  <p>{t("shortTeaserClipsDesc") || "Upload a short video of the event"}</p>
+                </div>
+                <input
+                  type="file"
+                  id="upload-video"
+                  className="d-none"
+                  onChange={handleVideoUpload}
+                  accept="video/*"
+                />
+                <label htmlFor="upload-video">
+                  {uploading ? t("uploading") : t("uploadVideo") || "Upload"}
+                </label>
+              </div>
+              <div className="upload-images mt-2">
+                {(eventData.shortTeaserVideo || []).map((link, index) => (
+                  <div
+                    className="images-innr"
+                    key={index}
+                    style={{ width: "150px", height: "150px" }}>
+                    <video
+                      src={getFullImageUrl(link)}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: "10px",
+                      }}
+                      controls
+                    />
+                    <button
+                      type="button"
+                      className="close-btn"
+                      onClick={() => removeVideo(index)}
+                      style={{ top: "-10px", right: "-10px" }}>
+                      <img src="/img/org-img/close.svg" alt="Remove" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="d-flex gap-2 justify-content-end mt-4">
                 <button
                   className="outline-btn"
                   type="button"

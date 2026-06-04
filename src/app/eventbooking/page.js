@@ -86,8 +86,9 @@ function BookingPageContent() {
               durationTranslation: course?.durationTranslation,
               posterImage: course?.posterImage,
               venueAddress: course?.venueAddress,
-              schedules: course?.schedules,
+              batches: course?.batches,
               currentSchedule: course?.currentSchedule,
+              weeklySchedule: course?.weeklySchedule,
               enrollmentType: course?.enrollmentType,
               original: course,
             });

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Col, Row, Form, Pagination, Modal, Spinner } from "react-bootstrap";
 import courseApi from "@/api/courseApi";
 import authApi from "@/api/authApi";
+import categoryApi from "@/api/categoryApi";
 import promotionsApi from "@/api/promotionsApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
@@ -17,6 +18,8 @@ function CoursesManagement() {
   const [filters, setFilters] = useState({
     search: "",
     categoryId: "",
+    isDraft: "", // "" (All), "false" (Published), "true" (Drafts)
+    enrollmentType: "", // "" (All), "Ongoing", "fixedStart"
   });
   const [pagination, setPagination] = useState({
     page: 1,
@@ -34,7 +37,7 @@ function CoursesManagement() {
 
   const fetchCategories = async () => {
     try {
-      const response = await authApi.getCategories();
+      const response = await categoryApi.getCategories({ type: "course", limit: 1000 });
       if (response?.data) {
         setCategories(response?.data?.categories || []);
       }
@@ -51,6 +54,8 @@ function CoursesManagement() {
         limit: pagination.limit,
         search: filters.search,
         categoryId: filters.categoryId,
+        isDraft: filters.isDraft,
+        enrollmentType: filters.enrollmentType,
       };
 
       const response = await courseApi.getOrganizerCourses(params);
@@ -76,7 +81,7 @@ function CoursesManagement() {
 
   useEffect(() => {
     fetchCourses();
-  }, [pagination.page, filters.categoryId]);
+  }, [pagination.page, filters.categoryId, filters.isDraft, filters.enrollmentType]);
 
   const handleSearchChange = (e) => {
     setFilters((prev) => ({ ...prev, search: e.target.value }));
@@ -152,7 +157,7 @@ function CoursesManagement() {
     } catch (err) {
       toast.error(
         t("failedToLoadPromotionPackages") ||
-          "Failed to load promotion packages",
+        "Failed to load promotion packages",
       );
     } finally {
       setLoadingPackages(false);
@@ -189,8 +194,8 @@ function CoursesManagement() {
     } catch (err) {
       toast.error(
         err?.response?.data?.message ||
-          t("checkoutFailed") ||
-          "Checkout failed. Please try again.",
+        t("checkoutFailed") ||
+        "Checkout failed. Please try again.",
       );
     } finally {
       setCheckingOut(false);
@@ -235,6 +240,131 @@ function CoursesManagement() {
           </Col>
         </Row>
 
+        {/* Filters Row */}
+        <div className="mb-4 mt-3 p-3 rounded" style={{ backgroundColor: "#1a1a1a", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <Form onSubmit={handleSearchSubmit}>
+            <Row className="align-items-center g-3">
+              {/* Search */}
+              <Col lg={4} md={6} xs={12}>
+                <Form.Group className="mb-0">
+                  <div className="position-relative">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder={t("searchCourses") || "Search program name..."}
+                      value={filters.search}
+                      onChange={handleSearchChange}
+                      style={{
+                        backgroundColor: "#111",
+                        border: "1px solid rgba(35, 173, 164, 0.3)",
+                        color: "white",
+                        height: "45px",
+                        paddingRight: "45px"
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      className="btn position-absolute end-0 top-0 h-100 border-0 bg-transparent"
+                      style={{ color: "#23ada4" }}
+                    >
+                      🔍
+                    </button>
+                  </div>
+                </Form.Group>
+              </Col>
+
+              {/* Category */}
+              <Col lg={3} md={6} xs={12}>
+                <Form.Select
+                  value={filters.categoryId}
+                  onChange={handleCategoryChange}
+                  style={{
+                    backgroundColor: "#111",
+                    border: "1px solid rgba(35, 173, 164, 0.3)",
+                    color: "white",
+                    height: "45px"
+                  }}
+                >
+                  <option value="">{t("allCategories") || "All Categories"}</option>
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Col>
+
+              {/* Draft status toggles */}
+              <Col lg={3} md={6} xs={12}>
+                <div className="d-flex rounded" style={{ border: "1px solid rgba(35, 173, 164, 0.3)", overflow: "hidden", height: "45px" }}>
+                  <button
+                    type="button"
+                    className="flex-grow-1 border-0"
+                    style={{
+                      backgroundColor: filters.isDraft === "" ? "#23ada4" : "#111",
+                      color: filters.isDraft === "" ? "black" : "white",
+                      fontSize: "13px",
+                      fontWeight: filters.isDraft === "" ? "bold" : "normal",
+                      transition: "all 0.2s"
+                    }}
+                    onClick={() => setFilters(prev => ({ ...prev, isDraft: "" }))}
+                  >
+                    All Status
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-grow-1 border-0"
+                    style={{
+                      backgroundColor: filters.isDraft === "false" ? "#23ada4" : "#111",
+                      color: filters.isDraft === "false" ? "black" : "white",
+                      fontSize: "13px",
+                      fontWeight: filters.isDraft === "false" ? "bold" : "normal",
+                      borderLeft: "1px solid rgba(35, 173, 164, 0.2)",
+                      transition: "all 0.2s"
+                    }}
+                    onClick={() => setFilters(prev => ({ ...prev, isDraft: "false" }))}
+                  >
+                    Published
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-grow-1 border-0"
+                    style={{
+                      backgroundColor: filters.isDraft === "true" ? "#23ada4" : "#111",
+                      color: filters.isDraft === "true" ? "black" : "white",
+                      fontSize: "13px",
+                      fontWeight: filters.isDraft === "true" ? "bold" : "normal",
+                      borderLeft: "1px solid rgba(35, 173, 164, 0.2)",
+                      transition: "all 0.2s"
+                    }}
+                    onClick={() => setFilters(prev => ({ ...prev, isDraft: "true" }))}
+                  >
+                    Drafts
+                  </button>
+                </div>
+              </Col>
+
+              {/* Enrollment type toggles */}
+              <Col lg={2} md={6} xs={12}>
+                <Form.Select
+                  value={filters.enrollmentType}
+                  onChange={(e) => setFilters(prev => ({ ...prev, enrollmentType: e.target.value }))}
+                  style={{
+                    backgroundColor: "#111",
+                    border: "1px solid rgba(35, 173, 164, 0.3)",
+                    color: "white",
+                    height: "45px"
+                  }}
+                >
+                  <option value="">All Types</option>
+                  <option value="Ongoing">Ongoing Classes</option>
+                  <option value="fixedStart">Fixed Start</option>
+                </Form.Select>
+              </Col>
+            </Row>
+          </Form>
+        </div>
+
         {/* Course Listing */}
         <div className="ticket-tabs">
           <div className="ticket-listing">
@@ -249,7 +379,6 @@ function CoursesManagement() {
                   <div className="ticket-cards" key={course._id}>
                     <div className="ticket-inner">
                       <div className="ticket-lft">
-                        <Form.Check />
                         <div className="event-info-box-img">
                           <img
                             src={
@@ -258,8 +387,8 @@ function CoursesManagement() {
                             }
                             alt={course.courseTitle}
                             style={{
-                              width: "80px",
-                              height: "80px",
+                              width: "90px",
+                              height: "90px",
                               objectFit: "cover",
                               borderRadius: "8px",
                             }}
@@ -268,10 +397,10 @@ function CoursesManagement() {
                             }}
                           />
                           <div>
-                            <h5 className="d-flex align-items-center gap-2 flex-wrap">
+                            <h5 className="d-flex align-items-center gap-2 flex-wrap mb-1">
                               <span
                                 className="text-truncate-1"
-                                style={{ maxWidth: "250px" }}
+                                style={{ maxWidth: "250px", fontWeight: "600", color: "#fff" }}
                               >
                                 {course.courseTitle}
                               </span>
@@ -293,17 +422,29 @@ function CoursesManagement() {
                               )}
                             </h5>
                             <p
-                              className="ref text-truncate-1"
-                              style={{ maxWidth: "300px" }}
+                              className="ref text-truncate-1 mb-2"
+                              style={{ maxWidth: "300px", fontSize: "14px", color: "#888" }}
                             >
                               {course.courseCategory?.name || "General"}
                             </p>
+
+                            {/* Date info */}
+                            <div className="d-flex align-items-center gap-1 text-muted" style={{ fontSize: "12px" }}>
+                              <span>📅</span>
+                              <span>
+                                {course.startDate ? new Date(course.startDate).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" }) : "N/A"}
+                                {" - "}
+                                {course.endDate ? new Date(course.endDate).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" }) : "N/A"}
+                              </span>
+                            </div>
+
                             {isFeaturedActive(course) && (
                               <p
                                 style={{
                                   fontSize: "11px",
                                   color: "#fda085",
-                                  margin: 0,
+                                  marginTop: "4px",
+                                  marginBottom: 0,
                                 }}
                               >
                                 {t("featuredUntil")}{" "}
@@ -319,73 +460,124 @@ function CoursesManagement() {
                           </div>
                         </div>
                       </div>
-                      <div className="ticket-rgt">
-                        <span className="status-badge">
-                          {t(course.enrollmentType?.toLowerCase()) ||
-                            course.enrollmentType ||
-                            t("ongoing")}
-                        </span>
+                      <div className="ticket-rgt d-flex flex-column align-items-end gap-2">
+                        <div className="d-flex gap-2 flex-wrap justify-content-end">
+                          {/* Publication Status */}
+                          {course.isDraft ? (
+                            <span
+                              className="px-2 py-1 rounded text-uppercase"
+                              style={{ fontSize: "11px", fontWeight: "bold", backgroundColor: "rgba(255, 193, 7, 0.15)", color: "#ffc107", border: "1px solid rgba(255, 193, 7, 0.3)" }}
+                            >
+                              {t("draft") || "Draft"}
+                            </span>
+                          ) : (
+                            <span
+                              className="px-2 py-1 rounded text-uppercase"
+                              style={{ fontSize: "11px", fontWeight: "bold", backgroundColor: "rgba(40, 167, 69, 0.15)", color: "#28a745", border: "1px solid rgba(40, 167, 69, 0.3)" }}
+                            >
+                              {t("published") || "Published"}
+                            </span>
+                          )}
+
+                          {/* Session status (Live, Upcoming, Past) */}
+                          {course.status && (
+                            <span
+                              className="px-2 py-1 rounded text-uppercase"
+                              style={{
+                                fontSize: "11px",
+                                fontWeight: "bold",
+                                backgroundColor:
+                                  course.status === "Live" ? "rgba(35, 173, 164, 0.15)" :
+                                    course.status === "Upcoming" ? "rgba(0, 123, 255, 0.15)" :
+                                      "rgba(108, 117, 125, 0.15)",
+                                color:
+                                  course.status === "Live" ? "#23ada4" :
+                                    course.status === "Upcoming" ? "#007bff" :
+                                      "#6c757d",
+                                border: `1px solid ${course.status === "Live" ? "rgba(35, 173, 164, 0.3)" :
+                                  course.status === "Upcoming" ? "rgba(0, 123, 255, 0.3)" :
+                                    "rgba(108, 117, 125, 0.3)"
+                                  }`
+                              }}
+                            >
+                              {t(course.status.toLowerCase()) || course.status}
+                            </span>
+                          )}
+
+                          {/* Enrollment type */}
+                          <span
+                            className="px-2 py-1 rounded text-uppercase"
+                            style={{ fontSize: "11px", fontWeight: "bold", backgroundColor: "rgba(255,255,255,0.08)", color: "#ccc", border: "1px solid rgba(255,255,255,0.15)" }}
+                          >
+                            {t(course.enrollmentType?.toLowerCase()) || course.enrollmentType || t("ongoing")}
+                          </span>
+                        </div>
+
                         <p
-                          className="text-truncate-1"
-                          style={{ maxWidth: "200px" }}
+                          className="text-truncate-1 mt-2 mb-0"
+                          style={{ fontSize: "14px", color: "#ccc" }}
                         >
                           {t("duration")}{" "}
-                          <span>{getCourseDurationText(course)}</span>
+                          <span style={{ color: "#23ada4", fontWeight: "600" }}>{getCourseDurationText(course)}</span>
                         </p>
                       </div>
                     </div>
-                    <div className="ticket-bottom">
-                      <p>
-                        {t("price")}{" "}
-                        <span>₮{course.price?.toLocaleString() || 0}</span>
-                      </p>
-                      <p>
-                        {t("totalRevenue")}{" "}
-                        <span>
-                          ₮{course.totalRevenue?.toLocaleString() || 0}
-                        </span>
-                      </p>
-                      <p>
-                        {t("seats")}{" "}
-                        <span>
-                          {course.totalEnrollments || 0}/
-                          {course.totalSeats || 0}
-                        </span>
-                      </p>
+                    <div className="ticket-bottom d-flex flex-wrap align-items-center justify-content-between gap-3 pt-3 mt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                      <div className="d-flex gap-4">
+                        <p className="mb-0">
+                          {t("price")}{" "}
+                          <span style={{ color: "#fff", fontWeight: "600" }}>₮{course.price?.toLocaleString() || 0}</span>
+                        </p>
+                        <p className="mb-0">
+                          {t("totalRevenue")}{" "}
+                          <span style={{ color: "#28a745", fontWeight: "600" }}>
+                            ₮{course.totalRevenue?.toLocaleString() || 0}
+                          </span>
+                        </p>
+                        <p className="mb-0">
+                          {t("seats")}{" "}
+                          <span style={{ color: "#ffc107", fontWeight: "600" }}>
+                            {course.totalEnrollments || 0}/
+                            {course.totalSeats || 0}
+                          </span>
+                        </p>
+                      </div>
 
-                      {!isPast && (
-                        <Link href={`/AddProgram?courseId=${course._id}`}>
-                          {t("edit")}{" "}
+                      <div className="d-flex align-items-center gap-3">
+                        {!isPast && (
+                          <Link href={`/AddProgram?courseId=${course._id}`} className="text-decoration-none" style={{ color: "#23ada4" }}>
+                            {t("edit")}{" "}
+                            <img src="/img/Arrow-Right.svg" alt="arrow" />
+                          </Link>
+                        )}
+
+                        <Link href={`/programDetails?id=${course._id}`} className="text-decoration-none" style={{ color: "#fff" }}>
+                          {t("viewDetails")}{" "}
                           <img src="/img/Arrow-Right.svg" alt="arrow" />
                         </Link>
-                      )}
 
-                      <Link href={`/programDetails?id=${course._id}`}>
-                        {t("viewDetails")}{" "}
-                        <img src="/img/Arrow-Right.svg" alt="arrow" />
-                      </Link>
-
-                      {!isPast &&
-                        (isFeaturedActive(course) ? (
-                          <span
-                            style={{
-                              color: "#fda085",
-                              fontSize: "13px",
-                              fontWeight: 500,
-                            }}
-                          >
-                            ⭐ {t("activePromotion") || "Active Promotion"}
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="custom-btn"
-                            style={{ padding: "8px 16px", fontSize: "13px" }}
-                            onClick={() => openPromoModal(course)}
-                          >
-                            🚀 {t("promote")}
-                          </button>
-                        ))}
+                        {!isPast &&
+                          (isFeaturedActive(course) ? (
+                            <span
+                              style={{
+                                color: "#fda085",
+                                fontSize: "13px",
+                                fontWeight: 500,
+                              }}
+                            >
+                              ⭐ {t("activePromotion") || "Active Promotion"}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="custom-btn"
+                              style={{ padding: "6px 12px", fontSize: "12px" }}
+                              onClick={() => openPromoModal(course)}
+                            >
+                              🚀 {t("promote")}
+                            </button>
+                          ))}
+                      </div>
                     </div>
                   </div>
                 );
