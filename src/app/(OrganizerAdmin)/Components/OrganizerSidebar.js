@@ -127,6 +127,15 @@ export default function OrganizerSidebar({ toggleSidebar }) {
         </Link>
 
         <Link
+          href="/Staff"
+          className={`menu-item ${isActive("/Staff") ? "active" : ""}`}>
+          <span className="icon">
+            <img src="/img/user-icon.svg" alt="" />
+          </span>
+          <span className="text">{t("staff")}</span>
+        </Link>
+
+        <Link
           href="/Message"
           className={`menu-item ${isActive("/Message") ? "active" : ""}`}>
           <span className="icon">

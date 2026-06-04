@@ -417,6 +417,8 @@ export const translations = {
     termsConditions: "Terms & Conditions",
     // Customer Admin
     personalInfo: "Personal info",
+    staff: "Staff",
+    staffManagement: "Staff Management",
     tickets: "Tickets",
     payment: "Payment",
     messages: "Messages",
@@ -1663,6 +1665,8 @@ export const translations = {
     termsConditions: "Үйлчилгээний нөхцөл",
     // Customer Admin
     personalInfo: "Хувийн мэдээлэл",
+    staff: "Staff",
+    staffManagement: "Staff Management",
     tickets: "Тасалбарууд",
     payment: "Төлбөр",
     messages: "Мессеж",
