@@ -3,6 +3,7 @@ import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { Col, Container, Form, Nav, Row, Tab } from "react-bootstrap";
 import authApi from "@/api/authApi";
+import staffApi from "@/api/staffApi";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import GuestRoute from "@/components/GuestRoute";
@@ -37,16 +38,29 @@ export default function Page() {
 
     setLoading(true);
     try {
-      const roleType = activeTab === "Organizer" ? "ORGANIZER" : "CUSTOMER";
-      const response = await authApi.loginInit({
-        email: formData.email,
-        password: formData.password,
-        type: roleType,
-      });
-      if (response?.status) {
-        localStorage.setItem("loginEmail", formData.email);
-        localStorage.setItem("loginType", roleType);
-        router.push("/otp?flow=login");
+      if (activeTab === "Staff") {
+        const response = await staffApi.loginStaff({
+          email: formData.email,
+          password: formData.password
+        });
+        if (response?.status) {
+          localStorage.setItem("token", response.data.token);
+          localStorage.setItem("userProfile", JSON.stringify(response.data.user));
+          toast.success("Logged in successfully as Staff");
+          router.push("/StaffHome");
+        }
+      } else {
+        const roleType = activeTab === "Organizer" ? "ORGANIZER" : "CUSTOMER";
+        const response = await authApi.loginInit({
+          email: formData.email,
+          password: formData.password,
+          type: roleType,
+        });
+        if (response?.status) {
+          localStorage.setItem("loginEmail", formData.email);
+          localStorage.setItem("loginType", roleType);
+          router.push("/otp?flow=login");
+        }
       }
     } catch (error) {
       // handled by interceptor
@@ -208,6 +222,16 @@ export default function Page() {
                               <div className="other_signup">
                                 <span>{" "}{t("dontHaveAccount")}{" "}<Link href="/register">{t("signUp")}</Link></span>
                               </div>
+                              <div className="text-center mt-3 border-top pt-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveTab("Staff")}
+                                  className="border-0 bg-transparent text-decoration-underline"
+                                  style={{ color: "#23ada4", fontSize: "14px", fontWeight: "500" }}
+                                >
+                                  Login as Staff
+                                </button>
+                              </div>
                             </Tab.Pane>
 
                             {/* ── Organizer Tab ── */}
@@ -234,6 +258,46 @@ export default function Page() {
                               <SocialButtons />
                               <div className="other_signup">
                                 <span>{" "}{t("dontHaveAccount")}{" "}<Link href="/register">{t("signUp")}</Link></span>
+                              </div>
+                              <div className="text-center mt-3 border-top pt-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveTab("Staff")}
+                                  className="border-0 bg-transparent text-decoration-underline"
+                                  style={{ color: "#23ada4", fontSize: "14px", fontWeight: "500" }}
+                                >
+                                  Login as Staff
+                                </button>
+                              </div>
+                            </Tab.Pane>
+
+                            {/* ── Staff Tab ── */}
+                            <Tab.Pane eventKey="Staff">
+                              <Form className="login_field" noValidate onSubmit={handleLogin}>
+                                <Form.Group className="mb-3" controlId="staffEmail">
+                                  <Form.Control type="email" name="email" placeholder={t("email")} value={formData.email} onChange={handleChange} />
+                                </Form.Group>
+                                <Form.Group className="mb-3" controlId="staffPassword">
+                                  <div className="d-flex gap-2 position-relative">
+                                    <Form.Control type={show ? "text" : "password"} name="password" placeholder={t("enterPassword")} value={formData.password} onChange={handleChange} />
+                                    <button type="button" onClick={() => setShow(!show)} className="password-eye-btn">
+                                      <img src={show ? "/img/lock.svg" : "/img/unlock.svg"} alt="toggle password" />
+                                    </button>
+                                  </div>
+                                </Form.Group>
+                                <button type="submit" disabled={loading} className="common_btn w-100 d-block text-center text-decoration-none border-0 mt-4">
+                                  {loading ? t("signingIn") : t("signIn")}
+                                </button>
+                              </Form>
+                              <div className="text-center mt-4 border-top pt-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveTab("Customer")}
+                                  className="border-0 bg-transparent text-decoration-underline"
+                                  style={{ color: "#23ada4", fontSize: "14px", fontWeight: "500" }}
+                                >
+                                  Back to User Login
+                                </button>
                               </div>
                             </Tab.Pane>
                           </Tab.Content>

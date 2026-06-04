@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 export const AuthGuardContext = createContext(null);
 
@@ -7,6 +8,26 @@ export function AuthGuardProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Redirect staff members to /StaffHome if they try to access other routes
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const profileStr = localStorage.getItem("userProfile");
+    if (token && profileStr) {
+      try {
+        const profile = JSON.parse(profileStr);
+        if (profile.roleId === 5 || profile.userRole === "STAFF") {
+          if (!pathname.startsWith("/StaffHome") && pathname !== "/login") {
+            router.push("/StaffHome");
+          }
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+  }, [pathname, router]);
 
   // Single global token check — runs once on mount
   useEffect(() => {

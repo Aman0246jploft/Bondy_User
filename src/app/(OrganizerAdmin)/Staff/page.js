@@ -44,7 +44,7 @@ function StaffPage() {
       setLoadingStaff(true);
       const res = await staffApi.listStaff();
       if (res?.status) {
-        setStaffList(res.data || []);
+        setStaffList(res.data?.staff || res.data || []);
       }
     } catch (err) {
       console.error("Failed to fetch staff list", err);
