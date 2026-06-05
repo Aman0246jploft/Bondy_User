@@ -42,7 +42,9 @@ function page() {
   const handlePublish = async (isDraft = false) => {
     setPublishing(true);
     try {
-      const payload = { ...eventData, isDraft };
+      const isPublishedEdit = eventData._id && eventData.isDraft === false;
+      const targetIsDraft = isPublishedEdit ? false : isDraft;
+      const payload = { ...eventData, isDraft: targetIsDraft };
 
       // Clean the payload - extract IDs from populated fields
       if (payload.eventCategory && typeof payload.eventCategory === 'object') {
@@ -280,24 +282,28 @@ function page() {
           </div>
         </div>
         <div className="d-flex gap-2 justify-content-end mt-5">
-          <Link href="/Gallery" className="outline-btn">
+          <Link href="/Agerestraction" className="outline-btn">
             {t("back")}
           </Link>
-          <button
-            type="button"
-            className="outline-btn"
-            onClick={() => handlePublish(true)}
-            disabled={publishing}
-          >
-            {publishing ? t("saving") || "Saving..." : t("saveDraft") || "Save Draft"}
-          </button>
+          {!(eventData._id && eventData.isDraft === false) && (
+            <button
+              type="button"
+              className="outline-btn"
+              onClick={() => handlePublish(true)}
+              disabled={publishing}
+            >
+              {publishing ? t("saving") || "Saving..." : t("saveDraft") || "Save Draft"}
+            </button>
+          )}
           <button
             type="button"
             className="custom-btn publish-btn"
             onClick={() => handlePublish(false)}
             disabled={publishing}
           >
-            {publishing ? t("publishing") : t("publish")}
+            {publishing
+              ? (eventData._id && eventData.isDraft === false ? t("saving") || "Saving..." : t("publishing"))
+              : (eventData._id && eventData.isDraft === false ? t("saveChanges") || "Save Changes" : t("publish"))}
           </button>
         </div>
       </div>

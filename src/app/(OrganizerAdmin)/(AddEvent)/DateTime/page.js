@@ -53,6 +53,11 @@ function page() {
       return;
     }
 
+    if (!eventData.venueAddress || !eventData.venueAddress.address || !eventData.venueAddress.latitude || !eventData.venueAddress.longitude) {
+      toast.error(t("venueAddressRequired") || "Venue address with valid coordinates is required");
+      return;
+    }
+
     if (eventData.venueName.length > 100) {
       toast.error(t("venueNameTooLong"));
       return;
@@ -67,8 +72,9 @@ function page() {
     );
     const now = new Date();
 
-    // Validate Start Date is in the future
-    if (startDateTime < now) {
+    // Validate Start Date is in the future only for new events or drafts
+    const isNewOrDraft = !eventData._id || eventData.isDraft;
+    if (isNewOrDraft && startDateTime < now) {
       toast.error(t("startDateMustBeInFuture"));
       return;
     }
@@ -96,7 +102,8 @@ function page() {
               className="outline-btn"
               onClick={async () => {
                 try {
-                  const payload = { ...eventData, isDraft: true };
+                  const isPublishedEdit = eventData._id && eventData.isDraft === false;
+                  const payload = { ...eventData, isDraft: !isPublishedEdit };
                   // Clean the payload
                   if (payload.eventCategory && typeof payload.eventCategory === 'object') {
                     payload.eventCategory = payload.eventCategory._id;
@@ -116,17 +123,17 @@ function page() {
                     response = await eventApi.createEvent(payload);
                   }
                   if (response.status) {
-                    toast.success(t("draftSavedSuccessfully") || "Draft saved successfully");
+                    toast.success(isPublishedEdit ? (t("profileUpdatedSuccessfully") || "Changes saved successfully") : (t("draftSavedSuccessfully") || "Draft saved successfully"));
                     router.push("/EventsManagement");
                   }
                 } catch (error) {
-                  console.error("Error saving draft:", error);
-                  toast.error(error.response?.data?.message || "Failed to save draft");
+                  console.error("Error saving event:", error);
+                  toast.error(error.response?.data?.message || "Failed to save event");
                 }
               }}
               style={{ padding: "8px 24px", borderRadius: "20px" }}
             >
-              {t("saveDraft") || "Save Draft"}
+              {eventData._id && eventData.isDraft === false ? (t("saveChanges") || "Save Changes") : (t("saveDraft") || "Save Draft")}
             </button>
           </div>
           <ul className="event-steps">

@@ -47,6 +47,14 @@ function StaffHome() {
   const [manualTicketNumber, setManualTicketNumber] = useState("");
   const [checkingInScanner, setCheckingInScanner] = useState(false);
 
+  // Ticket Verification States
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [verifiedTicket, setVerifiedTicket] = useState(null);
+  const [loadingVerify, setLoadingVerify] = useState(false);
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [verifyError, setVerifyError] = useState(null);
+  const [originalCode, setOriginalCode] = useState("");
+
   // Check authorization
   useEffect(() => {
     const checkAuth = () => {
@@ -215,37 +223,82 @@ function StaffHome() {
 
   const isProcessingQR = useRef(false);
 
-  const handleQRDetected = async (qrData) => {
-    if (isProcessingQR.current) return;
-    isProcessingQR.current = true;
+  const handleVerifyCode = async (code) => {
+    if (!code || !code.trim()) {
+      toast.error("Invalid ticket or QR code");
+      return;
+    }
+    setOriginalCode(code);
+    setVerifyError(null);
+    setVerifiedTicket(null);
+    setShowVerifyModal(true);
+    setLoadingVerify(true);
     try {
-      setCheckingInScanner(true);
       const payload = {
-        qrCodeData: qrData,
+        code: code.trim()
       };
       if (activeEntity) {
-        if (entityType === "event") {
-          payload.eventId = activeEntity._id;
-        } else {
-          payload.courseId = activeEntity._id;
-        }
+        payload.entityId = activeEntity._id;
       }
-      const res = await staffApi.scanQR(payload);
+      const res = await staffApi.verifyTicket(payload);
+      if (res?.status) {
+        setVerifiedTicket(res.data);
+      } else {
+        setVerifyError(res?.message || "Failed to verify ticket");
+      }
+    } catch (err) {
+      console.error("Verification failed", err);
+      setVerifyError(err?.response?.data?.message || "Verification failed");
+    } finally {
+      setLoadingVerify(false);
+    }
+  };
+
+  const handlePerformCheckIn = async () => {
+    if (!originalCode) return;
+    try {
+      setCheckingIn(true);
+      const payload = {
+        ticketNumber: originalCode.trim()
+      };
+      if (activeEntity) {
+        payload.entityId = activeEntity._id;
+      }
+      const res = await staffApi.checkInAttendee(payload);
       if (res?.status) {
         toast.success(`Check-in successful: ${res.data?.attendee?.firstName || ""} ${res.data?.attendee?.lastName || ""}`);
+        setShowVerifyModal(false);
+        setManualTicketNumber("");
+        setVerifiedTicket(null);
+        setOriginalCode("");
         fetchAttendeesList();
         fetchScanHistory();
       }
     } catch (err) {
-      console.error("QR Check-in failed", err);
+      console.error("Check-in failed", err);
       toast.error(err?.response?.data?.message || "Check-in failed");
     } finally {
-      setCheckingInScanner(false);
-      // Wait 2 seconds before allowing another scan to avoid duplicate scans
+      setCheckingIn(false);
       setTimeout(() => {
         isProcessingQR.current = false;
-      }, 2000);
+      }, 1500);
     }
+  };
+
+  const closeVerifyModal = () => {
+    setShowVerifyModal(false);
+    setVerifiedTicket(null);
+    setVerifyError(null);
+    setOriginalCode("");
+    setTimeout(() => {
+      isProcessingQR.current = false;
+    }, 1500);
+  };
+
+  const handleQRDetected = async (qrData) => {
+    if (isProcessingQR.current) return;
+    isProcessingQR.current = true;
+    handleVerifyCode(qrData);
   };
 
   useEffect(() => {
@@ -291,36 +344,12 @@ function StaffHome() {
     };
   }, [activeTab, activeEntity]);
 
-  // Handle manual ticket verification / check-in
   const handleCheckInSubmit = async (ticketNum) => {
     if (!ticketNum.trim()) {
       toast.error("Please enter a ticket number");
       return;
     }
-    try {
-      setCheckingInScanner(true);
-      // We will perform check-in directly using the ticket number.
-      // Alternatively, we can scan QR using unified scan endpoint.
-      // Let's support checking in first by calling checkInAttendee:
-      const payload = {
-        ticketNumber: ticketNum.trim()
-      };
-      if (activeEntity) {
-        payload.entityId = activeEntity._id;
-      }
-      const res = await staffApi.checkInAttendee(payload);
-      if (res?.status) {
-        toast.success(`Check-in successful: ${res.data?.attendee?.firstName || ""} ${res.data?.attendee?.lastName || ""}`);
-        setManualTicketNumber("");
-        fetchAttendeesList();
-        fetchScanHistory();
-      }
-    } catch (err) {
-      console.error("Check-in failed", err);
-      toast.error(err?.response?.data?.message || "Check-in failed");
-    } finally {
-      setCheckingInScanner(false);
-    }
+    handleVerifyCode(ticketNum);
   };
 
   const handleLogout = () => {
@@ -820,6 +849,69 @@ function StaffHome() {
         .details-action-btn:hover {
           background: #181818;
           border-color: #23ada4;
+        }
+
+        .verify-modal-content {
+          background: #121212 !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          border-radius: 20px !important;
+          color: #fff !important;
+        }
+        .verify-error-icon {
+          font-size: 48px;
+          color: #ff5c5c;
+        }
+        .verify-label {
+          color: #8c8c8c;
+          font-size: 12px;
+          display: block;
+          margin-bottom: 2px;
+        }
+        .verify-val {
+          font-size: 15px;
+          font-weight: 600;
+          color: #fff;
+        }
+        .verify-section {
+          background: #1a1a1a;
+          border-radius: 12px;
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .verify-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 13px;
+        }
+        .verify-row .verify-label {
+          margin: 0;
+        }
+        .verify-row .verify-val {
+          font-size: 13px;
+        }
+        .badge-status {
+          display: inline-block;
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 700;
+          text-align: center;
+          width: 100%;
+        }
+        .badge-status.valid {
+          background: rgba(35, 173, 164, 0.15);
+          color: #23ada4;
+        }
+        .badge-status.checked-in {
+          background: rgba(255, 160, 0, 0.15);
+          color: #ffa000;
+        }
+        .badge-status.expired {
+          background: rgba(255, 92, 92, 0.15);
+          color: #ff5c5c;
         }
       `}</style>
 
@@ -1431,6 +1523,123 @@ function StaffHome() {
           </div>
         </div>
       )}
+
+      {/* --------------------------------------------------------------- */}
+      {/* TICKET VERIFICATION MODAL */}
+      {/* --------------------------------------------------------------- */}
+      <Modal show={showVerifyModal} onHide={closeVerifyModal} centered contentClassName="verify-modal-content">
+        <Modal.Header closeButton closeVariant="white" className="border-0 pb-0">
+          <Modal.Title style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Ticket Verification</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="pt-3">
+          {loadingVerify ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" variant="teal" className="mb-2" />
+              <p className="m-0 text-muted" style={{ fontSize: "14px" }}>Verifying ticket/QR details...</p>
+            </div>
+          ) : verifyError ? (
+            <div className="text-center py-3">
+              <div className="verify-error-icon mb-3">&#9888;</div>
+              <h5 className="text-danger mb-2" style={{ fontSize: "16px", fontWeight: "600" }}>Verification Failed</h5>
+              <p className="text-muted mb-4" style={{ fontSize: "14px" }}>{verifyError}</p>
+              <button className="common_btn w-100" onClick={closeVerifyModal} style={{ background: "#333", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
+                Close
+              </button>
+            </div>
+          ) : verifiedTicket ? (
+            <div className="verify-details-container">
+              {/* Event Info */}
+              <div className="verify-event-info mb-3">
+                <span className="verify-label">Event / Course</span>
+                <div className="verify-val">{verifiedTicket.event?.title || "Unknown"}</div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="badge-wrapper mb-4">
+                {verifiedTicket.isAlreadyCheckedIn ? (
+                  <div className="badge-status checked-in">
+                    Already Checked In
+                  </div>
+                ) : verifiedTicket.isExpired ? (
+                  <div className="badge-status expired">
+                    Expired Ticket
+                  </div>
+                ) : (
+                  <div className="badge-status valid">
+                    Valid Ticket
+                  </div>
+                )}
+              </div>
+
+              {/* Attendee Details */}
+              {verifiedTicket.attendee && (
+                <div className="verify-section mb-3">
+                  <div className="verify-row">
+                    <span className="verify-label">Attendee Name</span>
+                    <span className="verify-val">{verifiedTicket.attendee.firstName} {verifiedTicket.attendee.lastName}</span>
+                  </div>
+                  <div className="verify-row">
+                    <span className="verify-label">Email</span>
+                    <span className="verify-val" style={{ wordBreak: "break-all" }}>{verifiedTicket.attendee.email}</span>
+                  </div>
+                  <div className="verify-row">
+                    <span className="verify-label">Ticket Number</span>
+                    <span className="verify-val">{verifiedTicket.attendee.ticketNumber}</span>
+                  </div>
+                  {verifiedTicket.attendee.ticketName && (
+                    <div className="verify-row">
+                      <span className="verify-label">Ticket Type</span>
+                      <span className="verify-val">{verifiedTicket.attendee.ticketName}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Transaction Details */}
+              {verifiedTicket.transaction && (
+                <div className="verify-section mb-4">
+                  <div className="verify-row">
+                    <span className="verify-label">Booking ID</span>
+                    <span className="verify-val">{verifiedTicket.transaction.bookingId}</span>
+                  </div>
+                  <div className="verify-row">
+                    <span className="verify-label">Total Qty</span>
+                    <span className="verify-val">{verifiedTicket.transaction.qty} ticket(s)</span>
+                  </div>
+                  <div className="verify-row">
+                    <span className="verify-label">Checked In Qty</span>
+                    <span className="verify-val">{verifiedTicket.transaction.checkedInQty} / {verifiedTicket.transaction.qty}</span>
+                  </div>
+                </div>
+              )}
+
+              {verifiedTicket.isAlreadyCheckedIn && verifiedTicket.checkedInAt && (
+                <div className="verify-checkin-time text-muted mb-4" style={{ fontSize: "12px", textAlign: "center" }}>
+                  Checked in at: {new Date(verifiedTicket.checkedInAt).toLocaleString()}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="verify-actions d-flex gap-2">
+                {!verifiedTicket.isAlreadyCheckedIn && !verifiedTicket.isExpired ? (
+                  <>
+                    <button className="common_btn flex-grow-1" onClick={closeVerifyModal} style={{ background: "#222", border: "1px solid #444", color: "#ccc", borderRadius: "20px", height: "40px" }}>
+                      Cancel
+                    </button>
+                    <button className="common_btn flex-grow-1" onClick={handlePerformCheckIn} disabled={checkingIn} style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
+                      {checkingIn ? <Spinner animation="border" size="sm" /> : "Check In"}
+                    </button>
+                  </>
+                ) : (
+                  <button className="common_btn w-100" onClick={closeVerifyModal} style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
+                    Close
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

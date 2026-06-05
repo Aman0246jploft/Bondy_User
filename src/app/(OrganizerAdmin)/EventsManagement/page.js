@@ -58,8 +58,14 @@ function page() {
       const params = {
         page: pagination.page,
         limit: pagination.limit,
-        status: activeTab === "all" ? "" : activeTab,
       };
+
+      if (activeTab === "drafts") {
+        params.isDraft = "true";
+      } else {
+        params.isDraft = "false";
+        params.status = activeTab === "all" ? "" : activeTab;
+      }
 
       const response = await eventApi.getOrganizerEvents(params);
       if (response?.data) {
@@ -199,6 +205,7 @@ function page() {
               <Tab eventKey="upcoming" title={t("upcoming")} />
               <Tab eventKey="ongoing" title={t("ongoing")} />
               <Tab eventKey="past" title={t("past")} />
+              <Tab eventKey="drafts" title={t("draftEvents") || "Drafts"} />
             </Tabs>
             {/* <div className="dashboard-filter">
               <div>
@@ -220,7 +227,7 @@ function page() {
               events.map((event) => {
                 const status = event.status?.toLowerCase();
                 const isPastOrEnded =
-                  status === "past" || new Date(event.endDate) < new Date();
+                  !event.isDraft && (status === "past" || new Date(event.endDate) < new Date());
 
                 return (
                   <div className="ticket-cards" key={event._id}>
@@ -297,11 +304,11 @@ function page() {
                       </div>
                       <div className="ticket-rgt">
                         <span
-                          className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}
+                          className={`status-badge ${event.isDraft ? "pending" : (event.status?.toLowerCase() || "upcoming")}`}
                         >
-                          {t(event.status?.toLowerCase()) ||
-                            event.status ||
-                            t("upcoming")}
+                          {event.isDraft
+                            ? (t("draftLabel") || "Draft")
+                            : (t(event.status?.toLowerCase()) || event.status || t("upcoming"))}
                         </span>
                         <p
                           className="text-truncate-1"

@@ -12,6 +12,7 @@ const staffApi = {
     checkInAttendee: (data) => apiClient.post("/attendee/check-in", data),
     scanQR: (data) => apiClient.post("/attendee/scan-qr", data),
     getTicketDetails: (ticketNumber) => apiClient.get(`/attendee/ticket/${ticketNumber}`),
+    verifyTicket: (data) => apiClient.post("/attendee/verify", data),
 };
 
 export default staffApi;

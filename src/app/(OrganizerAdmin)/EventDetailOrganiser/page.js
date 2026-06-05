@@ -10,27 +10,25 @@ import { useLanguage } from "@/context/LanguageContext";
 
 function ExpandableText({ text, limit = 200, className = "" }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { t, language } = useLanguage();
-  if (!text) return <p className={className}>{t("na")}</p>;
+  const { t } = useLanguage();
+  if (!text) return <p className={className}>{t("na") || "N/A"}</p>;
 
   const shouldShowToggle = text.length > limit;
   const displayText = isExpanded || !shouldShowToggle ? text : `${text.substring(0, limit)}...`;
 
   return (
     <div className={className}>
-      <p style={{ whiteSpace: "pre-line", margin: 0 }}>{displayText}</p>
+      <p style={{ whiteSpace: "pre-line", margin: 0, color: "rgba(255,255,255,0.8)", fontSize: "14px", lineHeight: "1.6" }}>{displayText}</p>
       {shouldShowToggle && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="view-more-btn mt-1"
+          className="mt-2 text-primary border-0 bg-transparent p-0"
           style={{
-            background: "none",
-            border: "none",
-            color: "#007bff",
-            padding: 0,
-            fontSize: "0.85rem",
+            fontSize: "13px",
             fontWeight: "600",
-            cursor: "pointer"
+            cursor: "pointer",
+            color: "#23ada4",
+            transition: "all 0.2s"
           }}
         >
           {isExpanded ? t("viewLess") : t("viewMore")}
@@ -68,14 +66,21 @@ function EventDetailsContent() {
     if (eventId) {
       fetchDetails();
     }
-    document.title = `${t("eventDetails")} - Bondy`;
-  }, [eventId, t]);
+  }, [eventId]);
+
+  useEffect(() => {
+    if (event) {
+      document.title = `${event.eventTitle || t("eventDetails")} - Control Center`;
+    } else {
+      document.title = `${t("eventDetails")} - Bondy`;
+    }
+  }, [event, t]);
 
   if (loading) {
     return (
-      <div className="text-center py-5">
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-3 text-white">{t("loadingEventDetails")}</p>
+      <div className="d-flex flex-column align-items-center justify-content-center py-5 min-vh-50">
+        <Spinner animation="border" style={{ color: "#23ada4" }} />
+        <p className="mt-3 text-secondary">{t("loadingEventDetails") || "Loading details..."}</p>
       </div>
     );
   }
@@ -83,319 +88,527 @@ function EventDetailsContent() {
   if (!event) {
     return (
       <div className="text-center py-5">
-        <h4 className="text-white">{t("eventNotFound")}</h4>
-        <Link href="/EventsManagement" className="custom-btn mt-3">
+        <h4 className="text-white mb-3">{t("eventNotFound")}</h4>
+        <Link href="/EventsManagement" className="custom-btn">
           {t("backToList")}
         </Link>
       </div>
     );
   }
 
+  // Estimate total revenue based on tickets soldQty
+  const estimatedRevenue = event.tickets?.reduce(
+    (sum, ticket) => sum + (ticket.soldQty || 0) * (ticket.price || 0),
+    0
+  ) || 0;
+
+  const status = event.status?.toLowerCase();
+  const isPastOrEnded = status === "past" || new Date(event.endDate) < new Date();
+
   return (
-    <div>
-      <div className="cards event-details">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <Link href="/EventsManagement" className="back-btn m-0">
-            <img src="/img/arrow-left-white.svg" alt="Back" />
-            {t("backToList")}
-          </Link>
-          <div className="d-flex gap-2">
-            {event.isFeatured && <span className="status-badge featured">Featured</span>}
-            {/* {event.isBooked && <span className="status-badge booked">Booked</span>} */}
-            {event.isWishlisted && <span className="status-badge wishlisted">Wishlisted</span>}
-          </div>
+    <div className="event-control-center">
+      {/* Action Header */}
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <Link href="/EventsManagement" className="back-btn-dashboard">
+          <span className="me-2">←</span> {t("backToList") || "Back to Events"}
+        </Link>
+        <div className="d-flex gap-2">
+          {!isPastOrEnded && (
+            <Link href={`/BasicInfo?eventId=${event._id}`} className="custom-btn edit-event-btn">
+              ✏️ {t("edit") || "Edit Event"}
+            </Link>
+          )}
         </div>
+      </div>
 
-        <h4 className="line-title">
-          <span>{t("eventOverview")}</span>
-        </h4>
-        <div>
-          {/* Image + Title side by side */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "16px", flexWrap: "wrap", marginBottom: "16px" }}>
-            <div className="event-dtl-card-img" style={{ borderRadius: "12px", overflow: "hidden", boxShadow: "0 4px 15px rgba(0,0,0,0.3)", flexShrink: 0 }}>
-              <img
-                src={getFullImageUrl(event.posterImage?.[0]) || "/img/sidebar-logo.svg"}
-                alt={event.eventTitle}
-                style={{ width: "100%", height: "auto", minHeight: "200px", objectFit: "cover" }}
-                onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
-              />
+      {/* Hero Overview Card */}
+      <div className="hero-details-card mb-4">
+        <div className="hero-blur-bg" style={{ backgroundImage: `url(${getFullImageUrl(event.posterImage?.[0]) || "/img/sidebar-logo.svg"})` }}></div>
+        <div className="hero-content-overlay d-flex flex-column flex-md-row gap-4 p-4 align-items-center align-items-md-stretch">
+          <div className="hero-poster shadow-lg">
+            <img
+              src={getFullImageUrl(event.posterImage?.[0]) || "/img/sidebar-logo.svg"}
+              alt={event.eventTitle}
+              onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
+            />
+          </div>
+          <div className="hero-text-details d-flex flex-column justify-content-between text-center text-md-start">
+            <div>
+              <div className="d-flex gap-2 flex-wrap mb-2 justify-content-center justify-content-md-start">
+                <span className={`badge-status ${event.isDraft ? "draft" : (event.status?.toLowerCase() || "upcoming")}`}>
+                  {event.isDraft ? (t("draftLabel") || "Draft") : (t(event.status?.toLowerCase()) || event.status)}
+                </span>
+                {event.isFeatured && <span className="badge-status featured">⭐ Featured</span>}
+                {event.visibility && <span className="badge-status visibility">{event.visibility}</span>}
+              </div>
+              <h1 className="hero-title text-truncate-2">{event.eventTitle}</h1>
+              <p className="hero-category text-muted mt-2">
+                📂 {event.eventCategory?.name || t("na")}
+              </p>
             </div>
-            <h3 style={{ flex: 1, minWidth: 0, wordBreak: "break-word", overflowWrap: "anywhere", margin: 0, alignSelf: "center", fontSize: "1.5rem", fontWeight: "700" }}>
-              {event.eventTitle}
-            </h3>
+            <div className="hero-meta text-muted mt-3 d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
+              <span>📅 {t("createDate")}: <strong>{new Date(event.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</strong></span>
+              <span>👤 {t("organizerName")}: <strong>{event.createdBy?.firstName ? `${event.createdBy.firstName} ${event.createdBy.lastName || ""}` : "N/A"}</strong></span>
+            </div>
           </div>
-          {/* Metadata below image */}
-          <ul className="event-dtl-rgt custom-grid-list">
-            <li>
-              <h6>{t("category")}</h6>
-              <p>{event.eventCategory?.name || t("na")}</p>
-            </li>
-            <li>
-              <h6>{t("createdDate")}</h6>
-              <p>
-                {new Date(event.createdAt).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </p>
-            </li>
-            <li>
-              <h6>{t("organizerName")}</h6>
-              <p>
-                {event.createdBy?.firstName
-                  ? `${event.createdBy.firstName} ${event.createdBy.lastName || ""}`
-                  : event.createdBy?.username || "N/A"}
-              </p>
-            </li>
-            <li>
-              <h6>{t("tags")}</h6>
-              <ExpandableText text={event.tags?.join(", ")} limit={50} />
-            </li>
-            <li>
-              <h6>{t("status")}</h6>
-              <span className={`status-badge ${event.status?.toLowerCase() || "upcoming"}`}>
-                {event.status ? t(event.status.toLowerCase()) : t("upcoming")}
-              </span>
-            </li>
-          </ul>
         </div>
+      </div>
 
-        <div className="time-location common-dtl-list mt-40">
-          <h4 className="line-title">
-            <span>{t("dateTimeLocation")}</span>
-          </h4>
-          <ul className="event-dtl-rgt">
-            <li>
-              <h6>{t("venueName")}</h6>
-              <ExpandableText text={event.venueName} limit={100} />
-            </li>
-            <li className="flex-row gap-4">
-              <div>
-                <h6>
-                  <img src="/img/white-calendar.svg" alt="" className="me-2" />
-                  {t("startDate")}
-                </h6>
-                <p>
-                  {new Date(event.startDate).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                  <span className="mx-2">•</span>
-                  {formatTime(event.startTime, true, language) || "N/A"}
-                </p>
+      {/* Organizer KPI Dashboard Cards */}
+      <Row className="gx-3 gy-3 mb-4">
+        <Col lg={3} md={6} xs={12}>
+          <div className="kpi-card shadow-sm">
+            <div className="kpi-icon">💰</div>
+            <div className="kpi-content">
+              <h5>{t("estimatedRevenue") || "Gross Revenue"}</h5>
+              <h3>₮{estimatedRevenue.toLocaleString()}</h3>
+              <p className="small text-muted">{t("ticketsRevenueOnly") || "From direct ticket sales"}</p>
+            </div>
+          </div>
+        </Col>
+        <Col lg={3} md={6} xs={12}>
+          <div className="kpi-card shadow-sm">
+            <div className="kpi-icon">🎟️</div>
+            <div className="kpi-content">
+              <h5>{t("ticketsSold") || "Tickets Sold"}</h5>
+              <h3>
+                {event.totalBooked?.toLocaleString() || 0} <span className="total-cap">/ {event.totalTickets?.toLocaleString() || 0}</span>
+              </h3>
+              <div className="progress-bar-container mt-2">
+                <div
+                  className="progress-bar-filled"
+                  style={{ width: `${event.totalTickets > 0 ? (event.totalBooked / event.totalTickets) * 100 : 0}%` }}
+                ></div>
               </div>
-              <div>
-                <h6>
-                  <img src="/img/white-calendar.svg" alt="" className="me-2" />
-                  {t("endDate")}
-                </h6>
-                <p>
-                  {new Date(event.endDate).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                  <span className="mx-2">•</span>
-                  {formatTime(event.endTime, true, language) || "N/A"}
-                </p>
-              </div>
-            </li>
-            <li>
-              <h6>
-                <img src="/img/Map-Point.svg" alt="" className="me-2" />
-                {t("location")}
-              </h6>
-              <div className="text-white">
-                <ExpandableText
-                  text={event.venueAddress?.address}
-                  limit={100}
-                />
-                <p className="mt-1 opacity-75">
-                  {event.venueAddress?.city && `${event.venueAddress.city}, `}
-                  {event.venueAddress?.country || ""}
-                </p>
-              </div>
-            </li>
-            {event.dressCode && (
-              <li>
-                <h6>{t("dressCode")}</h6>
-                <ExpandableText text={event.dressCode} limit={50} />
-              </li>
-            )}
-            {event.ageRestriction && (
-              <li>
-                <h6>{t("ageRestriction")}</h6>
-                <p>
-                  {event.ageRestriction.type === "RANGE"
-                    ? `${event.ageRestriction.minAge} - ${event.ageRestriction.maxAge} ${t("years")}`
-                    : event.ageRestriction.minAge || t("noRestriction")}
-                </p>
-              </li>
-            )}
-            {event.duration && (
-              <li>
-                <h6>{t("duration")}</h6>
-                <p>{language === "mn" ? event.durationTranslation || event.duration : event.duration}</p>
-              </li>
-            )}
-          </ul>
-        </div>
+            </div>
+          </div>
+        </Col>
+        <Col lg={3} md={6} xs={12}>
+          <div className="kpi-card shadow-sm">
+            <div className="kpi-icon">💺</div>
+            <div className="kpi-content">
+              <h5>{t("seatsLeft") || "Tickets Left"}</h5>
+              <h3>{event.leftSeats?.toLocaleString() || 0}</h3>
+              <p className="small text-muted">{event.ReservedExternally > 0 ? `+${event.ReservedExternally} Reserved Externally` : "Available for public booking"}</p>
+            </div>
+          </div>
+        </Col>
+        <Col lg={3} md={6} xs={12}>
+          <div className="kpi-card shadow-sm">
+            <div className="kpi-icon">👥</div>
+            <div className="kpi-content">
+              <h5>{t("totalAttendees") || "Total Check-Ins"}</h5>
+              <h3>{event.totalAttendees || 0}</h3>
+              <p className="small text-muted">{t("checkedInSuffix") || "Attendees checked in"}</p>
+            </div>
+          </div>
+        </Col>
+      </Row>
 
-        <div className="ticket-pricing common-dtl-list mt-40">
-          <h4 className="line-title">
-            <span>{t("ticketAndPricing")}</span>
-          </h4>
-          <ul className="event-dtl-rgt">
-            <li>
-              <h6>{t("ticketName")}</h6>
-              <ExpandableText text={event.ticketName} limit={50} />
-            </li>
-            <li>
-              <h6>{t("availability")}</h6>
-              <p>{event.ticketQtyAvailable?.toLocaleString() || 0} / {event.totalTickets?.toLocaleString() || 0} {t("tickets")}</p>
-            </li>
-            <li>
-              <h6>{t("price")}</h6>
-              <p className="text-primary" style={{ fontSize: "1.2rem", fontWeight: "700" }}>
-                ₮{event.ticketPrice?.toLocaleString() || 0}
-              </p>
-            </li>
-            {event.addOns && (
-              <li>
-                <h6>{t("addons")}</h6>
-                <ExpandableText text={event.addOns} limit={100} />
-              </li>
-            )}
-            <li>
-              <h6>{t("salePeriod")}</h6>
-              <p>
-                {event.ticketSelesStartDate
-                  ? new Date(event.ticketSelesStartDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-                  : "N/A"}
-                <span className="mx-2">{t("to")}</span>
-                {event.ticketSelesEndDate
-                  ? new Date(event.ticketSelesEndDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-                  : "N/A"}
-              </p>
-            </li>
-            <li>
-              <h6>{t("refundPolicy")}</h6>
-              <ExpandableText text={event.refundPolicy} limit={150} />
-            </li>
-          </ul>
-        </div>
+      {/* Main Two-Column Grid */}
+      <Row className="gx-4">
+        {/* Left Column - Details, Media & Gallery */}
+        <Col lg={7} md={12} className="mb-4">
+          <div className="content-card mb-4 p-4 shadow-sm">
+            <h4 className="card-heading-line mb-3"><span>{t("shortDescription")}</span></h4>
+            <ExpandableText text={event.shortdesc} limit={250} />
+          </div>
 
-        {attendees && (
-          <div className="attendees-section mt-40">
-            <h4 className="line-title">
-              <span>{t("attendees")} ({attendees.total})</span>
-            </h4>
-            <div className="d-flex align-items-center gap-3 bg-dark-soft p-3 rounded-3">
-              <div className="attendee-profiles d-flex">
-                {attendees.recent?.map((attendee, idx) => (
-                  <img
-                    key={idx}
-                    src={getFullImageUrl(attendee.profileImage) || "/img/default-user.png"}
-                    onError={(e) => { e.target.src = "/img/default-user.png"; }}
-                    alt={`${attendee.firstName}`}
-                    className="rounded-circle attendee-img"
-                    style={{
-                      width: "45px",
-                      height: "45px",
-                      marginLeft: idx > 0 ? "-18px" : "0",
-                      border: "3px solid #1a1a1a",
-                      objectFit: "cover"
-                    }}
-                    title={`${attendee.firstName} ${attendee.lastName}`}
-                  />
+          <div className="content-card mb-4 p-4 shadow-sm">
+            <h4 className="card-heading-line mb-3"><span>{t("detailedHighlights")}</span></h4>
+            <ExpandableText text={event.longdesc} limit={450} />
+          </div>
+
+          {/* Optional Teaser Video */}
+          {event.shortTeaserVideo && event.shortTeaserVideo.length > 0 && (
+            <div className="content-card mb-4 p-4 shadow-sm">
+              <h4 className="card-heading-line mb-3"><span>{t("teaserVideo")}</span></h4>
+              <div className="video-card-container">
+                <video
+                  width="100%"
+                  controls
+                  poster={getFullImageUrl(event.posterImage?.[0])}
+                  className="rounded-3 shadow-md"
+                >
+                  <source src={getFullImageUrl(event.shortTeaserVideo[0])} />
+                  {t("videoNotSupported") || "Your browser does not support videos."}
+                </video>
+              </div>
+            </div>
+          )}
+
+          {/* Gallery Images */}
+          {event.mediaLinks && event.mediaLinks.length > 0 && (
+            <div className="content-card p-4 shadow-sm">
+              <h4 className="card-heading-line mb-3"><span>{t("gallery")}</span></h4>
+              <div className="details-gallery-grid">
+                {event.mediaLinks.map((link, idx) => (
+                  <div key={idx} className="details-gallery-item">
+                    <img
+                      src={getFullImageUrl(link)}
+                      alt={`Gallery ${idx}`}
+                      onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
+                    />
+                  </div>
                 ))}
               </div>
-              {attendees.total > (attendees.recent?.length || 0) && (
-                <span className="text-white fw-bold">+{attendees.total - (attendees.recent?.length || 0)} {t("others")}</span>
+            </div>
+          )}
+        </Col>
+
+        {/* Right Column - Location, Tickets, Attendees */}
+        <Col lg={5} md={12} className="mb-4">
+          {/* DateTime & Location details */}
+          <div className="content-card mb-4 p-4 shadow-sm">
+            <h4 className="card-heading-line mb-3"><span>{t("dateTimeLocation")}</span></h4>
+            <div className="schedule-box mb-3 d-flex flex-column gap-3">
+              <div className="d-flex align-items-start gap-2">
+                <span className="icon-schedule">📍</span>
+                <div>
+                  <h6 className="mb-1 text-muted" style={{ fontSize: "13px" }}>{t("venue")}</h6>
+                  <p className="text-white mb-0 font-weight-bold" style={{ fontSize: "14px" }}>{event.venueName}</p>
+                  <p className="small text-secondary mb-0">{event.venueAddress?.address}</p>
+                  <p className="small text-secondary mb-0">{event.venueAddress?.city}, {event.venueAddress?.country}</p>
+                </div>
+              </div>
+
+              <div className="d-flex align-items-start gap-2">
+                <span className="icon-schedule">📅</span>
+                <div>
+                  <h6 className="mb-1 text-muted" style={{ fontSize: "13px" }}>{t("startDate")}</h6>
+                  <p className="text-white mb-0" style={{ fontSize: "14px" }}>
+                    {new Date(event.startDate).toLocaleDateString(language === "mn" ? "mn-MN" : "en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    <span className="mx-2">•</span>
+                    {formatTime(event.startTime, true, language)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="d-flex align-items-start gap-2">
+                <span className="icon-schedule">📅</span>
+                <div>
+                  <h6 className="mb-1 text-muted" style={{ fontSize: "13px" }}>{t("endDate")}</h6>
+                  <p className="text-white mb-0" style={{ fontSize: "14px" }}>
+                    {new Date(event.endDate).toLocaleDateString(language === "mn" ? "mn-MN" : "en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    <span className="mx-2">•</span>
+                    {formatTime(event.endTime, true, language)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <hr style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} />
+
+            <Row className="gy-2">
+              <Col xs={6}>
+                <h6 className="small text-muted mb-1">{t("ageRestriction") || "Age Limit"}</h6>
+                <p className="text-white font-weight-medium mb-0">
+                  {typeof event.ageRestriction === "string" ? event.ageRestriction : event.ageRestriction?.minAge ? `${event.ageRestriction.minAge}+` : "All Ages"}
+                </p>
+              </Col>
+              <Col xs={6}>
+                <h6 className="small text-muted mb-1">{t("dressCode") || "Dress Code"}</h6>
+                <p className="text-white font-weight-medium mb-0">{event.dressCode || "Casual"}</p>
+              </Col>
+              {event.refundPolicy && (
+                <Col xs={12} className="mt-2">
+                  <h6 className="small text-muted mb-1">{t("refundPolicy") || "Refund Policy"}</h6>
+                  <p className="text-white font-weight-medium mb-0">{event.refundPolicy}</p>
+                </Col>
+              )}
+            </Row>
+          </div>
+
+          {/* Ticket Tiers Performance Breakdown */}
+          <div className="content-card mb-4 p-4 shadow-sm">
+            <h4 className="card-heading-line mb-3"><span>{t("ticketAndPricing") || "Ticket Types"}</span></h4>
+            {event.tickets && event.tickets.length > 0 ? (
+              <div className="d-flex flex-column gap-3">
+                {event.tickets.map((tck, idx) => {
+                  const tckPercent = tck.qty > 0 ? Math.round((tck.soldQty / tck.qty) * 100) : 0;
+                  return (
+                    <div className="ticket-tier-row p-3 rounded" key={tck._id || idx}>
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                          <h6 className="text-white font-weight-bold mb-0" style={{ fontSize: "15px" }}>{tck.ticketName}</h6>
+                          <p className="small text-secondary mb-0 mt-1">{tck.ticketShortDesc || "No description provided"}</p>
+                        </div>
+                        <h5 className="ticket-price-badge m-0">₮{tck.price?.toLocaleString()}</h5>
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="d-flex justify-content-between small text-muted mb-1">
+                          <span>Sales Progress: {tck.soldQty} / {tck.qty} Sold</span>
+                          <span>{tckPercent}%</span>
+                        </div>
+                        <div className="progress-bar-container light">
+                          <div className="progress-bar-filled" style={{ width: `${tckPercent}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div className="d-flex justify-content-between small text-secondary mt-2" style={{ fontSize: "11px" }}>
+                        <span>Sales Start: {tck.salesStart ? new Date(tck.salesStart).toLocaleDateString() : "N/A"}</span>
+                        <span>End: {tck.salesEnd ? new Date(tck.salesEnd).toLocaleDateString() : "N/A"}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-secondary small my-3 text-center">No ticket options defined for this event.</p>
+            )}
+          </div>
+
+          {/* Attendees Summary */}
+          {/* {attendees && (
+            <div className="content-card p-4 shadow-sm">
+              <h4 className="card-heading-line mb-3">
+                <span>{t("attendees") || "Recent Bookings"} ({attendees.total})</span>
+              </h4>
+              {attendees.total > 0 ? (
+                <div className="d-flex align-items-center gap-3 bg-dark-soft p-3 rounded-3">
+                  <div className="attendee-profiles d-flex">
+                    {attendees.recent?.slice(0, 6).map((attendee, idx) => (
+                      <img
+                        key={idx}
+                        src={getFullImageUrl(attendee.profileImage) || "/img/default-user.png"}
+                        onError={(e) => { e.target.src = "/img/default-user.png"; }}
+                        alt={`${attendee.firstName}`}
+                        className="rounded-circle attendee-img"
+                        style={{
+                          width: "42px",
+                          height: "42px",
+                          marginLeft: idx > 0 ? "-15px" : "0",
+                          border: "3px solid #242424",
+                          objectFit: "cover"
+                        }}
+                        title={`${attendee.firstName} ${attendee.lastName}`}
+                      />
+                    ))}
+                  </div>
+                  {attendees.total > 6 && (
+                    <span className="text-secondary small fw-bold">+{attendees.total - 6} {t("others") || "others"}</span>
+                  )}
+                </div>
+              ) : (
+                <p className="text-secondary small my-2 text-center">No attendees registered yet.</p>
               )}
             </div>
-          </div>
-        )}
+          )} */}
+        </Col>
+      </Row>
 
-        {event.shortTeaserVideo && event.shortTeaserVideo.length > 0 && (
-          <div className="teaser-video mt-40"  style={{ maxWidth: "300px",maxHight:"300px"}}>
-            <h4 className="line-title">
-              <span>{t("teaserVideo")}</span>
-            </h4>
-            <div className="video-wrapper shadow-lg">
-              <video width="100%" controls poster={getFullImageUrl(event.posterImage?.[0])} className="rounded-3">
-                <source src={event.shortTeaserVideo[0]} type="video/mp4" />
-                {t("videoNotSupported")}
-              </video>
-            </div>
-          </div>
-        )}
-
-        <div className="descriptions-section mt-40">
-          <Row>
-            <Col md={6}>
-              <h4 className="line-title">
-                <span>{t("shortDescription")}</span>
-              </h4>
-              <ExpandableText text={event.shortdesc} limit={300} className="text-description" />
-            </Col>
-            <Col md={6}>
-              <h4 className="line-title">
-                <span>{t("detailedHighlights")}</span>
-              </h4>
-              <ExpandableText text={event.longdesc} limit={500} className="text-description" />
-            </Col>
-          </Row>
-        </div>
-
-        {event.mediaLinks && event.mediaLinks.length > 0 && (
-          <div className="gellry-images mt-40">
-            <h4 className="line-title">
-              <span>{t("gallery")}</span>
-            </h4>
-            <div className="gallery-grid">
-              {event.mediaLinks.map((link, idx) => (
-                <div key={idx} className={`gallery-item ${idx === 0 ? "large" : ""}`}>
-                  <img 
-                    src={getFullImageUrl(link)} 
-                    alt={`Gallery ${idx}`} 
-                    className="rounded-3 shadow-sm" 
-                    onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
       <style jsx>{`
-        .custom-grid-list {
+        .event-control-center {
+          color: #fff;
+          font-family: 'Inter', sans-serif;
+        }
+        .back-btn-dashboard {
+          color: #888;
+          text-decoration: none;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          transition: color 0.2s;
+        }
+        .back-btn-dashboard:hover {
+          color: #23ada4;
+        }
+        .edit-event-btn {
+          padding: 8px 20px;
+          font-size: 13px;
+          border-radius: 20px;
+        }
+        .hero-details-card {
+          position: relative;
+          background: #1e1e1e;
+          border: 1px solid #2d2d2d;
+          border-radius: 16px;
+          overflow: hidden;
+        }
+        .hero-blur-bg {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-size: cover;
+          background-position: center;
+          filter: blur(40px) brightness(0.25);
+          z-index: 1;
+        }
+        .hero-content-overlay {
+          position: relative;
+          z-index: 2;
+        }
+        .hero-poster {
+          width: 130px;
+          height: 130px;
+          border-radius: 12px;
+          overflow: hidden;
+          flex-shrink: 0;
+          border: 2px solid rgba(255,255,255,0.1);
+        }
+        .hero-poster img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .hero-text-details {
+          flex: 1;
+        }
+        .hero-title {
+          font-size: 24px;
+          font-weight: 700;
+          color: #fff;
+          margin: 0;
+        }
+        .badge-status {
+          font-size: 11px;
+          font-weight: 600;
+          padding: 4px 12px;
+          border-radius: 20px;
+          text-transform: uppercase;
+        }
+        .badge-status.draft { background: rgba(255, 193, 7, 0.15); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); }
+        .badge-status.upcoming { background: rgba(0, 123, 255, 0.15); color: #007bff; border: 1px solid rgba(0, 123, 255, 0.3); }
+        .badge-status.ongoing { background: rgba(40, 167, 69, 0.15); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.3); }
+        .badge-status.past { background: rgba(108, 117, 125, 0.15); color: #999; border: 1px solid rgba(108, 117, 125, 0.3); }
+        .badge-status.featured { background: linear-gradient(135deg, #f6d365, #fda085); color: #000; }
+        .badge-status.visibility { background: rgba(255,255,255,0.08); color: #ccc; border: 1px solid rgba(255,255,255,0.15); }
+        
+        .kpi-card {
+          background: #1e1e1e;
+          border: 1px solid #2d2d2d;
+          border-radius: 14px;
+          padding: 20px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+        .kpi-icon {
+          font-size: 28px;
+          background: rgba(35, 173, 164, 0.1);
+          width: 52px;
+          height: 52px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .kpi-content {
+          flex: 1;
+        }
+        .kpi-content h5 {
+          color: #888;
+          font-size: 12px;
+          text-transform: uppercase;
+          margin-bottom: 6px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+        }
+        .kpi-content h3 {
+          font-size: 22px;
+          font-weight: 700;
+          color: #fff;
+          margin: 0;
+        }
+        .kpi-content .total-cap {
+          font-size: 13px;
+          color: #666;
+          font-weight: 500;
+        }
+        .progress-bar-container {
+          background: #111;
+          height: 6px;
+          border-radius: 10px;
+          overflow: hidden;
+          width: 100%;
+        }
+        .progress-bar-container.light {
+          background: rgba(255,255,255,0.05);
+        }
+        .progress-bar-filled {
+          background: #23ada4;
+          height: 100%;
+          border-radius: 10px;
+        }
+        .content-card {
+          background: #1e1e1e;
+          border: 1px solid #2d2d2d;
+          border-radius: 14px;
+        }
+        .card-heading-line {
+          font-size: 15px;
+          font-weight: 600;
+          text-transform: uppercase;
+          border-bottom: 1px solid #2d2d2d;
+          padding-bottom: 12px;
+          color: #23ada4;
+          margin-bottom: 16px;
+        }
+        .card-heading-line span {
+          position: relative;
+        }
+        .card-heading-line span::after {
+          content: "";
+          position: absolute;
+          bottom: -13px;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background: #23ada4;
+        }
+        .details-gallery-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 20px;
+          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+          gap: 12px;
+        }
+        .details-gallery-item {
+          aspect-ratio: 1;
+          border-radius: 10px;
+          overflow: hidden;
+          border: 1px solid #333;
+        }
+        .details-gallery-item img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.25s ease;
+        }
+        .details-gallery-item img:hover {
+          transform: scale(1.08);
+        }
+        .icon-schedule {
+          font-size: 20px;
+          background: rgba(255,255,255,0.05);
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+        }
+        .ticket-tier-row {
+          background: #161616;
+          border: 1px solid rgba(255,255,255,0.04);
+        }
+        .ticket-price-badge {
+          color: #23ada4;
+          font-weight: 700;
+          font-size: 16px;
         }
         .bg-dark-soft {
-          background: rgba(255, 255, 255, 0.05);
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid rgba(255,255,255,0.02);
+        }
+        .attendee-img {
+          transition: transform 0.2s ease, z-index 0.2s ease;
         }
         .attendee-img:hover {
-          transform: translateY(-5px);
+          transform: translateY(-4px) scale(1.05);
           z-index: 10;
-          transition: transform 0.2s ease;
         }
-        .video-wrapper {
-          max-width: 800px;
-          border: 1px solid rgba(255,255,255,0.1);
-        }
-        .status-badge.featured { background-color: #ffc107; color: #000; font-weight: 700; }
-        .status-badge.booked { background-color: #28a745; color: #fff; font-weight: 600; }
-        .status-badge.wishlisted { background-color: #e83e8c; color: #fff; font-weight: 600; }
-        .text-description {
-          color: #ccc;
-          line-height: 1.6;
-        }
-        .mt-40 { margin-top: 40px; }
       `}</style>
     </div>
   );
@@ -403,7 +616,11 @@ function EventDetailsContent() {
 
 function page() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="text-center py-5">
+        <Spinner animation="border" style={{ color: "#23ada4" }} />
+      </div>
+    }>
       <EventDetailsContent />
     </Suspense>
   );
