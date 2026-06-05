@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import staffApi from "@/api/staffApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import jsQR from "jsqr";
 
 function StaffHome() {
   const router = useRouter();
@@ -212,6 +213,41 @@ function StaffHome() {
     }
   };
 
+  const isProcessingQR = useRef(false);
+
+  const handleQRDetected = async (qrData) => {
+    if (isProcessingQR.current) return;
+    isProcessingQR.current = true;
+    try {
+      setCheckingInScanner(true);
+      const payload = {
+        qrCodeData: qrData,
+      };
+      if (activeEntity) {
+        if (entityType === "event") {
+          payload.eventId = activeEntity._id;
+        } else {
+          payload.courseId = activeEntity._id;
+        }
+      }
+      const res = await staffApi.scanQR(payload);
+      if (res?.status) {
+        toast.success(`Check-in successful: ${res.data?.attendee?.firstName || ""} ${res.data?.attendee?.lastName || ""}`);
+        fetchAttendeesList();
+        fetchScanHistory();
+      }
+    } catch (err) {
+      console.error("QR Check-in failed", err);
+      toast.error(err?.response?.data?.message || "Check-in failed");
+    } finally {
+      setCheckingInScanner(false);
+      // Wait 2 seconds before allowing another scan to avoid duplicate scans
+      setTimeout(() => {
+        isProcessingQR.current = false;
+      }, 2000);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === "scan") {
       startCamera();
@@ -220,6 +256,40 @@ function StaffHome() {
     }
     return () => stopCamera();
   }, [activeTab]);
+
+  useEffect(() => {
+    let active = true;
+    let animationFrameId;
+
+    const scanFrame = () => {
+      if (!active) return;
+      if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
+        const video = videoRef.current;
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
+        if (code) {
+          handleQRDetected(code.data);
+        }
+      }
+      animationFrameId = requestAnimationFrame(scanFrame);
+    };
+
+    if (activeTab === "scan") {
+      scanFrame();
+    }
+
+    return () => {
+      active = false;
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [activeTab, activeEntity]);
 
   // Handle manual ticket verification / check-in
   const handleCheckInSubmit = async (ticketNum) => {
@@ -823,10 +893,10 @@ function StaffHome() {
                     <span>
                       {activeEntity.startDate
                         ? new Date(activeEntity.startDate).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
                         : "N/A"}
                     </span>
                   </p>
@@ -1091,21 +1161,21 @@ function StaffHome() {
           </svg>
           <span>Home</span>
         </button>
- 
+
         <button className={`nav-tab-item ${activeTab === "scan" ? "active" : ""}`} onClick={() => handleTabClick("scan")}>
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M.5 5A.5.5 0 0 1 0 4.5v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3A.5.5 0 0 0 1 1.5v3A.5.5 0 0 1 .5 5Zm0 6a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5Zm15-6a.5.5 0 0 1-.5-.5v-3A.5.5 0 0 0 14 1h-3a.5.5 0 0 1 0-1h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-.5.5Zm0 6a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5ZM3 3h2v2H3V3Zm2 5H3v3h3V8ZM3 6h2v1H3V6Zm3-3h2v1H6V3Zm0 2h1v2H6V5Zm3-2h4v2H9V3Zm2 3h2v1h-2V6Zm-2 2h2v1H9V8Zm3 0h1v3h-2V9h1V8Zm-3 2h1v1H9v-1Zm-2 1v1H5v-1h1Z" />
           </svg>
           <span>Scan</span>
         </button>
- 
+
         <button className={`nav-tab-item ${activeTab === "attendees" ? "active" : ""}`} onClick={() => handleTabClick("attendees")}>
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5.968-3.073L3.75 8.1l2.218-2.827L8 8l-2.032 2.927z" />
           </svg>
           <span>Attendees</span>
         </button>
- 
+
         <button className={`nav-tab-item ${activeTab === "history" ? "active" : ""}`} onClick={() => handleTabClick("history")}>
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z" />
@@ -1169,10 +1239,10 @@ function StaffHome() {
                         <span>
                           {event.startDate
                             ? new Date(event.startDate).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              })
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })
                             : "N/A"}
                         </span>
                       </p>
@@ -1210,10 +1280,10 @@ function StaffHome() {
                         <span>
                           {course.startDate
                             ? new Date(course.startDate).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              })
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })
                             : "N/A"}
                         </span>
                       </p>
@@ -1281,11 +1351,11 @@ function StaffHome() {
                 <span>
                   {detailEntity.startDate
                     ? new Date(detailEntity.startDate).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
                     : "Date N/A"}
                 </span>
               </div>
