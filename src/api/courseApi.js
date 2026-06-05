@@ -8,7 +8,7 @@ const courseApi = {
         return apiClient.get(`/course/details/${courseId}`);
     },
     getOrganizerCourses: (params) => {
-        return apiClient.get("/course/organizer/list", { params, skipToast: true });
+        return apiClient.get("/course/list", { params, skipToast: true });
     },
     createCourse: (data) => {
         return apiClient.post("/course/create", data);

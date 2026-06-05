@@ -22,8 +22,8 @@ export default function Page() {
   const [topics, setTopics] = useState([]);
 
   useEffect(() => {
-  document.title = `${t("contactUs")} - Bondy`;
-}, []);
+    document.title = `${t("contactUs")} - Bondy`;
+  }, []);
 
   useEffect(() => {
     const fetchTopics = async () => {

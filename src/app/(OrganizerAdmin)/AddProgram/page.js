@@ -51,6 +51,14 @@ function Page() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [refundPolicies, setRefundPolicies] = useState([]);
+  const [bookingCutOffOptions, setBookingCutOffOptions] = useState([
+    { key: "1h", label: "1 hour before session" },
+    { key: "2h", label: "2 hours before session" },
+    { key: "4h", label: "4 hours before session" },
+    { key: "12h", label: "12 hours before session" },
+    { key: "24h", label: "24 hours before session" },
+    { key: "48h", label: "48 hours before session" }
+  ]);
 
   // Batch Form Overlay State
   const [showBatchModal, setShowBatchModal] = useState(false);
@@ -174,6 +182,11 @@ function Page() {
         const refundRes = await apiClient.get("/event/refund-policies", { skipToast: true });
         if (refundRes?.status && Array.isArray(refundRes.data)) {
           setRefundPolicies(refundRes.data);
+        }
+
+        const cutOffRes = await apiClient.get("/globalsetting/BOOKING_CUT_OFF_CONFIG", { skipToast: true });
+        if (cutOffRes?.status && cutOffRes?.data?.value && Array.isArray(cutOffRes.data.value)) {
+          setBookingCutOffOptions(cutOffRes.data.value);
         }
       } catch (err) {
         console.error("Error loading config:", err);
@@ -1097,12 +1110,11 @@ function Page() {
                             }}
                           >
                             <option value="">Select Cut-off Time</option>
-                            <option value="1h">1 hour before session</option>
-                            <option value="2h">2 hours before session</option>
-                            <option value="4h">4 hours before session</option>
-                            <option value="12h">12 hours before session</option>
-                            <option value="24h">24 hours before session</option>
-                            <option value="48h">48 hours before session</option>
+                            {bookingCutOffOptions.map((opt) => (
+                              <option key={opt.key} value={opt.key}>
+                                {opt.label}
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </Col>
