@@ -40,6 +40,7 @@ function StaffHome() {
   const [detailsSource, setDetailsSource] = useState("home"); // "home" | "list"
   const [detailEntity, setDetailEntity] = useState(null);
   const [pendingTabSelection, setPendingTabSelection] = useState(null); // null | "scan" | "attendees" | "history"
+  const [overlayTab, setOverlayTab] = useState("events"); // "events" | "courses"
 
   // Scanner states
   const videoRef = useRef(null);
@@ -88,14 +89,15 @@ function StaffHome() {
       const res = await staffApi.getAssigned();
       if (res?.status) {
         const events = res.data?.events || [];
+        const courses = res.data?.courses || [];
         setAssignedEvents(events);
-        setAssignedCourses([]); // Ignore courses for now as requested
+        setAssignedCourses(courses);
         setActiveEntity(null); // No event selected by default
         setEntityType("event");
       }
     } catch (err) {
       console.error("Failed to load assigned items", err);
-      toast.error("Failed to load assigned events");
+      toast.error("Failed to load assigned events/courses");
     } finally {
       setLoadingAssigned(false);
     }
@@ -110,7 +112,7 @@ function StaffHome() {
     if (!activeEntity) {
       setPendingTabSelection(tabName);
       setShowAssignedEventsOverlay(true);
-      toast.error("Please select an event first.");
+      toast.error("Please select an event or course first.");
       return;
     }
 
@@ -928,7 +930,9 @@ function StaffHome() {
           </div>
           <div className="screen-body">
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="m-0" style={{ fontSize: "15px", fontWeight: "600", color: "#8c8c8c" }}>Your Active Event</h5>
+              <h5 className="m-0" style={{ fontSize: "15px", fontWeight: "600", color: "#8c8c8c" }}>
+                {activeEntity ? (activeEntity.courseTitle ? "Your Active Course" : "Your Active Event") : "Your Active Event / Course"}
+              </h5>
               <button
                 onClick={() => {
                   setDetailsSource("home");
@@ -1002,7 +1006,7 @@ function StaffHome() {
               </div>
             ) : (
               <div className="text-center py-4 px-3 mb-4" style={{ background: "#121212", border: "1px dashed rgba(255, 255, 255, 0.15)", borderRadius: "20px" }}>
-                <p style={{ color: "#8c8c8c", fontSize: "14px", marginBottom: "15px" }}>No event selected. Please select an event to start checking in attendees.</p>
+                <p style={{ color: "#8c8c8c", fontSize: "14px", marginBottom: "15px" }}>No event or course selected. Please select one to start checking in attendees.</p>
                 <button
                   className="common_btn"
                   style={{ background: "#23ada4", border: "none", borderRadius: "20px", padding: "8px 20px", fontSize: "13px", fontWeight: "600", color: "#fff" }}
@@ -1011,7 +1015,7 @@ function StaffHome() {
                     setShowAssignedEventsOverlay(true);
                   }}
                 >
-                  Select Event
+                  Select Event / Course
                 </button>
               </div>
             )}
@@ -1286,106 +1290,161 @@ function StaffHome() {
             <button className="back-arrow-btn" onClick={() => setShowAssignedEventsOverlay(false)}>
               &#8592;
             </button>
-            <h2>Assigned Events</h2>
+            <h2>Assigned Events & Courses</h2>
           </div>
           <div className="overlay-body">
-            {assignedEvents.length === 0 && assignedCourses.length === 0 ? (
-              <div className="text-center py-5" style={{ color: "#7c7c7c" }}>
-                No assigned events or courses found.
-              </div>
-            ) : (
-              <div className="d-flex flex-column gap-3">
-                {assignedEvents.map(event => (
-                  <div
-                    key={event._id}
-                    className="event-main-card"
-                    style={{ margin: 0 }}
-                    onClick={() => {
-                      if (pendingTabSelection) {
-                        setActiveEntity(event);
-                        setEntityType("event");
-                        setActiveTab(pendingTabSelection);
-                        setPendingTabSelection(null);
-                        setShowAssignedEventsOverlay(false);
-                      } else {
-                        setDetailEntity(event);
-                        setDetailsSource("list");
-                        setShowAssignedEventsOverlay(false);
-                        setShowEventDetailsOverlay(true);
-                      }
-                    }}
-                  >
-                    <img
-                      src={
-                        (Array.isArray(event.posterImage) && event.posterImage.length > 0)
-                          ? getFullImageUrl(event.posterImage[0])
-                          : "/img/sidebar-logo.svg"
-                      }
-                      className="event-card-img"
-                      alt="cover"
-                    />
-                    <div className="event-card-details">
-                      <h5>{event.eventTitle}</h5>
-                      <p className="category">{event.eventCategory?.name || "Event"}</p>
-                      <p className="info-line" style={{ color: "#7c7c7c" }}>
-                        <span>
-                          {event.startDate
-                            ? new Date(event.startDate).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })
-                            : "N/A"}
-                        </span>
-                      </p>
-                      <p className="info-line" style={{ color: "#7c7c7c" }}>
-                        <span>{event.venueName || "Online"}</span>
-                      </p>
-                    </div>
-                  </div>
-                ))}
+            {/* Dynamic Events / Courses Toggle */}
+            <div className="d-flex justify-content-center mb-4" style={{ background: "#121212", padding: "4px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <button
+                onClick={() => setOverlayTab("events")}
+                style={{
+                  flex: 1,
+                  background: overlayTab === "events" ? "#23ada4" : "transparent",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "8px 0",
+                  fontWeight: "600",
+                  fontSize: "13px",
+                  transition: "background 0.2s ease"
+                }}
+              >
+                Events ({assignedEvents.length})
+              </button>
+              <button
+                onClick={() => setOverlayTab("courses")}
+                style={{
+                  flex: 1,
+                  background: overlayTab === "courses" ? "#23ada4" : "transparent",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "8px 0",
+                  fontWeight: "600",
+                  fontSize: "13px",
+                  transition: "background 0.2s ease"
+                }}
+              >
+                Courses ({assignedCourses.length})
+              </button>
+            </div>
 
-                {assignedCourses.map(course => (
-                  <div
-                    key={course._id}
-                    className="event-main-card"
-                    style={{ margin: 0 }}
-                    onClick={() => {
-                      setActiveEntity(course);
-                      setEntityType("course");
-                      setShowAssignedEventsOverlay(false);
-                    }}
-                  >
-                    <img
-                      src={
-                        (Array.isArray(course.posterImage) && course.posterImage.length > 0)
-                          ? getFullImageUrl(course.posterImage[0])
-                          : "/img/sidebar-logo.svg"
-                      }
-                      className="event-card-img"
-                      alt="cover"
-                    />
-                    <div className="event-card-details">
-                      <h5>{course.courseTitle}</h5>
-                      <p className="category">{course.courseCategory?.name || "Course"}</p>
-                      <p className="info-line" style={{ color: "#7c7c7c" }}>
-                        <span>
-                          {course.startDate
-                            ? new Date(course.startDate).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })
-                            : "N/A"}
-                        </span>
-                      </p>
-                      <p className="info-line" style={{ color: "#7c7c7c" }}>
-                        <span>{course.venueName || "Online"}</span>
-                      </p>
+            {overlayTab === "events" ? (
+              assignedEvents.length === 0 ? (
+                <div className="text-center py-5" style={{ color: "#7c7c7c" }}>
+                  No assigned events found.
+                </div>
+              ) : (
+                <div className="d-flex flex-column gap-3">
+                  {assignedEvents.map(event => (
+                    <div
+                      key={event._id}
+                      className={`event-main-card ${activeEntity?._id === event._id ? "active-entity-card" : ""}`}
+                      style={{ margin: 0 }}
+                      onClick={() => {
+                        if (pendingTabSelection) {
+                          setActiveEntity(event);
+                          setEntityType("event");
+                          setActiveTab(pendingTabSelection);
+                          setPendingTabSelection(null);
+                          setShowAssignedEventsOverlay(false);
+                        } else {
+                          setDetailEntity(event);
+                          setDetailsSource("list");
+                          setShowAssignedEventsOverlay(false);
+                          setShowEventDetailsOverlay(true);
+                        }
+                      }}
+                    >
+                      <img
+                        src={
+                          (Array.isArray(event.posterImage) && event.posterImage.length > 0)
+                            ? getFullImageUrl(event.posterImage[0])
+                            : "/img/sidebar-logo.svg"
+                        }
+                        className="event-card-img"
+                        alt="cover"
+                      />
+                      <div className="event-card-details">
+                        <h5>{event.eventTitle}</h5>
+                        <p className="category">{event.eventCategory?.name || "Event"}</p>
+                        <p className="info-line" style={{ color: "#7c7c7c" }}>
+                          <span>
+                            {event.startDate
+                              ? new Date(event.startDate).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })
+                              : "N/A"}
+                          </span>
+                        </p>
+                        <p className="info-line" style={{ color: "#7c7c7c" }}>
+                          <span>{event.venueName || "Online"}</span>
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )
+            ) : (
+              assignedCourses.length === 0 ? (
+                <div className="text-center py-5" style={{ color: "#7c7c7c" }}>
+                  No assigned courses found.
+                </div>
+              ) : (
+                <div className="d-flex flex-column gap-3">
+                  {assignedCourses.map(course => (
+                    <div
+                      key={course._id}
+                      className="event-main-card"
+                      style={{ margin: 0 }}
+                      onClick={() => {
+                        if (pendingTabSelection) {
+                          setActiveEntity(course);
+                          setEntityType("course");
+                          setActiveTab(pendingTabSelection);
+                          setPendingTabSelection(null);
+                          setShowAssignedEventsOverlay(false);
+                        } else {
+                          setDetailEntity(course);
+                          setDetailsSource("list");
+                          setShowAssignedEventsOverlay(false);
+                          setShowEventDetailsOverlay(true);
+                        }
+                      }}
+                    >
+                      <img
+                        src={
+                          (Array.isArray(course.posterImage) && course.posterImage.length > 0)
+                            ? getFullImageUrl(course.posterImage[0])
+                            : "/img/sidebar-logo.svg"
+                        }
+                        className="event-card-img"
+                        alt="cover"
+                      />
+                      <div className="event-card-details">
+                        <h5>{course.courseTitle}</h5>
+                        <p className="category">{course.courseCategory?.name || "Course"}</p>
+                        <p className="info-line" style={{ color: "#7c7c7c" }}>
+                          <span>
+                            {course.startDate
+                              ? new Date(course.startDate).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })
+                              : "N/A"}
+                          </span>
+                        </p>
+                        <p className="info-line" style={{ color: "#7c7c7c" }}>
+                          <span>{course.venueName || "Online"}</span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
             )}
           </div>
         </div>
@@ -1408,7 +1467,7 @@ function StaffHome() {
             >
               &#8592;
             </button>
-            <h2>Events Details</h2>
+            <h2>{detailEntity.courseTitle ? "Course Details" : "Event Details"}</h2>
           </div>
           <div className="overlay-body d-flex flex-column">
             {/* Cover Image */}
@@ -1454,7 +1513,12 @@ function StaffHome() {
               <div className="d-flex align-items-center gap-2">
                 <span style={{ color: "#23ada4" }}>&#9201;</span>
                 <span>
-                  {detailEntity.startTime || "N/A"} - {detailEntity.endTime || "N/A"}
+                  {detailEntity.startTime
+                    ? `${detailEntity.startTime} - ${detailEntity.endTime || "N/A"}`
+                    : (detailEntity.batches && detailEntity.batches.length > 0
+                      ? detailEntity.batches.map(b => `${b.startTime || "N/A"} - ${b.endTime || "N/A"}`).join(", ")
+                      : "N/A"
+                    )}
                 </span>
               </div>
             </div>
@@ -1470,11 +1534,23 @@ function StaffHome() {
                 <p>Booked</p>
               </div>
               <div className="details-stat-box" style={{ borderLeft: "1px solid rgba(255, 255, 255, 0.08)", borderRight: "1px solid rgba(255, 255, 255, 0.08)" }}>
-                <h3>{detailEntity.ReservedExternally || 0}</h3>
+                <h3>
+                  {detailEntity.ReservedExternally !== undefined
+                    ? detailEntity.ReservedExternally
+                    : (detailEntity.batches && detailEntity.batches.length > 0
+                      ? detailEntity.batches.reduce((acc, b) => acc + (b.ReservedExternally || 0), 0)
+                      : 0
+                    )}
+                </h3>
                 <p>Reserved</p>
               </div>
               <div className="details-stat-box">
-                <h3>{detailEntity.totalTickets || detailEntity.totalSeats || detailEntity.tickets?.reduce((acc, t) => acc + (t.qty || 0), 0) || 100}</h3>
+                <h3>
+                  {detailEntity.totalTickets || detailEntity.totalSeats || detailEntity.tickets?.reduce((acc, t) => acc + (t.qty || 0), 0) || (detailEntity.batches && detailEntity.batches.length > 0
+                    ? detailEntity.batches.reduce((acc, b) => acc + (b.seats || 0), 0)
+                    : 100
+                  )}
+                </h3>
                 <p>Capacity</p>
               </div>
             </div>
@@ -1485,7 +1561,7 @@ function StaffHome() {
                 className="details-action-btn"
                 onClick={() => {
                   setActiveEntity(detailEntity);
-                  setEntityType("event");
+                  setEntityType(detailEntity.courseTitle ? "course" : "event");
                   setShowEventDetailsOverlay(false);
                   setActiveTab("scan");
                 }}
@@ -1498,7 +1574,7 @@ function StaffHome() {
                 className="details-action-btn"
                 onClick={() => {
                   setActiveEntity(detailEntity);
-                  setEntityType("event");
+                  setEntityType(detailEntity.courseTitle ? "course" : "event");
                   setShowEventDetailsOverlay(false);
                   setActiveTab("attendees");
                 }}
@@ -1511,7 +1587,7 @@ function StaffHome() {
                 className="details-action-btn"
                 onClick={() => {
                   setActiveEntity(detailEntity);
-                  setEntityType("event");
+                  setEntityType(detailEntity.courseTitle ? "course" : "event");
                   setShowEventDetailsOverlay(false);
                   setActiveTab("history");
                 }}

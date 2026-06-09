@@ -58,8 +58,8 @@ function StaffPage() {
     try {
       setLoadingEntities(true);
       const [eventsRes, coursesRes] = await Promise.all([
-        eventApi.getOrganizerEvents({ limit: 1000 }),
-        courseApi.getOrganizerCourses({ limit: 1000 }),
+        eventApi.getOrganizerEvents({ filter: "organizer", status: "Upcoming,Live", isDraft: false, limit: 1000 }),
+        courseApi.getOrganizerCourses({ filter: "organizer", status: "Upcoming,Live", isDraft: false, limit: 1000 }),
       ]);
       if (eventsRes?.status) {
         setEvents(eventsRes.data?.events || []);

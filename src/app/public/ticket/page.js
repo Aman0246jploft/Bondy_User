@@ -220,12 +220,18 @@ function PublicTicketContent() {
                       </Col>
                       <Col md={3} sm={6}>
                         <h6 style={{ color: "#888" }}>{t("ticketType") || "Ticket"}</h6>
-                        <p className="text-white">{item?.ticketName || item?.enrollmentType || "General"}</p>
+                        <p className="text-white">{ticketInfo?.ticketName || item?.ticketName || item?.enrollmentType || "General"}</p>
                       </Col>
                       <Col md={3} sm={6}>
                         <h6 style={{ color: "#888" }}>{t("quantity") || "Qty"}</h6>
                         <p className="text-white">{ticketInfo?.qty} {t("ticketsSuffix") || "Tickets"}</p>
                       </Col>
+                      {ticketInfo?.passExpiryDate && (
+                        <Col md={3} sm={6}>
+                          <h6 style={{ color: "#888" }}>{t("expiryDate") || "Expiry Date"}</h6>
+                          <p className="text-warning fw-bold">{formatEventDate(ticketInfo.passExpiryDate)}</p>
+                        </Col>
+                      )}
                     </Row>
                   </div>
                 </div>

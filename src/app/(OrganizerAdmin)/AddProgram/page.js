@@ -28,6 +28,15 @@ const EditIcon = () => (
   </svg>
 );
 
+const PassIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px", display: "inline-block", verticalAlign: "middle" }}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+);
+
 const CourseContextDummy = {
   venueAddress: {
     latitude: 47.9188,
@@ -100,6 +109,10 @@ function Page() {
     batches: [],
     refundPolicy: "",
     bookingCutOff: "",
+    oneMonthPassEnabled: false,
+    oneMonthPassPrice: "",
+    threeMonthPassEnabled: false,
+    threeMonthPassPrice: "",
     isDraft: false,
   });
 
@@ -136,6 +149,8 @@ function Page() {
       shortdesc: 250,
       whatYouWillLearn: 1000,
       price: 9,
+      oneMonthPassPrice: 9,
+      threeMonthPassPrice: 9,
       totalSeats: 9,
     };
 
@@ -235,6 +250,12 @@ function Page() {
           } else {
             setNoEndDate(false);
           }
+
+          // Populate pass details with fallbacks
+          if (transformed.oneMonthPassEnabled === undefined) transformed.oneMonthPassEnabled = false;
+          if (transformed.oneMonthPassPrice === undefined || transformed.oneMonthPassPrice === null) transformed.oneMonthPassPrice = "";
+          if (transformed.threeMonthPassEnabled === undefined) transformed.threeMonthPassEnabled = false;
+          if (transformed.threeMonthPassPrice === undefined || transformed.threeMonthPassPrice === null) transformed.threeMonthPassPrice = "";
 
           setFormData(transformed);
         }
@@ -398,6 +419,8 @@ function Page() {
         totalSessions: formData.enrollmentType === "Ongoing" ? 9999 : (formData.totalSessions ? Number(formData.totalSessions) : 0),
         endDate: formData.enrollmentType === "Ongoing" && noEndDate ? "2099-12-31" : formData.endDate,
         venueAddress: formatLocationForApi(formData.venueAddress) || formData.venueAddress,
+        oneMonthPassPrice: formData.oneMonthPassEnabled && formData.oneMonthPassPrice ? Number(formData.oneMonthPassPrice) : 0,
+        threeMonthPassPrice: formData.threeMonthPassEnabled && formData.threeMonthPassPrice ? Number(formData.threeMonthPassPrice) : 0,
       };
 
       if (payload.courseCategory && typeof payload.courseCategory === "object") {
@@ -437,6 +460,8 @@ function Page() {
         totalSessions: formData.enrollmentType === "Ongoing" ? 9999 : Number(formData.totalSessions),
         endDate: formData.enrollmentType === "Ongoing" && noEndDate ? "2099-12-31" : formData.endDate,
         venueAddress: formatLocationForApi(formData.venueAddress) || formData.venueAddress,
+        oneMonthPassPrice: formData.oneMonthPassEnabled && formData.oneMonthPassPrice ? Number(formData.oneMonthPassPrice) : 0,
+        threeMonthPassPrice: formData.threeMonthPassEnabled && formData.threeMonthPassPrice ? Number(formData.threeMonthPassPrice) : 0,
       };
 
       if (payload.courseCategory && typeof payload.courseCategory === "object") {
@@ -510,6 +535,18 @@ function Page() {
         if (!formData.price || formData.price < 0 || !formData.totalSeats || formData.totalSeats < 1 || !formData.refundPolicy) {
           toast.error("Please configure valid price, capacity per session, and refund policy");
           return false;
+        }
+        if (formData.oneMonthPassEnabled) {
+          if (formData.oneMonthPassPrice === "" || formData.oneMonthPassPrice < 0) {
+            toast.error("Please enter a valid price for the enabled 1 Month Pass");
+            return false;
+          }
+        }
+        if (formData.threeMonthPassEnabled) {
+          if (formData.threeMonthPassPrice === "" || formData.threeMonthPassPrice < 0) {
+            toast.error("Please enter a valid price for the enabled 3 Month Pass");
+            return false;
+          }
         }
       } else {
         if (!formData.price || formData.price < 0 || !formData.refundPolicy) {
@@ -1049,14 +1086,14 @@ function Page() {
                   <Col md={12} className="mb-3">
                     <div className="event-frm-bx">
                       <label className="form-label">
-                        {formData.enrollmentType === "Ongoing" ? "Price per Session" : "Price"} <span className="text-danger">*</span>
+                        {formData.enrollmentType === "Ongoing" ? "Price per session" : "Price"} <span className="text-danger">*</span>
                       </label>
                       <div className="price-input-wrapper position-relative">
-                        <span className="price-symbol position-absolute" style={{ left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#23ada4', fontWeight: 'bold' }}>₮</span>
+                        <span className="price-symbol position-absolute" style={{ left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#888', fontWeight: '500', fontSize: "16px" }}>₮</span>
                         <input
                           type="number"
                           className="form-control"
-                          style={{ paddingLeft: '30px' }}
+                          style={{ paddingLeft: '35px', backgroundColor: "#111", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontSize: "16px", height: "48px", borderRadius: "10px" }}
                           name="price"
                           value={formData.price}
                           onChange={handleChange}
@@ -1064,8 +1101,124 @@ function Page() {
                           min={0}
                         />
                       </div>
+                      {formData.enrollmentType === "Ongoing" && (
+                        <p className="text-muted small mt-2 mb-0">Set the price for each session.</p>
+                      )}
                     </div>
                   </Col>
+
+                  {formData.enrollmentType === "Ongoing" && (
+                    <Col md={12} className="mb-3">
+                      <label className="form-label text-secondary mb-2" style={{ fontSize: "12px", letterSpacing: "1px", fontWeight: "bold" }}>ACCESS PASSES (OPTIONAL)</label>
+                      <p className="text-muted mb-3" style={{ fontSize: "12px", marginTop: "-5px" }}>Offer prepaid passes for regular students. You manage attendance at the door.</p>
+
+                      {/* 1 Month Pass */}
+                      <div className="p-3 mb-3 rounded" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <h5 className="text-white mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>1-month pass</h5>
+                            <p className="text-muted mb-0" style={{ fontSize: "12px" }}>30-day access from purchase date</p>
+                          </div>
+                          <div className="form-check form-switch m-0">
+                            <input
+                              className="form-check-input ms-0"
+                              type="checkbox"
+                              id="oneMonthPassEnabled"
+                              checked={formData.oneMonthPassEnabled}
+                              onChange={(e) => {
+                                setFormData(prev => {
+                                  const updated = { ...prev, oneMonthPassEnabled: e.target.checked };
+                                  localStorage.setItem("courseCreationData", JSON.stringify(updated));
+                                  return updated;
+                                });
+                              }}
+                              style={{ cursor: "pointer", width: "45px", height: "22px" }}
+                            />
+                          </div>
+                        </div>
+
+                        {formData.oneMonthPassEnabled && (
+                          <div className="mt-3 p-3 rounded" style={{ background: "#181818", border: "1px solid rgba(255,255,255,0.03)" }}>
+                            <label className="form-label mb-2" style={{ fontSize: "14px", color: "#23ada4", display: "flex", alignItems: "center", gap: "6px" }}>
+                              <PassIcon />
+                              1-month pass price
+                            </label>
+                            <div className="price-input-wrapper position-relative">
+                              <span className="price-symbol position-absolute" style={{ left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'white', fontWeight: '500', fontSize: "16px" }}>₮</span>
+                              <input
+                                type="number"
+                                className="form-control"
+                                style={{ paddingLeft: '35px', backgroundColor: "#111", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontSize: "16px", height: "48px", borderRadius: "10px" }}
+                                name="oneMonthPassPrice"
+                                value={formData.oneMonthPassPrice}
+                                onChange={handleChange}
+                                placeholder="0"
+                                min={0}
+                              />
+                            </div>
+                            <p className="small mt-2 mb-0" style={{ color: "#23ada4", fontSize: "12px" }}>
+                              Valid 30 days from purchase. QR scanned at door.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 3 Month Pass */}
+                      <div className="p-3 mb-3 rounded" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <h5 className="text-white mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>3-month pass</h5>
+                            <p className="text-muted mb-0" style={{ fontSize: "12px" }}>90-day access from purchase date</p>
+                          </div>
+                          <div className="form-check form-switch m-0">
+                            <input
+                              className="form-check-input ms-0"
+                              type="checkbox"
+                              id="threeMonthPassEnabled"
+                              checked={formData.threeMonthPassEnabled}
+                              onChange={(e) => {
+                                setFormData(prev => {
+                                  const updated = { ...prev, threeMonthPassEnabled: e.target.checked };
+                                  localStorage.setItem("courseCreationData", JSON.stringify(updated));
+                                  return updated;
+                                });
+                              }}
+                              style={{ cursor: "pointer", width: "45px", height: "22px" }}
+                            />
+                          </div>
+                        </div>
+
+                        {formData.threeMonthPassEnabled && (
+                          <div className="mt-3 p-3 rounded" style={{ background: "#181818", border: "1px solid rgba(255,255,255,0.03)" }}>
+                            <label className="form-label mb-2" style={{ fontSize: "14px", color: "#23ada4", display: "flex", alignItems: "center", gap: "6px" }}>
+                              <PassIcon />
+                              3-month pass price
+                            </label>
+                            <div className="price-input-wrapper position-relative">
+                              <span className="price-symbol position-absolute" style={{ left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'white', fontWeight: '500', fontSize: "16px" }}>₮</span>
+                              <input
+                                type="number"
+                                className="form-control"
+                                style={{ paddingLeft: '35px', backgroundColor: "#111", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontSize: "16px", height: "48px", borderRadius: "10px" }}
+                                name="threeMonthPassPrice"
+                                value={formData.threeMonthPassPrice}
+                                onChange={handleChange}
+                                placeholder="0"
+                                min={0}
+                              />
+                            </div>
+                            <p className="small mt-2 mb-0" style={{ color: "#23ada4", fontSize: "12px" }}>
+                              {formData.oneMonthPassPrice && formData.threeMonthPassPrice && (3 * Number(formData.oneMonthPassPrice) - Number(formData.threeMonthPassPrice) > 0) ? (
+                                `Valid 90 days from purchase. Save ₮ ${(3 * Number(formData.oneMonthPassPrice) - Number(formData.threeMonthPassPrice)).toLocaleString()} vs 3x monthly.`
+                              ) : (
+                                "Valid 90 days from purchase. Save vs monthly pricing."
+                              )}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </Col>
+                  )}
 
                   {formData.enrollmentType === "Ongoing" && (
                     <>
@@ -1195,6 +1348,20 @@ function Page() {
                     ₮{formData.price} per session ({formData.refundPolicy})
                   </Col>
                 </Row>
+
+                {formData.enrollmentType === "Ongoing" && formData.oneMonthPassEnabled && (
+                  <Row className="mb-3">
+                    <Col md={4} className="text-secondary font-weight-bold">1 Month Pass Price:</Col>
+                    <Col md={8}>₮{formData.oneMonthPassPrice}</Col>
+                  </Row>
+                )}
+
+                {formData.enrollmentType === "Ongoing" && formData.threeMonthPassEnabled && (
+                  <Row className="mb-3">
+                    <Col md={4} className="text-secondary font-weight-bold">3 Month Pass Price:</Col>
+                    <Col md={8}>₮{formData.threeMonthPassPrice}</Col>
+                  </Row>
+                )}
 
                 {formData.enrollmentType === "Ongoing" && (
                   <>

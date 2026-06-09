@@ -15,6 +15,9 @@ const bookingApi = {
 
     getTicketList: (params) => apiClient.get("/booking/list", { params }),
 
+    getCourseAttendees: (courseId, params) =>
+        apiClient.get(`/booking/course/${courseId}/attendees`, { params, skipToast: true }),
+
     getTicketDetail: (transactionId) =>
         apiClient.get(`/booking/detail/${transactionId}`),
 
@@ -23,6 +26,8 @@ const bookingApi = {
 
     getPublicTicketDetail: (transactionId) =>
         apiClient.get(`/booking/public/detail/${transactionId}`),
+
+    cancelCourse: (data) => apiClient.post("/booking/cancel-course", data),
 };
 
 export default bookingApi;

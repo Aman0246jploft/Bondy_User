@@ -263,12 +263,18 @@ function TicketDetailsContent() {
                   </div>
                   <div className="ticket-summary-item">
                     <h6>{t("ticketType") || "Ticket"}</h6>
-                    <p className="ticket-text-wrap">{item?.ticketName || item?.enrollmentType || "General"}</p>
+                    <p className="ticket-text-wrap">{ticketInfo?.ticketName || item?.ticketName || item?.enrollmentType || "General"}</p>
                   </div>
                   <div className="ticket-summary-item">
                     <h6>{t("quantity") || "Qty"}</h6>
                     <p>{ticketInfo?.qty} {t("ticketsSuffix") || "Tickets"}</p>
                   </div>
+                  {ticketInfo?.passExpiryDate && (
+                    <div className="ticket-summary-item">
+                      <h6>{t("expiryDate") || "Expiry Date"}</h6>
+                      <p className="text-warning fw-bold">{formatEventDate(ticketInfo.passExpiryDate)}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -240,6 +240,11 @@ function page() {
                 <p>
                   {t("totalPaid")} <span>₮{ticket.totalAmount}</span>
                 </p>
+                {ticket.ticketName && (
+                  <p>
+                    {t("ticketType") || "Type"}: <span>{ticket.ticketName}</span>
+                  </p>
+                )}
                 <p>
                   <span>
                     <img src="/img/ticket-white.svg" />

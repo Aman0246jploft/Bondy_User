@@ -551,7 +551,7 @@ function CoursesManagement() {
                           </Link>
                         )}
 
-                        <Link href={`/programDetails?id=${course._id}`} className="text-decoration-none" style={{ color: "#fff" }}>
+                        <Link href={`/CourseDetailOrganiser?courseId=${course._id}`} className="text-decoration-none" style={{ color: "#fff" }}>
                           {t("viewDetails")}{" "}
                           <img src="/img/Arrow-Right.svg" alt="arrow" />
                         </Link>

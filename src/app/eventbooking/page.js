@@ -90,6 +90,10 @@ function BookingPageContent() {
               currentSchedule: course?.currentSchedule,
               weeklySchedule: course?.weeklySchedule,
               enrollmentType: course?.enrollmentType,
+              oneMonthPassEnabled: course?.oneMonthPassEnabled,
+              oneMonthPassPrice: course?.oneMonthPassPrice,
+              threeMonthPassEnabled: course?.threeMonthPassEnabled,
+              threeMonthPassPrice: course?.threeMonthPassPrice,
               original: course,
             });
           }
