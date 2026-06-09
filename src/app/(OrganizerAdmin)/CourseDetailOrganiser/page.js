@@ -386,7 +386,7 @@ function CourseDetailsContent() {
                                 className={!slot.isCancelled ? "slot-clickable" : ""}
                               >
                                 <div className="d-flex align-items-center gap-2">
-                                  <p className="mb-0 text-white" style={{ fontWeight: 600, fontSize: "14px", textDecoration: slot.isCancelled ? "line-through" : "none" }}>{slot.batchName}</p>
+                                  {/* <p className="mb-0 text-white" style={{ fontWeight: 600, fontSize: "14px", textDecoration: slot.isCancelled ? "line-through" : "none" }}>{slot.batchName}</p> */}
                                   {slot.isCancelled && <span className="badge bg-danger">Cancelled</span>}
                                 </div>
                                 <p className="mb-0 text-secondary" style={{ fontSize: "12px" }}>
@@ -735,7 +735,8 @@ function CourseDetailsContent() {
             </h5>
             <p style={{ color: "#ccc", fontSize: "14px", marginBottom: "20px" }}>
               {cancelMode === "slot"
-                ? `Are you sure you want to cancel ${selectedSlot?.batchName} for ${selectedSlot?.date ? selectedSlot.date.split("T")[0] : ""}?`
+                // ${selectedSlot?.batchName} for
+                ? `Are you sure you want to cancel  ${selectedSlot?.date ? selectedSlot.date.split("T")[0] : ""}?`
                 : "Are you sure you want to cancel this entire course? This will cancel all pending bookings and notify enrolled students."}
             </p>
             <div className="form-group mb-4">
