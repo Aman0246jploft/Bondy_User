@@ -35,6 +35,7 @@ const authApi = {
     getFollowers: (params) => apiClient.get("/follow/followers", { params, skipToast: true }),
     getFollowing: (params) => apiClient.get("/follow/following", { params, skipToast: true }),
 
+    submitVerification: (data) => apiClient.post("/verification/submit", data),
 };
 
 export default authApi;

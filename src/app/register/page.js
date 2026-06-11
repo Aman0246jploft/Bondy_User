@@ -41,8 +41,7 @@ function RegisterForm() {
 
   // Organizer Form State
   const [organizerData, setOrganizerData] = useState({
-    firstName: "",
-    lastName: "",
+    fullname: "",
     email: "",
     contactNumber: "",
     countryCode: "",
@@ -95,8 +94,7 @@ function RegisterForm() {
 
   const validateOrganizerForm = (data) => {
     const errors = {};
-    if (!data.firstName.trim()) errors.firstName = t("firstNameRequired");
-    if (!data.lastName.trim()) errors.lastName = t("lastNameRequired");
+    if (!data.fullname?.trim()) errors.fullname = t("fullNameRequired") || "Full Name is required";
 
     const emailError = validateEmail(data.email);
     if (emailError) errors.email = emailError;
@@ -158,8 +156,7 @@ function RegisterForm() {
       };
       const nextErrors = { ...organizerErrors };
 
-      if (name === "firstName") nextErrors.firstName = value.trim() ? "" : t("firstNameRequired");
-      if (name === "lastName") nextErrors.lastName = value.trim() ? "" : t("lastNameRequired");
+      if (name === "fullname") nextErrors.fullname = value.trim() ? "" : (t("fullNameRequired") || "Full Name is required");
       if (name === "email") nextErrors.email = validateEmail(value);
       if (name === "password") {
         nextErrors.password = validatePassword(value);
@@ -572,38 +569,19 @@ function RegisterForm() {
                               noValidate
                               onSubmit={handleOrganizerSignup}
                             >
-                              <Row>
-                                <Col md={6}>
-                                  <Form.Group className="mb-3">
-                                    <Form.Control
-                                      type="text"
-                                      name="firstName"
-                                      placeholder={t("firstName")}
-                                      value={organizerData.firstName}
-                                      onChange={handleOrganizerChange}
-                                      aria-required="true"
-                                    />
-                                    {organizerErrors.firstName && (
-                                      <div className="text-danger small mt-1">{organizerErrors.firstName}</div>
-                                    )}
-                                  </Form.Group>
-                                </Col>
-                                <Col md={6}>
-                                  <Form.Group className="mb-3">
-                                    <Form.Control
-                                      type="text"
-                                      name="lastName"
-                                      placeholder={t("lastName")}
-                                      value={organizerData.lastName}
-                                      onChange={handleOrganizerChange}
-                                      aria-required="true"
-                                    />
-                                    {organizerErrors.lastName && (
-                                      <div className="text-danger small mt-1">{organizerErrors.lastName}</div>
-                                    )}
-                                  </Form.Group>
-                                </Col>
-                              </Row>
+                              <Form.Group className="mb-3">
+                                <Form.Control
+                                  type="text"
+                                  name="fullname"
+                                  placeholder={t("fullName") || "Full Name"}
+                                  value={organizerData.fullname || ""}
+                                  onChange={handleOrganizerChange}
+                                  aria-required="true"
+                                />
+                                {organizerErrors.fullname && (
+                                  <div className="text-danger small mt-1">{organizerErrors.fullname}</div>
+                                )}
+                              </Form.Group>
 
                               <Form.Group className="mb-3">
                                 <Form.Control
@@ -695,66 +673,6 @@ function RegisterForm() {
                                   <div className="text-danger small mt-1">{organizerErrors.confirmPassword}</div>
                                 )}
                               </Form.Group>
-
-                              {/* <Form.Group className="mb-3">
-                                <Form.Label>Choose Business Type</Form.Label>
-                                <Form.Select
-                                  name="businessType"
-                                  value={organizerData.businessType}
-                                  onChange={handleOrganizerChange}
-                                  required
-                                >
-                                  <option value="">Choose Business Type</option>
-                                  <option value="react">React</option>
-                                  <option value="next">Next.js</option>
-                                  <option value="uiux">UI/UX</option>
-                                  <option value="frontend">Frontend</option>
-                                </Form.Select>
-                              </Form.Group> */}
-
-                              <div
-                                className="doc_upload_sec"
-                                onClick={() => fileRef.current.click()}
-                                style={{ cursor: "pointer" }}
-                              >
-                                <div className="photo_circle">
-                                  {preview ? (
-                                    <img
-                                      src={preview}
-                                      alt="Preview"
-                                      className="preview-img"
-                                    />
-                                  ) : (
-                                      <div className="upload-doc">
-                                      {t("attachDocuments")}
-                                      <p>
-                                        {t("dragDropBrowse")}
-                                      </p>
-                                      <span className="add_photo_text">
-                                        {t("uploadPhoto")}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  ref={fileRef}
-                                  style={{ display: "none" }}
-                                  onChange={handleFileChange}
-                                />
-                              </div>
-
-                              {/* <Form.Group className="mb-3">
-                                <Form.Control
-                                  type="text"
-                                  name="referralCode"
-                                  placeholder="Referral Code (optional)"
-                                  value={organizerData.referralCode}
-                                  onChange={handleOrganizerChange}
-                                />
-                              </Form.Group> */}
 
                               <Form.Group className="mb-3">
                                 <div className="custom-checkbox">

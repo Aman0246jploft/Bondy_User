@@ -90,18 +90,41 @@ function OTPContent() {
           localStorage.setItem("token", response?.data?.token);
         }
 
-        // Determine destination
+        let shouldShowModal = false;
+        let isVerified = false;
+        let userRole = "CUSTOMER";
         let nextPath = "/";
         try {
-          const profileRes = await authApi.getSelfProfile();
-          if (profileRes?.status) {
-            const profile = profileRes?.data?.user;
-            if (!profile?.firstName || !profile?.lastName) {
-              nextPath = "/completeprofile";
-            } else if (!profile?.categories || profile?.categories.length === 0) {
-              nextPath = "/insterest";
+          const profile = response?.data?.user;
+          if (profile) {
+            isVerified = profile?.isVerified ?? false;
+            // Check roleId (e.g. 2 is ORGANIZER, check details)
+            if (profile?.roleId === 2 || profile?.organizerVerificationStatus) {
+              userRole = "ORGANIZER";
+            }
+            if (userRole === "ORGANIZER") {
+              const hasBusinessDetails = (
+                profile?.businessName ||
+                profile?.businessCategory ||
+                profile?.shortDesc ||
+                profile?.socialMediaLink
+              );
+              if (!hasBusinessDetails) {
+                nextPath = "/completeprofile";
+              } else {
+                nextPath = "/";
+                if (!isVerified) {
+                  shouldShowModal = true;
+                }
+              }
             } else {
-              nextPath = "/";
+              if (!profile?.firstName || !profile?.lastName) {
+                nextPath = "/completeprofile";
+              } else if (!profile?.categories || profile?.categories.length === 0) {
+                nextPath = "/insterest";
+              } else {
+                nextPath = "/";
+              }
             }
           } else {
             nextPath = "/completeprofile";
@@ -111,8 +134,8 @@ function OTPContent() {
           nextPath = "/completeprofile";
         }
 
-        if (flow === "signup") {
-          setRedirectPath(nextPath);
+        if (shouldShowModal) {
+          setRedirectPath("/");
           setModalShow(true);
         } else {
           router.push(nextPath);
@@ -220,8 +243,15 @@ function OTPContent() {
         </Container>
         <VerificationModl
           show={modalShow}
-          onHide={() => setModalShow(false)}
-          redirectPath={redirectPath}
+          onHide={() => {
+            setModalShow(false);
+            localStorage.removeItem("token");
+            router.push("/");
+          }}
+          redirectPath="/"
+          onGoBack={() => {
+            localStorage.removeItem("token");
+          }}
         />
       </div>
     </GuestRoute>

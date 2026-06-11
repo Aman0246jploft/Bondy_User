@@ -1,104 +1,311 @@
 "use client";
-import Link from "next/link";
-import React, { useState, useRef, useEffect } from "react";
-import { Col, Form, Row } from "react-bootstrap";
-import "react-datepicker/dist/react-datepicker.css";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
-import { parsePhoneNumber } from "react-phone-number-input";
-import apiClient from "../../../api/apiClient";
-// import authApi from "../../../api/authApi"; // authApi uses apiClient internally
-import authApi from "../../../api/authApi";
+
+import React, { useState, useEffect, useRef } from "react";
+import { Row, Col, Form } from "react-bootstrap";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import {
+  Phone,
+  Mail,
+  FileText,
+  Landmark,
+  UserCheck,
+  CheckCircle,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  Lock,
+  ArrowLeft,
+  Upload,
+  RefreshCw
+} from "lucide-react";
+import apiClient from "../../../api/apiClient";
+import authApi from "@/api/authApi";
 import { getFullImageUrl } from "../../../utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Link from "next/link";
 
-function page() {
+function VerificationPageContent() {
   const { t } = useLanguage();
-  const [loading, setLoading] = useState(false);
-  const [userData, setUserData] = useState(null);
-  const [businessDoc, setBusinessDoc] = useState(null);
-  const [govIdDoc, setGovIdDoc] = useState(null);
-  const [status, setStatus] = useState("unverified"); // unverified, pending, approved, rejected, none
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
 
-  const fileRefBusiness = useRef(null);
-  const fileRefGov = useRef(null);
+  // Active checklist item dropdown
+  const [activeTab, setActiveTab] = useState(null); // 'phone', 'email', 'identity', 'bank', 'profile'
+
+  // Verification states
+  const [phoneVal, setPhoneVal] = useState("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+91");
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+
+  const [emailVal, setEmailVal] = useState("");
+  const [emailOtp, setEmailOtp] = useState("");
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [isEditingBank, setIsEditingBank] = useState(false);
+  const [isEditingIdentity, setIsEditingIdentity] = useState(false);
+  const [idType, setIdType] = useState("nationalId"); // "nationalId" or "drivingLicence"
+
+  // Business verification states
+  const [businessName, setBusinessName] = useState("");
+  const [businessCategory, setBusinessCategory] = useState("");
+  const [shortDesc, setShortDesc] = useState("");
+  const [socialMediaLink, setSocialMediaLink] = useState("");
+  const [isEditingProfileFields, setIsEditingProfileFields] = useState(false);
+  const [categoriesList, setCategoriesList] = useState([]);
+
+  // Docs uploads
+  const [nationalIdFront, setNationalIdFront] = useState(null);
+  const [nationalIdBack, setNationalIdBack] = useState(null);
+  const fileRefFront = useRef(null);
+  const fileRefBack = useRef(null);
+
+  // Bank Account states
+  const [banksList, setBanksList] = useState([]);
+  const [bankAccount, setBankAccount] = useState({
+    bankName: "",
+    bankHolderName: "",
+    accountNumber: "",
+    otherDetails: ""
+  });
+
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchProfile();
+    fetchBanks();
+    fetchCategories();
+    document.title = "Organizer Verification - Bondy";
   }, []);
-
-  const [email, setEmail] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
-
-  const updateProfile = async () => {
-    try {
-      const payload = {};
-      if (email) payload.email = email;
-
-      if (contactNumber) {
-        const parsed = parsePhoneNumber(contactNumber);
-        if (parsed) {
-          payload.countryCode = `+${parsed.countryCallingCode}`;
-          payload.contactNumber = parsed.nationalNumber;
-        } else {
-          payload.contactNumber = contactNumber; // Fallback if not parseable (shouldn't happen with valid PhoneInput)
-        }
-      }
-
-      const res = await apiClient.post("/user/update-profile", payload);
-      if (res.status === 200) {
-        toast.success(t("profileUpdatedSuccessfully"));
-        fetchProfile(); // Refresh data
-      }
-    } catch (error) {
-      console.error("Update profile error", error);
-      toast.error(error.response?.data?.message || t("failedToUpdateProfile"));
-    }
-  };
-
-  useEffect(() => {
-    if (userData) {
-      setEmail(userData.email || "");
-      // Construct full number for PhoneInput
-      if (userData.contactNumber) {
-        setContactNumber(
-          userData.countryCode
-            ? `${userData.countryCode}${userData.contactNumber}`
-            : userData.contactNumber,
-        );
-      } else {
-        setContactNumber("");
-      }
-    }
-    document.title = "Verified Profile - Bondy";
-  }, [userData]);
 
   const fetchProfile = async () => {
     try {
+      setLoading(true);
       const res = await apiClient.get("/user/selfProfile");
-      if (res?.data && res?.data?.user) {
-        const profile = res?.data?.user;
-        setUserData(profile);
-        setStatus(profile?.organizerVerificationStatus || "none");
 
-        if (profile?.documents && profile?.documents.length > 0) {
-          profile.documents.forEach((doc) => {
-            const docObj = {
-              file: doc.file,
-              preview: getFullImageUrl(doc.file),
-            };
-            if (doc.name === "Business Proof") setBusinessDoc(docObj);
-            if (doc.name === "Gov ID") setGovIdDoc(docObj);
+
+      if (res?.data?.user) {
+        const u = res.data.user;
+        setProfile(u);
+        setEmailVal(u.email || "");
+        if (u.contactNumber) {
+          setPhoneVal(u.contactNumber);
+        }
+        if (u.countryCode) {
+          setPhoneCountryCode(u.countryCode);
+        }
+        setIsEditingPhone(!u.verifications?.phone?.isVerified);
+        setIsEditingEmail(!u.verifications?.email?.isVerified);
+        setIsEditingBank(!u.verifications?.bankVerification?.isVerified);
+
+        const natStatus = u.verifications?.idVerification?.nationalId?.status || "unverified";
+        const licStatus = u.verifications?.idVerification?.drivingLicence?.status || "unverified";
+        const verifiedId = natStatus === "approved" || licStatus === "approved";
+        const pendingId = natStatus === "pending" || licStatus === "pending";
+        setIsEditingIdentity(!verifiedId && !pendingId);
+
+        if (u.verifications?.idVerification?.nationalId) {
+          setNationalIdFront(u.verifications.idVerification.nationalId.frontImage || null);
+          setNationalIdBack(u.verifications.idVerification.nationalId.backImage || null);
+        } else if (u.verifications?.idVerification?.drivingLicence) {
+          setNationalIdFront(u.verifications.idVerification.drivingLicence.frontImage || null);
+          setNationalIdBack(u.verifications.idVerification.drivingLicence.backImage || null);
+        }
+
+        console.log("88888787878787", u)
+
+        setBusinessName(u.businessName || "");
+        setBusinessCategory(u.businessCategory || "");
+        setShortDesc(u.shortDesc || "");
+        setSocialMediaLink(u.socialMediaLink || "");
+        setIsEditingProfileFields(u.organizerVerificationStatus !== "approved" && u.organizerVerificationStatus !== "pending");
+
+        // Prefill existing bank verification details if any
+        if (u.verifications?.bankVerification) {
+          setBankAccount({
+            bankName: u.verifications.bankVerification.bankName || "",
+            bankHolderName: u.verifications.bankVerification.bankHolderName || "",
+            accountNumber: u.verifications.bankVerification.accountNumber || "",
+            otherDetails: u.verifications.bankVerification.otherDetails || ""
           });
         }
       }
     } catch (error) {
-      console.error("Error fetching profile", error);
+      console.error("Error loading profile:", error);
+      toast.error(t("failedToLoadProfile") || "Failed to load profile data");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleFileChange = async (e, docType) => {
+  const fetchBanks = async () => {
+    try {
+      const res = await apiClient.get("/verification/banks");
+      if (res?.status && Array.isArray(res.data?.banks)) {
+        setBanksList(res.data.banks);
+      } else {
+        // Fallback standard banks if list empty
+        setBanksList([
+          { _id: "1", bankName: "State Bank of India" },
+          { _id: "2", bankName: "HDFC Bank" },
+          { _id: "3", bankName: "ICICI Bank" },
+          { _id: "4", bankName: "Bank of Mongolia" }
+        ]);
+      }
+    } catch (err) {
+      console.warn("Could not fetch banks list, using fallback:", err);
+      setBanksList([
+        { _id: "1", bankName: "State Bank of India" },
+        { _id: "2", bankName: "HDFC Bank" },
+        { _id: "3", bankName: "ICICI Bank" },
+        { _id: "4", bankName: "Bank of Mongolia" }
+      ]);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await apiClient.get("/category/list", { params: { limit: 100 } });
+      if (res?.status && Array.isArray(res.data?.categories)) {
+        setCategoriesList(res.data.categories);
+      }
+    } catch (err) {
+      console.warn("Could not fetch categories", err);
+    }
+  };
+
+  const handleSubmitProfileFields = async () => {
+    if (!businessName || !businessCategory) {
+      toast.error("Business Name and Category are required");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const res = await apiClient.post("/user/organizer/info", {
+        businessName,
+        category: businessCategory,
+        shortDesc,
+        socialMediaLink
+      });
+      if (res?.status) {
+        toast.success("Organizer profile submitted successfully!");
+        setIsEditingProfileFields(false);
+        fetchProfile();
+      }
+    } catch (err) {
+      toast.error("Failed to submit organizer profile details");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Toggle active accordion tab
+  const toggleTab = (tab) => {
+    if (activeTab === tab) {
+      setActiveTab(null);
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  // 1. Phone Verification Handlers
+  const handleSendPhoneOtp = async () => {
+    if (!phoneVal) {
+      toast.error(t("enterPhoneNumber") || "Please enter a valid phone number");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const res = await apiClient.post("/verification/phone/send-otp", {
+        countryCode: phoneCountryCode,
+        contactNumber: phoneVal
+      });
+      if (res?.status) {
+        toast.success(res.message || "OTP sent successfully to your phone number!");
+        setPhoneOtpSent(true);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to send phone OTP");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (!phoneOtp) {
+      toast.error("Please enter the OTP received");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const res = await apiClient.post("/verification/phone/verify-otp", {
+        otp: phoneOtp
+      });
+      if (res?.status) {
+        toast.success("Phone number verified successfully!");
+        setPhoneOtpSent(false);
+        setPhoneOtp("");
+        fetchProfile();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Invalid OTP");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // 2. Email Verification Handlers
+  const handleSendEmailOtp = async () => {
+    if (!emailVal) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const res = await apiClient.post("/verification/email/send-otp", {
+        email: emailVal
+      });
+      if (res?.status) {
+        toast.success(res.message || "OTP sent successfully to your email!");
+        setEmailOtpSent(true);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to send email OTP");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    if (!emailOtp) {
+      toast.error("Please enter the OTP received");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const res = await apiClient.post("/verification/email/verify-otp", {
+        otp: emailOtp
+      });
+      if (res?.status) {
+        toast.success("Email verified successfully!");
+        setEmailOtpSent(false);
+        setEmailOtp("");
+        fetchProfile();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Invalid OTP");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // 3. Document upload handlers
+  const handleDocUpload = async (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -106,288 +313,1118 @@ function page() {
     formData.append("files", file);
 
     try {
-      setLoading(true);
+      setSubmitting(true);
       const res = await authApi.uploadFile(formData);
-
-      if (res.data && res.data.files && res.data.files.length > 0) {
+      if (res.status && res.data?.files?.length > 0) {
         const fileUrl = res.data.files[0];
-        const docObj = {
-          file: fileUrl,
-          preview: getFullImageUrl(fileUrl),
-        };
-
-        if (docType === "Business Proof") setBusinessDoc(docObj);
-        if (docType === "Gov ID") setGovIdDoc(docObj);
-
-        toast.success(`${docType} ${t("uploadedSuccessfully")}`);
+        if (type === "front") {
+          setNationalIdFront(fileUrl);
+        } else {
+          setNationalIdBack(fileUrl);
+        }
+        toast.success("Document uploaded successfully!");
       }
-    } catch (error) {
-      console.error("Upload error", error);
-      toast.error(t("failedToUploadDocument"));
+    } catch (err) {
+      toast.error("Failed to upload document file");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const handleSubmit = async () => {
-    // Require at least one? Or both? User said "Business Proof , govId".
-    // Let's require at least one for now, or assume both if UI suggests.
-    if (!businessDoc && !govIdDoc) {
-      toast.error(t("uploadAtLeastOneDocument"));
+  const handleSubmitIdentity = async () => {
+    if (!nationalIdFront || !nationalIdBack) {
+      toast.error("Please upload both front and back images of your ID");
       return;
     }
-
     try {
-      setLoading(true);
-      const documents = [];
-      if (businessDoc)
-        documents.push({ name: "Business Proof", file: businessDoc.file });
-      if (govIdDoc) documents.push({ name: "Gov ID", file: govIdDoc.file });
-
-      const payload = { documents };
+      setSubmitting(true);
+      const payload = {};
+      if (idType === "nationalId") {
+        payload.nationalId = {
+          frontImage: nationalIdFront,
+          backImage: nationalIdBack
+        };
+      } else {
+        payload.drivingLicence = {
+          frontImage: nationalIdFront,
+          backImage: nationalIdBack
+        };
+      }
 
       const res = await apiClient.post("/verification/submit", payload);
-      if (res.status === true) {
-        toast.success(t("verificationSubmittedSuccessfully"));
-        setStatus("pending");
+      if (res?.status) {
+        toast.success("Identity documents submitted successfully!");
+        setIsEditingIdentity(false);
+        fetchProfile();
       }
-    } catch (error) {
-      console.error("Submit error", error);
-      toast.error(
-        error.response?.data?.message || t("failedToSubmitVerification"),
-      );
+    } catch (err) {
+      toast.error("Failed to submit ID verification");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
+  // 4. Bank account handler
+  const handleSubmitBank = async () => {
+    if (!bankAccount.bankName || !bankAccount.bankHolderName || !bankAccount.accountNumber) {
+      toast.error("Please fill in all required bank details");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const res = await apiClient.post("/verification/submit", {
+        bankVerification: bankAccount
+      });
+      if (res?.status) {
+        toast.success("Bank details submitted successfully!");
+        setIsEditingBank(false);
+        fetchProfile();
+      }
+    } catch (err) {
+      toast.error("Failed to submit bank details");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+        <div className="spinner-border text-teal" role="status" style={{ color: "#23ada4" }}>
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Verification Mappings
+  const isPhoneVerified = profile?.verifications?.phone?.isVerified || false;
+  const isEmailVerified = profile?.verifications?.email?.isVerified || false;
+
+  const nationalIdStatus = profile?.verifications?.idVerification?.nationalId?.status || "unverified";
+  const drivingLicenceStatus = profile?.verifications?.idVerification?.drivingLicence?.status || "unverified";
+  const isIdVerified = nationalIdStatus === "approved" || drivingLicenceStatus === "approved";
+  const isIdPending = nationalIdStatus === "pending" || drivingLicenceStatus === "pending";
+
+  const bankStatus = profile?.verifications?.bankVerification?.status || "unverified";
+  const isBankVerified = bankStatus === "approved";
+  const isBankPending = bankStatus === "pending";
+
+  const isProfileReviewed = profile.businessVerificationStatus === "approved";
+  const isProfilePending = profile.businessVerificationStatus === "pending";
+
+  const allVerified = profile?.isAllVerified;
+
   return (
-    <div>
-      <Row className="justify-content-center">
-        <Col md={6}>
-          <Form
-            className="row"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}>
-            <div className="event-form-card">
-              <h4 className="mb-4 text-white">{t("organizerVerification")}</h4>
+    <div className="cards verification-container">
+      {/* Back to Profile */}
+      <Link href="/OrganizerProfile" className="back-btn mb-4">
+        <ArrowLeft size={18} className="me-2" />
+        <span>{t("backToProfile") || "Back to Profile"}</span>
+      </Link>
 
-              {status === "approved" && (
-                <div className="alert alert-success">
-                  {t("accountVerified")}
+      {/* Main Status Header */}
+      {allVerified ? (
+        <div className="status-banner-card verified">
+          <div className="status-card-left">
+            <CheckCircle size={32} className="text-teal" />
+            <div className="status-text-details">
+              <h4>{t("verified") || "Verified"}</h4>
+              <p>{t("profileFullyVerified") || "Your organizer profile is fully verified."}</p>
+            </div>
+          </div>
+          {profile?.verifications?.allVerifiedAt && (
+            <span className="status-date-tag">
+              {t("verifiedOn") || "Verified on"} {new Date(profile?.verifications.allVerifiedAt).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+      ) : (
+        <div className="status-banner-card unverified">
+          <div className="status-card-left">
+            <AlertCircle size={32} className="text-warning" />
+            <div className="status-text-details">
+              <h4>{t("notVerified") || "Not Verified"}</h4>
+              <p>{t("completeChecksRemaining") || "Complete the remaining checks below to get the verified organizer badge."}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Checklist */}
+      <div className="verification-checklist-sec mt-4">
+        <h5 className="section-subtitle">{t("verificationChecklist") || "Verification Checklist"}</h5>
+        <p className="section-helper-text">{t("tapEachToComplete") || "Tap each item to view details and complete."}</p>
+
+        <div className="checklist-items-stack">
+
+          {/* 1. Phone Number */}
+          <div className="checklist-wrapper-card">
+            <div className="checklist-header" onClick={() => toggleTab("phone")}>
+              <div className="checklist-header-left">
+                <div className="icon-wrapper">
+                  <Phone size={20} className="text-teal" />
                 </div>
-              )}
-
-              {status === "rejected" && (
-                <div className="alert alert-danger">
-                  {t("verificationRejected")}
+                <div className="checklist-header-title">
+                  <h6>{t("phoneNumber") || "Phone Number"}</h6>
+                  <p>{t("verifiedDuringRegistration") || "Verified during registration"}</p>
                 </div>
-              )}
+              </div>
+              <div className="checklist-header-right">
+                {isPhoneVerified ? (
+                  <span className="badge-status verified">{t("verified") || "Verified"}</span>
+                ) : (
+                  <span className="badge-status required">{t("required") || "Required"}</span>
+                )}
+                {activeTab === "phone" ? <ChevronUp size={20} className="ms-3 text-muted" /> : <ChevronDown size={20} className="ms-3 text-muted" />}
+              </div>
+            </div>
 
-              {/* {status === "pending" && (
-                <div className="alert alert-warning">
-                  Your verification is pending approval.
-                </div>
-              )} */}
-
-              <Row>
-                <Col md={12}>
-                  <div className="event-frm-bx">
-                    <label className="text-white mb-2">Government ID</label>
-                    <div
-                      className="doc_upload_sec mt-0"
-                      onClick={() =>
-                        status !== "approved" && fileRefGov.current.click()
-                      }
-                      style={{
-                        cursor: status === "approved" ? "default" : "pointer",
-                        opacity: status === "approved" ? 0.7 : 1,
-                      }}>
-                      <div className="photo_circle">
-                        {govIdDoc ? (
-                          <img
-                            src={govIdDoc.preview}
-                            alt="Preview"
-                            className="preview-img"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              borderRadius: "10px",
+            {activeTab === "phone" && (
+              <div className="checklist-content-body">
+                {isPhoneVerified && !isEditingPhone ? (
+                  <div className="d-flex align-items-center justify-content-between py-2">
+                    <div className="d-flex align-items-center text-teal gap-2">
+                      <CheckCircle size={18} />
+                      <span>Your phone number ({phoneCountryCode} {phoneVal}) is successfully verified.</span>
+                    </div>
+                    <button className="custom-btn" onClick={() => setIsEditingPhone(true)}>
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <div className="py-2">
+                    <Form.Group className="mb-3">
+                      <Form.Label className="text-light">Phone Number</Form.Label>
+                      <div className="d-flex gap-2">
+                        <Form.Control
+                          type="text"
+                          className="custom-input-dark"
+                          style={{ maxWidth: "80px" }}
+                          value={phoneCountryCode}
+                          onChange={(e) => setPhoneCountryCode(e.target.value)}
+                          placeholder="+91"
+                        />
+                        <Form.Control
+                          type="text"
+                          className="custom-input-dark"
+                          value={phoneVal}
+                          onChange={(e) => setPhoneVal(e.target.value)}
+                          placeholder="Phone number"
+                        />
+                        <button className="custom-btn" onClick={handleSendPhoneOtp} disabled={submitting}>
+                          {phoneOtpSent ? "Resend OTP" : "Save & Send OTP"}
+                        </button>
+                        {isPhoneVerified && (
+                          <button
+                            className="custom-btn btn-secondary"
+                            style={{ backgroundColor: "#374151", borderColor: "#374151" }}
+                            onClick={() => {
+                              setIsEditingPhone(false);
+                              setPhoneOtpSent(false);
+                              if (profile) {
+                                setPhoneVal(profile.contactNumber || "");
+                                setPhoneCountryCode(profile.countryCode || "+91");
+                              }
                             }}
-                          />
-                        ) : (
-                          <div className="upload-doc">
-                            Upload Gov ID
-                            <p>Drag and drop or browse to upload</p>
-                            <span className="add_photo_text">Upload Photo</span>
-                          </div>
+                          >
+                            Cancel
+                          </button>
                         )}
                       </div>
+                    </Form.Group>
 
-                      <input
-                        type="file"
-                        accept="image/*"
-                        ref={fileRefGov}
-                        style={{ display: "none" }}
-                        onChange={(e) => handleFileChange(e, "Gov ID")}
-                        disabled={status === "approved"}
-                      />
-                    </div>
+                    {phoneOtpSent && (
+                      <Form.Group className="mb-3">
+                        <Form.Label className="text-light">Enter 5-Digit OTP</Form.Label>
+                        <div className="d-flex gap-2">
+                          <Form.Control
+                            type="text"
+                            className="custom-input-dark"
+                            value={phoneOtp}
+                            onChange={(e) => setPhoneOtp(e.target.value)}
+                            placeholder="Enter OTP (e.g. 12345)"
+                          />
+                          <button className="custom-btn" onClick={handleVerifyPhoneOtp} disabled={submitting}>
+                            Verify
+                          </button>
+                        </div>
+                      </Form.Group>
+                    )}
                   </div>
-                </Col>
+                )}
+              </div>
+            )}
+          </div>
 
-                {/* <Col md={12}>
-                  <div className="event-frm-bx mb-3">
-                    <label className="text-white mb-1">Email</label>
-                    <div className="d-flex gap-2">
-                      <input
-                        type="email"
-                        className="form-control"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
+          {/* 2. Email Address */}
+          <div className="checklist-wrapper-card">
+            <div className="checklist-header" onClick={() => toggleTab("email")}>
+              <div className="checklist-header-left">
+                <div className="icon-wrapper">
+                  <Mail size={20} className="text-teal" />
+                </div>
+                <div className="checklist-header-title">
+                  <h6>{t("email") || "Email"}</h6>
+                  <p>{t("verifyYourEmail") || "Verify your email address"}</p>
+                </div>
+              </div>
+              <div className="checklist-header-right">
+                {isEmailVerified ? (
+                  <span className="badge-status verified">{t("verified") || "Verified"}</span>
+                ) : (
+                  <span className="badge-status required">{t("required") || "Required"}</span>
+                )}
+                {activeTab === "email" ? <ChevronUp size={20} className="ms-3 text-muted" /> : <ChevronDown size={20} className="ms-3 text-muted" />}
+              </div>
+            </div>
+
+            {activeTab === "email" && (
+              <div className="checklist-content-body">
+                {isEmailVerified && !isEditingEmail ? (
+                  <div className="d-flex align-items-center justify-content-between py-2">
+                    <div className="d-flex align-items-center text-teal gap-2">
+                      <CheckCircle size={18} />
+                      <span>Your email address ({emailVal}) is successfully verified.</span>
                     </div>
+                    <button className="custom-btn" onClick={() => setIsEditingEmail(true)}>
+                      Change
+                    </button>
                   </div>
-                </Col> */}
-                {/* <Col md={12}>
-                  <div className="event-frm-bx mb-3">
-                    <label className="text-white mb-1">Contact Number</label>
-                    <div className="d-flex gap-2 phone-input-profile">
-                      <PhoneInput
-                        country={"us"}
-                        value={contactNumber}
-                        onChange={(phone) => setContactNumber("+" + phone)}
-                        inputClass="form-control w-100"
-                        containerClass="phone_input"
-                        dropdownClass="phone_input_dropdown"
-                        buttonClass="phone_input_button"
-                      />
-                      <button
-                        type="button"
-                        className="btn common_btn"
-                        onClick={updateProfile}>
-                        Update
+                ) : (
+                  <div className="py-2">
+                    <Form.Group className="mb-3">
+                      <Form.Label className="text-light">Email Address</Form.Label>
+                      <div className="d-flex gap-2">
+                        <Form.Control
+                          type="email"
+                          className="custom-input-dark"
+                          value={emailVal}
+                          onChange={(e) => setEmailVal(e.target.value)}
+                          placeholder="name@example.com"
+                        />
+                        <button className="custom-btn" onClick={handleSendEmailOtp} disabled={submitting}>
+                          {emailOtpSent ? "Resend OTP" : "Save & Send OTP"}
+                        </button>
+                        {isEmailVerified && (
+                          <button
+                            className="custom-btn btn-secondary"
+                            style={{ backgroundColor: "#374151", borderColor: "#374151" }}
+                            onClick={() => {
+                              setIsEditingEmail(false);
+                              setEmailOtpSent(false);
+                              if (profile) {
+                                setEmailVal(profile.email || "");
+                              }
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </Form.Group>
+
+                    {emailOtpSent && (
+                      <Form.Group className="mb-3">
+                        <Form.Label className="text-light">Enter 5-Digit OTP</Form.Label>
+                        <div className="d-flex gap-2">
+                          <Form.Control
+                            type="text"
+                            className="custom-input-dark"
+                            value={emailOtp}
+                            onChange={(e) => setEmailOtp(e.target.value)}
+                            placeholder="Enter OTP (e.g. 12345)"
+                          />
+                          <button className="custom-btn" onClick={handleVerifyEmailOtp} disabled={submitting}>
+                            Verify
+                          </button>
+                        </div>
+                      </Form.Group>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 3. Identity Document */}
+          <div className="checklist-wrapper-card">
+            <div className="checklist-header" onClick={() => toggleTab("identity")}>
+              <div className="checklist-header-left">
+                <div className="icon-wrapper">
+                  <FileText size={20} className="text-teal" />
+                </div>
+                <div className="checklist-header-title">
+                  <h6>{t("identityDocument") || "Identity Document"}</h6>
+                  <p>{t("uploadAGovernmentId") || "Upload a government ID (National ID / License)"}</p>
+                </div>
+              </div>
+              <div className="checklist-header-right">
+                {isIdVerified ? (
+                  <span className="badge-status verified">{t("verified") || "Verified"}</span>
+                ) : isIdPending ? (
+                  <span className="badge-status pending">{t("underReview") || "Under review"}</span>
+                ) : (
+                  <span className="badge-status required">{t("required") || "Required"}</span>
+                )}
+                {activeTab === "identity" ? <ChevronUp size={20} className="ms-3 text-muted" /> : <ChevronDown size={20} className="ms-3 text-muted" />}
+              </div>
+            </div>
+
+            {activeTab === "identity" && (
+              <div className="checklist-content-body">
+                {!isEditingIdentity ? (
+                  <div className="py-2">
+                    {isIdVerified ? (
+                      <div className="d-flex align-items-center text-teal gap-2 mb-3">
+                        <CheckCircle size={18} />
+                        <span>Your government ID has been reviewed and approved by administrators.</span>
+                      </div>
+                    ) : (
+                      <div className="d-flex align-items-center text-warning gap-2 mb-3">
+                        <RefreshCw size={18} className="spinner-icon" />
+                        <span>Your ID document submission is under review by our team. We'll update you shortly.</span>
+                      </div>
+                    )}
+
+                    {/* Render National ID details if they exist */}
+                    {profile?.verifications?.idVerification?.nationalId?.frontImage && (
+                      <div className="mb-4">
+                        <span className="text-teal d-block mb-3 small fw-bold">National ID Card</span>
+                        <Row>
+                          <Col md={6} className="mb-3">
+                            <label className="text-muted mb-2 d-block small">ID Card Front Image</label>
+                            <div className="uploader-box cursor-default" style={{ borderStyle: "solid" }}>
+                              <img src={getFullImageUrl(profile.verifications.idVerification.nationalId.frontImage)} alt="Front Preview" className="preview-image" />
+                            </div>
+                          </Col>
+                          <Col md={6} className="mb-3">
+                            <label className="text-muted mb-2 d-block small">ID Card Back Image</label>
+                            <div className="uploader-box cursor-default" style={{ borderStyle: "solid" }}>
+                              <img src={getFullImageUrl(profile.verifications.idVerification.nationalId.backImage)} alt="Back Preview" className="preview-image" />
+                            </div>
+                          </Col>
+                        </Row>
+                      </div>
+                    )}
+
+                    {/* Render Driving Licence details if they exist */}
+                    {profile?.verifications?.idVerification?.drivingLicence?.frontImage && (
+                      <div className="mb-4">
+                        <span className="text-teal d-block mb-3 small fw-bold">Driving Licence</span>
+                        <Row>
+                          <Col md={6} className="mb-3">
+                            <label className="text-muted mb-2 d-block small">Licence Front Image</label>
+                            <div className="uploader-box cursor-default" style={{ borderStyle: "solid" }}>
+                              <img src={getFullImageUrl(profile.verifications.idVerification.drivingLicence.frontImage)} alt="Front Preview" className="preview-image" />
+                            </div>
+                          </Col>
+                          <Col md={6} className="mb-3">
+                            <label className="text-muted mb-2 d-block small">Licence Back Image</label>
+                            <div className="uploader-box cursor-default" style={{ borderStyle: "solid" }}>
+                              <img src={getFullImageUrl(profile.verifications.idVerification.drivingLicence.backImage)} alt="Back Preview" className="preview-image" />
+                            </div>
+                          </Col>
+                        </Row>
+                      </div>
+                    )}
+
+                    <div className="text-center">
+                      <button className="custom-btn w-100 py-2 d-flex align-items-center justify-content-center gap-2" onClick={() => setIsEditingIdentity(true)}>
+                        Update ID Document
                       </button>
                     </div>
                   </div>
-                </Col> */}
-
-                <Col md={12}>
-                  <div className="event-frm-bx">
-                    <label className="text-white mb-2">
-                      {t("businessDocument")}
-                    </label>
-                    <div
-                      className="doc_upload_sec mt-0"
-                      onClick={() =>
-                        status !== "approved" && fileRefBusiness.current.click()
-                      }
-                      style={{
-                        cursor: status === "approved" ? "default" : "pointer",
-                        opacity: status === "approved" ? 0.7 : 1,
-                      }}>
-                      <div className="photo_circle">
-                        {businessDoc ? (
-                          <img
-                            src={businessDoc.preview}
-                            alt="Preview"
-                            className="preview-img"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              borderRadius: "10px",
-                              
-                            }}
-                             onError={(e) => e.target.src = "/img/sidebar-logo.svg"} 
-                          />
-                        ) : (
-                          <div className="upload-doc">
-                            {t("uploadBusinessDocument")}
-                            <p>{t("dragDropOrBrowse")}</p>
-                            <span className="add_photo_text">{t("uploadPhoto")}</span>
-                          </div>
-                        )}
+                ) : (
+                  <div className="py-2">
+                    {isIdPending && (
+                      <div className="alert alert-warning mb-3 py-2">
+                        Your submitted documents are currently under review. Resubmitting will start a new review process.
                       </div>
+                    )}
+                    <div className="mb-3">
+                      <Form.Label className="text-light text-start d-block">Select ID Document Type</Form.Label>
+                      <Form.Select
+                        className="custom-input-dark custom_select"
+                        value={idType}
+                        onChange={(e) => {
+                          setIdType(e.target.value);
+                          setNationalIdFront(null);
+                          setNationalIdBack(null);
+                        }}
+                      >
+                        <option value="nationalId">National ID Card</option>
+                        <option value="drivingLicence">Driving Licence</option>
+                      </Form.Select>
+                    </div>
 
-                      <input
-                        type="file"
-                        accept="image/*"
-                        ref={fileRefBusiness}
-                        style={{ display: "none" }}
-                        onChange={(e) => handleFileChange(e, "Business Proof")}
-                        disabled={status === "approved"}
-                      />
+                    <Row>
+                      <Col md={6} className="mb-3">
+                        <label className="text-white mb-2">{idType === "nationalId" ? "ID Card Front Image" : "Licence Front Image"}</label>
+                        <div
+                          className="uploader-box"
+                          onClick={() => fileRefFront.current.click()}
+                        >
+                          {nationalIdFront ? (
+                            <img src={getFullImageUrl(nationalIdFront)} alt="Front Preview" className="preview-image" />
+                          ) : (
+                            <div className="uploader-placeholder">
+                              <Upload size={24} className="mb-2 text-teal" />
+                              <span>Upload Front Image</span>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            ref={fileRefFront}
+                            style={{ display: "none" }}
+                            onChange={(e) => handleDocUpload(e, "front")}
+                          />
+                        </div>
+                      </Col>
+
+                      <Col md={6} className="mb-3">
+                        <label className="text-white mb-2">{idType === "nationalId" ? "ID Card Back Image" : "Licence Back Image"}</label>
+                        <div
+                          className="uploader-box"
+                          onClick={() => fileRefBack.current.click()}
+                        >
+                          {nationalIdBack ? (
+                            <img src={getFullImageUrl(nationalIdBack)} alt="Back Preview" className="preview-image" />
+                          ) : (
+                            <div className="uploader-placeholder">
+                              <Upload size={24} className="mb-2 text-teal" />
+                              <span>Upload Back Image</span>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            ref={fileRefBack}
+                            style={{ display: "none" }}
+                            onChange={(e) => handleDocUpload(e, "back")}
+                          />
+                        </div>
+                      </Col>
+                    </Row>
+
+                    <div className="text-end mt-3">
+                      {(isIdVerified || isIdPending) && (
+                        <button
+                          className="custom-btn btn-secondary me-2"
+                          style={{ backgroundColor: "#374151", borderColor: "#374151" }}
+                          onClick={() => {
+                            setIsEditingIdentity(false);
+                            // Restore from profile
+                            const nat = profile?.verifications?.idVerification?.nationalId;
+                            const lic = profile?.verifications?.idVerification?.drivingLicence;
+                            if (nat) {
+                              setNationalIdFront(nat.frontImage || null);
+                              setNationalIdBack(nat.backImage || null);
+                            } else if (lic) {
+                              setNationalIdFront(lic.frontImage || null);
+                              setNationalIdBack(lic.backImage || null);
+                            }
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                      <button
+                        className="custom-btn"
+                        onClick={handleSubmitIdentity}
+                        disabled={submitting || !nationalIdFront || !nationalIdBack}
+                      >
+                        Submit ID for Review
+                      </button>
                     </div>
                   </div>
-                </Col>
-              </Row>
+                )}
+              </div>
+            )}
+          </div>
 
-              {/* {status !== "approved" && ( */}
-                <div className="d-flex gap-2 justify-content-end mt-4">
-                  <button
-                    type="submit"
-                    className="custom-btn"
-                    disabled={loading || (!businessDoc && !govIdDoc)}>
-                                        {loading ? t("submitting") : t("submitForVerification")}
-                  </button>
+          {/* 4. Bank Account */}
+          <div className="checklist-wrapper-card">
+            <div className="checklist-header" onClick={() => toggleTab("bank")}>
+              <div className="checklist-header-left">
+                <div className="icon-wrapper">
+                  <Landmark size={20} className="text-teal" />
                 </div>
-              {/* )} */}
-
-              {/* Document History / Status List */}
-              {userData?.documents?.length > 0 && (
-                <div className="mt-5">
-                  <h5 className="text-white mb-3">{t("uploadedDocuments")}</h5>
-                  <div className="table-responsive">
-                    <table className="table table-responsive uploaded-documents-tbl">
-                      <thead>
-                        <tr>
-                          <th>{t("documentName")}</th>
-                          <th>{t("status")}</th>
-                          <th>{t("reason")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {userData.documents.map((doc, index) => (
-                          <tr key={index}>
-                            <td>
-                              <a
-                                href={getFullImageUrl(doc.file)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-info">
-                                {doc.name}
-                              </a>
-                            </td>
-                            <td>
-                              <span
-                                className={`badge ${doc.status === "approved"
-                                  ? "bg-success"
-                                  : doc.status === "rejected"
-                                    ? "bg-danger"
-                                    : "bg-warning"
-                                  }`}>
-                                {doc.status.toUpperCase()}
-                              </span>
-                            </td>
-                            <td>{doc.reason || "-"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                <div className="checklist-header-title">
+                  <h6>{t("bankAccount") || "Bank Account"}</h6>
+                  <p>{t("addBankAccountForPayouts") || "Add bank account for payouts"}</p>
                 </div>
-              )}
+              </div>
+              <div className="checklist-header-right">
+                {isBankVerified ? (
+                  <span className="badge-status verified">{t("verified") || "Verified"}</span>
+                ) : isBankPending ? (
+                  <span className="badge-status pending">{t("underReview") || "Under Review"}</span>
+                ) : (
+                  <span className="badge-status required">{t("required") || "Required"}</span>
+                )}
+                {activeTab === "bank" ? <ChevronUp size={20} className="ms-3 text-muted" /> : <ChevronDown size={20} className="ms-3 text-muted" />}
+              </div>
             </div>
-          </Form>
-        </Col>
-      </Row>
+
+            {activeTab === "bank" && (
+              <div className="checklist-content-body">
+                {isBankVerified && !isEditingBank ? (
+                  <div className="py-3">
+                    {/* Verified Status Banner */}
+                    <div className="d-flex flex-column align-items-center mb-4 text-center">
+                      <div className="icon-wrapper mb-2" style={{ width: "60px", height: "60px", backgroundColor: "rgba(35, 173, 164, 0.1)" }}>
+                        <Landmark size={32} className="text-teal" />
+                      </div>
+                      <h5 className="text-white mb-1" style={{ fontWeight: "600" }}>Verified</h5>
+                      <p className="text-muted small">Your bank account is verified.</p>
+                    </div>
+
+                    {/* Bank Info Rows */}
+                    <div className="p-3 mb-4" style={{ backgroundColor: "#262626", borderRadius: "12px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                      <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
+                        <span className="text-muted small">Bank Name</span>
+                        <span className="text-white fw-bold small">{bankAccount.bankName}</span>
+                      </div>
+                      <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
+                        <span className="text-muted small">Account Holder Name</span>
+                        <span className="text-white fw-bold small">{bankAccount.bankHolderName}</span>
+                      </div>
+                      <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
+                        <span className="text-muted small">Account Number</span>
+                        <span className="text-white fw-bold small">
+                          {bankAccount.accountNumber ? `**** **** **** ${bankAccount.accountNumber.slice(-4)}` : "N/A"}
+                        </span>
+                      </div>
+                      <div className="d-flex justify-content-between py-2">
+                        <span className="text-muted small">Verified on</span>
+                        <span className="text-white fw-bold small">
+                          {profile?.verifications?.bankVerification?.verifiedAt
+                            ? new Date(profile.verifications.bankVerification.verifiedAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })
+                            : new Date().toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-center">
+                      <button className="custom-btn w-100 py-2 d-flex align-items-center justify-content-center gap-2" onClick={() => setIsEditingBank(true)}>
+                        Update Bank Account
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-2">
+                    {isBankPending && (
+                      <div className="alert alert-warning mb-3 py-2">
+                        Bank details have been submitted and are currently pending verification. Updating below will submit a new request.
+                      </div>
+                    )}
+                    <Row className="g-3">
+                      <Col md={6}>
+                        <Form.Group>
+                          <Form.Label className="text-light">Bank Name</Form.Label>
+                          <Form.Select
+                            className="custom-input-dark custom_select"
+                            value={bankAccount.bankName}
+                            onChange={(e) => setBankAccount({ ...bankAccount, bankName: e.target.value })}
+                          >
+                            <option value="">Select Bank</option>
+                            {banksList.map((b) => (
+                              <option key={b._id} value={b.bankName}>
+                                {b.bankName}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+
+                      <Col md={6}>
+                        <Form.Group>
+                          <Form.Label className="text-light">Bank Holder Name</Form.Label>
+                          <Form.Control
+                            type="text"
+                            className="custom-input-dark"
+                            value={bankAccount.bankHolderName}
+                            onChange={(e) => setBankAccount({ ...bankAccount, bankHolderName: e.target.value })}
+                            placeholder="Account Holder Name"
+                          />
+                        </Form.Group>
+                      </Col>
+
+                      <Col md={6}>
+                        <Form.Group>
+                          <Form.Label className="text-light">Account Number</Form.Label>
+                          <Form.Control
+                            type="text"
+                            className="custom-input-dark"
+                            value={bankAccount.accountNumber}
+                            onChange={(e) => setBankAccount({ ...bankAccount, accountNumber: e.target.value })}
+                            placeholder="Account Number"
+                          />
+                        </Form.Group>
+                      </Col>
+                    </Row>
+
+                    <div className="text-end mt-4">
+                      {isBankVerified && (
+                        <button
+                          className="custom-btn btn-secondary me-2"
+                          style={{ backgroundColor: "#374151", borderColor: "#374151" }}
+                          onClick={() => {
+                            setIsEditingBank(false);
+                            if (profile?.verifications?.bankVerification) {
+                              setBankAccount({
+                                bankName: profile.verifications.bankVerification.bankName || "",
+                                bankHolderName: profile.verifications.bankVerification.bankHolderName || "",
+                                accountNumber: profile.verifications.bankVerification.accountNumber || "",
+                                otherDetails: profile.verifications.bankVerification.otherDetails || ""
+                              });
+                            }
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                      <button
+                        className="custom-btn"
+                        onClick={handleSubmitBank}
+                        disabled={submitting || !bankAccount.bankName || !bankAccount.bankHolderName || !bankAccount.accountNumber}
+                      >
+                        Submit Bank Details
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 5. Organizer Profile */}
+          <div className="checklist-wrapper-card">
+            <div className="checklist-header" onClick={() => toggleTab("profile")}>
+              <div className="checklist-header-left">
+                <div className="icon-wrapper">
+                  <UserCheck size={20} className="text-teal" />
+                </div>
+                <div className="checklist-header-title">
+                  <h6>{t("organizerProfile") || "Organizer Profile"}</h6>
+                  <p>{t("weReviewPublicProfile") || "We'll review your public organizer profile details"}</p>
+                </div>
+              </div>
+              <div className="checklist-header-right">
+                {isProfileReviewed ? (
+                  <span className="badge-status verified">{t("reviewed") || "Reviewed"}</span>
+                ) : isProfilePending ? (
+                  <span className="badge-status pending">{t("underReview") || "Under review"}</span>
+                ) : (
+                  <span className="badge-status required">{t("required") || "Required"}</span>
+                )}
+                {activeTab === "profile" ? <ChevronUp size={20} className="ms-3 text-muted" /> : <ChevronDown size={20} className="ms-3 text-muted" />}
+              </div>
+            </div>
+
+            {activeTab === "profile" && (
+              <div className="checklist-content-body">
+                {!isEditingProfileFields ? (
+                  <div className="py-3">
+                    {/* Status Banner */}
+                    <div className="d-flex flex-column align-items-center mb-4 text-center">
+                      <div className="icon-wrapper mb-2" style={{ width: "60px", height: "60px", backgroundColor: "rgba(35, 173, 164, 0.1)" }}>
+                        <UserCheck size={32} className="text-teal" />
+                      </div>
+                      <h5 className="text-white mb-1" style={{ fontWeight: "600" }}>Organizer Profile Details</h5>
+                      <p className="text-muted small">Status: <strong className="text-white">{profile.organizerVerificationStatus || "unverified"}</strong></p>
+                    </div>
+
+                    {/* Business Details Info Rows */}
+                    <div className="p-3 mb-4" style={{ backgroundColor: "#262626", borderRadius: "12px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                      <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
+                        <span className="text-muted small">Business Name</span>
+                        <span className="text-white fw-bold small">{businessName || "Not Set"}</span>
+                      </div>
+                      <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
+                        <span className="text-muted small">Business Category</span>
+                        <span className="text-white fw-bold small">
+                          {categoriesList.find(c => c._id === businessCategory)?.name || businessCategory || "Not Set"}
+                        </span>
+                      </div>
+                      <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
+                        <span className="text-muted small">Short Description</span>
+                        <span className="text-white fw-bold small text-end" style={{ maxWidth: "250px" }}>{shortDesc || "Not Set"}</span>
+                      </div>
+                      <div className="d-flex justify-content-between py-2">
+                        <span className="text-muted small">Social Media Link</span>
+                        <span className="text-white fw-bold small text-end text-truncate" style={{ maxWidth: "250px" }}>
+                          {socialMediaLink ? (
+                            <a href={socialMediaLink.startsWith("http") ? socialMediaLink : `https://${socialMediaLink}`} target="_blank" rel="noopener noreferrer" className="text-teal">
+                              {socialMediaLink}
+                            </a>
+                          ) : "Not Set"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-center">
+                      <button className="custom-btn w-100 py-2 d-flex align-items-center justify-content-center gap-2" onClick={() => setIsEditingProfileFields(true)}>
+                        Update Profile Details
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-2">
+                    <Row className="g-3">
+                      <Col md={6}>
+                        <Form.Group>
+                          <Form.Label className="text-light">Business Name</Form.Label>
+                          <Form.Control
+                            type="text"
+                            className="custom-input-dark"
+                            value={businessName}
+                            onChange={(e) => setBusinessName(e.target.value)}
+                            placeholder="Business Name"
+                          />
+                        </Form.Group>
+                      </Col>
+
+                      <Col md={6}>
+                        <Form.Group>
+                          <Form.Label className="text-light">Business Category</Form.Label>
+                          <Form.Select
+                            className="custom-input-dark custom_select"
+                            value={businessCategory}
+                            onChange={(e) => setBusinessCategory(e.target.value)}
+                          >
+                            <option value="">Select Category</option>
+                            {categoriesList.map((c) => (
+                              <option key={c._id} value={c._id}>
+                                {c.name}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+
+                      <Col md={12}>
+                        <Form.Group>
+                          <Form.Label className="text-light">Short Description</Form.Label>
+                          <Form.Control
+                            as="textarea"
+                            rows={3}
+                            className="custom-input-dark"
+                            style={{ height: "auto" }}
+                            value={shortDesc}
+                            onChange={(e) => setShortDesc(e.target.value)}
+                            placeholder="Brief description about your business..."
+                          />
+                        </Form.Group>
+                      </Col>
+
+                      <Col md={12}>
+                        <Form.Group>
+                          <Form.Label className="text-light">Social Media Link</Form.Label>
+                          <Form.Control
+                            type="text"
+                            className="custom-input-dark"
+                            value={socialMediaLink}
+                            onChange={(e) => setSocialMediaLink(e.target.value)}
+                            placeholder="e.g. instagram.com/mybusiness"
+                          />
+                        </Form.Group>
+                      </Col>
+                    </Row>
+
+                    <div className="text-end mt-4">
+                      <button
+                        className="custom-btn btn-secondary me-2"
+                        style={{ backgroundColor: "#374151", borderColor: "#374151" }}
+                        onClick={() => {
+                          setIsEditingProfileFields(false);
+                          if (profile) {
+                            setBusinessName(profile.businessName || "");
+                            setBusinessCategory(profile.businessCategory || "");
+                            setShortDesc(profile.shortDesc || "");
+                            setSocialMediaLink(profile.socialMediaLink || "");
+                          }
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="custom-btn"
+                        onClick={handleSubmitProfileFields}
+                        disabled={submitting || !businessName || !businessCategory}
+                      >
+                        Submit Profile Details
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      {/* Safety / Security Footer */}
+      <div className="verification-secure-footer mt-5">
+        <Lock size={16} className="text-teal me-2" />
+        <span>Your information is secure. Used only for verification and account safety.</span>
+      </div>
+
+      <style jsx>{`
+        .verification-container {
+          background-color: #161616;
+          border-radius: 20px;
+          padding: 25px;
+          color: #fff;
+        }
+
+        .back-btn {
+          display: inline-flex;
+          align-items: center;
+          color: #9ca3af;
+          text-decoration: none;
+          font-weight: 500;
+          transition: color 0.2s ease;
+        }
+
+        .back-btn:hover {
+          color: #23ada4;
+        }
+
+        .status-banner-card {
+          border-radius: 16px;
+          padding: 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 15px;
+        }
+
+        .status-banner-card.verified {
+          background-color: rgba(35, 173, 164, 0.08);
+          border: 1px solid rgba(35, 173, 164, 0.3);
+        }
+
+        .status-banner-card.unverified {
+          background-color: rgba(255, 190, 93, 0.06);
+          border: 1px solid rgba(255, 190, 93, 0.2);
+        }
+
+        .status-card-left {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+        }
+
+        .status-text-details h4 {
+          font-size: 18px;
+          font-weight: 700;
+          margin: 0 0 4px 0;
+        }
+
+        .status-text-details p {
+          font-size: 14px;
+          color: #9ca3af;
+          margin: 0;
+        }
+
+        .status-date-tag {
+          background-color: rgba(35, 173, 164, 0.15);
+          color: #23ada4;
+          font-size: 12px;
+          font-weight: 600;
+          padding: 6px 12px;
+          border-radius: 30px;
+        }
+
+        .section-subtitle {
+          font-size: 16px;
+          font-weight: 700;
+          margin-bottom: 4px;
+        }
+
+        .section-helper-text {
+          font-size: 14px;
+          color: #6b7280;
+          margin-bottom: 20px;
+        }
+
+        .checklist-items-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .checklist-wrapper-card {
+          background-color: #202020;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.03);
+          overflow: hidden;
+        }
+
+        .checklist-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+
+        .checklist-header:hover {
+          background-color: #252525;
+        }
+
+        .checklist-header-left {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+        }
+
+        .icon-wrapper {
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+          background-color: rgba(35, 173, 164, 0.08);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .checklist-header-title h6 {
+          font-size: 15px;
+          font-weight: 600;
+          margin: 0 0 2px 0;
+          color: #fff;
+        }
+
+        .checklist-header-title p {
+          font-size: 12px;
+          color: #6b7280;
+          margin: 0;
+        }
+
+        .checklist-header-right {
+          display: flex;
+          align-items: center;
+        }
+
+        .badge-status {
+          font-size: 11px;
+          font-weight: 600;
+          padding: 4px 10px;
+          border-radius: 30px;
+        }
+
+        .badge-status.verified {
+          background-color: rgba(35, 173, 164, 0.15);
+          color: #23ada4;
+          border: 1px solid rgba(35, 173, 164, 0.3);
+        }
+
+        .badge-status.required {
+          background-color: rgba(239, 68, 68, 0.12);
+          color: #ef4444;
+          border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .badge-status.pending {
+          background-color: rgba(255, 190, 93, 0.12);
+          color: #ffbe5d;
+          border: 1px solid rgba(255, 190, 93, 0.2);
+        }
+
+        .checklist-content-body {
+          padding: 20px;
+          background-color: #1a1a1a;
+          border-top: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .custom-input-dark {
+          background-color: #262626 !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          color: #fff !important;
+          border-radius: 8px !important;
+          height: 46px !important;
+        }
+
+        .custom-input-dark:focus {
+          border-color: #23ada4 !important;
+          box-shadow: none !important;
+        }
+
+        .custom_select {
+          background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+        }
+
+        .uploader-box {
+          background-color: #262626;
+          border: 2px dashed rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          height: 150px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          overflow: hidden;
+          transition: border-color 0.2s ease;
+        }
+
+        .uploader-box:hover {
+          border-color: #23ada4;
+        }
+
+        .uploader-placeholder {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          color: #9ca3af;
+          font-size: 13px;
+        }
+
+        .preview-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .verification-secure-footer {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 13px;
+          color: #6b7280;
+        }
+
+        .spinner-icon {
+          animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
 
-export default page;
+export default function VerificationPage() {
+  return (
+    <ProtectedRoute>
+      <VerificationPageContent />
+    </ProtectedRoute>
+  );
+}

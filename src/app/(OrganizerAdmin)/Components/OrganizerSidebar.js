@@ -206,12 +206,12 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </div>
         </div>
         <Link
-          href="/Verifiedprofile"
-          className={`menu-item ${isActive("/Verifiedprofile") ? "active" : ""}`}>
+          href="/OrganizerProfile"
+          className={`menu-item ${isActive("/OrganizerProfile") ? "active" : ""}`}>
           <span className="icon">
-            <img src="/img/org-img/verifiedprofile.svg" alt="" />
+            <img src="/img/user-icon.svg" alt="" />
           </span>
-          <span className="text">{t("verifiedProfile")}</span>
+          <span className="text">{t("profile") || "Profile"}</span>
         </Link>
       </nav>
 
