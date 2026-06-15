@@ -320,8 +320,13 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 const initResponse = await bookingApi.initiateBooking(payload);
                 if (initResponse.status) {
                     setTransactionId(initResponse.data.transactionId);
-                    setStep(3);
-                    toast.success(t("bookingInitiated"));
+                    if (initResponse.data.transaction?.status === "PAID") {
+                        setModalShow(true);
+                        toast.success(t("bookingConfirmed") || "Booking confirmed successfully!");
+                    } else {
+                        setStep(3);
+                        toast.success(t("bookingInitiated"));
+                    }
                 } else {
                     toast.error(initResponse.message || t("bookingInitiationFailed"));
                 }
@@ -348,8 +353,13 @@ export default function TicketBooking({ item, type, scheduleId }) {
                     const initResponse = await bookingApi.initiateBooking(payload);
                     if (initResponse.status) {
                         setTransactionId(initResponse.data.transactionId);
-                        setStep(3);
-                        toast.success(t("bookingInitiated"));
+                        if (initResponse.data.transaction?.status === "PAID") {
+                            setModalShow(true);
+                            toast.success(t("bookingConfirmed") || "Booking confirmed successfully!");
+                        } else {
+                            setStep(3);
+                            toast.success(t("bookingInitiated"));
+                        }
                     } else {
                         toast.error(initResponse.message || t("bookingInitiationFailed"));
                     }
@@ -369,8 +379,13 @@ export default function TicketBooking({ item, type, scheduleId }) {
                     const initResponse = await bookingApi.initiateBooking(payload);
                     if (initResponse.status) {
                         setTransactionId(initResponse.data.transactionId);
-                        setStep(3);
-                        toast.success(t("bookingInitiated"));
+                        if (initResponse.data.transaction?.status === "PAID") {
+                            setModalShow(true);
+                            toast.success(t("bookingConfirmed") || "Booking confirmed successfully!");
+                        } else {
+                            setStep(3);
+                            toast.success(t("bookingInitiated"));
+                        }
                     } else {
                         toast.error(initResponse.message || t("bookingInitiationFailed"));
                     }

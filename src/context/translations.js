@@ -208,6 +208,7 @@ export const translations = {
     allCourses: "All Courses",
     loadingCourses: "Loading courses...",
     noCourseFound: "No courses found",
+    onwards: "Onwards",
     // Category Section
     socialActivities: "Social Activities",
     workshops: "Workshops",
@@ -451,7 +452,7 @@ export const translations = {
     inviteSentTo: "Invite sent to {email}! 🎉",
     pleaseEnterEmailAddress: "Please enter an email address",
     pleaseEnterYourName: "Please enter your name",
-    
+
     heyUser: "Hey",
     defaultUser: "User",
     edit: "Edit",
@@ -801,7 +802,7 @@ export const translations = {
     referralCredits: "Referral Credits",
     transactionHistory: "Transaction History",
     allTypes: "All Types",
-    selectDateRange:"Select Date Range",
+    selectDateRange: "Select Date Range",
     searchTransactions: "Search transactions...",
     transactionType: "Type",
     balanceAfter: "Balance After",
@@ -1064,6 +1065,7 @@ export const translations = {
     typingPlural: "are typing",
     invalidOrExpiredOTP: "Invalid or expired OTP",
     sessionExpiredOrInvalidRequest: "Session expired or invalid request. Please start signup again.",
+    priceNotAvailable: "Price Not Available"
 
   },
   mn: {
@@ -1087,7 +1089,7 @@ export const translations = {
     loadingProfile: "Профайлыг ачааллаж байна...",
     userNotFound: "Хэрэглэгч олдсонгүй",
     block: "Хаах",
-    report: "Report", 
+    report: "Report",
     eventOrganizer: "Арга хэмжээ зохион байгуулагч",
     userRole: "Хэрэглэгч",
     eventsHosted: "Зохион байгуулсан арга хэмжээ",
@@ -1125,7 +1127,7 @@ export const translations = {
     alreadyHaveAccount: "Аль хэдийн бүртгэлтэй юу?",
     customer: "Хэрэглэгч",
     firstNameRequired: "Нэр шаардлагатай",
-    lastNameRequired: "Овог шаардлагатай", 
+    lastNameRequired: "Овог шаардлагатай",
     contactNumberRequired: "Утасны дугаар шаардлагатай",
     confirmPasswordRequired: "Нууц үг баталгаажуулах шаардлагатай",
     passwordsNotMatch: "Нууц үг таарахгүй байна",
@@ -1157,8 +1159,8 @@ export const translations = {
     heroTitle2: "курс, туршлагыг олж нээгээрэй",
     heroSubtitle:
       "Зөвхөн танд зориулсан концерт, кино, арга хэмжээний ертөнцөөр аялаарай!",
-      startTime: "Эхлэх цаг",
-      endTime: "Дуусах цаг",
+    startTime: "Эхлэх цаг",
+    endTime: "Дуусах цаг",
     // Home Page Components
     topEvents: "Шилдэг арга хэмжээнүүд",
     topEventsDesc: "Хайж буй дуучдаа хурдан олоорой.",
@@ -1166,7 +1168,7 @@ export const translations = {
     recommended: "Санал болгосон",
     nearYou: "Ойр байгаа",
     happeningSoon: "Удахгүй болох",
-    selectDateRange:"Огнооны хүрээ сонгох",
+    selectDateRange: "Огнооны хүрээ сонгох",
     // Organizers page
     organizersPageTitle: "Зохион байгуулагчид - Bondy",
     createManageEventsLine1: "Арга хэмжээгээ үүсгэн, удирдаарай",
@@ -1320,7 +1322,7 @@ export const translations = {
     eventPosterUploadedSuccessLine: "✓ Арга хэмжээний постер амжилттай байршуулсан",
     clickToRemoveAndUploadDifferentImage: "× товчийг дарж өөр зураг байршуулна уу",
     shortDescriptionLabel: "Товч тайлбар",
-    noUpcomingEvents:"Ирэх үйл явдал байхгүй",
+    noUpcomingEvents: "Ирэх үйл явдал байхгүй",
     shortDescriptionPlaceholder: "Товч танилцуулга",
     detailedDescriptionLabel: "Дэлгэрэнгүй тайлбар/Онцлогууд",
     detailedDescriptionPlaceholder: "Арга хэмжээний дэлгэрэнгүй мэдээлэл",
@@ -1432,7 +1434,7 @@ export const translations = {
     fixedStartCourseLabel: "Эхлэх огноо тогтмол курс",
     fixedStartCourseDesc: "Бүх оюутнууд хамт эхэлж, хамт төгсдөг",
     // Venue / Maps errors and placeholders (MN)
-   
+
     googleMapsApiKeyMissing: "Google Maps API түлхүүр тохируулагдаагүй",
     failedToLoadGoogleMaps: "Google Maps API-ыг ачааллахад алдаа гарлаа",
     failedToInitPlaces: "Places autocomplete-ыг эхлүүлэхэд алдаа гарлаа",
@@ -1543,7 +1545,7 @@ export const translations = {
     buildNetworkingTitle: "Холболт үүсгэх",
     activePromotion: "Идэвхтэй урамшуулал",
     // EventSection labels (MN)
-    timeToEndLabel:"Дуусахад үлдсэн цаг",
+    timeToEndLabel: "Дуусахад үлдсэн цаг",
     dateTBD: "Огноо тодорхойгүй",
     locationLabel: "Байршил",
     onlineLabel: "Онлайн",
@@ -1594,7 +1596,7 @@ export const translations = {
     viewMore: "Илүүг харах",
     viewLess: "Багасгах",
     reply: "Сэтгэгдэл бичих",
-     searchVenuePlaceholder: "Хаягийг хайх",
+    searchVenuePlaceholder: "Хаягийг хайх",
     hideReplies: "Хариуг нуух",
     viewReplies: "{count} хариуг харах",
     writeReplyPlaceholder: "Хариал бичнэ үү...",
