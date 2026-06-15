@@ -44,13 +44,14 @@ function CourseDetailsContent() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [slotAttendees, setSlotAttendees] = useState([]);
   const [attendeesLoading, setAttendeesLoading] = useState(false);
-  const [attendeesTotal, setAttendeesTotal] = useState(0);
-
-  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [attendeesTotal, setAttendeesTotal] = useState(0); const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelMode, setCancelMode] = useState("course"); // "course" | "slot"
   const [cancelReason, setCancelReason] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
 
+  const [showReservationModal, setShowReservationModal] = useState(false);
+  const [tempReservedExternally, setTempReservedExternally] = useState(0);
+  const [isSavingReservation, setIsSavingReservation] = useState(false);
   const { t, language } = useLanguage();
   const locale = language === "mn" ? "mn-MN" : "en-GB";
 
@@ -85,7 +86,9 @@ function CourseDetailsContent() {
       const payload = { courseId: course._id, reason: cancelReason };
       if (cancelMode === "slot" && selectedSlot) {
         payload.batchId = selectedSlot.batchId;
-        payload.date = selectedSlot.date.split("T")[0]; // YYYY-MM-DD
+        if (selectedSlot.date) {
+          payload.date = selectedSlot.date.split("T")[0]; // YYYY-MM-DD
+        }
       }
 
       const res = await bookingApi.cancelCourse(payload);
@@ -102,6 +105,30 @@ function CourseDetailsContent() {
       toast.error(error?.response?.data?.message || "Failed to cancel course");
     } finally {
       setIsCancelling(false);
+    }
+  };
+
+  const handleSaveReservation = async () => {
+    try {
+      setIsSavingReservation(true);
+      const res = await bookingApi.adjustCourseReservedSeats({
+        courseId: course._id,
+        batchId: selectedSlot.batchId,
+        date: selectedSlot.date || undefined,
+        ReservedExternally: tempReservedExternally,
+      });
+
+      if (res?.status) {
+        toast.success("Reserved seats updated successfully");
+        setShowReservationModal(false);
+        fetchDetails(); // reload details
+      } else {
+        toast.error(res?.message || "Failed to update reserved seats");
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to update reserved seats");
+    } finally {
+      setIsSavingReservation(false);
     }
   };
 
@@ -154,6 +181,7 @@ function CourseDetailsContent() {
   }
 
   const isPastOrEnded = course.status?.toLowerCase() === "past" || new Date(course.endDate) < new Date();
+  const isCancelled = course.status?.toLowerCase() === "cancelled";
   const enrolledPercent = course.totalSeats > 0 ? Math.round((course.acquiredSeats / course.totalSeats) * 100) : 0;
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const orderedSchedule = weekdays.filter(d => course.weeklySchedule?.[d]);
@@ -173,7 +201,7 @@ function CourseDetailsContent() {
           >
             👥 View All Enrollments
           </button>
-          {!isPastOrEnded && (
+          {!isPastOrEnded && !isCancelled && (
             <>
               <button
                 onClick={() => {
@@ -192,6 +220,15 @@ function CourseDetailsContent() {
           )}
         </div>
       </div>
+
+      {isCancelled && (
+        <div className="alert alert-danger d-flex align-items-center mb-4" style={{ borderRadius: "12px", border: "1px solid rgba(220, 53, 69, 0.2)", background: "rgba(220, 53, 69, 0.15)", color: "#f8d7da", padding: "15px" }}>
+          <span style={{ fontSize: "20px", marginRight: "12px" }}>⚠️</span>
+          <div>
+            <strong style={{ color: "#fff" }}>This course has been cancelled.</strong> All batches/sessions are cancelled and enrolled students have been refunded.
+          </div>
+        </div>
+      )}
 
       {/* Hero Card */}
       <div className="hero-details-card mb-4">
@@ -409,18 +446,32 @@ function CourseDetailsContent() {
                                   )}
                                 </div>
                                 {!slot.isCancelled && slot.batchId && slot.date && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedSlot(slot);
-                                      setCancelMode("slot");
-                                      setCancelModalOpen(true);
-                                    }}
-                                    className="btn btn-danger btn-sm border-0"
-                                    style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "6px", fontWeight: 600 }}
-                                  >
-                                    Cancel
-                                  </button>
+                                  <div className="d-flex gap-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedSlot(slot);
+                                        setTempReservedExternally(slot.ReservedExternally || 0);
+                                        setShowReservationModal(true);
+                                      }}
+                                      className="btn btn-warning btn-sm border-0 text-dark"
+                                      style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "6px", fontWeight: 600 }}
+                                    >
+                                      Reserve
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedSlot(slot);
+                                        setCancelMode("slot");
+                                        setCancelModalOpen(true);
+                                      }}
+                                      className="btn btn-danger btn-sm border-0"
+                                      style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "6px", fontWeight: 600 }}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -503,53 +554,94 @@ function CourseDetailsContent() {
           </div>
 
           {/* Batches */}
-          <div className="content-card mb-4 p-4">
-            <h4 className="card-heading-line mb-3"><span>🏫 Class Batches</span></h4>
-            {course.batches && course.batches.length > 0 ? (
-              <div className="d-flex flex-column gap-3">
-                {course.batches.map((batch, idx) => {
-                  const fillPercent = batch.seats > 0 ? Math.round(((batch.seats - batch.availableSeats) / batch.seats) * 100) : 0;
-                  return (
-                    <div className="ticket-tier-row p-3 rounded" key={batch._id || idx}>
-                      <div className="d-flex justify-content-between align-items-start mb-1">
-                        <div>
-                          {/* <h6 className="text-white mb-0" style={{ fontSize: "14px", fontWeight: 700 }}>{batch.batchName}</h6> */}
-                          <p className="small text-secondary mb-1">
-                            {formatTime(batch.startTime, true, language)} – {formatTime(batch.endTime, true, language)}
+          {(course.enrollmentType || "Ongoing") !== "Ongoing" && (
+            <div className="content-card mb-4 p-4">
+              <h4 className="card-heading-line mb-3"><span>🏫 Class Batches</span></h4>
+              {course.batches && course.batches.length > 0 ? (
+                <div className="d-flex flex-column gap-3">
+                  {course.batches.map((batch, idx) => {
+                    const fillPercent = batch.seats > 0 ? Math.round(((batch.seats - batch.availableSeats) / batch.seats) * 100) : 0;
+                    return (
+                      <div className="ticket-tier-row p-3 rounded" key={batch._id || idx}>
+                        <div className="d-flex justify-content-between align-items-start mb-1">
+                          <div>
+                            {/* <h6 className="text-white mb-0" style={{ fontSize: "14px", fontWeight: 700 }}>{batch.batchName}</h6> */}
+                            <p className="small text-secondary mb-1">
+                              {formatTime(batch.startTime, true, language)} – {formatTime(batch.endTime, true, language)}
+                            </p>
+                            <p className="small text-muted mb-0">
+                              {batch.days?.join(", ")}
+                            </p>
+                          </div>
+                          <span className="badge-status" style={{
+                            background: batch.status === "Active" ? "rgba(40,167,69,0.15)" : "rgba(108,117,125,0.15)",
+                            color: batch.status === "Active" ? "#28a745" : "#999",
+                            border: `1px solid ${batch.status === "Active" ? "rgba(40,167,69,0.3)" : "rgba(108,117,125,0.3)"}`,
+                            fontSize: "10px"
+                          }}>
+                            {batch.status}
+                          </span>
+                        </div>
+                        <div className="mt-2">
+                          <div className="d-flex justify-content-between small text-muted mb-1">
+                            <span>Enrolled: {batch.acquiredSeats || 0} / {batch.seats}</span>
+                            <span>{fillPercent}%</span>
+                          </div>
+                          <div className="progress-bar-container light">
+                            <div className="progress-bar-filled" style={{ width: `${fillPercent}%` }}></div>
+                          </div>
+                          <p className="small mt-1 mb-0" style={{ color: batch.isFull ? "#dc3545" : "#23ada4" }}>
+                            {batch.isFull ? "🔴 Full" : `🟢 ${batch.availableSeats} seats available`}
                           </p>
-                          <p className="small text-muted mb-0">
-                            {batch.days?.join(", ")}
-                          </p>
+                          {batch.status !== "Cancelled" && (
+                            <div className="d-flex justify-content-end gap-2 mt-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedSlot({
+                                    batchId: batch._id,
+                                    batchName: batch.batchName,
+                                    seats: batch.seats,
+                                    startTime: batch.startTime,
+                                    endTime: batch.endTime,
+                                    date: null
+                                  });
+                                  setTempReservedExternally(batch.ReservedExternally || 0);
+                                  setShowReservationModal(true);
+                                }}
+                                className="btn btn-warning btn-sm border-0 text-dark"
+                                style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "6px", fontWeight: 600 }}
+                              >
+                                Reserve
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedSlot({
+                                    batchId: batch._id,
+                                    batchName: batch.batchName,
+                                    date: null
+                                  });
+                                  setCancelMode("slot");
+                                  setCancelModalOpen(true);
+                                }}
+                                className="btn btn-danger btn-sm border-0"
+                                style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "6px", fontWeight: 600 }}
+                              >
+                                Cancel Batch
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        <span className="badge-status" style={{
-                          background: batch.status === "Active" ? "rgba(40,167,69,0.15)" : "rgba(108,117,125,0.15)",
-                          color: batch.status === "Active" ? "#28a745" : "#999",
-                          border: `1px solid ${batch.status === "Active" ? "rgba(40,167,69,0.3)" : "rgba(108,117,125,0.3)"}`,
-                          fontSize: "10px"
-                        }}>
-                          {batch.status}
-                        </span>
                       </div>
-                      <div className="mt-2">
-                        <div className="d-flex justify-content-between small text-muted mb-1">
-                          <span>Enrolled: {batch.acquiredSeats || 0} / {batch.seats}</span>
-                          <span>{fillPercent}%</span>
-                        </div>
-                        <div className="progress-bar-container light">
-                          <div className="progress-bar-filled" style={{ width: `${fillPercent}%` }}></div>
-                        </div>
-                        <p className="small mt-1 mb-0" style={{ color: batch.isFull ? "#dc3545" : "#23ada4" }}>
-                          {batch.isFull ? "🔴 Full" : `🟢 ${batch.availableSeats} seats available`}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-secondary small text-center py-3">No batches defined for this course.</p>
-            )}
-          </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-secondary small text-center py-3">No batches defined for this course.</p>
+              )}
+            </div>
+          )}
 
           {/* Assigned Staff */}
           {course.assignedStaff && course.assignedStaff.length > 0 && (
@@ -765,6 +857,104 @@ function CourseDetailsContent() {
                 disabled={isCancelling || !cancelReason.trim()}
               >
                 {isCancelling ? <Spinner size="sm" /> : "Confirm Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reservation Modal */}
+      {showReservationModal && selectedSlot && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} onClick={() => setShowReservationModal(false)}></div>
+          <div style={{ position: "relative", background: "#1e1e1e", border: "1px solid #2d2d2d", borderRadius: "16px", padding: "24px", width: "90%", maxWidth: "400px" }}>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h5 style={{ color: "#fff", fontWeight: 700, margin: 0 }}>Adjust Reserved Seats</h5>
+              <button
+                onClick={() => setShowReservationModal(false)}
+                style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#ccc", borderRadius: "8px", width: 30, height: 30, fontSize: "16px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="custom-modal-body">
+              <div style={{ background: "#151515", padding: "14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)", marginBottom: "20px" }}>
+                {selectedSlot.date && (
+                  <div style={{ display: "flex", gap: "8px", fontSize: "13px", color: "#888", marginBottom: "6px" }}>
+                    <span>📅</span>
+                    <span style={{ color: "#fff" }}>{selectedSlot.date}</span>
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: "8px", fontSize: "13px", color: "#888", marginBottom: "6px" }}>
+                  <span>🕒</span>
+                  <span style={{ color: "#fff" }}>{formatTime(selectedSlot.startTime, true, language)} - {formatTime(selectedSlot.endTime, true, language)}</span>
+                </div>
+                <div style={{ color: "#23ada4", fontSize: "14px", fontWeight: 600, marginTop: "8px" }}>
+                  {selectedSlot.batchName || course.courseTitle}
+                </div>
+              </div>
+
+              <div className="text-center mb-4">
+                <p style={{ color: "#888", fontSize: "13px", margin: "0 0 12px" }}>Add the number of seats reserved outside of Bondy</p>
+                <div className="d-flex align-items-center justify-content-center gap-3">
+                  <button
+                    className="btn"
+                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", width: "40px", height: "40px", borderRadius: "50%", fontSize: "18px", fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    onClick={() => setTempReservedExternally(prev => Math.max(0, prev - 1))}
+                    disabled={tempReservedExternally <= 0}
+                  >
+                    —
+                  </button>
+                  <span style={{ fontSize: "28px", fontWeight: "bold", color: "#f1c40f", minWidth: "60px" }}>{tempReservedExternally}</span>
+                  <button
+                    className="btn"
+                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", width: "40px", height: "40px", borderRadius: "50%", fontSize: "18px", fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    onClick={() => {
+                      const maxAllowed = selectedSlot.seats;
+                      setTempReservedExternally(prev => Math.min(maxAllowed, prev + 1));
+                    }}
+                    disabled={tempReservedExternally >= selectedSlot.seats}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ background: "#151515", padding: "14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                <h6 style={{ fontSize: "13px", color: "#888", marginBottom: "12px", textTransform: "uppercase", fontWeight: 600 }}>Updated capacity overview</h6>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "8px" }}>
+                  <span style={{ color: "#888" }}>Reserved externally</span>
+                  <span style={{ color: "#f1c40f", fontWeight: 600 }}>{tempReservedExternally}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "8px" }}>
+                  <span style={{ color: "#888" }}>Capacity</span>
+                  <span style={{ color: "#fff", fontWeight: 600 }}>{selectedSlot.seats}</span>
+                </div>
+              </div>
+
+              <p style={{ color: "#888", fontSize: "11px", fontStyle: "italic", textAlign: "center", marginTop: "16px", marginBottom: "0" }}>
+                * This change applies only to this specific slot date.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "end", gap: "10px", marginTop: "24px" }}>
+              <button
+                onClick={() => setShowReservationModal(false)}
+                className="btn"
+                style={{ background: "rgba(255,255,255,0.1)", color: "#fff", border: "none", borderRadius: "8px", padding: "8px 16px", fontSize: "14px" }}
+                disabled={isSavingReservation}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveReservation}
+                className="btn"
+                style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "8px", padding: "8px 16px", fontSize: "14px", fontWeight: 600 }}
+                disabled={isSavingReservation}
+              >
+                {isSavingReservation ? <Spinner size="sm" /> : "Save Changes"}
               </button>
             </div>
           </div>

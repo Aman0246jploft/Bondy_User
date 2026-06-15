@@ -53,13 +53,22 @@ function BookingPageContent() {
             const evt = response?.data?.event;
             setBookingType("EVENT");
             setIsWishlisted(evt?.isWishlisted || false);
+
+            let price = evt?.ticketPrice;
+
+            if (evt?.tickets && evt.tickets.length > 0) {
+              const prices = evt.tickets.map(t => t.price).filter(p => typeof p === 'number');
+              if (prices.length > 0) {
+                price = Math.min(...prices);
+              }
+            }
             setBookingItem({
               _id: evt?._id,
               title: evt?.eventTitle,
               categoryName: evt?.eventCategory?.name,
               status: evt?.status,
               shortdesc: evt?.shortdesc,
-              price: evt?.ticketPrice,
+              price: price,
               duration: evt?.duration,
               durationTranslation: evt?.durationTranslation,
               posterImage: evt?.posterImage,
@@ -223,8 +232,14 @@ function BookingPageContent() {
               <p className="event-desc mb-4">{bookingItem.shortdesc}</p>
               <div className="onwards_sec">
                 <h4 className="mb-0">
-                  <span className="price-text">₮{bookingItem.price}</span>{" "}
-                  <span>{t("onwards")}</span>
+                  {bookingItem.price != null && bookingItem.price !== undefined ? (
+                    <>
+                      <span className="price-text">{formatPrice(bookingItem.price)}</span>{" "}
+                      <span>{t("onwards")}</span>
+                    </>
+                  ) : (
+                    <span className="price-text">{t("priceNotAvailable") || "Price Not Available"}</span>
+                  )}
                 </h4>
                 <Button className="book_mark_icon" onClick={handleShare}>
                   <img src="/img/share_icon.svg" />

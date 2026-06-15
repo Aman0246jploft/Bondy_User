@@ -11,7 +11,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { toUtcDateRangeValue } from "@/utils/dateRangePayload";
 
 export default function Field({ onSearch, label = "Search", placeholder = "Search here..." }) {
-   const { t } = useLanguage()
+  const { t } = useLanguage()
   const [isReady, setIsReady] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState(null);
@@ -144,7 +144,7 @@ export default function Field({ onSearch, label = "Search", placeholder = "Searc
                   <VenueAutocomplete
                     key={resetKey}
                     onPlaceSelected={handleVenueSelected}
-                   placeholder={t("locationPlaceholder")}
+                    placeholder={t("locationPlaceholder")}
                     className="border-0 shadow-none p-0 bg-transparent w-100 text-white"
                   />
                 </div>

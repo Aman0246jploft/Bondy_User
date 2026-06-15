@@ -36,7 +36,7 @@ export default function HomePage() {
   }, []);
 
   const { t } = useLanguage();
-   useEffect(() => {
+  useEffect(() => {
     document.title = `${t("home")} | Bondy`;
   }, []);
 

@@ -52,7 +52,7 @@ export default function Map({ latitude, longitude, title, address, venueName, im
         center: position,
         zoom: 15,
         minZoom: 12,   // 🔒 prevents too much zoom out
-  maxZoom: 18,   // 🔒 prevents too much zoom in
+        maxZoom: 18,   // 🔒 prevents too much zoom in
         styles: [
           { "elementType": "geometry", "stylers": [{ "color": "#121212" }] },
           { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },

@@ -26,8 +26,10 @@ const bookingApi = {
 
     getPublicTicketDetail: (transactionId) =>
         apiClient.get(`/booking/public/detail/${transactionId}`),
-
     cancelCourse: (data) => apiClient.post("/booking/cancel-course", data),
+    cancelEvent: (data) => apiClient.post("/booking/cancel-event", data),
+    adjustCourseReservedSeats: (data) => apiClient.post("/booking/adjust-course-reserved-seats", data),
+    getCancellationReasons: () => apiClient.get("/booking/cancellation-reasons"),
 };
 
 export default bookingApi;

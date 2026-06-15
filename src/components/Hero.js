@@ -15,6 +15,7 @@ import "swiper/css/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import VenueAutocomplete from "../app/(OrganizerAdmin)/Components/VenueAutocomplete";
 import { toUtcDateRangeValue } from "@/utils/dateRangePayload";
+import apiClient from "@/api/apiClient";
 const HeroSlider = ({ setView, onSearch }) => {
   const { t } = useLanguage();
   const [isReady, setIsReady] = useState(false);
@@ -110,12 +111,26 @@ const HeroSlider = ({ setView, onSearch }) => {
     },
   };
 
-  const slides = [
+  const [slides, setSlides] = useState([
     "/img/banner_img.png",
     "https://images.unsplash.com/photo-1459749411177-042180ce673c?q=80&w=2070",
     "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070",
     "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=2070",
-  ];
+  ]);
+
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const response = await apiClient.get("/banner/list");
+        if (response?.status && response?.data?.banners?.length > 0) {
+          setSlides(response.data.banners);
+        }
+      } catch (err) {
+        console.error("Failed to fetch banners:", err);
+      }
+    };
+    fetchBanners();
+  }, []);
 
   const handleSearchClick = () => {
     const params = {};
@@ -174,6 +189,7 @@ const HeroSlider = ({ setView, onSearch }) => {
     <div className="hero-wrapper">
       {/* ---------- SLIDER ---------- */}
       <Swiper
+        key={slides.length}
         modules={[Autoplay, EffectFade, Navigation]}
         effect="fade"
         speed={1500}
@@ -182,22 +198,38 @@ const HeroSlider = ({ setView, onSearch }) => {
         loop
         className="h-100"
       >
-        {slides.map((img, index) => (
-          <SwiperSlide key={index}>
-            <div
-              className="slide-bg"
-              style={{
-                backgroundImage: `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)), url(${img})`,
-              }}
-            />
+        {slides.map((slide, index) => {
+          const imgUrl = typeof slide === "string" ? slide : slide.image;
+          const linkUrl = typeof slide === "string" ? null : slide.linkUrl;
+          return (
+            <SwiperSlide key={index}>
+              {linkUrl ? (
+                <a href={linkUrl} target="_blank" rel="noopener noreferrer">
+                  <div
+                    className="slide-bg"
+                    style={{
+                      backgroundImage: `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)), url(${imgUrl})`,
+                      cursor: "pointer"
+                    }}
+                  />
+                </a>
+              ) : (
+                <div
+                  className="slide-bg"
+                  style={{
+                    backgroundImage: `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)), url(${imgUrl})`,
+                  }}
+                />
+              )}
 
-            <div className="banner_video">
-              <video autoPlay muted loop playsInline className="bg_video">
-                <source src="/img/video_banner.mp4" type="video/mp4" />
-              </video>
-            </div>
-          </SwiperSlide>
-        ))}
+              <div className="banner_video">
+                <video autoPlay muted loop playsInline className="bg_video">
+                  <source src="/img/video_banner.mp4" type="video/mp4" />
+                </video>
+              </div>
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
 
       {/* ---------- NAV BUTTONS ---------- */}

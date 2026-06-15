@@ -62,7 +62,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="text">{t("personalInfo")}</span>
         </Link>
 
-         <Link
+        <Link
           href="/Notifications"
           className={`menu-item ${isActive("/Notification") ? "active" : ""}`}>
           <span className="icon" style={{ position: "relative" }}>
@@ -206,12 +206,12 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </div>
         </div>
         <Link
-          href="/OrganizerProfile"
-          className={`menu-item ${isActive("/OrganizerProfile") ? "active" : ""}`}>
+          href="/Verifiedprofile"
+          className={`menu-item ${isActive("/Verifiedprofile") ? "active" : ""}`}>
           <span className="icon">
             <img src="/img/user-icon.svg" alt="" />
           </span>
-          <span className="text">{t("profile") || "Profile"}</span>
+          <span className="text">{t("verification") || "Verification"}</span>
         </Link>
       </nav>
 

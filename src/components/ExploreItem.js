@@ -27,8 +27,11 @@ export default function ExploreItem({
   startDate,
   endDate,
   placement,
+  excludeMyEvents,
+  excludeMyCourses,
+  status,
 }) {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const [items, setItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -37,7 +40,7 @@ export default function ExploreItem({
   useEffect(() => {
     // Reset to page 1 if type, filter, category, or search params change
     setCurrentPage(1);
-  }, [type, filter, categoryId, search, latitude, longitude, startDate, endDate, placement]);
+  }, [type, filter, categoryId, search, latitude, longitude, startDate, endDate, placement, excludeMyEvents, excludeMyCourses, status]);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -55,6 +58,8 @@ export default function ExploreItem({
             startDate: startDate,
             endDate: endDate,
             placement: placement,
+            excludeMyEvents: excludeMyEvents,
+            status: status,
           });
           const eventData = response?.data?.data || response?.data || response;
           if (eventData?.events) {
@@ -81,6 +86,7 @@ export default function ExploreItem({
             longitude: longitude,
             startDate: startDate,
             endDate: endDate,
+            excludeMyCourses: excludeMyCourses,
           });
           const courseData = response?.data?.data || response?.data || response;
           if (courseData?.courses) {
@@ -111,6 +117,9 @@ export default function ExploreItem({
     startDate,
     endDate,
     placement,
+    excludeMyEvents,
+    excludeMyCourses,
+    status,
   ]);
 
   const handleToggle = (value) => {
@@ -257,8 +266,8 @@ export default function ExploreItem({
                                 ? new Date(item.startDate).toLocaleDateString()
                                 : item.currentSchedule
                                   ? new Date(
-                                      item.currentSchedule.startDate,
-                                    ).toLocaleDateString()
+                                    item.currentSchedule.startDate,
+                                  ).toLocaleDateString()
                                   : "Date N/A"}
                             </div>
                             <div
@@ -280,6 +289,25 @@ export default function ExploreItem({
                                 : item.acquiredSeats || 0}{" "}
                               attendees
                             </div>
+                            {!isEvent && (
+                              <div
+                                className="info-item"
+                                style={{
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  color: "var(--white, #fff)",
+                                }}
+                              >
+                                <img
+                                  src="/img/session_icon.svg"
+                                  className="info-icon"
+                                  alt="icon"
+                                  style={{ width: "16px", height: "16px" }}
+                                />
+                                {t(item.enrollmentType?.toLowerCase()) || item.enrollmentType || t("ongoing")}
+                              </div>
+                            )}
                             {isEvent && (
                               <div
                                 className="info-item"
@@ -302,7 +330,7 @@ export default function ExploreItem({
                                   minute: "2-digit",
                                   hour12: true,
                                 })} */}
-                                 {formatTime(item.startTime, true, language)}
+                                {formatTime(item.startTime, true, language)}
                               </div>
                             )}
                           </div>

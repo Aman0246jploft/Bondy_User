@@ -65,31 +65,30 @@ function ProgramDetailsContent() {
 
   const handleWishlistToggle = () => {
     checkAuth(async () => {
-    if (wishlistLoading) return;
-    setWishlistLoading(true);
-
-    try {
-      if (isWishlisted) {
-        const response = await wishlistApi.removeFromWishlist({ entityId: id });
-        if (response?.status === true) {
-          toast.success(response?.message);
-          setIsWishlisted(false);
+      if (wishlistLoading) return;
+      setWishlistLoading(true);
+      try {
+        if (isWishlisted) {
+          const response = await wishlistApi.removeFromWishlist({ entityId: id });
+          if (response?.status === true) {
+            toast.success(response?.message);
+            setIsWishlisted(false);
+          }
+        } else {
+          const response = await wishlistApi.addToWishlist({
+            entityId: id,
+            entityModel: "Course",
+          });
+          if (response?.status === true) {
+            toast.success(response?.message);
+            setIsWishlisted(true);
+          }
         }
-      } else {
-        const response = await wishlistApi.addToWishlist({
-          entityId: id,
-          entityModel: "Course",
-        });
-        if (response?.status === true) {
-          toast.success(response?.message);
-          setIsWishlisted(true);
-        }
+      } catch (error) {
+        console.error("Wishlist toggle error:", error);
+      } finally {
+        setWishlistLoading(false);
       }
-    } catch (error) {
-      console.error("Wishlist toggle error:", error);
-    } finally {
-      setWishlistLoading(false);
-    }
     });
   };
 
@@ -150,6 +149,8 @@ function ProgramDetailsContent() {
     enrollmentType,
     whatYouWillLearn,
     galleryImages,
+    totalSessions,
+    batches,
   } = courseDetails;
 
   const images = [
@@ -176,12 +177,20 @@ function ProgramDetailsContent() {
                 <h1 className="event-title">{courseTitle}</h1>
                 <p className="event-meta">
                   {(language === "mn" ? durationTranslation || duration : duration) || "N/A"} •{" "}
-                  {currentSchedule
-                    ? `${formatDate(currentSchedule.startDate)} – ${formatDate(
-                        currentSchedule.endDate,
-                      )}`
-                    : "Dates N/A"}{" "}
-                  • {schedules?.length || 0} sessions
+                  {enrollmentType === "Ongoing" ? (
+                    <>
+                      {t("ongoing") || "Ongoing"} • {t("startDate") || "Starts"}: {formatDate(currentSchedule?.startDate)}
+                    </>
+                  ) : (
+                    <>
+                      {currentSchedule
+                        ? `${formatDate(currentSchedule.startDate)} – ${formatDate(
+                          currentSchedule.endDate,
+                        )}`
+                        : "Dates N/A"}{" "}
+                      • {totalSessions || 0} sessions
+                    </>
+                  )}
                 </p>
                 <Button
                   className="book_mark_icon"
@@ -245,23 +254,23 @@ function ProgramDetailsContent() {
                   hasSingleMedia
                     ? false
                     : {
-                        delay: 3000,
-                        disableOnInteraction: false,
-                      }
+                      delay: 3000,
+                      disableOnInteraction: false,
+                    }
                 }
                 breakpoints={
                   hasSingleMedia
                     ? {}
                     : {
-                        768: {
-                          slidesPerView: 2,
-                          spaceBetween: 20,
-                        },
-                        1024: {
-                          slidesPerView: 3,
-                          spaceBetween: 20,
-                        },
-                      }
+                      768: {
+                        slidesPerView: 2,
+                        spaceBetween: 20,
+                      },
+                      1024: {
+                        slidesPerView: 3,
+                        spaceBetween: 20,
+                      },
+                    }
                 }
                 className="mySwiper"
               >
@@ -291,11 +300,17 @@ function ProgramDetailsContent() {
                   <div className="event_time_mange">
                     <h5>{t("dateAndTime")}</h5>
                     <span>
-                      {currentSchedule
-                        ? `${formatDate(
+                      {enrollmentType === "Ongoing" ? (
+                        <>
+                          {t("ongoing") || "Ongoing"} • {t("startDate") || "Starts"}: {formatDate(currentSchedule?.startDate)}
+                        </>
+                      ) : (
+                        currentSchedule
+                          ? `${formatDate(
                             currentSchedule.startDate,
                           )} ${t("at")} ${formatTime(currentSchedule.startTime, true, language)} ${t("to")} ${formatTime(currentSchedule.endTime, true, language)}`
-                        : t("detailedTimingNotAvailable")}
+                          : t("detailedTimingNotAvailable")
+                      )}
                     </span>
                   </div>
                   <div className="event_time_mange">
@@ -363,9 +378,11 @@ function ProgramDetailsContent() {
                       />
                     </div>
 
-                    {/* <span>
+                    {/*
+                     <span>
                       {createdBy?.firstName} {createdBy?.lastName}
-                    </span> */}
+                    </span> 
+                    */}
 
                     <span
                       style={{
@@ -400,24 +417,27 @@ function ProgramDetailsContent() {
                             (e.target.src = "/img/sidebar-logo.svg")
                           }
                           loading="lazy"
-                          className={`gallery-item img-placeholder ${
-                            idx === 0 ? "large-gallery-item" : ""
-                          }`}
+                          className={`gallery-item img-placeholder ${idx === 0 ? "large-gallery-item" : ""
+                            }`}
                           alt={`Gallery ${idx}`}
                         />
                       ))}
                   </div>
                   <div className="onwards_sec mt-4">
-                        <h4 className="mb-0">
-                          <span className="price-text">{formatPrice(price)}</span>
-                        </h4>
-                        <AuthButton
-                          requiresAuth
-                          onClick={() => router.push(`/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`)}
-                          className="common_btn"
-                        >
-                          {t("bookNow")}
-                        </AuthButton>
+                    <h4 className="mb-0">
+                      <span className="price-text">{formatPrice(price)}</span>
+                    </h4>
+                    <AuthButton
+                      requiresAuth
+                      onClick={() => router.push(
+                        currentSchedule?._id
+                          ? `/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`
+                          : `/eventbooking?id=${courseDetails._id}`
+                      )}
+                      className="common_btn"
+                    >
+                      {t("bookNow")}
+                    </AuthButton>
                     <Button className="book_mark_icon" onClick={handleShare}>
                       <img src="/img/share_icon.svg" />
                     </Button>
@@ -428,54 +448,96 @@ function ProgramDetailsContent() {
               {id && <CommentsSection entityId={id} entityModel="Course" />}
             </Container>
           </Col>
-            <Col lg={4}>
+          <Col lg={4}>
             <div className="upcming_session">
-              <h4>{t("upcomingSessions")}</h4>
+              <h4>{enrollmentType === "Ongoing" ? (t("weeklySchedule") || "Weekly Schedule") : (t("availableBatches") || "Available Batches")}</h4>
               <div className="upcming_session_box">
-                {schedules && schedules.length > 0 ? (
-                  schedules.map((schedule, idx) => {
-                    const dateObj = new Date(schedule.startDate);
-                    const month = dateObj.toLocaleString("default", {
-                      month: "short",
+                {enrollmentType === "Ongoing" ? (
+                  (() => {
+                    const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                    const orderedSchedule = weekdays.filter(d => courseDetails.weeklySchedule?.[d]);
+                    if (orderedSchedule.length === 0) {
+                      return <p>{t("noUpcomingSessionsFound")}</p>;
+                    }
+                    return orderedSchedule.map((day) => {
+                      const dayData = courseDetails.weeklySchedule[day];
+                      const slots = dayData.slots || [];
+                      return (
+                        <div key={day} className="mb-3">
+                          <h6 style={{ color: "#23ada4", fontWeight: 700, fontSize: "14px", textTransform: "uppercase" }}>{day} ({dayData.date})</h6>
+                          {slots.map((slot, idx) => (
+                            <div className="upcming_session_item mb-2" key={idx}>
+                              <div className="content">
+                                <div className="upcming_session_content ps-0">
+                                  <h6>
+                                    {formatTime(slot.startTime, true, language)} {t("to")} {formatTime(slot.endTime, true, language)}
+                                  </h6>
+                                </div>
+                              </div>
+                              <div className="booking_bx">
+                                <span className="text_pr">
+                                  {slot.isBooked
+                                    ? t("booked")
+                                    : slot.isFull
+                                      ? t("full")
+                                      : formatPrice(price)}
+                                </span>
+                                {slot.isBooked ? (
+                                  <span className="badge bg-success">{t("booked")}</span>
+                                ) : slot.isFull ? (
+                                  <span className="badge bg-danger">{t("full")}</span>
+                                ) : (
+                                  <AuthButton
+                                    requiresAuth
+                                    onClick={() => router.push(`/eventbooking?id=${courseDetails._id}`)}
+                                    className="common_btn"
+                                  >
+                                    {t("bookNow")}
+                                  </AuthButton>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
                     });
-                    const day = dateObj.getDate();
-                    const dayName = dateObj.toLocaleString("default", {
-                      weekday: "short",
-                    });
-
+                  })()
+                ) : batches && batches.length > 0 ? (
+                  batches.map((batch, idx) => {
                     return (
-                      <div className="upcming_session_item" key={idx}>
+                      <div className="upcming_session_item mb-3" key={batch._id || idx}>
                         <div className="content">
-                          <div className="date_box">
-                            <span>{month}</span>
-                            <span>{day}</span>
-                          </div>
-                          <div className="upcming_session_content">
-                            <span>
-                              {dayName} • {schedule.startTime} {t("to")} {schedule.endTime}
-                                                          {dayName} • {formatTime(schedule.startTime, true, language)} {t("to")} {formatTime(schedule.endTime, true, language)}
-                            </span>
-                            <h6>
-                              {courseTitle} ({t("sessionLabel")} {idx + 1})
+                          <div className="upcming_session_content ps-0">
+                            <h6 style={{ color: "#fff", fontWeight: 600 }}>
+                              {batch.batchName}
                             </h6>
+                            <span className="text-secondary" style={{ fontSize: "12px", display: "block", marginTop: "4px" }}>
+                              📅 {batch.days?.join(", ")}
+                            </span>
+                            <span className="text-secondary" style={{ fontSize: "12px", display: "block" }}>
+                              🕒 {formatTime(batch.startTime, true, language)} {t("to")} {formatTime(batch.endTime, true, language)}
+                            </span>
+                            <span className="text-muted" style={{ fontSize: "11px", display: "block", marginTop: "2px" }}>
+                              {batch.isFull ? t("full") : `${batch.availableSeats} seats left`}
+                            </span>
                           </div>
                         </div>
                         <div className="booking_bx">
                           <span className="text_pr">
-                            {schedule.isBooked
+                            {batch.isBooked
                               ? t("booked")
-                              : schedule.isFull
+                              : batch.isFull
                                 ? t("full")
                                 : formatPrice(price)}
                           </span>
-                          {schedule.isBooked ? (
+                          {batch.isBooked ? (
                             <span className="badge bg-success">{t("booked")}</span>
-                          ) : schedule.isFull ? (
+                          ) : batch.isFull ? (
                             <span className="badge bg-danger">{t("full")}</span>
                           ) : (
                             <AuthButton
                               requiresAuth
-                              onClick={() => router.push(`/eventbooking?id=${courseDetails._id}&scheduleId=${schedule._id}`)}
+                              onClick={() => router.push(`/eventbooking?id=${courseDetails._id}&scheduleId=${batch._id}`)}
                               className="common_btn"
                             >
                               {t("bookNow")}
@@ -489,198 +551,35 @@ function ProgramDetailsContent() {
                   <p>{t("noUpcomingSessionsFound")}</p>
                 )}
               </div>
+
+              {enrollmentType === "Ongoing" && (courseDetails.oneMonthPassEnabled || courseDetails.threeMonthPassEnabled) && (
+                <div className="mt-4 p-3 rounded" style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <h5 className="text-white mb-3" style={{ fontSize: "15px", fontWeight: 700 }}>🎫 {t("availablePasses") || "Available Passes"}</h5>
+                  <div className="d-flex flex-column gap-2">
+                    {courseDetails.oneMonthPassEnabled && (
+                      <div className="d-flex justify-content-between align-items-center p-2 rounded" style={{ backgroundColor: "#111" }}>
+                        <div>
+                          <p className="mb-0 text-white" style={{ fontSize: "13px", fontWeight: 600 }}>{t("oneMonthPass") || "1 Month Pass"}</p>
+                          <span className="text-muted" style={{ fontSize: "11px" }}>30 days unlimited access</span>
+                        </div>
+                        <span style={{ color: "#23ada4", fontWeight: 700 }}>{formatPrice(courseDetails.oneMonthPassPrice)}</span>
+                      </div>
+                    )}
+                    {courseDetails.threeMonthPassEnabled && (
+                      <div className="d-flex justify-content-between align-items-center p-2 rounded" style={{ backgroundColor: "#111" }}>
+                        <div>
+                          <p className="mb-0 text-white" style={{ fontSize: "13px", fontWeight: 600 }}>{t("threeMonthPass") || "3 Month Pass"}</p>
+                          <span className="text-muted" style={{ fontSize: "11px" }}>90 days unlimited access</span>
+                        </div>
+                        <span style={{ color: "#23ada4", fontWeight: 700 }}>{formatPrice(courseDetails.threeMonthPassPrice)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </Col>
         </Row>
-
-        {/* <div className="recommended-section program_page">
-          <Row className="gy-5">
-            <div className="fz_32">
-              <h2>Event You May like</h2>
-            </div>
-
-            <Col xl={3} lg={4} md={6}>
-              <div className="event_main_cart">
-                <div className="recommended-card">
-                  <img src="/img/imageholder.png" alt="Nora Bayes" />
-                </div>
-
-                <div className="card-overlay">
-                  <div className="overlay-content program_cart">
-                    <div className="program_cart_inner">
-                      <Link href="/programDetails">
-                        <div className="program_cart_cntent">
-                          <h4>Salsa for Beginners</h4>
-                          <span>With Marco & Elena</span>
-                        </div>
-                      </Link>
-                      <Link href="/profile">
-                        {" "}
-                        <img src="/img/prfl.png" />
-                      </Link>
-                    </div>
-                    <ul className="program_time">
-                      <li>
-                        <img src="/img/session_icon.svg" />
-                        2hrs
-                      </li>
-                      <li>
-                        <img src="/img/time_icon.svg" />
-                        12 sessions
-                      </li>
-                      <li>
-                        <img src="/img/0date_icon.svg" />
-                        May 1 – Jun 1
-                      </li>
-                    </ul>
-
-                    <div className="price_align">
-                      <span>$300</span>
-                      <Link href="/eventbooking" className="common_btn">
-                        Book Now
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Col>
-            <Col xl={3} lg={4} md={6}>
-              <div className="event_main_cart">
-                <div className="recommended-card">
-                  <img src="/img/imageholder-1.png" alt="Nora Bayes" />
-                </div>
-
-                <div className="card-overlay">
-                  <div className="overlay-content program_cart">
-                    <div className="program_cart_inner">
-                      <Link href="/programDetails">
-                        <div className="program_cart_cntent">
-                          <h4>Salsa for Beginners</h4>
-                          <span>With Marco & Elena</span>
-                        </div>
-                      </Link>
-                      <Link href="/profile">
-                        {" "}
-                        <img src="/img/prfl.png" />
-                      </Link>
-                    </div>
-                    <ul className="program_time">
-                      <li>
-                        <img src="/img/session_icon.svg" />
-                        2hrs
-                      </li>
-                      <li>
-                        <img src="/img/time_icon.svg" />
-                        12 sessions
-                      </li>
-                      <li>
-                        <img src="/img/0date_icon.svg" />
-                        May 1 – Jun 1
-                      </li>
-                    </ul>
-
-                    <div className="price_align">
-                      <span className="redText">Seats Full</span>
-                      <Link href="" className="common_btn">
-                        Join Waitlist
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Col>
-            <Col xl={3} lg={4} md={6}>
-              <div className="event_main_cart">
-                <div className="recommended-card">
-                  <img src="/img/imageholder-2.png" alt="Nora Bayes" />
-                </div>
-
-                <div className="card-overlay">
-                  <div className="overlay-content program_cart">
-                    <div className="program_cart_inner">
-                      <Link href="/programDetails">
-                        <div className="program_cart_cntent">
-                          <h4>Salsa for Beginners</h4>
-                          <span>With Marco & Elena</span>
-                        </div>
-                      </Link>
-                      <Link href="/profile">
-                        {" "}
-                        <img src="/img/prfl.png" />
-                      </Link>
-                    </div>
-                    <ul className="program_time">
-                      <li>
-                        <img src="/img/session_icon.svg" />
-                        2hrs
-                      </li>
-                      <li>
-                        <img src="/img/time_icon.svg" />
-                        12 sessions
-                      </li>
-                      <li>
-                        <img src="/img/0date_icon.svg" />
-                        May 1 – Jun 1
-                      </li>
-                    </ul>
-
-                    <div className="price_align">
-                      <span>$300</span>
-                      <Link href="/eventbooking" className="common_btn">
-                        Book Now
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Col>
-            <Col xl={3} lg={4} md={6}>
-              <div className="event_main_cart">
-                <div className="recommended-card">
-                  <img src="/img/imageholder-3.png" alt="Nora Bayes" />
-                </div>
-
-                <div className="card-overlay">
-                  <div className="overlay-content program_cart">
-                    <div className="program_cart_inner">
-                      <Link href="/programDetails">
-                        <div className="program_cart_cntent">
-                          <h4>Salsa for Beginners</h4>
-                          <span>With Marco & Elena</span>
-                        </div>
-                      </Link>
-                      <Link href="/profile">
-                        {" "}
-                        <img src="/img/prfl.png" />
-                      </Link>
-                    </div>
-                    <ul className="program_time">
-                      <li>
-                        <img src="/img/session_icon.svg" />
-                        2hrs
-                      </li>
-                      <li>
-                        <img src="/img/time_icon.svg" />
-                        12 sessions
-                      </li>
-                      <li>
-                        <img src="/img/0date_icon.svg" />
-                        May 1 – Jun 1
-                      </li>
-                    </ul>
-
-                    <div className="price_align">
-                      <span className="redText">Seats Full</span>
-                      <Link href="" className="common_btn">
-                        Join Waitlist
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Col>
-          </Row>
-        </div> */}
       </Container>
 
       <FAQ />

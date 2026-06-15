@@ -138,7 +138,7 @@ function OrganizerProfileContent() {
       </div>
 
       {/* Quick Actions Grid */}
-      <div className="quick-actions-grid mb-4">
+      {/* <div className="quick-actions-grid mb-4">
         <Row className="g-3">
           <Col xs={6} md={3}>
             <Link href="/EventsManagement" className="quick-action-card">
@@ -173,7 +173,7 @@ function OrganizerProfileContent() {
             </Link>
           </Col>
         </Row>
-      </div>
+      </div> */}
 
       {/* Account Section */}
       <div className="profile-menu-section mb-4">
@@ -195,7 +195,7 @@ function OrganizerProfileContent() {
             <ChevronRight size={18} className="menu-arrow" />
           </Link>
 
-          <div className="profile-menu-item no-link">
+          {/* <div className="profile-menu-item no-link">
             <div className="menu-item-left">
               <Globe size={18} className="menu-icon" />
               <span>{t("language") || "Language"}</span>
@@ -204,15 +204,15 @@ function OrganizerProfileContent() {
               <span className="me-2 text-muted-custom">English</span>
               <ChevronRight size={18} className="menu-arrow" />
             </div>
-          </div>
+          </div> */}
 
-          <Link href="/Notifications" className="profile-menu-item">
+          {/* <Link href="/Notifications" className="profile-menu-item">
             <div className="menu-item-left">
               <Bell size={18} className="menu-icon" />
               <span>{t("notifications") || "Notifications"}</span>
             </div>
             <ChevronRight size={18} className="menu-arrow" />
-          </Link>
+          </Link> */}
 
           <Link href="/Verifiedprofile" className="profile-menu-item">
             <div className="menu-item-left">
@@ -234,17 +234,17 @@ function OrganizerProfileContent() {
             </div>
           </Link>
 
-          <Link href="/Settings" className="profile-menu-item">
+          {/* <Link href="/Settings" className="profile-menu-item">
             <div className="menu-item-left">
               <Shield size={18} className="menu-icon" />
               <span>{t("security") || "Security"}</span>
             </div>
             <ChevronRight size={18} className="menu-arrow" />
-          </Link>
+          </Link> */}
         </div>
       </div>
 
-      {/* Support Section */}
+      {/* Support Section
       <div className="profile-menu-section mb-4">
         <h5 className="section-title">{t("support") || "Support"}</h5>
         <div className="profile-menu-list">
@@ -264,7 +264,7 @@ function OrganizerProfileContent() {
             <ChevronRight size={18} className="menu-arrow" />
           </Link>
         </div>
-      </div>
+      </div> */}
 
       {/* Legal Section */}
       <div className="profile-menu-section mb-4">

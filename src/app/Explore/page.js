@@ -104,7 +104,7 @@ function ExploreContent() {
           <p>{t("explorePageSubtitle")}</p>
         </div>
       </div>
- 
+
       <div className="listing_bannr_field">
         <Container>
           {/* Search Field Component */}
@@ -172,6 +172,8 @@ function ExploreContent() {
                         longitude={searchParams.longitude}
                         startDate={searchParams.startDate}
                         endDate={searchParams.endDate}
+                        excludeMyEvents={true}
+                        status="Live,Upcoming"
                       />
                     </Tab.Pane>
                     <Tab.Pane eventKey="Program">
@@ -185,6 +187,7 @@ function ExploreContent() {
                         longitude={searchParams.longitude}
                         startDate={searchParams.startDate}
                         endDate={searchParams.endDate}
+                        excludeMyCourses={true}
                       />
                     </Tab.Pane>
                   </Tab.Content>

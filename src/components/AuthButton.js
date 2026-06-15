@@ -17,7 +17,7 @@ import { AuthGuardContext } from "@/context/AuthGuardContext";
  */
 export default function AuthButton({ requiresAuth, onClick, children, ...rest }) {
   const ctx = useContext(AuthGuardContext);
-  
+
   // Only call the hook if context exists (safe for pre-rendering)
   const { checkAuth } = ctx ? useAuthGuard() : { checkAuth: undefined };
 

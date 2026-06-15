@@ -33,7 +33,6 @@ const EventSection = ({
         return { filter: "all", defaultTitle: t("events") };
     }
   };
-
   useEffect(() => {
     const fetchEvents = async () => {
       setLoading(true);
@@ -45,6 +44,7 @@ const EventSection = ({
           limit,
           page: 1,
           filter,
+          // status: "Upcoming,Live",
           ...extraParams,
         };
 
@@ -72,7 +72,24 @@ const EventSection = ({
 
         const response = await eventApi.getEvents(params);
         if (response.data && response.data.events) {
-          setEvents(response.data.events || []);
+          let fetchedEvents = response.data.events || [];
+          // Fallback if list is not fully filled (especially for recommended filter)
+          if (fetchedEvents.length < limit) {
+            const neededCount = limit - fetchedEvents.length;
+            const fallbackParams = {
+              ...params,
+              limit: neededCount,
+              filter: "all"
+            };
+            const fallbackResponse = await eventApi.getEvents(fallbackParams);
+            if (fallbackResponse?.data?.events?.length > 0) {
+              const filteredFallbacks = fallbackResponse.data.events.filter(
+                (fe) => !fetchedEvents.some((e) => e._id === fe._id)
+              );
+              fetchedEvents = [...fetchedEvents, ...filteredFallbacks].slice(0, limit);
+            }
+          }
+          setEvents(fetchedEvents);
         }
       } catch (error) {
         console.error("Error fetching events:", error);
@@ -145,8 +162,8 @@ const EventSection = ({
                         <div className="time_main">
                           <div className="timing_box">
                             <span>
-                                <img src="/img/Stopwatch.svg" alt={t("timerAlt")} /> {t("timeToEndLabel")}
-                              </span>
+                              <img src="/img/Stopwatch.svg" alt={t("timerAlt")} /> {t("timeToEndLabel")}
+                            </span>
                             <span>06:34:15</span>
                             {/* Logic for countdown can be added later if needed */}
                           </div>
@@ -174,8 +191,13 @@ const EventSection = ({
                         from {item.minPrice ? `$${item.minPrice}` : "Free"}
                       </div> */}
                       <div className="price-tag">
-                        {/* from{" "} */}
-                        {item.ticketPrice ? `₮${item.ticketPrice}` : t("freeLabel")}
+                        {(() => {
+                          if (!item.tickets || item.tickets.length === 0) return t("freeLabel");
+                          const prices = item.tickets.map(tk => tk.price).filter(p => typeof p === 'number');
+                          if (prices.length === 0) return t("freeLabel");
+                          const minPrice = Math.min(...prices);
+                          return `₮${minPrice}`;
+                        })()}
                       </div>
                     </div>
                   </div>

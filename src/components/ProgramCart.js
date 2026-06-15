@@ -53,17 +53,15 @@ const ProgramCart = ({ programsArray, pagination }) => {
   ];
 
   const trimTo30CharsNoSpaceCount = (text = "") => {
-  let count = 0;
-  let result = "";
-
-  for (let char of text) {
-    if (char !== " ") count++; // ignore spaces
-    if (count > 40) break;
-    result += char;
-  }
-
-  return count >= 40 ? result + "" : result;
-};
+    let count = 0;
+    let result = "";
+    for (let char of text) {
+      if (char !== " ") count++; // ignore spaces
+      if (count > 40) break;
+      result += char;
+    }
+    return count >= 40 ? result + "" : result;
+  };
 
   return (
     <section className="recommended-section program_page">
