@@ -47,6 +47,12 @@ function page() {
     const { name, value } = e.target;
     updateEventData({ [name]: value });
   };
+  useEffect(() => {
+    const sliders = document.querySelectorAll(".form-range");
+    sliders.forEach((slider) => {
+      setSliderBackground(slider);
+    });
+  }, [eventData.ageRestriction]);
 
   const handleNext = (e) => {
     e.preventDefault();
