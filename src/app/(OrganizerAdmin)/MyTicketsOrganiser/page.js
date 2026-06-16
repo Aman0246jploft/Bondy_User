@@ -342,7 +342,7 @@ function page() {
       </div>
 
       <Modal show={!!reviewModal} onHide={() => setReviewModal(null)} centered contentClassName="review-modal-content">
-        <Modal.Body style={{ background: "#2a2a2a", borderRadius: "16px", padding: "32px", textAlign: "center" }}>
+        <Modal.Body >
           <h4 style={{ color: "#fff", fontWeight: "700", marginBottom: "8px" }}>
             {reviewModal?.reviewId ? (t("editReview") || "Edit Review") : (t("howWasYourEvent") || "How was your Event")}
           </h4>

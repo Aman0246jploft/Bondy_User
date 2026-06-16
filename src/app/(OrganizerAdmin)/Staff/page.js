@@ -58,8 +58,18 @@ function StaffPage() {
     try {
       setLoadingEntities(true);
       const [eventsRes, coursesRes] = await Promise.all([
-        eventApi.getOrganizerEvents({ filter: "organizer", status: "Upcoming,Live", isDraft: false, limit: 1000 }),
-        courseApi.getOrganizerCourses({ filter: "organizer", status: "Upcoming,Live", isDraft: false, limit: 1000 }),
+        eventApi.getOrganizerEvents({
+          filter: "organizer",
+          status: "Upcoming,Live",
+          isDraft: false,
+          limit: 1000,
+        }),
+        courseApi.getOrganizerCourses({
+          filter: "organizer",
+          status: "Upcoming,Live",
+          isDraft: false,
+          limit: 1000,
+        }),
       ]);
       if (eventsRes?.status) {
         setEvents(eventsRes.data?.events || []);
@@ -146,12 +156,16 @@ function StaffPage() {
 
     // Build initial assignment map
     const initialMap = {};
-    events.forEach(event => {
-      const isAssigned = event.assignedStaff?.some(id => id === staff._id || id?._id === staff._id);
+    events.forEach((event) => {
+      const isAssigned = event.assignedStaff?.some(
+        (id) => id === staff._id || id?._id === staff._id,
+      );
       initialMap[event._id] = !!isAssigned;
     });
-    courses.forEach(course => {
-      const isAssigned = course.assignedStaff?.some(id => id === staff._id || id?._id === staff._id);
+    courses.forEach((course) => {
+      const isAssigned = course.assignedStaff?.some(
+        (id) => id === staff._id || id?._id === staff._id,
+      );
       initialMap[course._id] = !!isAssigned;
     });
 
@@ -161,9 +175,9 @@ function StaffPage() {
 
   // Toggle state of event/course in modal
   const handleToggleAssignItem = (id) => {
-    setAssignedMap(prev => ({
+    setAssignedMap((prev) => ({
       ...prev,
-      [id]: !prev[id]
+      [id]: !prev[id],
     }));
   };
 
@@ -176,43 +190,49 @@ function StaffPage() {
 
       // We will loop through events and courses and see which ones changed assignment state for this staff member
       const eventPromises = events.map(async (event) => {
-        const wasAssigned = event.assignedStaff?.some(id => id === selectedStaff._id || id?._id === selectedStaff._id);
+        const wasAssigned = event.assignedStaff?.some(
+          (id) => id === selectedStaff._id || id?._id === selectedStaff._id,
+        );
         const isNowAssigned = !!assignedMap[event._id];
 
         if (wasAssigned !== isNowAssigned) {
           // Assignment changed!
-          let newStaffIds = event.assignedStaff?.map(id => id?._id || id) || [];
+          let newStaffIds =
+            event.assignedStaff?.map((id) => id?._id || id) || [];
           if (isNowAssigned) {
             newStaffIds = [...newStaffIds, selectedStaff._id];
           } else {
-            newStaffIds = newStaffIds.filter(id => id !== selectedStaff._id);
+            newStaffIds = newStaffIds.filter((id) => id !== selectedStaff._id);
           }
 
           // Call assign staff endpoint
           return staffApi.assignStaffToEvent({
             entityId: event._id,
-            staffIds: newStaffIds
+            staffIds: newStaffIds,
           });
         }
       });
 
       const coursePromises = courses.map(async (course) => {
-        const wasAssigned = course.assignedStaff?.some(id => id === selectedStaff._id || id?._id === selectedStaff._id);
+        const wasAssigned = course.assignedStaff?.some(
+          (id) => id === selectedStaff._id || id?._id === selectedStaff._id,
+        );
         const isNowAssigned = !!assignedMap[course._id];
 
         if (wasAssigned !== isNowAssigned) {
           // Assignment changed!
-          let newStaffIds = course.assignedStaff?.map(id => id?._id || id) || [];
+          let newStaffIds =
+            course.assignedStaff?.map((id) => id?._id || id) || [];
           if (isNowAssigned) {
             newStaffIds = [...newStaffIds, selectedStaff._id];
           } else {
-            newStaffIds = newStaffIds.filter(id => id !== selectedStaff._id);
+            newStaffIds = newStaffIds.filter((id) => id !== selectedStaff._id);
           }
 
           // Call assign staff endpoint
           return staffApi.assignStaffToCourse({
             entityId: course._id,
-            staffIds: newStaffIds
+            staffIds: newStaffIds,
           });
         }
       });
@@ -231,18 +251,25 @@ function StaffPage() {
   };
 
   // Filter staff by name or email
-  const filteredStaffList = staffList.filter(staff => {
+  const filteredStaffList = staffList.filter((staff) => {
     const q = searchQuery.toLowerCase();
-    const fullName = `${staff.firstName || ""} ${staff.lastName || ""}`.toLowerCase();
-    return fullName.includes(q) || staff.email?.toLowerCase().includes(q) || staff._id?.toLowerCase().includes(q);
+    const fullName =
+      `${staff.firstName || ""} ${staff.lastName || ""}`.toLowerCase();
+    return (
+      fullName.includes(q) ||
+      staff.email?.toLowerCase().includes(q) ||
+      staff._id?.toLowerCase().includes(q)
+    );
   });
 
   // Filter events/courses inside the modal
-  const filteredEntities = (activeTab === "events" ? events : courses).filter(item => {
-    const q = entitySearchQuery.toLowerCase();
-    const title = (item.eventTitle || item.courseTitle || "").toLowerCase();
-    return title.includes(q);
-  });
+  const filteredEntities = (activeTab === "events" ? events : courses).filter(
+    (item) => {
+      const q = entitySearchQuery.toLowerCase();
+      const title = (item.eventTitle || item.courseTitle || "").toLowerCase();
+      return title.includes(q);
+    },
+  );
 
   return (
     <div className="staff-container">
@@ -465,6 +492,8 @@ function StaffPage() {
           border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
           justify-content: center;
           position: relative;
+          padding: 0px !important;
+          padding-bottom: 10px !important;
         }
         .dark-modal .modal-header .btn-close {
           filter: invert(1);
@@ -503,6 +532,8 @@ function StaffPage() {
           flex-direction: column;
           gap: 12px;
           padding-right: 5px;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
         .entity-item-card {
           display: flex;
@@ -535,6 +566,7 @@ function StaffPage() {
           font-size: 14px;
           font-weight: 600;
           margin: 0 0 3px 0;
+          width: 30ch;
           color: #fff;
           white-space: nowrap;
           overflow: hidden;
@@ -581,22 +613,36 @@ function StaffPage() {
       {showAddStaff ? (
         <div className="cards">
           <div className="add-staff-header">
-            <button className="back-arrow-btn" onClick={() => setShowAddStaff(false)}>
+            <button
+              className="back-arrow-btn"
+              onClick={() => setShowAddStaff(false)}>
               &#8592;
             </button>
             <h2>Add Staff</h2>
           </div>
-          <p style={{ color: "#7c7c7c", fontSize: "14px", marginBottom: "30px" }}>
-            Assign a new team member to your scanning pool. They will be able to access the event check-in tools immediately.
+          <p
+            style={{
+              color: "#7c7c7c",
+              fontSize: "14px",
+              marginBottom: "30px",
+            }}>
+            Assign a new team member to your scanning pool. They will be able to
+            access the event check-in tools immediately.
           </p>
 
           <form onSubmit={handleAddStaffSubmit}>
             {/* Circle Upload Photo */}
-            <div className="photo-upload-circle" onClick={() => !uploadingPhoto && fileInputRef.current.click()}>
+            <div
+              className="photo-upload-circle"
+              onClick={() => !uploadingPhoto && fileInputRef.current.click()}>
               {uploadingPhoto ? (
                 <Spinner animation="border" size="sm" variant="light" />
               ) : formPhoto ? (
-                <img src={getFullImageUrl(formPhoto)} alt="Avatar Preview" className="photo-preview" />
+                <img
+                  src={getFullImageUrl(formPhoto)}
+                  alt="Avatar Preview"
+                  className="photo-preview"
+                />
               ) : (
                 <div className="upload-placeholder">
                   <svg viewBox="0 0 24 24">
@@ -648,8 +694,15 @@ function StaffPage() {
               />
             </div>
 
-            <button type="submit" className="submit-staff-btn" disabled={submittingStaff}>
-              {submittingStaff ? <Spinner animation="border" size="sm" /> : "Add Staff Member"}
+            <button
+              type="submit"
+              className="submit-staff-btn"
+              disabled={submittingStaff}>
+              {submittingStaff ? (
+                <Spinner animation="border" size="sm" />
+              ) : (
+                "Add Staff Member"
+              )}
             </button>
           </form>
         </div>
@@ -660,13 +713,20 @@ function StaffPage() {
         <div className="cards">
           <div className="staff-header">
             <h2>Staff</h2>
-            <button className="add-staff-btn-circle" onClick={() => setShowAddStaff(true)}>
+            <button
+              className="add-staff-btn-circle"
+              onClick={() => setShowAddStaff(true)}>
               +
             </button>
           </div>
 
           <div className="search-wrapper-staff">
-            <svg className="search-icon" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <svg
+              className="search-icon"
+              width="16"
+              height="16"
+              fill="currentColor"
+              viewBox="0 0 16 16">
               <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
             </svg>
             <input
@@ -692,21 +752,33 @@ function StaffPage() {
                   <div className="staff-info-box">
                     <div className="staff-avatar-circle">
                       {staff.profileImage ? (
-                        <img src={getFullImageUrl(staff.profileImage)} alt="Avatar" />
+                        <img
+                          src={getFullImageUrl(staff.profileImage)}
+                          alt="Avatar"
+                        />
                       ) : (
-                        <svg width="24" height="24" fill="#7c7c7c" viewBox="0 0 16 16">
+                        <svg
+                          width="24"
+                          height="24"
+                          fill="#7c7c7c"
+                          viewBox="0 0 16 16">
                           <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
                         </svg>
                       )}
                     </div>
                     <div className="staff-details">
-                      <h5>{`${staff.firstName || ""} ${staff.lastName || ""}`.trim() || "Staff Member"}</h5>
+                      <h5>
+                        {`${staff.firstName || ""} ${staff.lastName || ""}`.trim() ||
+                          "Staff Member"}
+                      </h5>
                       <p>{staff.email}</p>
                     </div>
                   </div>
 
-                  <button className="assign-action-btn" onClick={() => handleOpenAssign(staff)}>
-                    <img src="/img/ticket-icon.svg" alt="Assign" style={{ filter: "hue-rotate(90deg) brightness(1.2)" }} />
+                  <button
+                    className="assign-action-btn"
+                    onClick={() => handleOpenAssign(staff)}>
+                    <img src="/img/ticket-icon.svg" alt="Assign" />
                     <span>Assign Event</span>
                   </button>
                 </div>
@@ -719,11 +791,17 @@ function StaffPage() {
       {/* --------------------------------------------------------------- */}
       {/* ASSIGNED EVENTS/COURSES MODAL */}
       {/* --------------------------------------------------------------- */}
-      <Modal show={showAssignModal} onHide={() => setShowAssignModal(false)} centered className="dark-modal">
+      <Modal
+        show={showAssignModal}
+        onHide={() => setShowAssignModal(false)}
+        centered
+        className="dark-modal">
         <Modal.Header closeButton>
           <Modal.Title>Assigned Events</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ background: "#161616" }}>
+        <Modal.Body
+          className="p-0"
+          style={{ background: "#161616", padding: "0 !important" }}>
           {/* Tabs */}
           <div className="modal-tabs">
             <button
@@ -731,8 +809,7 @@ function StaffPage() {
               onClick={() => {
                 setActiveTab("events");
                 setEntitySearchQuery("");
-              }}
-            >
+              }}>
               Events
             </button>
             <button
@@ -740,15 +817,21 @@ function StaffPage() {
               onClick={() => {
                 setActiveTab("courses");
                 setEntitySearchQuery("");
-              }}
-            >
+              }}>
               Courses
             </button>
           </div>
 
           {/* Search */}
-          <div className="search-wrapper-staff" style={{ marginBottom: "15px" }}>
-            <svg className="search-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+          <div
+            className="search-wrapper-staff"
+            style={{ marginBottom: "15px" }}>
+            <svg
+              className="search-icon"
+              width="14"
+              height="14"
+              fill="currentColor"
+              viewBox="0 0 16 16">
               <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
             </svg>
             <input
@@ -756,7 +839,11 @@ function StaffPage() {
               placeholder={`Search by ${activeTab === "events" ? "event" : "course"} name...`}
               value={entitySearchQuery}
               onChange={(e) => setEntitySearchQuery(e.target.value)}
-              style={{ height: "42px", borderRadius: "21px", paddingLeft: "42px" }}
+              style={{
+                height: "42px",
+                borderRadius: "21px",
+                paddingLeft: "42px",
+              }}
             />
           </div>
 
@@ -774,11 +861,24 @@ function StaffPage() {
               {filteredEntities.map((item) => {
                 const title = item.eventTitle || item.courseTitle;
                 const isAssigned = !!assignedMap[item._id];
-                const dateStr = item.startDate ? new Date(item.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
-                const endDateStr = item.endDate ? new Date(item.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+                const dateStr = item.startDate
+                  ? new Date(item.startDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : "";
+                const endDateStr = item.endDate
+                  ? new Date(item.endDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : "";
                 const location = item.venueName || "Online";
 
-                const poster = (Array.isArray(item.posterImage) && item.posterImage.length > 0) ? getFullImageUrl(item.posterImage[0]) : "";
+                const poster =
+                  Array.isArray(item.posterImage) && item.posterImage.length > 0
+                    ? getFullImageUrl(item.posterImage[0])
+                    : "";
 
                 return (
                   <div className="entity-item-card" key={item._id}>
@@ -786,7 +886,13 @@ function StaffPage() {
                       {poster ? (
                         <img src={poster} alt="Thumbnail" />
                       ) : (
-                        <div style={{ background: "#2a2a2a", width: "100%", height: "100%" }} />
+                        <div
+                          style={{
+                            background: "#2a2a2a",
+                            width: "100%",
+                            height: "100%",
+                          }}
+                        />
                       )}
                     </div>
                     <div className="entity-text-details">
@@ -796,14 +902,21 @@ function StaffPage() {
 
                     <button
                       className={`toggle-assign-btn ${isAssigned ? "assigned" : ""}`}
-                      onClick={() => handleToggleAssignItem(item._id)}
-                    >
+                      onClick={() => handleToggleAssignItem(item._id)}>
                       {isAssigned ? (
-                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <svg
+                          width="24"
+                          height="24"
+                          fill="currentColor"
+                          viewBox="0 0 16 16">
                           <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
                         </svg>
                       ) : (
-                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <svg
+                          width="24"
+                          height="24"
+                          fill="currentColor"
+                          viewBox="0 0 16 16">
                           <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
                           <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
                         </svg>
@@ -816,8 +929,15 @@ function StaffPage() {
           )}
 
           {/* Save Button */}
-          <button className="save-assignment-btn" onClick={handleSaveAssignments} disabled={savingAssignments}>
-            {savingAssignments ? <Spinner animation="border" size="sm" /> : "Save"}
+          <button
+            className="save-assignment-btn"
+            onClick={handleSaveAssignments}
+            disabled={savingAssignments}>
+            {savingAssignments ? (
+              <Spinner animation="border" size="sm" />
+            ) : (
+              "Save"
+            )}
           </button>
         </Modal.Body>
       </Modal>

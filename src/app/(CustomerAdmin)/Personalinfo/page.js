@@ -67,7 +67,9 @@ function PersonalInfoContent() {
 
           // Find Country Code and Load States
           if (location.country) {
-            const countryObj = countries.find(c => c.name === location.country);
+            const countryObj = countries.find(
+              (c) => c.name === location.country,
+            );
             if (countryObj) {
               countryCode = countryObj.isoCode;
               initialStates = State.getStatesOfCountry(countryCode);
@@ -75,7 +77,9 @@ function PersonalInfoContent() {
 
               // Find State Code and Load Cities
               if (location.state) {
-                const stateObj = initialStates.find(s => s.name === location.state);
+                const stateObj = initialStates.find(
+                  (s) => s.name === location.state,
+                );
                 if (stateObj) {
                   stateCode = stateObj.isoCode;
                   initialCities = City.getCitiesOfState(countryCode, stateCode);
@@ -107,7 +111,9 @@ function PersonalInfoContent() {
             address: location?.address || "",
           });
           setSelectedCategoryIds(
-            (profile?.categories || []).map((category) => category._id || category),
+            (profile?.categories || []).map(
+              (category) => category._id || category,
+            ),
           );
           setPreview(getFullImageUrl(profile?.profileImage));
         }
@@ -293,12 +299,8 @@ function PersonalInfoContent() {
               <div
                 className="personal-profile-img"
                 style={{ cursor: "pointer" }}
-                onClick={() => fileRef.current.click()}
-              >
-                <img
-                  src={preview || "/img/sidebar-logo.svg"}
-                  alt="Profile"
-                />
+                onClick={() => fileRef.current.click()}>
+                <img src={preview || "/img/sidebar-logo.svg"} alt="Profile" />
                 <input
                   type="file"
                   hidden
@@ -308,7 +310,9 @@ function PersonalInfoContent() {
                 />
               </div>
               <div className="personal-profile-info">
-                <h4>{t("heyUser")} {profileData.firstName || t("defaultUser") }!</h4>
+                <h4>
+                  {t("heyUser")} {profileData.firstName || t("defaultUser")}!
+                </h4>
                 <p>{profileData.email}</p>
               </div>
             </div>
@@ -316,14 +320,13 @@ function PersonalInfoContent() {
               <button
                 className="edit-profile-btn"
                 type="button"
-                onClick={() => fileRef.current.click()}
-              >
+                onClick={() => fileRef.current.click()}>
                 <img src="/img/edit-icon.svg" alt="Edit" />
                 <span>{t("EditProfile") || t("edit")}</span>
               </button>
             </div>
           </div>
-          <Row>
+          <Row className="profile-cms-inpt">
             {/* Row 1: Names */}
             <Col md={6}>
               <div className="form-floating custom-floting">
@@ -358,7 +361,9 @@ function PersonalInfoContent() {
                 <span className="form-icon">
                   <img src="/img/form-user.svg" alt="" />
                 </span>
-                {errors.lastName && <small className="text-danger ps-2">{errors.lastName}</small>}
+                {errors.lastName && (
+                  <small className="text-danger ps-2">{errors.lastName}</small>
+                )}
               </div>
             </Col>
 
@@ -403,8 +408,7 @@ function PersonalInfoContent() {
                   className="form-select"
                   id="country"
                   value={profileData.country}
-                  onChange={handleCountryChange}
-                >
+                  onChange={handleCountryChange}>
                   <option value="">{t("selectCountry")}</option>
                   {countries.map((c) => (
                     <option key={c.isoCode} value={c.name}>
@@ -416,7 +420,9 @@ function PersonalInfoContent() {
                 <span className="form-icon">
                   <img src="/img/form-globe.svg" alt="" />
                 </span>
-                {errors.country && <small className="text-danger ps-2">{errors.country}</small>}
+                {errors.country && (
+                  <small className="text-danger ps-2">{errors.country}</small>
+                )}
               </div>
             </Col>
             <Col md={6}>
@@ -426,8 +432,7 @@ function PersonalInfoContent() {
                   id="state"
                   value={profileData.state}
                   onChange={handleStateChange}
-                  disabled={!profileData.country}
-                >
+                  disabled={!profileData.country}>
                   <option value="">{t("selectState")}</option>
                   {states.map((s) => (
                     <option key={s.isoCode} value={s.name}>
@@ -439,7 +444,9 @@ function PersonalInfoContent() {
                 <span className="form-icon">
                   <img src="/img/form-globe.svg" alt="" />
                 </span>
-                {errors.state && <small className="text-danger ps-2">{errors.state}</small>}
+                {errors.state && (
+                  <small className="text-danger ps-2">{errors.state}</small>
+                )}
               </div>
             </Col>
 
@@ -451,8 +458,7 @@ function PersonalInfoContent() {
                   id="city"
                   value={profileData.city}
                   onChange={handleCityChange}
-                  disabled={!profileData.state}
-                >
+                  disabled={!profileData.state}>
                   <option value="">{t("selectCity")}</option>
                   {cities.map((city) => (
                     <option key={city.name} value={city.name}>
@@ -464,7 +470,9 @@ function PersonalInfoContent() {
                 <span className="form-icon">
                   <img src="/img/form-mark.svg" alt="" />
                 </span>
-                {errors.city && <small className="text-danger ps-2">{errors.city}</small>}
+                {errors.city && (
+                  <small className="text-danger ps-2">{errors.city}</small>
+                )}
               </div>
             </Col>
             {/* <Col md={6}>
@@ -486,7 +494,8 @@ function PersonalInfoContent() {
 
             {/* Row 5: Contact Number */}
             <Col md={6}>
-              <div className={`phone_input_wrapper custom-floting ${profileData.contactNumber ? 'has-value' : ''}`}>
+              <div
+                className={`phone_input_wrapper custom-floting ${profileData.contactNumber ? "has-value" : ""}`}>
                 <PhoneInput
                   country={"us"}
                   value={profileData.contactNumber}
@@ -496,21 +505,27 @@ function PersonalInfoContent() {
                   dropdownClass="phone_input_dropdown"
                   buttonClass="phone_input_button"
                 />
-                <label className="phone-field-label">{t("contactNumber")}</label>
+                <label className="phone-field-label">
+                  {t("contactNumber")}
+                </label>
               </div>
             </Col>
 
             <Col md={12}>
               <div className="mb-4">
                 <h5 className="mb-2">{t("interestCategories")}</h5>
-                <p className="text-secondary mb-3 small">{t("interestCategoriesHelper")}</p>
+                <p className="text-secondary mb-3 small">
+                  {t("interestCategoriesHelper")}
+                </p>
                 <div className="interest-scroll-area">
                   <InterestSelector
                     categories={categories}
                     selectedIds={selectedCategoryIds}
                     onToggle={(id) => {
                       setSelectedCategoryIds((prev) =>
-                        prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+                        prev.includes(id)
+                          ? prev.filter((item) => item !== id)
+                          : [...prev, id],
                       );
                     }}
                   />
@@ -523,8 +538,7 @@ function PersonalInfoContent() {
                 <button
                   className="outline-btn"
                   type="button"
-                  onClick={() => window.location.reload()}
-                >
+                  onClick={() => window.location.reload()}>
                   {t("discard")}
                 </button>
                 <button className="custom-btn" type="submit" disabled={loading}>

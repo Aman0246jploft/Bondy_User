@@ -36,10 +36,21 @@ body {
 }
 
 .unread-notif {
-  border-color: var(--primary-teal);
-  background: rgba(35, 173, 164, 0.12);
+  border-radius: 16px;
+  border: 1px solid var(--primary-30, rgba(35, 173, 164, 0.3));
+}
+.notification-cards p {
+  margin-bottom: 0px;
+  opacity: 0.6;
 }
 
+.notification-cards h5 {
+  color: var(--white, #fff);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+}
 .mb-20 {
   margin-bottom: 20px;
 }
@@ -364,6 +375,7 @@ input[type="number"]::-webkit-outer-spin-button {
   border: 1px solid var(--primary-teal);
   color: var(--primary-teal);
   background: rgba(35, 173, 164, 0.3);
+  font-size: 13px;
 }
 
 .dashboard-counter .counter.pending {
@@ -649,11 +661,11 @@ input[type="number"]::-webkit-outer-spin-button {
 .event-frm-bx .form-control,
 .event-frm-bx .form-select {
   height: 56px;
-  background-color: #323232;
-  border-radius: 50px;
-  color: #999;
+  background-color: #323232 !important;
+  border-radius: 50px !important;
+  color: #999 !important;
   box-shadow: none;
-  border: 1px solid #737373;
+  border: 1px solid #737373 !important;
 }
 
 .event-frm-bx.upload {
@@ -816,8 +828,20 @@ input[type="number"]::-webkit-outer-spin-button {
 .event-preview-title-marquee {
   display: flex;
   gap: 2rem;
-  mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
 }
 
 .event-preview-title-marquee span {
@@ -1461,11 +1485,11 @@ input[type="number"]::-webkit-outer-spin-button {
   border-radius: 50%;
 }
 
-.gender-toggle input:checked+.slider {
+.gender-toggle input:checked + .slider {
   background-color: #23ada4;
 }
 
-.gender-toggle input:checked+.slider:before {
+.gender-toggle input:checked + .slider:before {
   transform: translateX(30px);
 }
 
@@ -1479,7 +1503,6 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 @media (max-width: 1024px) {
-
   .ticket-bottom,
   .ticket-inner {
     flex-wrap: wrap;
@@ -1609,7 +1632,9 @@ input[type="number"]::-webkit-outer-spin-button {
   border-color: #363636;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-size: 25px 25px, cover;
+  background-size:
+    25px 25px,
+    cover;
 }
 
 .setting-info-rgt .form-check-input:checked {
@@ -1711,7 +1736,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .modal-header {
   border-bottom: 1px solid #333 !important;
-  padding: 20px 24px !important;
+  padding: 20px 24px;
 }
 
 .modal-header .btn-close {
@@ -1724,7 +1749,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .modal-body {
-  padding: 24px !important;
+  padding: 24px;
 }
 
 .modal-footer {
@@ -1744,7 +1769,7 @@ input[type="number"]::-webkit-outer-spin-button {
   border: 1px solid #333 !important;
   color: #fff !important;
   border-radius: 8px !important;
-  padding: 10px 14px !important;
+  padding: 10px 14px;
 }
 
 .form-control:focus {
@@ -1864,6 +1889,7 @@ input[type="number"]::-webkit-outer-spin-button {
   font-weight: 600;
   display: inline-flex;
   align-items: center;
+  text-transform: capitalize;
   gap: 8px;
 }
 
@@ -1959,7 +1985,7 @@ input[type="number"]::-webkit-outer-spin-button {
   gap: 20px;
 }
 
-.payment-dtl-innr li>div {
+.payment-dtl-innr li > div {
   flex: 1;
   min-width: 150px;
 }
@@ -2103,7 +2129,16 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 16px !important;
   box-shadow: none !important;
 }
-
+.profile-cms-inpt .react-tel-input .form-control {
+  text-transform: capitalize;
+  padding: 0.7rem 1rem 0.625rem 2.8rem !important;
+  height: 56px !important;
+  background-color: #323232 !important;
+  border-radius: 50px !important;
+  color: #999 !important;
+  box-shadow: none !important;
+  border: 1px solid #737373 !important;
+}
 .phone_input.react-tel-input .flag-dropdown {
   background-color: transparent !important;
   border: none !important;
@@ -2145,7 +2180,7 @@ input[type="number"]::-webkit-outer-spin-button {
 .phone_input_wrapper.has-value .phone-field-label,
 .phone_input_wrapper:focus-within .phone-field-label {
   transform: scale(0.85) translateY(-1.2rem) translateX(0.1rem);
-  color: var(--primary-teal);
+  color: #787878;
   background-color: transparent;
   padding-left: 20px;
   height: auto;
@@ -2165,7 +2200,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: opacity 0.3s ease;
 }
 
-.custom-floting .form-control:focus~.form-icon img {
+.custom-floting .form-control:focus ~ .form-icon img {
   opacity: 1;
   filter: drop-shadow(0 0 5px var(--primary-teal));
 }
