@@ -4,12 +4,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import LanguageSelector from "./LanguageSelector";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import authApi from "@/api/authApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function BondyHeader() {
   const { t } = useLanguage();
+  const pathname = usePathname();
   const [isAnimating, setIsAnimating] = useState(true);
   const [showContent, setShowContent] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,17 +30,44 @@ export default function BondyHeader() {
         try {
           const response = await authApi.getSelfProfile();
           if (response?.status) {
-            setUserProfile(response?.data?.user);
+            const profile = response?.data?.user;
+            const isApproved = profile?.hasBeenApproved === true || profile?.isVerified === true;
+            const isOrganizer = profile?.roleId === 2 || profile?.organizerVerificationStatus;
+            const hasBusinessDetails = !!(
+              profile?.businessName ||
+              profile?.businessCategory ||
+              profile?.shortDesc ||
+              profile?.socialMediaLink
+            );
+
+            if (isOrganizer && !isApproved) {
+              if (hasBusinessDetails) {
+                if (pathname !== "/completeprofile") {
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("userProfile");
+                  setUserProfile(null);
+                  return;
+                }
+              } else {
+                if (pathname !== "/completeprofile") {
+                  setUserProfile(null);
+                  return;
+                }
+              }
+            }
+            setUserProfile(profile);
           }
         } catch (error) {
           console.error("Header Profile Fetch Error:", error);
         }
+      } else {
+        setUserProfile(null);
       }
     };
     fetchUser();
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [pathname]);
 
   return (
     <>

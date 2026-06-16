@@ -722,7 +722,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                     </div>
                                                     <div className="d-flex align-items-center gap-3">
                                                         <span className="fw-bold" style={{ fontSize: "16px", color: selectedPassType === "single" ? "#23ada4" : "#fff" }}>
-                                                            {formatPrice(item.price)}
+                                                            {formatPrice(item.price * Math.max(1, Object.keys(selectedSlots).length))}
                                                         </span>
                                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: selectedPassType === "single" ? "rotate(180deg)" : "none", transition: "transform 0.2s", color: "#666" }}>
                                                             <polyline points="6 9 12 15 18 9"></polyline>

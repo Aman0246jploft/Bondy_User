@@ -9,7 +9,7 @@ const authApi = {
                 "Content-Type": "multipart/form-data",
             },
         }),
-    getSelfProfile: () => apiClient.get("/user/selfProfile", { skipToast: true }),
+    getSelfProfile: (config = {}) => apiClient.get("/user/selfProfile", { skipToast: true, ...config }),
     updateProfile: (data) => apiClient.post("/user/update-profile", data, { skipToast: true }),
     getCategoryList: (params) => apiClient.get("/category/list", {
         params: {

@@ -85,35 +85,49 @@ function OTPContent() {
           localStorage.removeItem("registerType");
         }
 
-        // Save token
-        if (response?.data?.token) {
-          localStorage.setItem("token", response?.data?.token);
+        const profile = response?.data?.user;
+        let isApproved = false;
+        let userRole = "CUSTOMER";
+        let hasBusinessDetails = false;
+
+        if (profile) {
+          isApproved = profile?.hasBeenApproved === true || profile?.isVerified === true;
+          if (profile?.roleId === 2 || profile?.organizerVerificationStatus) {
+            userRole = "ORGANIZER";
+          }
+          hasBusinessDetails = !!(
+            profile?.businessName ||
+            profile?.businessCategory ||
+            profile?.shortDesc ||
+            profile?.socialMediaLink
+          );
+        }
+
+        const isUnverifiedOrganizerWithBusiness = userRole === "ORGANIZER" && !isApproved && hasBusinessDetails;
+
+        // Save token ONLY if they are not an unverified organizer with business details
+        if (!isUnverifiedOrganizerWithBusiness) {
+          if (response?.data?.token) {
+            localStorage.setItem("token", response?.data?.token);
+            if (profile) {
+              localStorage.setItem("userProfile", JSON.stringify(profile));
+            }
+          }
+        } else {
+          localStorage.removeItem("token");
+          localStorage.removeItem("userProfile");
         }
 
         let shouldShowModal = false;
-        let isVerified = false;
-        let userRole = "CUSTOMER";
         let nextPath = "/";
         try {
-          const profile = response?.data?.user;
           if (profile) {
-            isVerified = profile?.isVerified ?? false;
-            // Check roleId (e.g. 2 is ORGANIZER, check details)
-            if (profile?.roleId === 2 || profile?.organizerVerificationStatus) {
-              userRole = "ORGANIZER";
-            }
             if (userRole === "ORGANIZER") {
-              const hasBusinessDetails = (
-                profile?.businessName ||
-                profile?.businessCategory ||
-                profile?.shortDesc ||
-                profile?.socialMediaLink
-              );
               if (!hasBusinessDetails) {
                 nextPath = "/completeprofile";
               } else {
                 nextPath = "/";
-                if (!isVerified) {
+                if (!isApproved) {
                   shouldShowModal = true;
                 }
               }

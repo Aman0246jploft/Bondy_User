@@ -66,31 +66,31 @@ function EventDetailsContent() {
 
   const handleWishlistToggle = () => {
     checkAuth(async () => {
-    if (wishlistLoading) return;
-    setWishlistLoading(true);
+      if (wishlistLoading) return;
+      setWishlistLoading(true);
 
-    try {
-      if (isWishlisted) {
-        const response = await wishlistApi.removeFromWishlist({ entityId: eventId });
-        if (response?.status === true) {
-          toast.success(response?.message)
-          setIsWishlisted(false);
+      try {
+        if (isWishlisted) {
+          const response = await wishlistApi.removeFromWishlist({ entityId: eventId });
+          if (response?.status === true) {
+            toast.success(response?.message)
+            setIsWishlisted(false);
+          }
+        } else {
+          const response = await wishlistApi.addToWishlist({
+            entityId: eventId,
+            entityModel: "Event"
+          });
+          if (response?.status === true) {
+            setIsWishlisted(true);
+            toast.success(response?.message)
+          }
         }
-      } else {
-        const response = await wishlistApi.addToWishlist({
-          entityId: eventId,
-          entityModel: "Event"
-        });
-        if (response?.status === true) {
-          setIsWishlisted(true);
-          toast.success(response?.message)
-        }
+      } catch (error) {
+        console.error("Wishlist toggle error:", error);
+      } finally {
+        setWishlistLoading(false);
       }
-    } catch (error) {
-      console.error("Wishlist toggle error:", error);
-    } finally {
-      setWishlistLoading(false);
-    }
     });
   };
 
@@ -200,24 +200,24 @@ function EventDetailsContent() {
                   hasSingleMedia
                     ? false
                     : {
-                        delay: 3000,
-                        disableOnInteraction: false,
-                      }
+                      delay: 3000,
+                      disableOnInteraction: false,
+                    }
                 }
                 speed={800}
                 breakpoints={
                   hasSingleMedia
                     ? {}
                     : {
-                        768: {
-                          slidesPerView: 2,
-                          spaceBetween: 20,
-                        },
-                        1024: {
-                          slidesPerView: 2.5,
-                          spaceBetween: 20,
-                        },
-                      }
+                      768: {
+                        slidesPerView: 2,
+                        spaceBetween: 20,
+                      },
+                      1024: {
+                        slidesPerView: 2.5,
+                        spaceBetween: 20,
+                      },
+                    }
                 }
               >
                 {mediaItems && mediaItems?.map((item, index) => (
@@ -270,19 +270,19 @@ function EventDetailsContent() {
               <div className="event-details-container details_Event_box">
                 <div className="details_Event_time">
                   <div className="event_time_mange">
-                      <h5>{t("dateAndTime")}</h5>
-                      <span>
-                        {formatEventDateTime(
-                          event?.startDate,
-                          event?.startTime,
-                          event?.endTime,
-                        )}
-                      </span>
-                    </div>
-                    <div className="event_time_mange">
-                      <h5>{t("location")}</h5>
-                      <span>{event?.venueAddress?.address}</span>
-                    </div>
+                    <h5>{t("dateAndTime")}</h5>
+                    <span>
+                      {formatEventDateTime(
+                        event?.startDate,
+                        event?.startTime,
+                        event?.endTime,
+                      )}
+                    </span>
+                  </div>
+                  <div className="event_time_mange">
+                    <h5>{t("location")}</h5>
+                    <span>{event?.venueAddress?.address}</span>
+                  </div>
                   {/* <div className="event_time_mange">
                     <h5>Date & Time</h5>
                     <span>

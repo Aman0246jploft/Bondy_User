@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import authApi from "@/api/authApi";
 
 export const AuthGuardContext = createContext(null);
 
@@ -29,10 +30,89 @@ export function AuthGuardProvider({ children }) {
     }
   }, [pathname, router]);
 
-  // Single global token check — runs once on mount
+  // Single global token check — runs on mount and pathname changes
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("token"));
-  }, []);
+    const checkTokenAndStatus = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setIsLoggedIn(false);
+        return;
+      }
+      setIsLoggedIn(true);
+
+      // Fast synchronous check
+      const profileStr = localStorage.getItem("userProfile");
+      if (profileStr) {
+        try {
+          const profile = JSON.parse(profileStr);
+          const isApproved = profile?.hasBeenApproved === true || profile?.isVerified === true;
+          const isOrganizer = profile?.roleId === 2 || profile?.organizerVerificationStatus;
+          const hasBusinessDetails = !!(
+            profile?.businessName ||
+            profile?.businessCategory ||
+            profile?.shortDesc ||
+            profile?.socialMediaLink
+          );
+
+          if (isOrganizer && !isApproved) {
+            if (hasBusinessDetails) {
+              if (pathname !== "/completeprofile") {
+                localStorage.removeItem("token");
+                localStorage.removeItem("userProfile");
+                setIsLoggedIn(false);
+                router.replace("/");
+                return;
+              }
+            } else {
+              if (pathname !== "/completeprofile") {
+                router.replace("/completeprofile");
+                return;
+              }
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      // Async verification check
+      try {
+        const response = await authApi.getSelfProfile();
+        if (response?.status) {
+          const profile = response?.data?.user;
+          localStorage.setItem("userProfile", JSON.stringify(profile));
+
+          const isApproved = profile?.hasBeenApproved === true || profile?.isVerified === true;
+          const isOrganizer = profile?.roleId === 2 || profile?.organizerVerificationStatus;
+          const hasBusinessDetails = !!(
+            profile?.businessName ||
+            profile?.businessCategory ||
+            profile?.shortDesc ||
+            profile?.socialMediaLink
+          );
+
+          if (isOrganizer && !isApproved) {
+            if (hasBusinessDetails) {
+              if (pathname !== "/completeprofile") {
+                localStorage.removeItem("token");
+                localStorage.removeItem("userProfile");
+                setIsLoggedIn(false);
+                router.replace("/");
+              }
+            } else {
+              if (pathname !== "/completeprofile") {
+                router.replace("/completeprofile");
+              }
+            }
+          }
+        }
+      } catch (err) {
+        // Handled by interceptor
+      }
+    };
+
+    checkTokenAndStatus();
+  }, [pathname, router]);
 
   /**
    * checkAuth(callback?)
