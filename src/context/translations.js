@@ -10,6 +10,7 @@ export const translations = {
     signIn: "Sign In",
     addOns: "Add-ons",
     minAge: "Min age",
+    singleSessionPerlass: "Single Session / per class",
     // Auth Required Modal
     authRequiredTitle: "Account Required",
     activePromotion: "Active Promotion",

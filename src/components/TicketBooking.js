@@ -122,10 +122,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 } else if (type === "COURSE") {
                     let payload;
                     if (item?.enrollmentType === "Ongoing") {
-                        const slots = Object.entries(selectedSlots).map(([day, batchId]) => ({
-                            batchId,
-                            selectedDay: day,
-                        }));
+                        const slots = Object.values(selectedSlots);
                         if (selectedPassType === "single" && slots.length === 0) {
                             setPriceBreakdown({
                                 basePrice: 0, taxes: 0, discount: 0, totalAmount: 0,
@@ -224,10 +221,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
             } else if (type === "COURSE") {
                 let payload;
                 if (item?.enrollmentType === "Ongoing") {
-                    const slots = Object.entries(selectedSlots).map(([day, batchId]) => ({
-                        batchId,
-                        selectedDay: day,
-                    }));
+                    const slots = Object.values(selectedSlots);
                     if (selectedPassType === "single" && slots.length === 0) {
                         toast.error(t("pleaseSelectBatchFirst") || "Please select at least one schedule first");
                         return;
@@ -332,16 +326,13 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 }
             } else if (type === "COURSE") {
                 if (item?.enrollmentType === "Ongoing") {
-                    const slotEntries = Object.entries(selectedSlots);
+                    const slotEntries = Object.values(selectedSlots);
                     if (selectedPassType === "single" && slotEntries.length === 0) {
                         toast.error(t("pleaseSelectBatchFirst") || "Please select at least one schedule");
                         setLoading(false);
                         return;
                     }
-                    const ongoingSlots = slotEntries.map(([day, batchId]) => ({
-                        batchId,
-                        selectedDay: day,
-                    }));
+                    const ongoingSlots = slotEntries;
                     const payload = {
                         qty: qty,
                         discountCode: appliedPromoCode,
@@ -436,6 +427,165 @@ export default function TicketBooking({ item, type, scheduleId }) {
         }
     };
 
+    const [activeDayKey, setActiveDayKey] = useState(null);
+
+    useEffect(() => {
+        if (item?.weeklySchedule) {
+            const keys = Object.keys(item.weeklySchedule);
+            if (keys.length > 0 && !activeDayKey) {
+                setActiveDayKey(keys[0]);
+            }
+        }
+    }, [item, activeDayKey]);
+
+    const parseDayKey = (key) => {
+        const dayPart = key.split(" ")[0]; // e.g. "Mon"
+        const dateMatch = key.match(/\(([^)]+)\)/);
+        let dateStr = "";
+        if (dateMatch && dateMatch[1]) {
+            try {
+                const dateObj = new Date(dateMatch[1]);
+                if (!isNaN(dateObj.getTime())) {
+                    const dayNum = dateObj.getDate();
+                    const monthName = dateObj.toLocaleString(language === "mn" ? "mn-MN" : "en-US", { month: "short" });
+                    dateStr = `${dayNum} ${monthName}`;
+                }
+            } catch (e) {
+                dateStr = dateMatch[1];
+            }
+        }
+        return {
+            dayName: dayPart,
+            dateStr: dateStr || (key.includes("(") ? key.substring(key.indexOf("(")) : "")
+        };
+    };
+
+    const renderOngoingSlots = (isPassChild = true) => {
+        if (!item.weeklySchedule || Object.keys(item.weeklySchedule).length === 0) {
+            return <p className="text-muted text-start ps-3" style={{ fontSize: "13px" }}>{t("noUpcomingClasses") || "No weekly schedule configured yet."}</p>;
+        }
+
+        const keys = Object.keys(item.weeklySchedule);
+        const currentActiveKey = activeDayKey || keys[0];
+        const activeDayData = item.weeklySchedule[currentActiveKey] || [];
+        const slots = Array.isArray(activeDayData) ? activeDayData : (activeDayData.slots || []);
+
+        return (
+            <div className={isPassChild ? "mt-3 pt-3 border-top border-secondary" : ""} onClick={isPassChild ? (e) => e.stopPropagation() : undefined}>
+                {/* Horizontal scrollable days list */}
+                <div className="d-flex gap-2 overflow-auto pb-2 mb-3 no-scrollbar" style={{ scrollbarWidth: "none" }}>
+                    {keys.map((dayKey) => {
+                        const { dayName, dateStr } = parseDayKey(dayKey);
+                        const isActive = dayKey === currentActiveKey;
+                        // Count selected slots on this day
+                        const dayData = item?.weeklySchedule?.[dayKey] || [];
+                        const slotsOnThisDay = Array.isArray(dayData) ? dayData : (dayData.slots || []);
+                        const selectedCountOnThisDay = slotsOnThisDay?.filter(s => !!selectedSlots[`${dayKey}_${s.batchId}`]).length;
+
+                        return (
+                            <button
+                                key={dayKey}
+                                className="d-flex flex-column align-items-center justify-content-center p-2 rounded-3 text-white position-relative"
+                                onClick={() => setActiveDayKey(dayKey)}
+                                style={{
+                                    minWidth: "70px",
+                                    height: "60px",
+                                    backgroundColor: isActive ? "#23ada4" : "#1a1a1a",
+                                    border: isActive ? "1px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
+                                    transition: "all 0.2s ease"
+                                }}
+                            >
+                                <span style={{ fontSize: "12px", fontWeight: "600", opacity: isActive ? 1 : 0.8 }}>
+                                    {t(dayName) || dayName}
+                                </span>
+                                <span style={{ fontSize: "10px", opacity: isActive ? 0.9 : 0.6 }}>
+                                    {dateStr}
+                                </span>
+                                {selectedCountOnThisDay > 0 && !isActive && (
+                                    <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: "9px" }}>
+                                        {selectedCountOnThisDay}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <h6 className="fw-bold mb-2 text-start text-white" style={{ fontSize: "13px", opacity: 0.8 }}>
+                    {t("availableTimes") || "Available times"}
+                </h6>
+
+                <div
+                    className="rounded-3 overflow-hidden"
+                    style={{ border: "1px solid rgba(255,255,255,0.1)", backgroundColor: "#0c0c0c" }}
+                >
+                    {slots.map((slot, slotIdx) => {
+                        const slotKey = `${currentActiveKey}_${slot.batchId}`;
+                        const isSelected = !!selectedSlots[slotKey];
+                        const isFull = slot.isFull || slot.availableSeats <= 0;
+                        return (
+                            <div
+                                key={`${currentActiveKey}-${slot.batchId}-${slotIdx}`}
+                                className="p-3 d-flex justify-content-between align-items-center"
+                                onClick={() => {
+                                    if (!isFull) {
+                                        const slotBatchId = slot.batchId?.toString();
+                                        setSelectedSlots(prev => {
+                                            const next = { ...prev };
+                                            if (next[slotKey]) {
+                                                delete next[slotKey];
+                                            } else {
+                                                next[slotKey] = {
+                                                    batchId: slotBatchId,
+                                                    selectedDay: currentActiveKey,
+                                                    selectedDate: slot.date || null
+                                                };
+                                            }
+                                            return next;
+                                        });
+                                        if (qty > slot.availableSeats) setQty(slot.availableSeats);
+                                    }
+                                }}
+                                style={{
+                                    cursor: isFull ? "not-allowed" : "pointer",
+                                    opacity: isFull ? 0.6 : 1,
+                                    borderBottom: slotIdx < slots.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none",
+                                    backgroundColor: isSelected ? "rgba(35,173,164,0.08)" : "transparent",
+                                    transition: "background-color 0.2s ease"
+                                }}
+                            >
+                                <div className="d-flex align-items-center gap-4">
+                                    <span className="text-white" style={{ fontSize: "14px", fontWeight: "500" }}>
+                                        {slot.startTime} – {slot.endTime}
+                                    </span>
+                                    <span className="text-muted" style={{ fontSize: "12px" }}>
+                                        {isFull
+                                            ? t("full") || "Full"
+                                            : `${slot.availableSeats} ${t("seatsLeft") || "seats left"}`}
+                                    </span>
+                                </div>
+                                <div>
+                                    {isSelected ? (
+                                        <div
+                                            className="d-flex align-items-center justify-content-center"
+                                            style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: "#23ada4" }}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        </div>
+                                    ) : (
+                                        <div style={{ width: "20px", height: "20px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)" }} />
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
     const renderStep = () => {
         switch (step) {
             case 1:
@@ -528,179 +678,112 @@ export default function TicketBooking({ item, type, scheduleId }) {
                         ) : (
                             <>
                                 {item.enrollmentType === "Ongoing" && (item.oneMonthPassEnabled || item.threeMonthPassEnabled) ? (
-                                    /* Passes are enabled: slot selection is nested inside Single Session */
                                     <div className="mb-4">
-                                        <h6 className="fw-bold mb-2 text-start text-white" style={{ fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                                            {t("selectAccessType") || "Select Access Pass Type"}
-                                        </h6>
+                                        <h5 className="fw-bold mb-3 text-start text-white" style={{ fontSize: "16px", letterSpacing: "0.5px" }}>
+                                            {t("selectYourPlan") || "Select your plan"}
+                                        </h5>
                                         <div className="d-flex flex-column gap-3">
                                             {/* Single Session Card */}
                                             <div
-                                                className="p-3 rounded-3 text-start"
+                                                className="p-3 rounded-3 text-start position-relative"
                                                 onClick={() => setSelectedPassType("single")}
                                                 style={{
-                                                    backgroundColor: selectedPassType === "single" ? "rgba(35, 173, 164, 0.1)" : "#111",
-                                                    border: selectedPassType === "single" ? "1px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
+                                                    backgroundColor: selectedPassType === "single" ? "rgba(35, 173, 164, 0.05)" : "#0f0f0f",
+                                                    border: selectedPassType === "single" ? "1.5px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
                                                     cursor: "pointer",
-                                                    transition: "all 0.2s ease",
+                                                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                                                 }}
                                             >
+                                                {selectedPassType === "single" && (
+                                                    <span className="position-absolute top-0 start-100 translate-middle d-flex align-items-center justify-content-center" style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: "#23ada4", border: "2px solid #0f0f0f", zIndex: 10 }}>
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                                        </svg>
+                                                    </span>
+                                                )}
                                                 <div className="d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px" }}>
-                                                            {t("singleSession") || "Single Session"}
-                                                        </h6>
-                                                        <p className="mb-0 text-muted" style={{ fontSize: "12px" }}>
-                                                            {t("singleSessionDesc") || "Pay per session. Valid only for the selected slot day."}
-                                                        </p>
+                                                    <div className="d-flex align-items-center gap-3">
+                                                        <div className="d-flex align-items-center justify-content-center rounded-3" style={{ width: "48px", height: "48px", backgroundColor: "rgba(35, 173, 164, 0.12)" }}>
+                                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <rect x="2" y="5" width="20" height="14" rx="2" stroke="#23ada4" strokeWidth="2" />
+                                                                <path d="M6 10H10V14H6V10Z" fill="#ff4c8b" />
+                                                                <circle cx="2" cy="12" r="2" fill="#0f0f0f" />
+                                                                <circle cx="22" cy="12" r="2" fill="#0f0f0f" />
+                                                            </svg>
+                                                        </div>
+                                                        <div>
+                                                            <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px" }}>
+                                                                {t("singleSessionPerlass") || "Single Session / per class"}
+                                                            </h6>
+                                                            <p className="mb-0 text-muted" style={{ fontSize: "12px" }}>
+                                                                {t("singleSessionDesc") || "Book one specific session only"}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                     <div className="d-flex align-items-center gap-3">
-                                                        <span className="fw-bold text-white" style={{ color: "#23ada4" }}>{formatPrice(item.price)}</span>
-                                                        {selectedPassType === "single" ? (
-                                                            <div className="d-flex align-items-center justify-content-center" style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: "#23ada4" }}>
-                                                                <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#fff" }} />
-                                                            </div>
-                                                        ) : (
-                                                            <div style={{ width: "20px", height: "20px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)" }} />
-                                                        )}
+                                                        <span className="fw-bold" style={{ fontSize: "16px", color: selectedPassType === "single" ? "#23ada4" : "#fff" }}>
+                                                            {formatPrice(item.price)}
+                                                        </span>
+                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: selectedPassType === "single" ? "rotate(180deg)" : "none", transition: "transform 0.2s", color: "#666" }}>
+                                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                                        </svg>
                                                     </div>
                                                 </div>
-
-                                                {/* Dropdown list of slots nested under Single Session */}
-                                                {selectedPassType === "single" && (
-                                                    <div className="mt-3 pt-3 border-top border-secondary" onClick={(e) => e.stopPropagation()}>
-                                                        <h6 className="fw-bold mb-3 text-start text-white" style={{ fontSize: "13px" }}>
-                                                            {t("selectWeeklySchedule") || "Select Weekly Schedule *"}
-                                                        </h6>
-                                                        {item.weeklySchedule && Object.keys(item.weeklySchedule).length > 0 ? (
-                                                            <div className="d-flex flex-column gap-3">
-                                                                {Object.entries(item.weeklySchedule).map(([day, dayData]) => {
-                                                                    const slots = Array.isArray(dayData) ? dayData : (dayData.slots || []);
-                                                                    const dateStr = dayData.date || "";
-                                                                    return (
-                                                                        <div key={day} className="mb-1">
-                                                                            <h6
-                                                                                className="fw-bold mb-2 text-start text-white"
-                                                                                style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#23ada4" }}
-                                                                            >
-                                                                                {(() => {
-                                                                                    const dayPrefix = day.split(" ")[0];
-                                                                                    const datePart = dateStr ? ` (${dateStr})` : (day.includes("(") ? day.substring(day.indexOf("(")) : "");
-                                                                                    return (dayPrefix === "Mon" ? "Monday" :
-                                                                                        dayPrefix === "Tue" ? "Tuesday" :
-                                                                                            dayPrefix === "Wed" ? "Wednesday" :
-                                                                                                dayPrefix === "Thu" ? "Thursday" :
-                                                                                                    dayPrefix === "Fri" ? "Friday" :
-                                                                                                        dayPrefix === "Sat" ? "Saturday" : "Sunday") + datePart;
-                                                                                })()}
-                                                                            </h6>
-                                                                            <div
-                                                                                className="rounded-3 overflow-hidden"
-                                                                                style={{ border: "1px solid rgba(255,255,255,0.1)", backgroundColor: "#080808" }}
-                                                                            >
-                                                                                {slots.map((slot, slotIdx) => {
-                                                                                    const isSelected = selectedSlots[day] === slot.batchId?.toString();
-                                                                                    const isFull = slot.isFull || slot.availableSeats <= 0;
-                                                                                    return (
-                                                                                        <div
-                                                                                            key={`${day}-${slot.batchId}-${slotIdx}`}
-                                                                                            className="p-3 d-flex justify-content-between align-items-center"
-                                                                                            onClick={(e) => {
-                                                                                                e.stopPropagation();
-                                                                                                if (!isFull) {
-                                                                                                    const slotBatchId = slot.batchId?.toString();
-                                                                                                    setSelectedSlots(prev => {
-                                                                                                        const next = { ...prev };
-                                                                                                        if (next[day] === slotBatchId) {
-                                                                                                            delete next[day];
-                                                                                                        } else {
-                                                                                                            next[day] = slotBatchId;
-                                                                                                        }
-                                                                                                        return next;
-                                                                                                    });
-                                                                                                    if (qty > slot.availableSeats) setQty(slot.availableSeats);
-                                                                                                }
-                                                                                            }}
-                                                                                            style={{
-                                                                                                cursor: isFull ? "not-allowed" : "pointer",
-                                                                                                opacity: isFull ? 0.6 : 1,
-                                                                                                borderBottom: slotIdx < slots.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
-                                                                                                backgroundColor: isSelected ? "rgba(35,173,164,0.12)" : "transparent",
-                                                                                                transition: "background-color 0.2s ease"
-                                                                                            }}
-                                                                                        >
-                                                                                            <div className="d-flex align-items-center gap-3">
-                                                                                                <span className="text-white" style={{ fontSize: "14px", fontWeight: "500" }}>
-                                                                                                    {slot.startTime} – {slot.endTime}
-                                                                                                </span>
-                                                                                                <span className="text-muted" style={{ fontSize: "12px" }}>
-                                                                                                    {isFull
-                                                                                                        ? t("full") || "Full"
-                                                                                                        : `${slot.availableSeats} left`}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                            <div>
-                                                                                                {isSelected ? (
-                                                                                                    <div
-                                                                                                        className="d-flex align-items-center justify-content-center"
-                                                                                                        style={{ width: "18px", height: "18px", borderRadius: "50%", backgroundColor: "#23ada4" }}
-                                                                                                    >
-                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                                                                                                            <polyline points="20 6 9 17 4 12"></polyline>
-                                                                                                        </svg>
-                                                                                                    </div>
-                                                                                                ) : (
-                                                                                                    <div style={{ width: "18px", height: "18px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.2)" }} />
-                                                                                                )}
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    );
-                                                                                })}
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        ) : (
-                                                            <p className="text-muted text-start" style={{ fontSize: "12px" }}>{t("noUpcomingClasses") || "No weekly schedule configured yet."}</p>
-                                                        )}
-                                                    </div>
-                                                )}
+                                                {selectedPassType === "single" && renderOngoingSlots()}
                                             </div>
 
                                             {/* 1 Month Pass Card */}
                                             {item.oneMonthPassEnabled && (
-                                                <div
-                                                    className="p-3 rounded-3 text-start"
-                                                    onClick={() => {
-                                                        setSelectedPassType("1_month");
-                                                        setSelectedSlots({});
-                                                    }}
-                                                    style={{
-                                                        backgroundColor: selectedPassType === "1_month" ? "rgba(35, 173, 164, 0.1)" : "#111",
-                                                        border: selectedPassType === "1_month" ? "1px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
-                                                        cursor: "pointer",
-                                                        transition: "all 0.2s ease",
-                                                    }}
-                                                >
-                                                    <div className="d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px" }}>
-                                                                {t("oneMonthPass") || "1 Month Pass"}
-                                                            </h6>
-                                                            <p className="mb-0 text-muted" style={{ fontSize: "12px" }}>
-                                                                {t("oneMonthPassDesc") || "Unlimited access to selected slot days for 30 days."}
-                                                            </p>
-                                                        </div>
-                                                        <div className="d-flex align-items-center gap-3">
-                                                            <span className="fw-bold text-white" style={{ color: "#23ada4" }}>{formatPrice(item.oneMonthPassPrice)}</span>
-                                                            {selectedPassType === "1_month" ? (
-                                                                <div className="d-flex align-items-center justify-content-center" style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: "#23ada4" }}>
-                                                                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#fff" }} />
+                                                <div className="position-relative w-100">
+                                                    <div className="position-absolute" style={{ top: "-10px", left: "20px", zIndex: 2 }}>
+                                                        <span className="px-2 py-0.5 rounded-pill" style={{ backgroundColor: "#23ada4", color: "#000", fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                                            {t("mostPopular") || "Most Popular"}
+                                                        </span>
+                                                    </div>
+                                                    <div
+                                                        className="p-3 rounded-3 text-start position-relative"
+                                                        onClick={() => setSelectedPassType("1_month")}
+                                                        style={{
+                                                            backgroundColor: selectedPassType === "1_month" ? "rgba(35, 173, 164, 0.05)" : "#0f0f0f",
+                                                            border: selectedPassType === "1_month" ? "1.5px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
+                                                            cursor: "pointer",
+                                                            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                                                        }}
+                                                    >
+                                                        {selectedPassType === "1_month" && (
+                                                            <span className="position-absolute top-0 start-100 translate-middle d-flex align-items-center justify-content-center" style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: "#23ada4", border: "2px solid #0f0f0f", zIndex: 10 }}>
+                                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                                </svg>
+                                                            </span>
+                                                        )}
+                                                        <div className="d-flex justify-content-between align-items-center">
+                                                            <div className="d-flex align-items-center gap-3">
+                                                                <div className="d-flex align-items-center justify-content-center rounded-3" style={{ width: "48px", height: "48px", backgroundColor: "rgba(35, 173, 164, 0.12)" }}>
+                                                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <rect x="3" y="4" width="18" height="16" rx="2" stroke="#23ada4" strokeWidth="2" />
+                                                                        <line x1="3" y1="9" x2="21" y2="9" stroke="#23ada4" strokeWidth="2" />
+                                                                        <line x1="8" y1="2" x2="8" y2="5" stroke="#23ada4" strokeWidth="2" />
+                                                                        <line x1="16" y1="2" x2="16" y2="5" stroke="#23ada4" strokeWidth="2" />
+                                                                        <circle cx="8" cy="13" r="1.5" fill="#23ada4" />
+                                                                        <circle cx="12" cy="13" r="1.5" fill="#23ada4" />
+                                                                        <circle cx="16" cy="13" r="1.5" fill="#23ada4" />
+                                                                    </svg>
                                                                 </div>
-                                                            ) : (
-                                                                <div style={{ width: "20px", height: "20px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)" }} />
-                                                            )}
+                                                                <div>
+                                                                    <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px" }}>
+                                                                        {t("oneMonthPass") || "1-Month Pass"}
+                                                                    </h6>
+                                                                    <p className="mb-0 text-muted" style={{ fontSize: "12px" }}>
+                                                                        {t("oneMonthPassDesc") || "Valid for 30 days from check-in"}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="d-flex align-items-center gap-3">
+                                                                <span className="fw-bold" style={{ fontSize: "16px", color: selectedPassType === "1_month" ? "#23ada4" : "#fff" }}>
+                                                                    {formatPrice(item.oneMonthPassPrice)}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -709,186 +792,101 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                             {/* 3 Month Pass Card */}
                                             {item.threeMonthPassEnabled && (
                                                 <div
-                                                    className="p-3 rounded-3 text-start"
-                                                    onClick={() => {
-                                                        setSelectedPassType("3_month");
-                                                        setSelectedSlots({});
-                                                    }}
+                                                    className="p-3 rounded-3 text-start position-relative"
+                                                    onClick={() => setSelectedPassType("3_month")}
                                                     style={{
-                                                        backgroundColor: selectedPassType === "3_month" ? "rgba(35, 173, 164, 0.1)" : "#111",
-                                                        border: selectedPassType === "3_month" ? "1px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
+                                                        backgroundColor: selectedPassType === "3_month" ? "rgba(35, 173, 164, 0.05)" : "#0f0f0f",
+                                                        border: selectedPassType === "3_month" ? "1.5px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
                                                         cursor: "pointer",
-                                                        transition: "all 0.2s ease",
+                                                        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                                                     }}
                                                 >
+                                                    {selectedPassType === "3_month" && (
+                                                        <span className="position-absolute top-0 start-100 translate-middle d-flex align-items-center justify-content-center" style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: "#23ada4", border: "2px solid #0f0f0f", zIndex: 10 }}>
+                                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                                            </svg>
+                                                        </span>
+                                                    )}
                                                     <div className="d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px" }}>
-                                                                {t("threeMonthPass") || "3 Month Pass"}
-                                                            </h6>
-                                                            <p className="mb-0 text-muted" style={{ fontSize: "12px" }}>
-                                                                {t("threeMonthPassDesc") || "Unlimited access to selected slot days for 90 days."}
-                                                            </p>
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            <div className="d-flex align-items-center justify-content-center rounded-3" style={{ width: "48px", height: "48px", backgroundColor: "rgba(35, 173, 164, 0.12)" }}>
+                                                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M12 3L14.5 8.5L20 11L14.5 13.5L12 19L9.5 13.5L4 11L9.5 8.5L12 3Z" stroke="#23ada4" strokeWidth="2" strokeLinejoin="round" fill="none" />
+                                                                    <path d="M5 3L6 5L8 6L6 7L5 9L4 7L2 6L4 5L5 3Z" fill="#23ada4" />
+                                                                </svg>
+                                                            </div>
+                                                            <div>
+                                                                <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px" }}>
+                                                                    {t("threeMonthPass") || "3-Month Pass"}
+                                                                </h6>
+                                                                <p className="mb-0 text-muted" style={{ fontSize: "12px" }}>
+                                                                    {t("threeMonthPassDesc") || "Valid for 90 days from check-in"}
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                         <div className="d-flex align-items-center gap-3">
-                                                            <span className="fw-bold text-white" style={{ color: "#23ada4" }}>{formatPrice(item.threeMonthPassPrice)}</span>
-                                                            {selectedPassType === "3_month" ? (
-                                                                <div className="d-flex align-items-center justify-content-center" style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: "#23ada4" }}>
-                                                                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#fff" }} />
-                                                                </div>
-                                                            ) : (
-                                                                <div style={{ width: "20px", height: "20px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)" }} />
-                                                            )}
+                                                            <span className="fw-bold" style={{ fontSize: "16px", color: selectedPassType === "3_month" ? "#23ada4" : "#fff" }}>
+                                                                {formatPrice(item.threeMonthPassPrice)}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
+                                ) : item.enrollmentType === "Ongoing" ? (
+                                    <>
+                                        <h5 className="fw-bold mb-3 text-start text-white" style={{ fontSize: "16px", letterSpacing: "0.5px" }}>
+                                            {t("selectWeeklySchedule") || "Select Weekly Schedule"}
+                                        </h5>
+                                        {renderOngoingSlots(false)}
+                                    </>
                                 ) : (
-                                    /* Passes are NOT enabled: render slots list normally at root level */
-                                    item.enrollmentType === "Ongoing" ? (
-                                        <>
-                                            <h5 className="fw-bold mb-3 text-start">
-                                                {t("selectWeeklySchedule") || "Select Weekly Schedule"}
-                                            </h5>
-                                            {item.weeklySchedule && Object.keys(item.weeklySchedule).length > 0 ? (
-                                                <div className="d-flex flex-column gap-3 mb-4">
-                                                    {Object.entries(item.weeklySchedule).map(([day, dayData]) => {
-                                                        const slots = Array.isArray(dayData) ? dayData : (dayData.slots || []);
-                                                        const dateStr = dayData.date || "";
-                                                        return (
-                                                            <div key={day} className="mb-1">
-                                                                <h6
-                                                                    className="fw-bold mb-2 text-start text-white"
-                                                                    style={{ fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.5px" }}
-                                                                >
-                                                                    {(() => {
-                                                                        const dayPrefix = day.split(" ")[0];
-                                                                        const datePart = dateStr ? ` (${dateStr})` : (day.includes("(") ? day.substring(day.indexOf("(")) : "");
-                                                                        return (dayPrefix === "Mon" ? "Monday" :
-                                                                            dayPrefix === "Tue" ? "Tuesday" :
-                                                                                dayPrefix === "Wed" ? "Wednesday" :
-                                                                                    dayPrefix === "Thu" ? "Thursday" :
-                                                                                        dayPrefix === "Fri" ? "Friday" :
-                                                                                            dayPrefix === "Sat" ? "Saturday" : "Sunday") + datePart;
-                                                                    })()}
-                                                                </h6>
-                                                                <div
-                                                                    className="rounded-3 overflow-hidden"
-                                                                    style={{ border: "1px solid rgba(255,255,255,0.15)", backgroundColor: "#111" }}
-                                                                >
-                                                                    {slots.map((slot, slotIdx) => {
-                                                                        const isSelected = selectedSlots[day] === slot.batchId?.toString();
-                                                                        const isFull = slot.isFull || slot.availableSeats <= 0;
-                                                                        return (
-                                                                            <div
-                                                                                key={`${day}-${slot.batchId}-${slotIdx}`}
-                                                                                className="p-3 d-flex justify-content-between align-items-center"
-                                                                                onClick={() => {
-                                                                                    if (!isFull) {
-                                                                                        const slotBatchId = slot.batchId?.toString();
-                                                                                        setSelectedSlots(prev => {
-                                                                                            const next = { ...prev };
-                                                                                            if (next[day] === slotBatchId) {
-                                                                                                delete next[day];
-                                                                                            } else {
-                                                                                                next[day] = slotBatchId;
-                                                                                            }
-                                                                                            return next;
-                                                                                        });
-                                                                                        if (qty > slot.availableSeats) setQty(slot.availableSeats);
-                                                                                    }
-                                                                                }}
-                                                                                style={{
-                                                                                    cursor: isFull ? "not-allowed" : "pointer",
-                                                                                    opacity: isFull ? 0.6 : 1,
-                                                                                    borderBottom: slotIdx < slots.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none",
-                                                                                    backgroundColor: isSelected ? "rgba(35,173,164,0.08)" : "transparent",
-                                                                                    transition: "background-color 0.2s ease"
-                                                                                }}
-                                                                            >
-                                                                                <div className="d-flex align-items-center gap-4">
-                                                                                    <span className="text-white" style={{ fontSize: "15px", fontWeight: "500" }}>
-                                                                                        {slot.startTime} – {slot.endTime}
-                                                                                    </span>
-                                                                                    <span className="text-muted" style={{ fontSize: "13px" }}>
-                                                                                        {isFull
-                                                                                            ? t("full") || "Full"
-                                                                                            : `${slot.availableSeats} ${t("seatsLeft") || "seats left"}`}
-                                                                                    </span>
-                                                                                </div>
-                                                                                <div>
-                                                                                    {isSelected ? (
-                                                                                        <div
-                                                                                            className="d-flex align-items-center justify-content-center"
-                                                                                            style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: "#23ada4" }}
-                                                                                        >
-                                                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                                                                                                <polyline points="20 6 9 17 4 12"></polyline>
-                                                                                            </svg>
-                                                                                        </div>
-                                                                                    ) : (
-                                                                                        <div style={{ width: "20px", height: "20px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)" }} />
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            ) : (
-                                                <p className="text-muted text-start">{t("noUpcomingClasses") || "No weekly schedule configured yet."}</p>
-                                            )}
-                                        </>
-                                    ) : (
-                                        /* ── Fixed Start: batch list ── */
-                                        <div className="d-flex flex-column gap-3 mb-4">
-                                            {item.batches?.map((batch) => {
-                                                const isSelected = selectedBatchId === batch._id;
-                                                const isFull = batch.availableSeats <= 0;
-                                                return (
-                                                    <div
-                                                        key={batch._id}
-                                                        className="p-3 rounded-3 text-start"
-                                                        onClick={() => {
-                                                            if (!isFull) {
-                                                                setSelectedBatchId(batch._id);
-                                                                if (qty > batch.availableSeats) setQty(batch.availableSeats);
-                                                            }
-                                                        }}
-                                                        style={{
-                                                            backgroundColor: isSelected ? "rgba(35, 173, 164, 0.1)" : "#111",
-                                                            border: isSelected ? "1px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
-                                                            cursor: isFull ? "not-allowed" : "pointer",
-                                                            opacity: isFull ? 0.6 : 1,
-                                                            transition: "all 0.2s ease",
-                                                        }}
-                                                    >
-                                                        <div className="d-flex justify-content-between align-items-start">
-                                                            <div>
-                                                                <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "16px" }}>
-                                                                    {batch.batchName || "Schedule Slot"}
-                                                                </h6>
-                                                                <p className="mb-0 text-muted" style={{ fontSize: "13px" }}>
-                                                                    {batch.days?.join(", ")} • {batch.startTime} – {batch.endTime}
-                                                                </p>
-                                                            </div>
-                                                            <div className="text-end">
-                                                                <span className={`badge ${isFull ? "bg-danger" : "bg-success"}`} style={{ fontSize: "12px" }}>
-                                                                    {isFull ? t("full") || "Full" : `${batch.availableSeats} ${t("seatsLeft") || "seats left"}`}
-                                                                </span>
-                                                            </div>
+                                    /* ── Fixed Start: batch list ── */
+                                    <div className="d-flex flex-column gap-3 mb-4">
+                                        {item.batches?.map((batch) => {
+                                            const isSelected = selectedBatchId === batch._id;
+                                            const isFull = batch.availableSeats <= 0;
+                                            return (
+                                                <div
+                                                    key={batch._id}
+                                                    className="p-3 rounded-3 text-start"
+                                                    onClick={() => {
+                                                        if (!isFull) {
+                                                            setSelectedBatchId(batch._id);
+                                                            if (qty > batch.availableSeats) setQty(batch.availableSeats);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        backgroundColor: isSelected ? "rgba(35, 173, 164, 0.1)" : "#111",
+                                                        border: isSelected ? "1px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
+                                                        cursor: isFull ? "not-allowed" : "pointer",
+                                                        opacity: isFull ? 0.6 : 1,
+                                                        transition: "all 0.2s ease",
+                                                    }}
+                                                >
+                                                    <div className="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "16px" }}>
+                                                                {batch.batchName || "Schedule Slot"}
+                                                            </h6>
+                                                            <p className="mb-0 text-muted" style={{ fontSize: "13px" }}>
+                                                                {batch.days?.join(", ")} • {batch.startTime} – {batch.endTime}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-end">
+                                                            <span className={`badge ${isFull ? "bg-danger" : "bg-success"}`} style={{ fontSize: "12px" }}>
+                                                                {isFull ? t("full") || "Full" : `${batch.availableSeats} ${t("seatsLeft") || "seats left"}`}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )
-                                )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )
+                                }
 
 
                                 {type !== "COURSE" && (
@@ -906,10 +904,11 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                             <button
                                                 className="btn text-white fs-4"
                                                 onClick={() => {
-                                                    // For Ongoing, cap by min available across selected slots
                                                     const maxQty = item?.enrollmentType === "Ongoing"
-                                                        ? Math.min(...Object.entries(selectedSlots).map(([d, bId]) => {
-                                                            const s = item.weeklySchedule?.[d]?.find(sl => sl.batchId?.toString() === bId);
+                                                        ? Math.min(...Object.values(selectedSlots).map((info) => {
+                                                            const dayData = item.weeklySchedule?.[info.selectedDay];
+                                                            const slotsArray = Array.isArray(dayData) ? dayData : (dayData?.slots || []);
+                                                            const s = slotsArray.find(sl => sl.batchId?.toString() === info.batchId?.toString());
                                                             return s ? s.availableSeats : 1;
                                                         }))
                                                         : (item.batches?.find(b => b._id === selectedBatchId)?.availableSeats ?? 1);
