@@ -104,7 +104,7 @@ function Page() {
     },
     enrollmentType: "Ongoing",
     startDate: "",
-    endDate: "",
+    endDate: "2099-12-31",
     totalSessions: "",
     batches: [],
     refundPolicy: "",
@@ -116,7 +116,7 @@ function Page() {
     isDraft: false,
   });
 
-  const [noEndDate, setNoEndDate] = useState(false);
+  const [noEndDate, setNoEndDate] = useState(true);
 
   // Track eventData helper context internally for LocationMap dependency compatibility
   const [eventData, setEventData] = useState({
@@ -633,7 +633,8 @@ function Page() {
                     className={`custom-btn ${formData.enrollmentType === "Ongoing" ? "" : "outline-btn"}`}
                     style={{ borderRadius: "20px", padding: "10px 24px", fontSize: "14px" }}
                     onClick={() => {
-                      setFormData(prev => ({ ...prev, enrollmentType: "Ongoing" }));
+                      setFormData(prev => ({ ...prev, enrollmentType: "Ongoing", endDate: "2099-12-31" }));
+                      setNoEndDate(true);
                     }}
                     disabled={!!courseId}
                   >
@@ -644,7 +645,8 @@ function Page() {
                     className={`custom-btn ${formData.enrollmentType === "fixedStart" ? "" : "outline-btn"}`}
                     style={{ borderRadius: "20px", padding: "10px 24px", fontSize: "14px" }}
                     onClick={() => {
-                      setFormData(prev => ({ ...prev, enrollmentType: "fixedStart" }));
+                      setFormData(prev => ({ ...prev, enrollmentType: "fixedStart", endDate: "" }));
+                      setNoEndDate(false);
                     }}
                     disabled={!!courseId}
                   >
@@ -826,49 +828,23 @@ function Page() {
                     </div>
                   </Col>
 
-                  {formData.enrollmentType === "Ongoing" ? (
+                  {formData.enrollmentType === "Ongoing" ?
                     <Col md={6} className="mb-3 d-flex flex-column justify-content-center">
                       <div className="form-check form-switch pt-3">
                         <input
                           className="form-check-input"
                           type="checkbox"
                           id="no-end-date-toggle"
-                          checked={noEndDate}
-                          onChange={(e) => {
-                            setNoEndDate(e.target.checked);
-                            if (e.target.checked) {
-                              setFormData(prev => ({ ...prev, endDate: "2099-12-31" }));
-                            } else {
-                              setFormData(prev => ({ ...prev, endDate: "" }));
-                            }
-                          }}
-                          style={{ cursor: "pointer" }}
+                          checked={true}
+                          disabled
+                          style={{ cursor: "not-allowed" }}
                         />
-                        <label className="form-check-label text-white ms-2" htmlFor="no-end-date-toggle" style={{ cursor: "pointer" }}>
+                        <label className="form-check-label text-white ms-2" htmlFor="no-end-date-toggle" style={{ cursor: "not-allowed" }}>
                           No end date (Ongoing indefinitely)
                         </label>
                       </div>
-
-                      {!noEndDate && (
-                        <div className="event-frm-bx mt-2">
-                          <label className="form-label">End Date <span className="text-danger">*</span></label>
-                          <div className="date-input-wrapper">
-                            <input
-                              type="date"
-                              className="date-input form-control"
-                              value={formData.endDate === "2099-12-31" ? "" : formData.endDate}
-                              onChange={handleChange}
-                              name="endDate"
-                              min={formData.startDate || new Date().toISOString().split("T")[0]}
-                            />
-                            <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
-                              <img src="/img/white-calendar.svg" alt="calendar" />
-                            </span>
-                          </div>
-                        </div>
-                      )}
                     </Col>
-                  ) : (
+                    :
                     <>
                       <Col md={6} className="mb-3">
                         <div className="event-frm-bx">
@@ -903,7 +879,7 @@ function Page() {
                         </div>
                       </Col>
                     </>
-                  )}
+                  }
                 </Row>
 
                 <h5 className="text-white mb-3">Location</h5>
