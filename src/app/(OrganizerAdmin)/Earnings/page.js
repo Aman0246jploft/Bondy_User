@@ -22,7 +22,7 @@ function Page() {
     REFUND: t("refund"),
     ADJUSTMENT: t("adjustment"),
     REFERRAL: t("referralReward"),
-    PURCHASE:t("purchase")
+    PURCHASE: t("purchase"),
   };
 
   const TYPE_BADGE = {
@@ -32,7 +32,7 @@ function Page() {
     REFUND: "cancel",
     ADJUSTMENT: "upcoming",
     REFERRAL: "complete",
-    PURCHASE:"purchase"
+    PURCHASE: "purchase",
   };
 
   const formatAmount = (amount) => {
@@ -115,22 +115,35 @@ function Page() {
       return;
     }
     if (amount < minPayout) {
-      toast.error(t("minPayoutAmount", { amount: minPayout.toLocaleString() }) || `Minimum payout amount is ₮${minPayout.toLocaleString()}`);
+      toast.error(
+        t("minPayoutAmount", { amount: minPayout.toLocaleString() }) ||
+          `Minimum payout amount is ₮${minPayout.toLocaleString()}`,
+      );
       return;
     }
     if (amount > earnings.payoutBalance) {
-      toast.error(t("amountExceedsBalance") || "Amount exceeds available balance");
+      toast.error(
+        t("amountExceedsBalance") || "Amount exceeds available balance",
+      );
       return;
     }
     if (!payoutReference.trim()) {
-      toast.error(t("paymentRefRequired") || "Payment reference / bank account details are required");
+      toast.error(
+        t("paymentRefRequired") ||
+          "Payment reference / bank account details are required",
+      );
       return;
     }
     setPayoutLoading(true);
     try {
-      const res = await organizerApi.requestPayout(amount, payoutReference.trim());
+      const res = await organizerApi.requestPayout(
+        amount,
+        payoutReference.trim(),
+      );
       if (res?.status) {
-        toast.success(t("payoutRequestSubmitted") || "Payout request submitted!");
+        toast.success(
+          t("payoutRequestSubmitted") || "Payout request submitted!",
+        );
         setShowPayoutModal(false);
         setPayoutAmount("");
         setPayoutReference("");
@@ -167,12 +180,18 @@ function Page() {
   const totalPages = Math.max(1, Math.ceil(filteredHistory.length / PAGE_SIZE));
   const paginatedHistory = filteredHistory.slice(
     (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
+    currentPage * PAGE_SIZE,
   );
 
   // Reset to page 1 when filters change
-  const handleSearch = (val) => { setSearch(val); setCurrentPage(1); };
-  const handleTypeFilter = (val) => { setTypeFilter(val); setCurrentPage(1); };
+  const handleSearch = (val) => {
+    setSearch(val);
+    setCurrentPage(1);
+  };
+  const handleTypeFilter = (val) => {
+    setTypeFilter(val);
+    setCurrentPage(1);
+  };
 
   return (
     <div>
@@ -186,8 +205,7 @@ function Page() {
           <button
             className="common_btn"
             onClick={() => setShowPayoutModal(true)}
-            disabled={earnings.payoutBalance <= 0}
-          >
+            disabled={earnings.payoutBalance <= 0}>
             {t("requestPayout")}
           </button>
         </div>
@@ -218,7 +236,8 @@ function Page() {
             <div className="earning-cards">
               <h5>{t("referralCredits")}</h5>
               <h4>
-                ₮{earnings.walletHistory
+                ₮
+                {earnings.walletHistory
                   .filter((w) => w.type === "REFERRAL")
                   .reduce((s, w) => s + (w.amount || 0), 0)
                   .toLocaleString()}
@@ -239,11 +258,12 @@ function Page() {
                 className="form-control"
                 style={{ maxWidth: 180 }}
                 value={typeFilter}
-                onChange={(e) => handleTypeFilter(e.target.value)}
-              >
+                onChange={(e) => handleTypeFilter(e.target.value)}>
                 <option value="ALL">{t("allTypes")}</option>
                 {Object.entries(TYPE_LABEL).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
                 ))}
               </select>
               {/* Search */}
@@ -256,7 +276,11 @@ function Page() {
                   onChange={(e) => handleSearch(e.target.value)}
                 />
                 <button type="button">
-                  <img src="/img/org-img/search-white.svg" width={16} alt="search" />
+                  <img
+                    src="/img/org-img/search-white.svg"
+                    width={16}
+                    alt="search"
+                  />
                 </button>
               </div>
             </div>
@@ -283,7 +307,10 @@ function Page() {
                   </tr>
                 ) : paginatedHistory.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-4" style={{ color: "#999" }}>
+                    <td
+                      colSpan={6}
+                      className="text-center py-4"
+                      style={{ color: "#999" }}>
                       {search || typeFilter !== "ALL"
                         ? t("noMatchingTransactions")
                         : t("noTransactionsYet")}
@@ -294,21 +321,32 @@ function Page() {
                     <tr key={item._id || i}>
                       <td>{formatDate(item.createdAt)}</td>
                       <td>
-                        <div className="title">{item.description || TYPE_LABEL[item.type] || item.type}</div>
-                        <div className="sub">{TYPE_LABEL[item.type] || item.type}</div>
+                        <div className="title">
+                          {item.description ||
+                            TYPE_LABEL[item.type] ||
+                            item.type}
+                        </div>
+                        <div className="sub">
+                          {TYPE_LABEL[item.type] || item.type}
+                        </div>
                       </td>
-                      <td className="trx" style={{ fontSize: 12, color: "#888" }}>
+                      <td
+                        className="trx"
+                        style={{ fontSize: 12, color: "#888" }}>
                         #{String(item._id).slice(-8).toUpperCase()}
                       </td>
                       <td>
-                        <span className={`status-badge ${TYPE_BADGE[item.type] || "pending"}`}>
+                        <span
+                          className={`status-badge ${TYPE_BADGE[item.type] || "pending"}`}>
                           {TYPE_LABEL[item.type] || item.type}
                         </span>
                       </td>
                       <td
                         className="amount"
-                        style={{ color: item.amount < 0 ? "#e74c3c" : "#27ae60", fontWeight: 600 }}
-                      >
+                        style={{
+                          color: item.amount < 0 ? "#e74c3c" : "#27ae60",
+                          fontWeight: 600,
+                        }}>
                         {formatAmount(item.amount)}
                       </td>
                       <td>₮{(item.balanceAfter || 0).toLocaleString()}</td>
@@ -321,12 +359,20 @@ function Page() {
 
           {/* ─── Pagination ─── */}
           {!loading && filteredHistory.length > PAGE_SIZE && (
-            <div className="d-flex justify-content-between align-items-center px-3 py-3" style={{ borderTop: "1px solid #2a2a2a" }}>
+            <div
+              className="d-flex justify-content-between align-items-center px-3 py-3"
+              style={{ borderTop: "1px solid #2a2a2a" }}>
               <span style={{ color: "#888", fontSize: 13 }}>
                 {t("showingTransactions", {
-                  start: Math.min((currentPage - 1) * PAGE_SIZE + 1, filteredHistory.length),
-                  end: Math.min(currentPage * PAGE_SIZE, filteredHistory.length),
-                  total: filteredHistory.length
+                  start: Math.min(
+                    (currentPage - 1) * PAGE_SIZE + 1,
+                    filteredHistory.length,
+                  ),
+                  end: Math.min(
+                    currentPage * PAGE_SIZE,
+                    filteredHistory.length,
+                  ),
+                  total: filteredHistory.length,
                 })}
               </span>
               <div className="d-flex gap-2">
@@ -334,12 +380,16 @@ function Page() {
                   className="common_btn"
                   style={{ padding: "6px 14px", fontSize: 13 }}
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => p - 1)}
-                >
+                  onClick={() => setCurrentPage((p) => p - 1)}>
                   ← {t("previous")}
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                  .filter(
+                    (p) =>
+                      p === 1 ||
+                      p === totalPages ||
+                      Math.abs(p - currentPage) <= 1,
+                  )
                   .reduce((acc, p, idx, arr) => {
                     if (idx > 0 && p - arr[idx - 1] > 1) acc.push("...");
                     acc.push(p);
@@ -347,7 +397,11 @@ function Page() {
                   }, [])
                   .map((p, idx) =>
                     p === "..." ? (
-                      <span key={`ellipsis-${idx}`} style={{ alignSelf: "center", color: "#666" }}>...</span>
+                      <span
+                        key={`ellipsis-${idx}`}
+                        style={{ alignSelf: "center", color: "#666" }}>
+                        ...
+                      </span>
                     ) : (
                       <button
                         key={p}
@@ -357,18 +411,16 @@ function Page() {
                           padding: "6px 12px",
                           fontSize: 13,
                           opacity: currentPage === p ? 1 : 0.5,
-                        }}
-                      >
+                        }}>
                         {p}
                       </button>
-                    )
+                    ),
                   )}
                 <button
                   className="common_btn"
                   style={{ padding: "6px 14px", fontSize: 13 }}
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => p + 1)}
-                >
+                  onClick={() => setCurrentPage((p) => p + 1)}>
                   {t("next")} →
                 </button>
               </div>
@@ -378,17 +430,29 @@ function Page() {
       </div>
 
       {/* ─── Payout Request Modal ──────────────────────────────────────────── */}
-      <Modal show={showPayoutModal} onHide={() => { setShowPayoutModal(false); setPayoutAmount(""); setPayoutReference(""); }} centered>
-        <Modal.Header closeButton>
+      <Modal
+        show={showPayoutModal}
+        onHide={() => {
+          setShowPayoutModal(false);
+          setPayoutAmount("");
+          setPayoutReference("");
+        }}
+        centered>
+        <Modal.Header className="p-0 mb-4 pb-3" closeButton>
           <Modal.Title>{t("requestPayout")}</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleRequestPayout}>
-          <Modal.Body>
+          <Modal.Body className="p-0">
             <p style={{ color: "#999", fontSize: 14 }}>
               {t("availableBalance")}:{" "}
-              <strong style={{ color: "#fff" }}>₮{earnings.payoutBalance.toLocaleString()}</strong>
+              <strong style={{ color: "#fff" }}>
+                ₮{earnings.payoutBalance.toLocaleString()}
+              </strong>
               <span style={{ marginLeft: 12, color: "#aaa" }}>
-                {t("min") || "Minimum"}: <strong style={{ color: "#fff" }}>₮{minPayout.toLocaleString()}</strong>
+                {t("min") || "Minimum"}:{" "}
+                <strong style={{ color: "#fff" }}>
+                  ₮{minPayout.toLocaleString()}
+                </strong>
               </span>
             </p>
 
@@ -399,7 +463,9 @@ function Page() {
                 type="number"
                 min={minPayout}
                 max={earnings.payoutBalance}
-                placeholder={t("minPayoutAmount", { amount: minPayout.toLocaleString() })}
+                placeholder={t("minPayoutAmount", {
+                  amount: minPayout.toLocaleString(),
+                })}
                 value={payoutAmount}
                 onChange={(e) => setPayoutAmount(e.target.value)}
                 required
@@ -418,7 +484,10 @@ function Page() {
 
             {/* Payment Reference */}
             <Form.Group className="mb-3">
-              <Form.Label>{t("payoutRefLabel")} <span style={{ color: "#e74c3c" }}>*</span></Form.Label>
+              <Form.Label>
+                {t("payoutRefLabel")}{" "}
+                <span style={{ color: "#e74c3c" }}>*</span>
+              </Form.Label>
               <Form.Control
                 type="text"
                 placeholder={t("payoutRefPlaceholder")}
@@ -432,22 +501,35 @@ function Page() {
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => { setShowPayoutModal(false); setPayoutAmount(""); setPayoutReference(""); }}>
+            <button
+              className="outline-btn py-2 px-4"
+              onClick={() => {
+                setShowPayoutModal(false);
+                setPayoutAmount("");
+                setPayoutReference("");
+              }}>
               {t("discard")}
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
-              className="common_btn"
+              className="common_btn py-2"
               disabled={
                 payoutLoading ||
                 !payoutAmount ||
                 !payoutReference.trim() ||
                 Number(payoutAmount) < minPayout ||
                 Number(payoutAmount) > earnings.payoutBalance
-              }
-            >
-              {payoutLoading ? <Spinner animation="border" size="sm" /> : t("payoutRequestSubmitted") && t("submitTicket") /** Reusing submitTicket as Submit Request fallback */ || "Submit Request"}
-            </Button>
+              }>
+              {payoutLoading ? (
+                <Spinner animation="border" size="sm" />
+              ) : (
+                (t("payoutRequestSubmitted") &&
+                  t(
+                    "submitTicket",
+                  )) /** Reusing submitTicket as Submit Request fallback */ ||
+                "Submit Request"
+              )}
+            </button>
           </Modal.Footer>
         </Form>
       </Modal>

@@ -10,7 +10,12 @@ import { useLanguage } from "@/context/LanguageContext";
 import { formatTime } from "@/utils/timeHelper";
 import toast from "react-hot-toast";
 
-const ExpandableText = ({ text, limit = 100, forceExpanded = false, hideToggle = false }) => {
+const ExpandableText = ({
+  text,
+  limit = 100,
+  forceExpanded = false,
+  hideToggle = false,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useLanguage();
 
@@ -34,9 +39,10 @@ const ExpandableText = ({ text, limit = 100, forceExpanded = false, hideToggle =
               fontSize: "0.875rem",
               padding: 0,
               textDecoration: "underline",
-            }}
-          >
-            {isExpanded ? t("viewLess") || "View Less" : t("viewMore") || "View More"}
+            }}>
+            {isExpanded
+              ? t("viewLess") || "View Less"
+              : t("viewMore") || "View More"}
           </button>
         )}
       </p>
@@ -124,7 +130,11 @@ function TicketDetailsContent() {
       case "CANCELLED":
       case "FAILED":
       case "REFUND_INITIATED":
-        return <span className="status-badge cancel">{t(status.toLowerCase()) || status}</span>;
+        return (
+          <span className="status-badge cancel">
+            {t(status.toLowerCase()) || status}
+          </span>
+        );
       default:
         return <span className="status-badge pending">{status}</span>;
     }
@@ -137,13 +147,15 @@ function TicketDetailsContent() {
       weekday: "short",
       day: "numeric",
       month: "short",
-      year: "numeric"
+      year: "numeric",
     });
   };
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "400px" }}>
         <Spinner animation="border" variant="teal" />
       </div>
     );
@@ -163,14 +175,17 @@ function TicketDetailsContent() {
   const isEvent = ticketInfo.bookingType === "EVENT";
   const item = isEvent ? ticketInfo.eventId : ticketInfo.courseId;
   const title = isEvent ? item?.eventTitle : item?.courseTitle;
-  const selectedSchedule = !isEvent && item?.schedules?.find(s => s._id === ticketInfo.scheduleId);
+  const selectedSchedule =
+    !isEvent && item?.schedules?.find((s) => s._id === ticketInfo.scheduleId);
 
   const fullAddress = [
     item?.venueAddress?.address,
     item?.venueAddress?.city,
     item?.venueAddress?.state,
-    item?.venueAddress?.country
-  ].filter(Boolean).join(", ");
+    item?.venueAddress?.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <div className="ticket-details-wrapper">
@@ -181,7 +196,9 @@ function TicketDetailsContent() {
         </Link>
       </div>
 
-      <div ref={ticketRef} className="cards ticket-details-card p-0 overflow-hidden">
+      <div
+        ref={ticketRef}
+        className="cards ticket-details-card p-0 overflow-hidden">
         <div className="p-4 p-md-4 p-xl-5">
           <div className="ticket-hero-grid">
             <div>
@@ -204,27 +221,39 @@ function TicketDetailsContent() {
                 <div className="ticket-header-block">
                   <div className="ticket-heading-row">
                     <div className="ticket-heading-copy">
-                      <div className="mb-2">{getStatusBadge(ticketInfo?.status)}</div>
+                      <div className="mb-2">
+                        {getStatusBadge(ticketInfo?.status)}
+                      </div>
                       <h1 className="ticket-page-title">{title || "N/A"}</h1>
                       <p className="ticket-subtitle mb-0">
-                        {isEvent ? (t("eventDetails") || "Event details") : (t("courseDetails") || "Course details")}
+                        {isEvent
+                          ? t("eventDetails") || "Event details"
+                          : t("courseDetails") || "Course details"}
                       </p>
                     </div>
-                    <div className="ticket-action-group" data-html2canvas-ignore="true">
+                    <div
+                      className="ticket-action-group"
+                      data-html2canvas-ignore="true">
                       <button
                         className="common_btn d-flex align-items-center justify-content-center"
                         type="button"
-                        onClick={handleDownloadTicket}
-                      >
-                        <img src="/img/download-arrow.svg" className="me-2" alt="" />
+                        onClick={handleDownloadTicket}>
+                        <img
+                          src="/img/download-arrow.svg"
+                          className="me-2"
+                          alt=""
+                        />
                         {t("downloadTicket") || "Download PDF"}
                       </button>
                       <button
                         className="common_btn d-flex align-items-center justify-content-center"
                         type="button"
-                        onClick={handleShare}
-                      >
-                        <img src="/img/share-icon.svg" className="me-2" alt="" />
+                        onClick={handleShare}>
+                        <img
+                          src="/img/share-icon.svg"
+                          className="me-2"
+                          alt=""
+                        />
                         {t("share") || "Share"}
                       </button>
                     </div>
@@ -234,7 +263,11 @@ function TicketDetailsContent() {
                 <div className="ticket-summary-grid">
                   <div className="ticket-summary-item">
                     <h6>{t("orderTrackingCode") || "Booking ID"}</h6>
-                    <p className="ticket-text-wrap" title={ticketInfo?.bookingId}>{ticketInfo?.bookingId}</p>
+                    <p
+                      className="ticket-text-wrap"
+                      title={ticketInfo?.bookingId}>
+                      {ticketInfo?.bookingId}
+                    </p>
                   </div>
                   <div className="ticket-summary-item">
                     <h6>{t("orderDate") || "Booking Date"}</h6>
@@ -242,16 +275,25 @@ function TicketDetailsContent() {
                   </div>
                   <div className="ticket-summary-item">
                     <h6>{t("ticketType") || "Ticket"}</h6>
-                    <p className="ticket-text-wrap">{ticketInfo?.ticketName || item?.ticketName || item?.enrollmentType || "General"}</p>
+                    <p className="ticket-text-wrap">
+                      {ticketInfo?.ticketName ||
+                        item?.ticketName ||
+                        item?.enrollmentType ||
+                        "General"}
+                    </p>
                   </div>
                   <div className="ticket-summary-item">
                     <h6>{t("quantity") || "Qty"}</h6>
-                    <p>{ticketInfo?.qty} {t("ticketsSuffix") || "Tickets"}</p>
+                    <p>
+                      {ticketInfo?.qty} {t("ticketsSuffix") || "Tickets"}
+                    </p>
                   </div>
                   {ticketInfo?.passExpiryDate && (
                     <div className="ticket-summary-item">
                       <h6>{t("expiryDate") || "Expiry Date"}</h6>
-                      <p className="text-warning fw-bold">{formatEventDate(ticketInfo.passExpiryDate)}</p>
+                      <p className="text-warning fw-bold">
+                        {formatEventDate(ticketInfo.passExpiryDate)}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -270,32 +312,60 @@ function TicketDetailsContent() {
                     <img src="/img/Map-Point.svg" alt="" className="me-2" />
                     {t("location") || "Location"}
                   </h6>
-                  <ExpandableText text={fullAddress} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
+                  <ExpandableText
+                    text={fullAddress}
+                    forceExpanded={isSharingImage}
+                    hideToggle={isSharingImage}
+                  />
                 </div>
               </Col>
 
               <Col md={6}>
                 <div className="info-box ticket-panel-box">
                   <h6>
-                    <img src="/img/white-calendar.svg" alt="" className="me-2" />
+                    <img
+                      src="/img/white-calendar.svg"
+                      alt=""
+                      className="me-2"
+                    />
                     {t("timeSlots") || "Time Slots"}
                   </h6>
                   {isEvent ? (
                     <p>
                       <strong>{formatEventDate(item?.startDate)}</strong>
                       <br />
-                      <span>{formatTime(item?.startTime, true, language)} - {formatTime(item?.endTime, true, language)}</span>
+                      <span>
+                        {formatTime(item?.startTime, true, language)} -{" "}
+                        {formatTime(item?.endTime, true, language)}
+                      </span>
                     </p>
                   ) : (
                     <p>
                       {selectedSchedule ? (
                         <>
-                          <strong>{formatEventDate(selectedSchedule.startDate)} - {formatEventDate(selectedSchedule.endDate)}</strong>
+                          <strong>
+                            {formatEventDate(selectedSchedule.startDate)} -{" "}
+                            {formatEventDate(selectedSchedule.endDate)}
+                          </strong>
                           <br />
-                          <span>{formatTime(selectedSchedule.startTime, true, language)} - {formatTime(selectedSchedule.endTime, true, language)}</span>
+                          <span>
+                            {formatTime(
+                              selectedSchedule.startTime,
+                              true,
+                              language,
+                            )}{" "}
+                            -{" "}
+                            {formatTime(
+                              selectedSchedule.endTime,
+                              true,
+                              language,
+                            )}
+                          </span>
                         </>
                       ) : (
-                        <span>{t("multipleSchedules") || "Check course schedule"}</span>
+                        <span>
+                          {t("multipleSchedules") || "Check course schedule"}
+                        </span>
                       )}
                     </p>
                   )}
@@ -305,7 +375,12 @@ function TicketDetailsContent() {
               <Col md={12}>
                 <div className="info-box ticket-panel-box">
                   <h6>{t("description") || "Description"}</h6>
-                  <ExpandableText text={item?.shortdesc || item?.longdesc} limit={200} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
+                  <ExpandableText
+                    text={item?.shortdesc || item?.longdesc}
+                    limit={200}
+                    forceExpanded={isSharingImage}
+                    hideToggle={isSharingImage}
+                  />
                 </div>
               </Col>
 
@@ -315,7 +390,11 @@ function TicketDetailsContent() {
                     <Col md={6}>
                       <div className="info-box ticket-panel-box">
                         <h6>{t("ageRestriction") || "Age Restriction"}</h6>
-                        <p>{item.ageRestriction.type === "MIN_AGE" ? `${t("minAge") || "Min age"}: ${item.ageRestriction.minAge}+` : t("noRestriction")}</p>
+                        <p>
+                          {item.ageRestriction.type === "MIN_AGE"
+                            ? `${t("minAge") || "Min age"}: ${item.ageRestriction.minAge}+`
+                            : t("noRestriction")}
+                        </p>
                       </div>
                     </Col>
                   )}
@@ -331,7 +410,12 @@ function TicketDetailsContent() {
                     <Col md={12}>
                       <div className="info-box ticket-panel-box">
                         <h6>{t("addOns") || "Add-ons"}</h6>
-                        <ExpandableText text={item.addOns} limit={150} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
+                        <ExpandableText
+                          text={item.addOns}
+                          limit={150}
+                          forceExpanded={isSharingImage}
+                          hideToggle={isSharingImage}
+                        />
                       </div>
                     </Col>
                   )}
@@ -342,7 +426,12 @@ function TicketDetailsContent() {
                 <Col md={12}>
                   <div className="info-box ticket-panel-box">
                     <h6>{t("whatYouWillLearn") || "What you will learn"}</h6>
-                    <ExpandableText text={item.whatYouWillLearn} limit={200} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
+                    <ExpandableText
+                      text={item.whatYouWillLearn}
+                      limit={200}
+                      forceExpanded={isSharingImage}
+                      hideToggle={isSharingImage}
+                    />
                   </div>
                 </Col>
               )}
@@ -353,27 +442,50 @@ function TicketDetailsContent() {
             <Row className="align-items-center">
               <Col md={6}>
                 <div className="customer-info-simple ticket-panel-box h-100">
-                  <h6 className="text-secondary mb-1 text-uppercase small letter-spacing-1">{t("paidBy") || "Paid By"}</h6>
-                  <h4 className="mb-0 ticket-text-wrap">{ticketInfo?.userId?.firstName} {ticketInfo?.userId?.lastName}</h4>
-                  <p className="text-secondary small mt-1">{t("totalPaid") || "Total Paid"}: <span className="text-white fw-bold">₮{ticketInfo?.totalAmount}</span></p>
+                  <h6 className="text-secondary mb-1 text-uppercase small letter-spacing-1">
+                    {t("paidBy") || "Paid By"}
+                  </h6>
+                  <h4 className="mb-0 ticket-text-wrap">
+                    {ticketInfo?.userId?.firstName}{" "}
+                    {ticketInfo?.userId?.lastName}
+                  </h4>
+                  <p className="text-secondary small mt-1">
+                    {t("totalPaid") || "Total Paid"}:{" "}
+                    <span className="text-white fw-bold">
+                      ₮{ticketInfo?.totalAmount}
+                    </span>
+                  </p>
                 </div>
               </Col>
               <Col md={6} className="text-md-end mt-4 mt-md-0">
                 <div className="qr-container ticket-panel-box p-3 bg-transparent border-0 d-inline-block">
                   {ticketInfo?.qrCodeData ? (
                     <div className="qr-wrapper">
-                      <div className="qr-box p-2 bg-white rounded-3 shadow-lg" style={{ width: "140px", height: "140px" }}>
+                      <div
+                        className="qr-box p-2 bg-white rounded-3 shadow-lg"
+                        style={{ width: "140px", height: "140px" }}>
                         <QRCode
                           value={ticketInfo.qrCodeData}
                           size={120}
-                          style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                          style={{
+                            height: "auto",
+                            maxWidth: "100%",
+                            width: "100%",
+                          }}
                           viewBox={`0 0 256 256`}
                         />
                       </div>
-                      <p className="mt-2 text-secondary small text-center">{t("scanToEntry") || "Scan for Entry"}</p>
+                      <p className="mt-2 text-secondary small text-center">
+                        {t("scanToEntry") || "Scan for Entry"}
+                      </p>
                     </div>
                   ) : (
-                    <img src="/img/barcode-ticket.svg" alt="Barcode" className="img-fluid" style={{ maxWidth: "200px" }} />
+                    <img
+                      src="/img/barcode-ticket.svg"
+                      alt="Barcode"
+                      className="img-fluid"
+                      style={{ maxWidth: "200px" }}
+                    />
                   )}
                 </div>
               </Col>
@@ -438,7 +550,7 @@ function TicketDetailsContent() {
 
         .ticket-page-title {
           margin: 0;
-          font-size: clamp(1.5rem, 3vw, 2.5rem);
+          font-size: clamp(1.5rem, 3vw, 1.8rem);
           line-height: 1.12;
           overflow-wrap: anywhere;
           word-break: break-word;

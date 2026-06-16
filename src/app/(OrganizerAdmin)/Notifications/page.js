@@ -253,7 +253,7 @@ export default function NotificationPage() {
                 ) : (
                   <>
                     <div className="d-flex align-items-center justify-content-between mb-2 px-1">
-                      <label style={{ fontSize: 13, color: "#aaa", cursor: "pointer", userSelect: "none" }}>
+                      <label style={{ fontSize: 14, color: "#aaa", cursor: "pointer", userSelect: "none" }}>
                         <input
                           type="checkbox"
                           checked={notifications.every((n) => selectedIds.includes(n._id))}
@@ -288,7 +288,7 @@ export default function NotificationPage() {
                     return (
                       <>
                         <div className="d-flex align-items-center justify-content-between mb-2 px-1">
-                          <label style={{ fontSize: 13, color: "#aaa", cursor: "pointer", userSelect: "none" }}>
+                          <label style={{ fontSize: 14, color: "#aaa", cursor: "pointer", userSelect: "none" }}>
                             <input
                               type="checkbox"
                               checked={list.every((n) => selectedIds.includes(n._id))}
@@ -325,7 +325,7 @@ export default function NotificationPage() {
                     return (
                       <>
                         <div className="d-flex align-items-center justify-content-between mb-2 px-1">
-                          <label style={{ fontSize: 13, color: "#aaa", cursor: "pointer", userSelect: "none" }}>
+                          <label style={{ fontSize: 14, color: "#aaa", cursor: "pointer", userSelect: "none" }}>
                             <input
                               type="checkbox"
                               checked={list.every((n) => selectedIds.includes(n._id))}

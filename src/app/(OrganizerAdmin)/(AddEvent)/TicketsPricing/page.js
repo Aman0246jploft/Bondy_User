@@ -195,9 +195,10 @@ function page() {
               type="button"
               className="outline-btn"
               onClick={handleSaveDraft}
-              style={{ padding: "8px 24px", borderRadius: "20px" }}
-            >
-              {eventData._id && eventData.isDraft === false ? (t("saveChanges") || "Save Changes") : (t("saveDraft") || "Save Draft")}
+              style={{ padding: "8px 24px", borderRadius: "20px" }}>
+              {eventData._id && eventData.isDraft === false
+                ? t("saveChanges") || "Save Changes"
+                : t("saveDraft") || "Save Draft"}
             </button>
           </div>
           <ul className="event-steps">
@@ -246,11 +247,18 @@ function page() {
           <Form onSubmit={handleNext}>
             <div className="event-form-card">
               {ticketsList.map((ticket, index) => (
-                <div key={index} className="mb-4 pb-4 border-bottom border-secondary">
+                <div
+                  key={index}
+                  className="mb-4 pb-4 border-bottom border-secondary">
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="text-white" style={{ color: "#23ada4" }}>{t("ticketTitle") || `Ticket ${index + 1}`}</h5>
+                    <h5 className="text-white" style={{ color: "#23ada4" }}>
+                      {t("ticketTitle") || `Ticket ${index + 1}`}
+                    </h5>
                     {ticketsList.length > 1 && (
-                      <button type="button" onClick={() => removeTicketType(index)} className="btn p-0 border-0 bg-transparent">
+                      <button
+                        type="button"
+                        onClick={() => removeTicketType(index)}
+                        className="btn p-0 border-0 bg-transparent">
                         <TrashIcon />
                       </button>
                     )}
@@ -259,13 +267,20 @@ function page() {
                     <Col md={12} className="mb-3">
                       <div className="event-frm-bx">
                         <label className="form-label">
-                          {t("ticketNameLabel")} <span className="text-danger">*</span>
+                          {t("ticketNameLabel")}{" "}
+                          <span className="text-danger">*</span>
                         </label>
                         <input
                           type="text"
                           className="form-control"
                           value={ticket.ticketName || ""}
-                          onChange={(e) => handleTicketChange(index, "ticketName", e.target.value)}
+                          onChange={(e) =>
+                            handleTicketChange(
+                              index,
+                              "ticketName",
+                              e.target.value,
+                            )
+                          }
                           placeholder={t("ticketNamePlaceholder")}
                           maxLength={100}
                         />
@@ -274,31 +289,53 @@ function page() {
                     <Col md={12} className="mb-3">
                       <div className="event-frm-bx">
                         <label className="form-label">
-                          {t("shortDescriptionOptional") || "Short Description (Optional)"}
+                          {t("shortDescriptionOptional") ||
+                            "Short Description (Optional)"}
                         </label>
                         <textarea
                           className="form-control"
                           rows={2}
                           value={ticket.ticketShortDesc || ""}
-                          onChange={(e) => handleTicketChange(index, "ticketShortDesc", e.target.value)}
-                          placeholder={t("ticketShortDescPlaceholder") || "Enter short description"}
+                          onChange={(e) =>
+                            handleTicketChange(
+                              index,
+                              "ticketShortDesc",
+                              e.target.value,
+                            )
+                          }
+                          placeholder={
+                            t("ticketShortDescPlaceholder") ||
+                            "Enter short description"
+                          }
                         />
                       </div>
                     </Col>
                     <Col md={6} className="mb-3">
                       <div className="event-frm-bx">
                         <label className="form-label">
-                          {t("pricePerTicketLabel")} <span className="text-danger">*</span>
+                          {t("pricePerTicketLabel")}{" "}
+                          <span className="text-danger">*</span>
                         </label>
                         <div className="price-input-wrapper position-relative">
-                          <span className="price-symbol position-absolute" style={{ left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#23ada4', fontWeight: 'bold' }}>₮</span>
+                          <span
+                            className="price-symbol position-absolute"
+                            style={{
+                              left: "12px",
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              color: "#23ada4",
+                              fontWeight: "bold",
+                            }}>
+                            ₮
+                          </span>
                           <input
                             type="number"
-                            className="form-control"
-                            style={{ paddingLeft: '30px' }}
+                            className="form-control px-cms-30" 
                             value={ticket.price === "" ? "" : ticket.price}
                             placeholder="0"
-                            onChange={(e) => handleTicketChange(index, "price", e.target.value)}
+                            onChange={(e) =>
+                              handleTicketChange(index, "price", e.target.value)
+                            }
                             min={0}
                           />
                         </div>
@@ -306,31 +343,47 @@ function page() {
                     </Col>
                     <Col md={6} className="mb-3">
                       <div className="event-frm-bx">
-                        <label className="form-label">{t("quantityAvailableLabel")} <span className="text-danger">*</span></label>
+                        <label className="form-label">
+                          {t("quantityAvailableLabel")}{" "}
+                          <span className="text-danger">*</span>
+                        </label>
                         <input
                           type="number"
                           className="form-control"
                           value={ticket.qty === "" ? "" : ticket.qty}
                           placeholder="1"
-                          onChange={(e) => handleTicketChange(index, "qty", e.target.value)}
+                          onChange={(e) =>
+                            handleTicketChange(index, "qty", e.target.value)
+                          }
                           min={1}
                         />
                       </div>
                     </Col>
                     <Col md={6} className="mb-3">
                       <div className="event-frm-bx">
-                        <label className="form-label">{t("salesStartDateLabel")} <span className="text-danger">*</span></label>
+                        <label className="form-label">
+                          {t("salesStartDateLabel")}{" "}
+                          <span className="text-danger">*</span>
+                        </label>
                         <div className="date-input-wrapper">
                           <input
                             type="date"
                             className="date-input form-control"
                             value={formatDateVal(ticket.salesStart)}
-                            onChange={(e) => handleTicketChange(index, "salesStart", e.target.value)}
+                            onChange={(e) =>
+                              handleTicketChange(
+                                index,
+                                "salesStart",
+                                e.target.value,
+                              )
+                            }
                             min={today}
                           />
-                          <span className="calendar-icon" onClick={(e) => {
-                            e.currentTarget.previousSibling?.showPicker();
-                          }}>
+                          <span
+                            className="calendar-icon"
+                            onClick={(e) => {
+                              e.currentTarget.previousSibling?.showPicker();
+                            }}>
                             <img src="/img/white-calendar.svg" alt="calendar" />
                           </span>
                         </div>
@@ -338,18 +391,29 @@ function page() {
                     </Col>
                     <Col md={6} className="mb-3">
                       <div className="event-frm-bx">
-                        <label className="form-label">{t("salesEndDateLabel")} <span className="text-danger">*</span></label>
+                        <label className="form-label">
+                          {t("salesEndDateLabel")}{" "}
+                          <span className="text-danger">*</span>
+                        </label>
                         <div className="date-input-wrapper">
                           <input
                             type="date"
                             className="date-input form-control"
                             value={formatDateVal(ticket.salesEnd)}
-                            onChange={(e) => handleTicketChange(index, "salesEnd", e.target.value)}
+                            onChange={(e) =>
+                              handleTicketChange(
+                                index,
+                                "salesEnd",
+                                e.target.value,
+                              )
+                            }
                             min={formatDateVal(ticket.salesStart) || today}
                           />
-                          <span className="calendar-icon" onClick={(e) => {
-                            e.currentTarget.previousSibling?.showPicker();
-                          }}>
+                          <span
+                            className="calendar-icon"
+                            onClick={(e) => {
+                              e.currentTarget.previousSibling?.showPicker();
+                            }}>
                             <img src="/img/white-calendar.svg" alt="calendar" />
                           </span>
                         </div>
@@ -364,8 +428,7 @@ function page() {
                   type="button"
                   onClick={addTicketType}
                   className="outline-btn w-100"
-                  style={{ borderRadius: "8px", borderStyle: "dashed" }}
-                >
+                  style={{ borderRadius: "8px", borderStyle: "dashed" }}>
                   + {t("addAnotherTicketType") || "Add Another Ticket Type"}
                 </button>
               </div>
@@ -373,7 +436,10 @@ function page() {
               <Row className="mb-3">
                 <Col md={12}>
                   <div className="event-frm-bx">
-                    <label className="form-label">{t("refundPolicyLabel")} <span className="text-danger">*</span></label>
+                    <label className="form-label">
+                      {t("refundPolicyLabel")}{" "}
+                      <span className="text-danger">*</span>
+                    </label>
                     <select
                       className="form-select"
                       name="refundPolicy"
@@ -383,17 +449,25 @@ function page() {
                         backgroundColor: "#1a1a1a",
                         color: "white",
                         border: "1px solid rgba(35, 173, 164, 0.3)",
-                        height: "45px"
-                      }}
-                    >
-                      <option value="">{t("selectRefundPolicy") || "Select Refund Policy"}</option>
+                        height: "45px",
+                      }}>
+                      <option value="">
+                        {t("selectRefundPolicy") || "Select Refund Policy"}
+                      </option>
                       {refundPolicies.map((policy) => {
-                        const translationKey = policy === "No Refund" ? "noRefund" :
-                          policy === "1 Day Before" ? "oneDayBefore" :
-                            policy === "7 Days Before" ? "sevenDaysBefore" : "";
+                        const translationKey =
+                          policy === "No Refund"
+                            ? "noRefund"
+                            : policy === "1 Day Before"
+                              ? "oneDayBefore"
+                              : policy === "7 Days Before"
+                                ? "sevenDaysBefore"
+                                : "";
                         return (
                           <option key={policy} value={policy}>
-                            {translationKey ? (t(translationKey) || policy) : policy}
+                            {translationKey
+                              ? t(translationKey) || policy
+                              : policy}
                           </option>
                         );
                       })}
@@ -406,9 +480,7 @@ function page() {
                 <Link href="/DateTime" className="outline-btn">
                   {t("back")}
                 </Link>
-                <button
-                  type="submit"
-                  className="custom-btn">
+                <button type="submit" className="custom-btn">
                   {t("saveAndContinue")}
                 </button>
               </div>
