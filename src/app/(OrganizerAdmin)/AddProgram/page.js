@@ -189,7 +189,7 @@ function Page() {
 
     const fetchData = async () => {
       try {
-        const catRes = await apiClient.get("/category/list?type=course&limit=100");
+        const catRes = await apiClient.get("/category/list?limit=1000");
         if (catRes?.data && catRes?.data?.categories) {
           setCategories(catRes.data.categories);
         }
