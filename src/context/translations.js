@@ -681,13 +681,7 @@ export const translations = {
     dashboard: "Dashboard",
     // Verify dropdown / organizer verification (MN)
     verifiedOrganizer: "Батлагдсан зохион байгуулагч",
-    verifiedOnDate: "Батлагдсан огноо: {date}",
-    whatsVerified: "Юуг баталсан бэ",
-    identityVerifiedDesc: "Өөрийн үнэмлэх баталгаажсан (Засгийн газрын ID шалгасан)",
-    contactVerifiedDesc: "Холбоо барих баталгаажсан (Утас болон имэйл)",
-    payoutVerifiedDesc: "Төлбөр баталгаажсан (Банк/QPay холбогдсон)",
-    businessVerifiedDesc: "Бизнес батлагдсан",
-    verifiedDisclaimer: "Батлагдсан байдал нь арга хэмжээний чанар эсвэл өөрчлөлт гарахгүй гэсэн баталгаа биш юм.",
+
     // Verify dropdown / organizer verification
     verifiedOrganizer: "Verified Organizer",
     verifiedOnDate: "Verified on: {date}",

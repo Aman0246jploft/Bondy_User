@@ -28,7 +28,7 @@ function ExploreContent() {
       setLoading(true);
       const apiType = type === "Events" ? "event" : "course";
       const response = await categoryApi.getCategories({
-        type: apiType,
+        // type: apiType,
         limit: 10000,
       });
 

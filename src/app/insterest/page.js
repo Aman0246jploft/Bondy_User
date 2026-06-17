@@ -79,6 +79,18 @@ function InterestPageContent() {
     );
   };
 
+  const allSelected =
+    categories.length > 0 &&
+    categories.every((cat) => selectedIds.includes(cat._id));
+
+  const handleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(categories.map((cat) => cat._id));
+    }
+  };
+
   const handleContinue = async () => {
     if (selectedIds.length === 0) {
       toast.error(t("pleaseSelectAtLeastOneInterest"));
@@ -134,8 +146,8 @@ function InterestPageContent() {
   };
 
   useEffect(() => {
-  document.title = "Interest - Bondy";
-}, []);
+    document.title = "Interest - Bondy";
+  }, []);
 
   return (
     <div className="login_sec compplete_profile_sec">
@@ -164,6 +176,17 @@ function InterestPageContent() {
                   </p>
                 </div>
                 <main>
+                  <div className="d-flex justify-content-end mb-2">
+                    {categories.length > 0 && (
+                      <Button
+                        variant="link"
+                        className="text-decoration-none p-0 fw-semibold text-primary"
+                        onClick={handleSelectAll}
+                      >
+                        {allSelected ? "Deselect All" : "Select All"}
+                      </Button>
+                    )}
+                  </div>
                   <div className="interest-scroll-area">
                     <InterestSelector
                       categories={categories}
