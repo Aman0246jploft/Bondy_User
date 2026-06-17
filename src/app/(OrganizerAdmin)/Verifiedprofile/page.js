@@ -117,8 +117,6 @@ function VerificationPageContent() {
           setNationalIdBack(u.verifications.idVerification.drivingLicence.backImage || null);
         }
 
-        console.log("88888787878787", u)
-
         setBusinessName(u.businessName || "");
         setBusinessCategory(u.businessCategory || "");
         setShortDesc(u.shortDesc || "");

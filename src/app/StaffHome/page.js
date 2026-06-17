@@ -268,7 +268,7 @@ function StaffHome() {
       }
       const res = await staffApi.checkInAttendee(payload);
       if (res?.status) {
-        toast.success(`Check-in successful: ${res.data?.attendee?.firstName || ""} ${res.data?.attendee?.lastName || ""}`);
+        toast.success(res.message || `Check-in successful: ${res.data?.attendee?.firstName || ""} ${res.data?.attendee?.lastName || ""}`);
         setShowVerifyModal(false);
         setManualTicketNumber("");
         setVerifiedTicket(null);
@@ -279,6 +279,39 @@ function StaffHome() {
     } catch (err) {
       console.error("Check-in failed", err);
       toast.error(err?.response?.data?.message || "Check-in failed");
+    } finally {
+      setCheckingIn(false);
+      setTimeout(() => {
+        isProcessingQR.current = false;
+      }, 1500);
+    }
+  };
+
+  const handlePerformCheckInForSlot = async (selectedDate, batchId) => {
+    if (!originalCode) return;
+    try {
+      setCheckingIn(true);
+      const payload = {
+        ticketNumber: originalCode.trim(),
+        selectedDate,
+        batchId
+      };
+      if (activeEntity) {
+        payload.entityId = activeEntity._id;
+      }
+      const res = await staffApi.checkInAttendee(payload);
+      if (res?.status) {
+        toast.success(res.message || "Session Check-in successful");
+        setShowVerifyModal(false);
+        setManualTicketNumber("");
+        setVerifiedTicket(null);
+        setOriginalCode("");
+        fetchAttendeesList();
+        fetchScanHistory();
+      }
+    } catch (err) {
+      console.error("Session Check-in failed", err);
+      toast.error(err?.response?.data?.message || "Session Check-in failed");
     } finally {
       setCheckingIn(false);
       setTimeout(() => {
@@ -1622,98 +1655,169 @@ function StaffHome() {
                 Close
               </button>
             </div>
-          ) : verifiedTicket ? (
-            <div className="verify-details-container">
-              {/* Event Info */}
-              <div className="verify-event-info mb-3">
-                <span className="verify-label">Event / Course</span>
-                <div className="verify-val">{verifiedTicket.event?.title || "Unknown"}</div>
-              </div>
+          ) : verifiedTicket ? (() => {
+            const isCheckedInToday = verifiedTicket.checkedInToday;
 
-              {/* Status Badge */}
-              <div className="badge-wrapper mb-4">
-                {verifiedTicket.isAlreadyCheckedIn ? (
-                  <div className="badge-status checked-in">
-                    Already Checked In
-                  </div>
-                ) : verifiedTicket.isExpired ? (
-                  <div className="badge-status expired">
-                    Expired Ticket
-                  </div>
-                ) : (
-                  <div className="badge-status valid">
-                    Valid Ticket
-                  </div>
-                )}
-              </div>
+            return (
+              <div className="verify-details-container">
+                {/* Event Info */}
+                <div className="verify-event-info mb-3">
+                  <span className="verify-label">Event / Course</span>
+                  <div className="verify-val">{verifiedTicket.event?.title || "Unknown"}</div>
+                </div>
 
-              {/* Attendee Details */}
-              {verifiedTicket.attendee && (
-                <div className="verify-section mb-3">
-                  <div className="verify-row">
-                    <span className="verify-label">Attendee Name</span>
-                    <span className="verify-val">{verifiedTicket.attendee.firstName} {verifiedTicket.attendee.lastName}</span>
-                  </div>
-                  <div className="verify-row">
-                    <span className="verify-label">Email</span>
-                    <span className="verify-val" style={{ wordBreak: "break-all" }}>{verifiedTicket.attendee.email}</span>
-                  </div>
-                  <div className="verify-row">
-                    <span className="verify-label">Ticket Number</span>
-                    <span className="verify-val">{verifiedTicket.attendee.ticketNumber}</span>
-                  </div>
-                  {verifiedTicket.attendee.ticketName && (
-                    <div className="verify-row">
-                      <span className="verify-label">Ticket Type</span>
-                      <span className="verify-val">{verifiedTicket.attendee.ticketName}</span>
+                {/* Status Badge */}
+                <div className="badge-wrapper mb-4">
+                  {isCheckedInToday ? (
+                    <div className="badge-status checked-in" style={{ background: "rgba(52, 199, 89, 0.15)", color: "#34c759" }}>
+                      Checked In Today
+                    </div>
+                  ) : verifiedTicket.isAlreadyCheckedIn ? (
+                    <div className="badge-status checked-in">
+                      Already Checked In
+                    </div>
+                  ) : verifiedTicket.isExpired ? (
+                    <div className="badge-status expired">
+                      Expired Ticket
+                    </div>
+                  ) : (
+                    <div className="badge-status valid">
+                      Valid Ticket
                     </div>
                   )}
                 </div>
-              )}
 
-              {/* Transaction Details */}
-              {verifiedTicket.transaction && (
-                <div className="verify-section mb-4">
-                  <div className="verify-row">
-                    <span className="verify-label">Booking ID</span>
-                    <span className="verify-val">{verifiedTicket.transaction.bookingId}</span>
+                {/* Attendee Details */}
+                {verifiedTicket.attendee && (
+                  <div className="verify-section mb-3">
+                    <div className="verify-row">
+                      <span className="verify-label">Attendee Name</span>
+                      <span className="verify-val">{verifiedTicket.attendee.firstName} {verifiedTicket.attendee.lastName}</span>
+                    </div>
+                    <div className="verify-row">
+                      <span className="verify-label">Email</span>
+                      <span className="verify-val" style={{ wordBreak: "break-all" }}>{verifiedTicket.attendee.email}</span>
+                    </div>
+                    <div className="verify-row">
+                      <span className="verify-label">Ticket Number</span>
+                      <span className="verify-val">{verifiedTicket.attendee.ticketNumber}</span>
+                    </div>
+                    {verifiedTicket.attendee.ticketName && (
+                      <div className="verify-row">
+                        <span className="verify-label">Ticket Type</span>
+                        <span className="verify-val">{verifiedTicket.attendee.ticketName}</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="verify-row">
-                    <span className="verify-label">Total Qty</span>
-                    <span className="verify-val">{verifiedTicket.transaction.qty} ticket(s)</span>
-                  </div>
-                  <div className="verify-row">
-                    <span className="verify-label">Checked In Qty</span>
-                    <span className="verify-val">{verifiedTicket.transaction.checkedInQty} / {verifiedTicket.transaction.qty}</span>
-                  </div>
-                </div>
-              )}
-
-              {verifiedTicket.isAlreadyCheckedIn && verifiedTicket.checkedInAt && (
-                <div className="verify-checkin-time text-muted mb-4" style={{ fontSize: "12px", textAlign: "center" }}>
-                  Checked in at: {new Date(verifiedTicket.checkedInAt).toLocaleString()}
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="verify-actions d-flex gap-2">
-                {!verifiedTicket.isAlreadyCheckedIn && !verifiedTicket.isExpired ? (
-                  <>
-                    <button className="common_btn flex-grow-1" onClick={closeVerifyModal} style={{ background: "#222", border: "1px solid #444", color: "#ccc", borderRadius: "20px", height: "40px" }}>
-                      Cancel
-                    </button>
-                    <button className="common_btn flex-grow-1" onClick={handlePerformCheckIn} disabled={checkingIn} style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
-                      {checkingIn ? <Spinner animation="border" size="sm" /> : "Check In"}
-                    </button>
-                  </>
-                ) : (
-                  <button className="common_btn w-100" onClick={closeVerifyModal} style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
-                    Close
-                  </button>
                 )}
+
+                {/* Transaction Details */}
+                {verifiedTicket.transaction && (
+                  <div className="verify-section mb-4">
+                    <div className="verify-row">
+                      <span className="verify-label">Booking ID</span>
+                      <span className="verify-val">{verifiedTicket.transaction.bookingId}</span>
+                    </div>
+                    {verifiedTicket.transaction.passType && (
+                      <div className="verify-row">
+                        <span className="verify-label">Pass Type</span>
+                        <span className="verify-val" style={{ textTransform: "capitalize" }}>{verifiedTicket.transaction.passType.replace("_", " ")}</span>
+                      </div>
+                    )}
+                    {verifiedTicket.transaction.passExpiryDate && (
+                      <div className="verify-row">
+                        <span className="verify-label">Pass Expiry</span>
+                        <span className="verify-val">{new Date(verifiedTicket.transaction.passExpiryDate).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    <div className="verify-row">
+                      <span className="verify-label">Total Qty</span>
+                      <span className="verify-val">{verifiedTicket.transaction.qty} ticket(s)</span>
+                    </div>
+                    <div className="verify-row">
+                      <span className="verify-label">Checked In Qty</span>
+                      <span className="verify-val">{verifiedTicket.transaction.checkedInQty} / {verifiedTicket.transaction.qty}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Ongoing Slots/Sessions (if present) */}
+                {verifiedTicket.transaction && verifiedTicket.transaction.ongoingSlots && verifiedTicket.transaction.ongoingSlots.length > 0 && (
+                  <div className="verify-section mb-4">
+                    <div className="verify-label mb-2" style={{ fontWeight: "600", color: "#23ada4" }}>Booked Slots ({verifiedTicket.transaction.ongoingSlots.length})</div>
+                    <div className="d-flex flex-column gap-2" style={{ maxHeight: "150px", overflowY: "auto" }}>
+                      {verifiedTicket.transaction.ongoingSlots.map((slot) => {
+                        const slotDate = slot.selectedDate;
+                        // Check if checked in via attendee history or slot flag
+                        const isSlotChecked = verifiedTicket.attendee?.checkInHistory?.some(entry =>
+                          entry.batchId === slot.batchId && entry.sessionDate === slotDate
+                        ) || slot.isCheckedIn;
+
+                        return (
+                          <div key={slot._id} className="d-flex justify-content-between align-items-center p-2 rounded" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.06)" }}>
+                            <div className="d-flex flex-column text-start">
+                              <span style={{ fontSize: "13px", fontWeight: "600", color: "#fff" }}>{slot.selectedDay}, {slotDate || "N/A"}</span>
+                              <span style={{ fontSize: "11px", color: "#8c8c8c" }}>Batch: {slot.batchId.slice(-6).toUpperCase()}</span>
+                            </div>
+                            {isSlotChecked ? (
+                              <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style={{ borderRadius: "10px", fontSize: "11px" }}>Checked In</span>
+                            ) : (
+                              <button
+                                 className="btn btn-sm"
+                                 disabled={checkingIn}
+                                 onClick={() => handlePerformCheckInForSlot(slotDate, slot.batchId)}
+                                 style={{ background: "#23ada4", color: "#fff", borderRadius: "10px", fontSize: "11px", border: "none", padding: "4px 10px" }}
+                              >
+                                Check In
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {verifiedTicket.isAlreadyCheckedIn && verifiedTicket.checkedInAt && (
+                  <div className="verify-checkin-time text-muted mb-4" style={{ fontSize: "12px", textAlign: "center" }}>
+                    Checked in at: {new Date(verifiedTicket.checkedInAt).toLocaleString()}
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="verify-actions d-flex gap-2">
+                  {!verifiedTicket.isAlreadyCheckedIn && !verifiedTicket.isExpired ? (
+                    <>
+                      <button className="common_btn flex-grow-1" onClick={closeVerifyModal} style={{ background: "#222", border: "1px solid #444", color: "#ccc", borderRadius: "20px", height: "40px" }}>
+                        Cancel
+                      </button>
+                      {(verifiedTicket.transaction?.passType || !verifiedTicket.transaction?.ongoingSlots || verifiedTicket.transaction.ongoingSlots.length === 0) && (
+                        isCheckedInToday ? (
+                          <button className="common_btn flex-grow-1" disabled style={{ background: "rgba(52, 199, 89, 0.15)", color: "#34c759", border: "1px solid #34c759", borderRadius: "20px", height: "40px" }}>
+                            Scanned for Today
+                          </button>
+                        ) : (
+                          <button className="common_btn flex-grow-1" onClick={handlePerformCheckIn} disabled={checkingIn} style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
+                            {checkingIn ? (
+                              <Spinner animation="border" size="sm" />
+                            ) : verifiedTicket.transaction?.passType ? (
+                              "Check In Pass"
+                            ) : (
+                              "Check In"
+                            )}
+                          </button>
+                        )
+                      )}
+                    </>
+                  ) : (
+                    <button className="common_btn w-100" onClick={closeVerifyModal} style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
+                      Close
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ) : null}
+            );
+          })() : null}
         </Modal.Body>
       </Modal>
     </div>
