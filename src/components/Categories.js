@@ -80,7 +80,16 @@ const Categories = () => {
                     </a>
                   </div>
                   {/* Overlapping Character Image */}
-                  <img src={cat.img} alt={cat.title} className="char-img" />
+                  <img
+                    src={cat.img}
+                    alt={cat.title}
+                    className="char-img"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      const randomImg = featuredCardImages[Math.floor(Math.random() * featuredCardImages.length)];
+                      e.target.src = randomImg;
+                    }}
+                  />
                 </div>
               </div>
             );

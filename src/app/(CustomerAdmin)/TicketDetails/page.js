@@ -175,6 +175,12 @@ function TicketDetailsContent() {
   const isEvent = ticketInfo.bookingType === "EVENT";
   const item = isEvent ? ticketInfo.eventId : ticketInfo.courseId;
   const title = isEvent ? item?.eventTitle : item?.courseTitle;
+  const isCourse = ticketInfo.bookingType === "COURSE";
+  const courseEnrollmentType = !isEvent ? item?.enrollmentType : null;
+  const isFixedStart = isCourse && courseEnrollmentType === "fixedStart";
+  const isOngoing = isCourse && courseEnrollmentType === "Ongoing";
+  const isOngoingPass = isOngoing && !!ticketInfo.passType;
+  const isOngoingSession = isOngoing && !ticketInfo.passType;
   const selectedSchedule =
     !isEvent && item?.schedules?.find((s) => s._id === ticketInfo.scheduleId);
 
@@ -276,16 +282,19 @@ function TicketDetailsContent() {
                   <div className="ticket-summary-item">
                     <h6>{t("ticketType") || "Ticket"}</h6>
                     <p className="ticket-text-wrap">
-                      {ticketInfo?.ticketName ||
-                        item?.ticketName ||
-                        item?.enrollmentType ||
-                        "General"}
+                      {isEvent
+                        ? (ticketInfo?.ticketName || "General Ticket")
+                        : isFixedStart
+                          ? (ticketInfo?.ticketName || `${t("fixedStart") || "Fixed Start"} Course`)
+                          : isOngoingPass
+                            ? (ticketInfo?.passType === "3_month" ? `3 ${t("monthPass") || "Month Pass"}` : `1 ${t("monthPass") || "Month Pass"}`)
+                            : (ticketInfo?.ticketName || `${t("ongoing") || "Ongoing"} (Session)`)}
                     </p>
                   </div>
                   <div className="ticket-summary-item">
                     <h6>{t("quantity") || "Qty"}</h6>
                     <p>
-                      {ticketInfo?.qty} {t("ticketsSuffix") || "Tickets"}
+                      {ticketInfo?.qty} {isOngoingSession ? (ticketInfo?.qty > 1 ? t("sessionsSuffix") || "Sessions" : t("sessionsSuffix") || "Session") : (t("ticketsSuffix") || "Tickets")}
                     </p>
                   </div>
                   {ticketInfo?.passExpiryDate && (
@@ -328,7 +337,11 @@ function TicketDetailsContent() {
                       alt=""
                       className="me-2"
                     />
-                    {t("timeSlots") || "Time Slots"}
+                    {isEvent
+                      ? (t("eventTime") || "Event Time")
+                      : isOngoingPass
+                        ? (t("passValidity") || "Pass Validity")
+                        : (t("timeSlots") || "Time Slots")}
                   </h6>
                   {isEvent ? (
                     <p>
@@ -338,6 +351,18 @@ function TicketDetailsContent() {
                         {formatTime(item?.startTime, true, language)} -{" "}
                         {formatTime(item?.endTime, true, language)}
                       </span>
+                    </p>
+                  ) : isOngoingPass ? (
+                    <p>
+                      <strong>{t("starts") || "Starts"}:</strong> {formatEventDate(ticketInfo?.createdAt)}
+                      <br />
+                      <strong>{t("expires") || "Expires"}:</strong> <span className="text-warning fw-bold">{formatEventDate(ticketInfo?.passExpiryDate)}</span>
+                    </p>
+                  ) : isOngoingSession ? (
+                    <p>
+                      <strong>{t("sessionSlots") || "Session Slots"}:</strong>
+                      <br />
+                      <span>{ticketInfo?.qty} {ticketInfo?.qty > 1 ? t("sessions") || "Sessions" : t("session") || "Session"} {t("booked") || "Booked"}</span>
                     </p>
                   ) : (
                     <p>
@@ -437,6 +462,52 @@ function TicketDetailsContent() {
               )}
             </Row>
           </div>
+
+          {((isFixedStart || isOngoingSession) && (ticketInfo?.upcoming?.length > 0 || ticketInfo?.past?.length > 0)) && (
+            <div className="ticket-section-block mt-4 pt-4 border-top border-secondary">
+              <h4 className="line-title mb-3">
+                <span>{t("sessionSchedule") || "Session Schedule"}</span>
+              </h4>
+              <Row className="g-4">
+                {ticketInfo.upcoming?.length > 0 && (
+                  <Col md={6}>
+                    <div className="info-box ticket-panel-box h-100">
+                      <h6 className="text-teal mb-3 d-flex align-items-center">
+                        <span className="dot bg-teal me-2 d-inline-block rounded-circle" style={{ width: "8px", height: "8px", backgroundColor: "var(--primary-teal)" }}></span>
+                        {t("upcomingSessions") || "Upcoming Sessions"}
+                      </h6>
+                      <div className="session-list overflow-auto" style={{ maxHeight: "250px" }}>
+                        {ticketInfo.upcoming.map((session, idx) => (
+                          <div key={idx} className="session-item d-flex justify-content-between py-2 border-bottom border-secondary last-border-0">
+                            <span>{formatEventDate(session.date)} <small className="text-secondary">({t(session.selectedDay) || session.selectedDay})</small></span>
+                            <span className="text-white-50">{session.timing}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Col>
+                )}
+                {ticketInfo.past?.length > 0 && (
+                  <Col md={6}>
+                    <div className="info-box ticket-panel-box h-100">
+                      <h6 className="text-secondary mb-3 d-flex align-items-center">
+                        <span className="dot bg-secondary me-2 d-inline-block rounded-circle" style={{ width: "8px", height: "8px" }}></span>
+                        {t("pastSessions") || "Past Sessions"}
+                      </h6>
+                      <div className="session-list overflow-auto" style={{ maxHeight: "250px" }}>
+                        {ticketInfo.past.map((session, idx) => (
+                          <div key={idx} className="session-item d-flex justify-content-between py-2 border-bottom border-secondary last-border-0">
+                            <span className="text-white-50">{formatEventDate(session.date)} <small className="text-secondary">({t(session.selectedDay) || session.selectedDay})</small></span>
+                            <span className="text-muted">{session.timing}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Col>
+                )}
+              </Row>
+            </div>
+          )}
 
           <div className="ticket-footer ticket-section-block mt-4">
             <Row className="align-items-center">

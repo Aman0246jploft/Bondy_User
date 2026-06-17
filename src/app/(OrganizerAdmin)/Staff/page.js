@@ -26,6 +26,7 @@ function StaffPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [submittingStaff, setSubmittingStaff] = useState(false);
   const fileInputRef = useRef(null);
+  const entityListRef = useRef(null);
 
   // Assignment Modal states
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -89,6 +90,13 @@ function StaffPage() {
     fetchOrganizerEntities();
     document.title = "Staff Management - Bondy";
   }, []);
+
+  // Reset scroll position to top when switching tabs in the assignment modal
+  useEffect(() => {
+    if (entityListRef.current) {
+      entityListRef.current.scrollTop = 0;
+    }
+  }, [activeTab]);
 
   // Handle file select and upload for staff avatar photo
   const handlePhotoUpload = async (e) => {
@@ -857,21 +865,21 @@ function StaffPage() {
               No {activeTab} found.
             </div>
           ) : (
-            <div className="entity-list-container">
+            <div className="entity-list-container" ref={entityListRef}>
               {filteredEntities.map((item) => {
                 const title = item.eventTitle || item.courseTitle;
                 const isAssigned = !!assignedMap[item._id];
                 const dateStr = item.startDate
                   ? new Date(item.startDate).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })
+                    month: "short",
+                    day: "numeric",
+                  })
                   : "";
                 const endDateStr = item.endDate
                   ? new Date(item.endDate).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })
+                    month: "short",
+                    day: "numeric",
+                  })
                   : "";
                 const location = item.venueName || "Online";
 
