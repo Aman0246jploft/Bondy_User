@@ -1,9 +1,13 @@
 "use client";
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import authApi from "@/api/authApi";
 
 export default function LocationManager() {
+    const pathname = usePathname();
+
     useEffect(() => {
+        if (pathname && pathname.startsWith("/public")) return;
         const handleLocationUpdate = async () => {
             const token = localStorage.getItem("token");
             if (!token) return;

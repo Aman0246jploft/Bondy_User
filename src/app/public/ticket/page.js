@@ -7,6 +7,7 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import QRCode from "react-qr-code";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatTime } from "@/utils/timeHelper";
+import "./ticket.css";
 
 const ExpandableText = ({ text, limit = 100 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -16,8 +17,8 @@ const ExpandableText = ({ text, limit = 100 }) => {
   if (text.length <= limit) return <p>{text}</p>;
 
   useEffect(() => {
-        document.title = (text.length > 50 ? text.substring(0, 50) + "..." : text) + " - Bondy";
-    }, [text]);
+    document.title = (text.length > 50 ? text.substring(0, 50) + "..." : text) + " - Bondy";
+  }, [text]);
 
   return (
     <div>

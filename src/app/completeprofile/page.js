@@ -208,7 +208,7 @@ function CompleteProfileContent() {
                         <Form.Label className="text-light">Primary category</Form.Label>
                         <Form.Select
                           name="businessCategory"
-                          className="custom_field_input custom_select"
+                          className="custom_field_input"
                           value={organizerData.businessCategory}
                           onChange={handleOrganizerChange}
                           required
@@ -376,3 +376,8 @@ function CompleteProfileContent() {
     </div>
   );
 }
+
+
+
+Input: s = "abcabcbb"
+Output: 3
