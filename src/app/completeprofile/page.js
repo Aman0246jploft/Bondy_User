@@ -214,7 +214,7 @@ function CompleteProfileContent() {
                           required
                         >
                           <option value="" disabled>Select category</option>
-                          {categories.map((cat) => (
+                          {categories?.map((cat) => (
                             <option key={cat._id} value={cat._id}>
                               {cat.name}
                             </option>
@@ -376,8 +376,3 @@ function CompleteProfileContent() {
     </div>
   );
 }
-
-
-
-Input: s = "abcabcbb"
-Output: 3
