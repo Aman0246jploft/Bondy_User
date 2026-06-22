@@ -118,6 +118,14 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="text">{t("myFavorite")}</span>
         </Link>
         <Link
+          href="/CustomerReferral"
+          className={`menu-item ${isActive("/CustomerReferral") ? "active" : ""}`}>
+          <span className="icon">
+            <img src="/img/user-icon.svg" alt="" />
+          </span>
+          <span className="text">{t("referral")}</span>
+        </Link>
+        <Link
           href="/SupportTicketsC"
           className={`menu-item ${isActive("/SupportTicketsC") ? "active" : ""}`}>
           <span className="icon">

@@ -37,6 +37,7 @@ function RegisterForm() {
     countryCode: "",
     password: "",
     confirmPassword: "",
+    referralCode: "",
   });
 
   // Organizer Form State
@@ -58,7 +59,7 @@ function RegisterForm() {
     const refCode = searchParams.get("ref");
     if (refCode) {
       setOrganizerData((prev) => ({ ...prev, referralCode: refCode }));
-      setSelectedTab("Organizer"); // Jump to Organizer tab if referral link used
+      setCustomerData((prev) => ({ ...prev, referralCode: refCode }));
     }
   }, [searchParams]);
 
@@ -253,6 +254,7 @@ function RegisterForm() {
         countryCode: finalCountryCode,
         password: customerData.password,
         confirmPassword: customerData.confirmPassword,
+        referralCode: customerData.referralCode,
       };
       const response = await authApi.customerSignup(payload);
       if (response?.status) {
@@ -399,328 +401,328 @@ function RegisterForm() {
 
   return (
     <GuestRoute>
-    <div className="login_sec">
-      <Container fluid>
-        <Row className="justify-content-between align-items-center gy-4">
-          <Col xl={5} lg={7}>
-            <div className="login_img">
-              <img src="/img/login_side_img.png" alt="login side" />
-              <div className="content_img_box">
-                <h4>{t("exploreEventsEffortlessly")}</h4>
-                <p>
-                  {t("exploreEventsEffortlesslyDesc")}
-                </p>
-              </div>
-            </div>
-          </Col>
-
-          <Col xl={6} lg={5}>
-            <Row className="justify-content-center align-items-center">
-              <Col xxl={7} xl={9} lg={10} md={12}>
-                <div className="common_field">
-                  <div className="fz_32">
-                    <h2 className="">{t("getStarted")}</h2>
-                    <p>
-                      {t("registerForEventsDesc")}
-                    </p>
-                  </div>
-
-                  <Tab.Container
-                    id="Login"
-                    activeKey={selectedTab}
-                    onSelect={(k) => setSelectedTab(k)}
-                  >
-                    <Row>
-                      <Col sm={12} className="mb-4">
-                        <Nav
-                          variant="pills"
-                          className="custom-nav-pills justify-content-center m-auto"
-                        >
-                          <Nav.Item>
-                            <Nav.Link eventKey="Customer">{t("customer")}</Nav.Link>
-                          </Nav.Item>
-                          <Nav.Item>
-                            <Nav.Link eventKey="Organizer">{t("organizer")}</Nav.Link>
-                          </Nav.Item>
-                        </Nav>
-                      </Col>
-
-                      <Col sm={12}>
-                        <Tab.Content>
-                          <Tab.Pane eventKey="Customer">
-                            <Form
-                              className="login_field"
-                              noValidate
-                              onSubmit={handleCustomerSignup}
-                            >
-                              <Form.Group className="mb-3">
-                                <Form.Control
-                                  type="email"
-                                  name="email"
-                                  placeholder={t("email")}
-                                  value={customerData.email}
-                                  onChange={handleCustomerChange}
-                                  aria-required="true"
-                                />
-                                {customerErrors.email && (
-                                  <div className="text-danger small mt-1">{customerErrors.email}</div>
-                                )}
-                              </Form.Group>
-
-                              <Form.Group className="mb-3">
-                                <PhoneInput
-                                  country={"us"}
-                                  value={customerData.contactNumber}
-                                  onChange={(phone) =>
-                                    handlePhoneChange("+" + phone, "Customer")
-                                  }
-                                  inputClass="form-control w-100"
-                                  containerClass="phone_input"
-                                  dropdownClass="phone_input_dropdown"
-                                  buttonClass="phone_input_button"
-                                />
-                                {customerErrors.contactNumber && (
-                                  <div className="text-danger small mt-1">{customerErrors.contactNumber}</div>
-                                )}
-                              </Form.Group>
-
-                              <Form.Group className="mb-3">
-                                <div className="d-flex gap-2 position-relative">
-                                  <Form.Control
-                                    type={show ? "text" : "password"}
-                                    name="password"
-                                    placeholder={t("password")}
-                                    value={customerData.password}
-                                    onChange={handleCustomerChange}
-                                    aria-required="true"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => setShow(!show)}
-                                    className="password-eye-btn"
-                                  >
-                                    <img
-                                      src={
-                                        show
-                                          ? "/img/lock.svg"
-                                          : "/img/unlock.svg"
-                                      }
-                                      alt="toggle password"
-                                    />
-                                  </button>
-                                </div>
-                                {customerErrors.password && (
-                                  <div className="text-danger small mt-1">{customerErrors.password}</div>
-                                )}
-                              </Form.Group>
-
-                              <Form.Group className="mb-3">
-                                <div className="d-flex gap-2 position-relative">
-                                  <Form.Control
-                                    type={show2 ? "text" : "password"}
-                                    name="confirmPassword"
-                                    placeholder={t("confirmPassword")}
-                                    value={customerData.confirmPassword}
-                                    onChange={handleCustomerChange}
-                                    aria-required="true"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => setShow2(!show2)}
-                                    className="password-eye-btn"
-                                  >
-                                    <img
-                                      src={
-                                        show2
-                                          ? "/img/lock.svg"
-                                          : "/img/unlock.svg"
-                                      }
-                                      alt="toggle confirm password"
-                                    />
-                                  </button>
-                                </div>
-                                {customerErrors.confirmPassword && (
-                                  <div className="text-danger small mt-1">{customerErrors.confirmPassword}</div>
-                                )}
-                              </Form.Group>
-
-                              <button
-                                type="submit"
-                                disabled={loading}
-                                className="common_btn w-100 d-block text-center text-decoration-none"
-                              >
-                                {loading ? t("signingUp") : t("signUp")}
-                              </button>
-                            </Form>
-
-                            <SocialButtons />
-
-                            <div className="other_signup">
-                              <span>
-                                {t("alreadyHaveAccount")}{" "}
-                                <Link href="/login">{t("login")}</Link>
-                              </span>
-                            </div>
-                          </Tab.Pane>
-
-                          <Tab.Pane eventKey="Organizer">
-                            <Form
-                              className="login_field"
-                              noValidate
-                              onSubmit={handleOrganizerSignup}
-                            >
-                              <Form.Group className="mb-3">
-                                <Form.Control
-                                  type="text"
-                                  name="fullname"
-                                  placeholder={t("fullName") || "Full Name"}
-                                  value={organizerData.fullname || ""}
-                                  onChange={handleOrganizerChange}
-                                  aria-required="true"
-                                />
-                                {organizerErrors.fullname && (
-                                  <div className="text-danger small mt-1">{organizerErrors.fullname}</div>
-                                )}
-                              </Form.Group>
-
-                              <Form.Group className="mb-3">
-                                <Form.Control
-                                  type="email"
-                                  name="email"
-                                  placeholder={t("email")}
-                                  value={organizerData.email}
-                                  onChange={handleOrganizerChange}
-                                  aria-required="true"
-                                />
-                                {organizerErrors.email && (
-                                  <div className="text-danger small mt-1">{organizerErrors.email}</div>
-                                )}
-                              </Form.Group>
-
-                              <Form.Group className="mb-3">
-                                <PhoneInput
-                                  country={"us"}
-                                  value={organizerData.contactNumber}
-                                  onChange={(phone) =>
-                                    handlePhoneChange("+" + phone, "Organizer")
-                                  }
-                                  inputClass="form-control w-100"
-                                  containerClass="phone_input"
-                                  dropdownClass="phone_input_dropdown"
-                                  buttonClass="phone_input_button"
-                                />
-                                {organizerErrors.contactNumber && (
-                                  <div className="text-danger small mt-1">{organizerErrors.contactNumber}</div>
-                                )}
-                              </Form.Group>
-
-                              <Form.Group className="mb-3">
-                                <div className="d-flex gap-2 position-relative">
-                                  <Form.Control
-                                    type={show ? "text" : "password"}
-                                    name="password"
-                                    placeholder={t("password")}
-                                    value={organizerData.password}
-                                    onChange={handleOrganizerChange}
-                                    aria-required="true"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => setShow(!show)}
-                                    className="password-eye-btn"
-                                  >
-                                    <img
-                                      src={
-                                        show
-                                          ? "/img/lock.svg"
-                                          : "/img/unlock.svg"
-                                      }
-                                      alt="toggle password"
-                                    />
-                                  </button>
-                                </div>
-                                {organizerErrors.password && (
-                                  <div className="text-danger small mt-1">{organizerErrors.password}</div>
-                                )}
-                              </Form.Group>
-
-                              <Form.Group className="mb-3">
-                                <div className="d-flex gap-2 position-relative">
-                                  <Form.Control
-                                    type={show2 ? "text" : "password"}
-                                    name="confirmPassword"
-                                    placeholder={t("confirmPassword")}
-                                    value={organizerData.confirmPassword}
-                                    onChange={handleOrganizerChange}
-                                    aria-required="true"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => setShow2(!show2)}
-                                    className="password-eye-btn"
-                                  >
-                                    <img
-                                      src={
-                                        show2
-                                          ? "/img/lock.svg"
-                                          : "/img/unlock.svg"
-                                      }
-                                      alt="toggle confirm password"
-                                    />
-                                  </button>
-                                </div>
-                                {organizerErrors.confirmPassword && (
-                                  <div className="text-danger small mt-1">{organizerErrors.confirmPassword}</div>
-                                )}
-                              </Form.Group>
-
-                              <Form.Group className="mb-3">
-                                <div className="custom-checkbox">
-                                  <input
-                                    type="checkbox"
-                                    id="terms"
-                                    name="acceptTerms"
-                                    checked={organizerData.acceptTerms}
-                                    onChange={handleOrganizerChange}
-                                  />
-                                  <label htmlFor="terms">
-                                    {t("acceptTermsConditions")}
-                                  </label>
-                                </div>
-                                {organizerErrors.acceptTerms && (
-                                  <div className="text-danger small mt-1">{organizerErrors.acceptTerms}</div>
-                                )}
-                              </Form.Group>
-
-                              <button
-                                type="submit"
-                                disabled={loading}
-                                className="common_btn w-100 d-block text-center text-decoration-none"
-                              >
-                                {loading ? t("signingUp") : t("signUp")}
-                              </button>
-                            </Form>
-
-                            <SocialButtons />
-
-                            <div className="other_signup">
-                              <span>
-                                {t("alreadyHaveAccount")}{" "}
-                                <Link href="/login">{t("login")}</Link>
-                              </span>
-                            </div>
-                          </Tab.Pane>
-                        </Tab.Content>
-                      </Col>
-                    </Row>
-                  </Tab.Container>
+      <div className="login_sec">
+        <Container fluid>
+          <Row className="justify-content-between align-items-center gy-4">
+            <Col xl={5} lg={7}>
+              <div className="login_img">
+                <img src="/img/login_side_img.png" alt="login side" />
+                <div className="content_img_box">
+                  <h4>{t("exploreEventsEffortlessly")}</h4>
+                  <p>
+                    {t("exploreEventsEffortlesslyDesc")}
+                  </p>
                 </div>
-              </Col>
-            </Row>
-          </Col>
-        </Row>
-      </Container>
-    </div>
+              </div>
+            </Col>
+
+            <Col xl={6} lg={5}>
+              <Row className="justify-content-center align-items-center">
+                <Col xxl={7} xl={9} lg={10} md={12}>
+                  <div className="common_field">
+                    <div className="fz_32">
+                      <h2 className="">{t("getStarted")}</h2>
+                      <p>
+                        {t("registerForEventsDesc")}
+                      </p>
+                    </div>
+
+                    <Tab.Container
+                      id="Login"
+                      activeKey={selectedTab}
+                      onSelect={(k) => setSelectedTab(k)}
+                    >
+                      <Row>
+                        <Col sm={12} className="mb-4">
+                          <Nav
+                            variant="pills"
+                            className="custom-nav-pills justify-content-center m-auto"
+                          >
+                            <Nav.Item>
+                              <Nav.Link eventKey="Customer">{t("customer")}</Nav.Link>
+                            </Nav.Item>
+                            <Nav.Item>
+                              <Nav.Link eventKey="Organizer">{t("organizer")}</Nav.Link>
+                            </Nav.Item>
+                          </Nav>
+                        </Col>
+
+                        <Col sm={12}>
+                          <Tab.Content>
+                            <Tab.Pane eventKey="Customer">
+                              <Form
+                                className="login_field"
+                                noValidate
+                                onSubmit={handleCustomerSignup}
+                              >
+                                <Form.Group className="mb-3">
+                                  <Form.Control
+                                    type="email"
+                                    name="email"
+                                    placeholder={t("email")}
+                                    value={customerData.email}
+                                    onChange={handleCustomerChange}
+                                    aria-required="true"
+                                  />
+                                  {customerErrors.email && (
+                                    <div className="text-danger small mt-1">{customerErrors.email}</div>
+                                  )}
+                                </Form.Group>
+
+                                <Form.Group className="mb-3">
+                                  <PhoneInput
+                                    country={"us"}
+                                    value={customerData.contactNumber}
+                                    onChange={(phone) =>
+                                      handlePhoneChange("+" + phone, "Customer")
+                                    }
+                                    inputClass="form-control w-100"
+                                    containerClass="phone_input"
+                                    dropdownClass="phone_input_dropdown"
+                                    buttonClass="phone_input_button"
+                                  />
+                                  {customerErrors.contactNumber && (
+                                    <div className="text-danger small mt-1">{customerErrors.contactNumber}</div>
+                                  )}
+                                </Form.Group>
+
+                                <Form.Group className="mb-3">
+                                  <div className="d-flex gap-2 position-relative">
+                                    <Form.Control
+                                      type={show ? "text" : "password"}
+                                      name="password"
+                                      placeholder={t("password")}
+                                      value={customerData.password}
+                                      onChange={handleCustomerChange}
+                                      aria-required="true"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShow(!show)}
+                                      className="password-eye-btn"
+                                    >
+                                      <img
+                                        src={
+                                          show
+                                            ? "/img/lock.svg"
+                                            : "/img/unlock.svg"
+                                        }
+                                        alt="toggle password"
+                                      />
+                                    </button>
+                                  </div>
+                                  {customerErrors.password && (
+                                    <div className="text-danger small mt-1">{customerErrors.password}</div>
+                                  )}
+                                </Form.Group>
+
+                                <Form.Group className="mb-3">
+                                  <div className="d-flex gap-2 position-relative">
+                                    <Form.Control
+                                      type={show2 ? "text" : "password"}
+                                      name="confirmPassword"
+                                      placeholder={t("confirmPassword")}
+                                      value={customerData.confirmPassword}
+                                      onChange={handleCustomerChange}
+                                      aria-required="true"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShow2(!show2)}
+                                      className="password-eye-btn"
+                                    >
+                                      <img
+                                        src={
+                                          show2
+                                            ? "/img/lock.svg"
+                                            : "/img/unlock.svg"
+                                        }
+                                        alt="toggle confirm password"
+                                      />
+                                    </button>
+                                  </div>
+                                  {customerErrors.confirmPassword && (
+                                    <div className="text-danger small mt-1">{customerErrors.confirmPassword}</div>
+                                  )}
+                                </Form.Group>
+
+                                <button
+                                  type="submit"
+                                  disabled={loading}
+                                  className="common_btn w-100 d-block text-center text-decoration-none"
+                                >
+                                  {loading ? t("signingUp") : t("signUp")}
+                                </button>
+                              </Form>
+
+                              <SocialButtons />
+
+                              <div className="other_signup">
+                                <span>
+                                  {t("alreadyHaveAccount")}{" "}
+                                  <Link href="/login">{t("login")}</Link>
+                                </span>
+                              </div>
+                            </Tab.Pane>
+
+                            <Tab.Pane eventKey="Organizer">
+                              <Form
+                                className="login_field"
+                                noValidate
+                                onSubmit={handleOrganizerSignup}
+                              >
+                                <Form.Group className="mb-3">
+                                  <Form.Control
+                                    type="text"
+                                    name="fullname"
+                                    placeholder={t("fullName") || "Full Name"}
+                                    value={organizerData.fullname || ""}
+                                    onChange={handleOrganizerChange}
+                                    aria-required="true"
+                                  />
+                                  {organizerErrors.fullname && (
+                                    <div className="text-danger small mt-1">{organizerErrors.fullname}</div>
+                                  )}
+                                </Form.Group>
+
+                                <Form.Group className="mb-3">
+                                  <Form.Control
+                                    type="email"
+                                    name="email"
+                                    placeholder={t("email")}
+                                    value={organizerData.email}
+                                    onChange={handleOrganizerChange}
+                                    aria-required="true"
+                                  />
+                                  {organizerErrors.email && (
+                                    <div className="text-danger small mt-1">{organizerErrors.email}</div>
+                                  )}
+                                </Form.Group>
+
+                                <Form.Group className="mb-3">
+                                  <PhoneInput
+                                    country={"us"}
+                                    value={organizerData.contactNumber}
+                                    onChange={(phone) =>
+                                      handlePhoneChange("+" + phone, "Organizer")
+                                    }
+                                    inputClass="form-control w-100"
+                                    containerClass="phone_input"
+                                    dropdownClass="phone_input_dropdown"
+                                    buttonClass="phone_input_button"
+                                  />
+                                  {organizerErrors.contactNumber && (
+                                    <div className="text-danger small mt-1">{organizerErrors.contactNumber}</div>
+                                  )}
+                                </Form.Group>
+
+                                <Form.Group className="mb-3">
+                                  <div className="d-flex gap-2 position-relative">
+                                    <Form.Control
+                                      type={show ? "text" : "password"}
+                                      name="password"
+                                      placeholder={t("password")}
+                                      value={organizerData.password}
+                                      onChange={handleOrganizerChange}
+                                      aria-required="true"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShow(!show)}
+                                      className="password-eye-btn"
+                                    >
+                                      <img
+                                        src={
+                                          show
+                                            ? "/img/lock.svg"
+                                            : "/img/unlock.svg"
+                                        }
+                                        alt="toggle password"
+                                      />
+                                    </button>
+                                  </div>
+                                  {organizerErrors.password && (
+                                    <div className="text-danger small mt-1">{organizerErrors.password}</div>
+                                  )}
+                                </Form.Group>
+
+                                <Form.Group className="mb-3">
+                                  <div className="d-flex gap-2 position-relative">
+                                    <Form.Control
+                                      type={show2 ? "text" : "password"}
+                                      name="confirmPassword"
+                                      placeholder={t("confirmPassword")}
+                                      value={organizerData.confirmPassword}
+                                      onChange={handleOrganizerChange}
+                                      aria-required="true"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShow2(!show2)}
+                                      className="password-eye-btn"
+                                    >
+                                      <img
+                                        src={
+                                          show2
+                                            ? "/img/lock.svg"
+                                            : "/img/unlock.svg"
+                                        }
+                                        alt="toggle confirm password"
+                                      />
+                                    </button>
+                                  </div>
+                                  {organizerErrors.confirmPassword && (
+                                    <div className="text-danger small mt-1">{organizerErrors.confirmPassword}</div>
+                                  )}
+                                </Form.Group>
+
+                                <Form.Group className="mb-3">
+                                  <div className="custom-checkbox">
+                                    <input
+                                      type="checkbox"
+                                      id="terms"
+                                      name="acceptTerms"
+                                      checked={organizerData.acceptTerms}
+                                      onChange={handleOrganizerChange}
+                                    />
+                                    <label htmlFor="terms">
+                                      {t("acceptTermsConditions")}
+                                    </label>
+                                  </div>
+                                  {organizerErrors.acceptTerms && (
+                                    <div className="text-danger small mt-1">{organizerErrors.acceptTerms}</div>
+                                  )}
+                                </Form.Group>
+
+                                <button
+                                  type="submit"
+                                  disabled={loading}
+                                  className="common_btn w-100 d-block text-center text-decoration-none"
+                                >
+                                  {loading ? t("signingUp") : t("signUp")}
+                                </button>
+                              </Form>
+
+                              <SocialButtons />
+
+                              <div className="other_signup">
+                                <span>
+                                  {t("alreadyHaveAccount")}{" "}
+                                  <Link href="/login">{t("login")}</Link>
+                                </span>
+                              </div>
+                            </Tab.Pane>
+                          </Tab.Content>
+                        </Col>
+                      </Row>
+                    </Tab.Container>
+                  </div>
+                </Col>
+              </Row>
+            </Col>
+          </Row>
+        </Container>
+      </div>
     </GuestRoute>
   );
 }
