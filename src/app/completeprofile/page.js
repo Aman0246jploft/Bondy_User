@@ -1,11 +1,13 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Col, Container, Form, Row, Button } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import VerificationModl from "@/components/Modal/VerificationModl";
+import { Upload, Camera } from "lucide-react";
+import { getFullImageUrl } from "@/utils/imageHelper";
 
 export default function CompleteProfile() {
   return (
@@ -30,7 +32,32 @@ function CompleteProfileContent() {
     dob: null,
     bio: "",
     profileImage: "",
+    backgroundImage: "",
   });
+
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [backgroundImageFile, setBackgroundImageFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [backgroundPreview, setBackgroundPreview] = useState(null);
+
+  const avatarInputRef = useRef(null);
+  const coverInputRef = useRef(null);
+
+  const handleProfileFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setProfileImageFile(file);
+    const localPreview = URL.createObjectURL(file);
+    setPreview(localPreview);
+  };
+
+  const handleBackgroundFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setBackgroundImageFile(file);
+    const localPreview = URL.createObjectURL(file);
+    setBackgroundPreview(localPreview);
+  };
 
   // Organizer Business details state
   const [organizerData, setOrganizerData] = useState({
@@ -93,7 +120,14 @@ function CompleteProfileContent() {
               dob: profile?.dob ? new Date(profile.dob) : null,
               bio: profile?.bio || "",
               profileImage: profile?.profileImage || "",
+              backgroundImage: profile?.backgroundImage || "",
             });
+            if (profile?.profileImage) {
+              setPreview(getFullImageUrl(profile.profileImage));
+            }
+            if (profile?.backgroundImage) {
+              setBackgroundPreview(getFullImageUrl(profile.backgroundImage));
+            }
           }
         }
       } catch (error) {
@@ -123,7 +157,36 @@ function CompleteProfileContent() {
 
     try {
       setLoading(true);
-      const response = await authApi.updateProfile(customerData);
+      let uploadedProfileImage = customerData.profileImage;
+      let uploadedBackgroundImage = customerData.backgroundImage;
+
+      // 1. Upload profile image if a new file was selected
+      if (profileImageFile) {
+        const formData = new FormData();
+        formData.append("files", profileImageFile);
+        const response = await authApi.uploadFile(formData);
+        if (response?.status && response.data?.files?.length > 0) {
+          uploadedProfileImage = response.data.files[0];
+        }
+      }
+
+      // 2. Upload background/cover image if a new file was selected
+      if (backgroundImageFile) {
+        const formData = new FormData();
+        formData.append("files", backgroundImageFile);
+        const response = await authApi.uploadFile(formData);
+        if (response?.status && response.data?.files?.length > 0) {
+          uploadedBackgroundImage = response.data.files[0];
+        }
+      }
+
+      const payload = {
+        ...customerData,
+        profileImage: uploadedProfileImage,
+        backgroundImage: uploadedBackgroundImage,
+      };
+
+      const response = await authApi.updateProfile(payload);
       if (response?.status) {
         router.push("/insterest");
       }
@@ -307,6 +370,50 @@ function CompleteProfileContent() {
                   </div>
 
                   <Form className="common_field" onSubmit={handleCustomerSubmit}>
+                    {/* Cover/Avatar Setup Box */}
+                    <div className="profile-images-setup">
+                      {/* Cover Banner Uploader */}
+                      <div className="profile-cover-upload" onClick={() => coverInputRef.current.click()}>
+                        {backgroundPreview ? (
+                          <img src={backgroundPreview} alt="Cover Preview" className="cover-preview-img" onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }} />
+                        ) : (
+                          <div className="cover-placeholder">
+                            <Upload size={20} className="mb-1 text-teal" />
+                            <span>Add Cover Photo</span>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          ref={coverInputRef}
+                          style={{ display: "none" }}
+                          accept="image/*"
+                          onChange={handleBackgroundFileChange}
+                        />
+                      </div>
+
+                      {/* Profile Image Uploader */}
+                      <div className="profile-avatar-upload" onClick={() => avatarInputRef.current.click()}>
+                        <div className="avatar-preview-box">
+                          <img
+                            src={preview || "/img/default-user.png"}
+                            alt="Avatar Preview"
+                            onError={(e) => {
+                              e.target.src = "/img/default-user.png";
+                            }}
+                          />
+                          <div className="avatar-edit-icon">
+                            <Camera size={12} />
+                          </div>
+                        </div>
+                        <input
+                          type="file"
+                          ref={avatarInputRef}
+                          style={{ display: "none" }}
+                          accept="image/*"
+                          onChange={handleProfileFileChange}
+                        />
+                      </div>
+                    </div>
                     <Row className="gy-3">
                       <Col md={6}>
                         <Form.Group controlId="firstName">
@@ -373,6 +480,77 @@ function CompleteProfileContent() {
           </Col>
         </Row>
       </Container>
+      <style jsx>{`
+        .profile-images-setup {
+          position: relative;
+          width: 100%;
+          margin-bottom: 45px;
+        }
+        .profile-cover-upload {
+          width: 100%;
+          height: 140px;
+          border-radius: 12px;
+          background-color: #262626;
+          border: 2px dashed rgba(255, 255, 255, 0.1);
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: border-color 0.2s ease;
+        }
+        .profile-cover-upload:hover {
+          border-color: #23ada4;
+        }
+        .cover-preview-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .cover-placeholder {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          color: #9ca3af;
+          font-size: 13px;
+        }
+        .profile-avatar-upload {
+          position: absolute;
+          bottom: -25px;
+          left: 20px;
+          cursor: pointer;
+          z-index: 10;
+        }
+        .avatar-preview-box {
+          position: relative;
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          border: 3px solid #161616;
+          overflow: hidden;
+          background-color: #374151;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .avatar-preview-box img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .avatar-edit-icon {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          background-color: #23ada4;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #fff;
+          border: 1px solid #161616;
+        }
+      `}</style>
     </div>
   );
 }

@@ -24,7 +24,7 @@ const eventData = {
   },
 };
 
-const SessionCart = ({ type, title, events }) => {
+const SessionCart = ({ type, title, events, isPast, isMyProfile }) => {
   // If events are passed via props, use them, otherwise check local data (optional fallback)
   const { t, language } = useLanguage();
 
@@ -70,9 +70,19 @@ const SessionCart = ({ type, title, events }) => {
               }
             };
 
-            const price = item.ticketPrice !== undefined
-              ? formatPrice(item.ticketPrice)
-              : (typeof item.price === "number" ? formatPrice(item.price) : item.price);
+            let priceVal = undefined;
+            if (item.ticketPrice !== undefined && item.ticketPrice !== null) {
+              priceVal = item.ticketPrice;
+            } else if (item.price !== undefined && item.price !== null) {
+              priceVal = item.price;
+            } else if (item.tickets && Array.isArray(item.tickets) && item.tickets.length > 0) {
+              const prices = item.tickets.map(t => t.price).filter(p => p !== undefined && p !== null);
+              if (prices.length > 0) {
+                priceVal = Math.min(...prices);
+              }
+            }
+
+            const price = formatPrice(priceVal);
 
             // Calculate seats left
             const seatsLeft = item.totalTickets && item.ticketQtyAvailable
@@ -121,9 +131,11 @@ const SessionCart = ({ type, title, events }) => {
 
                       <div className="price-tag">{t("fromLabel")} {price}</div>
                       <div className="event_cart_footer">
-                        <Link href={bookingUrl} className="common_btn max_170">
-                          {t("bookNow")}
-                        </Link>
+                        {!isPast && !isMyProfile && (
+                          <Link href={bookingUrl} className="common_btn max_170">
+                            {t("bookNow")}
+                          </Link>
+                        )}
                         {seatsLeft && <span>{seatsLeft}</span>}
                       </div>
                     </div>

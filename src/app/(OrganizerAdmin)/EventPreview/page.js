@@ -236,7 +236,15 @@ function page() {
           <ul className="event-dtl-rgt mt-2">
             <li>
               <h6>{t("refundPolicy")}</h6>
-              <p>{eventData.refundPolicy}</p>
+              <p>
+                {eventData.refundPolicy === "No Refund"
+                  ? t("noRefund")
+                  : eventData.refundPolicy === "1 Day Before"
+                    ? t("oneDayBefore")
+                    : eventData.refundPolicy === "7 Days Before"
+                      ? t("sevenDaysBefore")
+                      : eventData.refundPolicy}
+              </p>
             </li>
           </ul>
         </div>
@@ -252,6 +260,7 @@ function page() {
           <h4 className="line-title">
             <span>{t("detailedDescriptionLabel")}</span>
           </h4>
+
           <p style={{ wordBreak: "break-word" }}>
             {eventData.longdesc}
           </p>

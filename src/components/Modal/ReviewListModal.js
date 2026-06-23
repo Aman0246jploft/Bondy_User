@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import reviewApi from "@/api/reviewApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import VerifyDropdwons from "@/components/VerifyDropdwons";
+import { useLanguage } from "@/context/LanguageContext";
 
 const ReviewListModal = ({ show, onHide, entityId, entityModel }) => {
+    const { t } = useLanguage();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
@@ -67,7 +69,7 @@ const ReviewListModal = ({ show, onHide, entityId, entityModel }) => {
     return (
         <Modal show={show} onHide={onHide} centered scrollable className="review-modal">
             <Modal.Header closeButton className="bg-dark text-white border-secondary py-3">
-                <Modal.Title className="fw-bold h5 mb-0">Reviews & Ratings</Modal.Title>
+                <Modal.Title className="fw-bold h5 mb-0">{t("reviewsAndRatings") || "Reviews & Ratings"}</Modal.Title>
             </Modal.Header>
             <Modal.Body
                 onScroll={handleScroll}
@@ -78,7 +80,7 @@ const ReviewListModal = ({ show, onHide, entityId, entityModel }) => {
                 {reviews.length === 0 && !loading ? (
                     <div className="p-5 text-center text-muted">
                         <img src="/img/sidebar-logo.svg" width="60" className="mb-3 opacity-25" alt="No reviews" />
-                        <p>No reviews found yet.</p>
+                        <p>{t("noReviewsFound") || "No reviews found yet."}</p>
                     </div>
                 ) : (
                     <div className="review-list">
@@ -101,11 +103,6 @@ const ReviewListModal = ({ show, onHide, entityId, entityModel }) => {
                                                 height="50"
                                                 onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
                                             />
-                                            {/* {user.isVerified && (
-                                                <div className="position-absolute bottom-0 end-0 bg-dark rounded-circle" style={{ padding: '2px' }}>
-                                                    <VerifyDropdwons />
-                                                </div>
-                                            )} */}
                                         </div>
                                         <div className="flex-grow-1">
                                             <div className="d-flex justify-content-between align-items-start text-dark">
@@ -131,7 +128,7 @@ const ReviewListModal = ({ show, onHide, entityId, entityModel }) => {
                                         </p>
                                         {review.entityId && (
                                             <div className="mt-2 pt-2 border-top border-secondary opacity-75">
-                                                <span className="small-label me-1">Posted for:</span>
+                                                <span className="small-label me-1">{t("postedFor") || "Posted for:"}</span>
                                                 <span className="event-label">{review.entityId.eventTitle || review.entityId.courseTitle}</span>
                                             </div>
                                         )}

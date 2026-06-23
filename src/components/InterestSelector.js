@@ -2,7 +2,7 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
 
-const InterestSelector = ({ categories = [], selectedIds = [], onToggle }) => {
+const InterestSelector = ({ categories = [], selectedIds = [], onToggle, disabled = false }) => {
   const { language } = useLanguage();
 
   const getCategoryName = (item) => {
@@ -15,8 +15,8 @@ const InterestSelector = ({ categories = [], selectedIds = [], onToggle }) => {
       {categories.map((item) => (
         <div
           key={item._id}
-          onClick={() => onToggle && onToggle(item._id)}
-          className={`chip ${selectedIds.includes(item._id) ? "selected" : ""}`}>
+          onClick={() => !disabled && onToggle && onToggle(item._id)}
+          className={`chip ${selectedIds.includes(item._id) ? "selected" : ""} ${disabled ? "disabled" : ""}`}>
           <span className="icon">
             {item.image ? (
               <img

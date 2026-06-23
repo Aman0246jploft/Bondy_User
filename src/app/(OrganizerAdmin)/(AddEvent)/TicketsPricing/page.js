@@ -330,7 +330,7 @@ function page() {
                           </span>
                           <input
                             type="number"
-                            className="form-control px-cms-30" 
+                            className="form-control px-cms-30"
                             value={ticket.price === "" ? "" : ticket.price}
                             placeholder="0"
                             onChange={(e) =>

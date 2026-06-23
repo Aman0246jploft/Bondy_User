@@ -88,7 +88,7 @@ function StaffPage() {
   useEffect(() => {
     fetchStaffList();
     fetchOrganizerEntities();
-    document.title = "Staff Management - Bondy";
+    document.title = t("staffManagementTitle") || "Staff Management - Bondy";
   }, []);
 
   // Reset scroll position to top when switching tabs in the assignment modal
@@ -111,11 +111,11 @@ function StaffPage() {
       const res = await authApi.uploadFile(formData);
       if (res.data && res.data.files && res.data.files.length > 0) {
         setFormPhoto(res.data.files[0]);
-        toast.success("Photo uploaded successfully");
+        toast.success(t("photoUploadedSuccessfully") || "Photo uploaded successfully");
       }
     } catch (err) {
       console.error("Photo upload failed", err);
-      toast.error("Failed to upload photo");
+      toast.error(t("photoUploadFailed") || "Failed to upload photo");
     } finally {
       setUploadingPhoto(false);
     }
@@ -125,7 +125,7 @@ function StaffPage() {
   const handleAddStaffSubmit = async (e) => {
     e.preventDefault();
     if (!formFullName.trim() || !formEmail.trim() || !formPassword.trim()) {
-      toast.error("Please fill in all required fields.");
+      toast.error(t("fillRequiredFields") || "Please fill in all required fields.");
       return;
     }
 
@@ -140,7 +140,7 @@ function StaffPage() {
 
       const res = await staffApi.addStaff(payload);
       if (res?.status) {
-        toast.success("Staff member added successfully");
+        toast.success(t("staffAddedSuccessfully") || "Staff member added successfully");
         // Reset form
         setFormFullName("");
         setFormEmail("");
@@ -152,7 +152,7 @@ function StaffPage() {
       }
     } catch (err) {
       console.error("Failed to add staff member", err);
-      toast.error(err?.response?.data?.message || "Failed to add staff member");
+      toast.error(err?.response?.data?.message || t("failedToAddStaff") || "Failed to add staff member");
     } finally {
       setSubmittingStaff(false);
     }
@@ -246,13 +246,13 @@ function StaffPage() {
       });
 
       await Promise.all([...eventPromises, ...coursePromises]);
-      toast.success("Assignments saved successfully");
+      toast.success(t("assignmentsSavedSuccessfully") || "Assignments saved successfully");
       setShowAssignModal(false);
       // Refresh events/courses cache to reflect new assignments
       fetchOrganizerEntities();
     } catch (err) {
       console.error("Failed to save assignments", err);
-      toast.error("Failed to save some assignments");
+      toast.error(t("failedToSaveAssignments") || "Failed to save some assignments");
     } finally {
       setSavingAssignments(false);
     }
@@ -626,7 +626,7 @@ function StaffPage() {
               onClick={() => setShowAddStaff(false)}>
               &#8592;
             </button>
-            <h2>Add Staff</h2>
+            <h2>{t("addStaff") || "Add Staff"}</h2>
           </div>
           <p
             style={{
@@ -634,8 +634,7 @@ function StaffPage() {
               fontSize: "14px",
               marginBottom: "30px",
             }}>
-            Assign a new team member to your scanning pool. They will be able to
-            access the event check-in tools immediately.
+            {t("addStaffDesc") || "Assign a new team member to your scanning pool. They will be able to access the event check-in tools immediately."}
           </p>
 
           <form onSubmit={handleAddStaffSubmit}>
@@ -650,13 +649,14 @@ function StaffPage() {
                   src={getFullImageUrl(formPhoto)}
                   alt="Avatar Preview"
                   className="photo-preview"
+                  onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
                 />
               ) : (
                 <div className="upload-placeholder">
                   <svg viewBox="0 0 24 24">
                     <path d="M19 12h-2v3h-3v2h3v3h2v-3h3v-2h-3zM11.5 8.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM17 9.5V6H7L4.5 9.5 3 8v11h11v-2H5.4l1.6-2.2 2.2 2.2h3.8z" />
                   </svg>
-                  <span>Add Photo</span>
+                  <span>{t("addPhoto") || "Add Photo"}</span>
                 </div>
               )}
               <input
@@ -670,10 +670,10 @@ function StaffPage() {
 
             {/* Inputs */}
             <div className="staff-form-group">
-              <label>Full Name *</label>
+              <label>{t("fullNameLabel") || "Full Name"} *</label>
               <input
                 type="text"
-                placeholder="Enter full name"
+                placeholder={t("enterFullNamePlaceholder") || "Enter full name"}
                 value={formFullName}
                 onChange={(e) => setFormFullName(e.target.value)}
                 required
@@ -681,10 +681,10 @@ function StaffPage() {
             </div>
 
             <div className="staff-form-group">
-              <label>Staff Email *</label>
+              <label>{t("staffEmailLabel") || "Staff Email"} *</label>
               <input
                 type="email"
-                placeholder="Enter staff email"
+                placeholder={t("enterStaffEmailPlaceholder") || "Enter staff email"}
                 value={formEmail}
                 onChange={(e) => setFormEmail(e.target.value)}
                 required
@@ -692,10 +692,10 @@ function StaffPage() {
             </div>
 
             <div className="staff-form-group">
-              <label>Password *</label>
+              <label>{t("passwordLabel") || "Password"} *</label>
               <input
                 type="password"
-                placeholder="Enter password"
+                placeholder={t("enterPasswordPlaceholder") || "Enter password"}
                 value={formPassword}
                 onChange={(e) => setFormPassword(e.target.value)}
                 required
@@ -709,7 +709,7 @@ function StaffPage() {
               {submittingStaff ? (
                 <Spinner animation="border" size="sm" />
               ) : (
-                "Add Staff Member"
+                t("addStaffMember") || "Add Staff Member"
               )}
             </button>
           </form>
@@ -720,7 +720,7 @@ function StaffPage() {
         /* --------------------------------------------------------------- */
         <div className="cards">
           <div className="staff-header">
-            <h2>Staff</h2>
+            <h2>{t("staffHeader") || "Staff"}</h2>
             <button
               className="add-staff-btn-circle"
               onClick={() => setShowAddStaff(true)}>
@@ -739,7 +739,7 @@ function StaffPage() {
             </svg>
             <input
               type="text"
-              placeholder="Search by name, email or Staff ID..."
+              placeholder={t("searchStaffPlaceholder") || "Search by name, email or Staff ID..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -751,7 +751,7 @@ function StaffPage() {
             </div>
           ) : filteredStaffList.length === 0 ? (
             <div className="text-center py-5" style={{ color: "#7c7c7c" }}>
-              No staff members found.
+              {t("noStaffMembersFound") || "No staff members found."}
             </div>
           ) : (
             <div className="staff-list">
@@ -759,25 +759,16 @@ function StaffPage() {
                 <div className="staff-card" key={staff._id}>
                   <div className="staff-info-box">
                     <div className="staff-avatar-circle">
-                      {staff.profileImage ? (
-                        <img
-                          src={getFullImageUrl(staff.profileImage)}
-                          alt="Avatar"
-                        />
-                      ) : (
-                        <svg
-                          width="24"
-                          height="24"
-                          fill="#7c7c7c"
-                          viewBox="0 0 16 16">
-                          <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
-                        </svg>
-                      )}
+                      <img
+                        src={staff.profileImage ? getFullImageUrl(staff.profileImage) : "/img/sidebar-logo.svg"}
+                        alt="Avatar"
+                        onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
+                      />
                     </div>
                     <div className="staff-details">
                       <h5>
                         {`${staff.firstName || ""} ${staff.lastName || ""}`.trim() ||
-                          "Staff Member"}
+                          t("staffMember") || "Staff Member"}
                       </h5>
                       <p>{staff.email}</p>
                     </div>
@@ -787,7 +778,7 @@ function StaffPage() {
                     className="assign-action-btn"
                     onClick={() => handleOpenAssign(staff)}>
                     <img src="/img/ticket-icon.svg" alt="Assign" />
-                    <span>Assign Event</span>
+                    <span>{t("assignEvent") || "Assign Event"}</span>
                   </button>
                 </div>
               ))}
@@ -805,7 +796,7 @@ function StaffPage() {
         centered
         className="dark-modal">
         <Modal.Header closeButton>
-          <Modal.Title>Assigned Events</Modal.Title>
+          <Modal.Title>{t("assignedEventsTitle") || "Assigned Events"}</Modal.Title>
         </Modal.Header>
         <Modal.Body
           className="p-0"
@@ -818,7 +809,7 @@ function StaffPage() {
                 setActiveTab("events");
                 setEntitySearchQuery("");
               }}>
-              Events
+              {t("eventsTab") || "Events"}
             </button>
             <button
               className={`modal-tab-btn ${activeTab === "courses" ? "active" : ""}`}
@@ -826,7 +817,7 @@ function StaffPage() {
                 setActiveTab("courses");
                 setEntitySearchQuery("");
               }}>
-              Courses
+              {t("coursesTab") || "Courses"}
             </button>
           </div>
 
@@ -844,7 +835,7 @@ function StaffPage() {
             </svg>
             <input
               type="text"
-              placeholder={`Search by ${activeTab === "events" ? "event" : "course"} name...`}
+              placeholder={activeTab === "events" ? (t("searchByEventName") || "Search by event name...") : (t("searchByCourseName") || "Search by course name...")}
               value={entitySearchQuery}
               onChange={(e) => setEntitySearchQuery(e.target.value)}
               style={{
@@ -862,7 +853,7 @@ function StaffPage() {
             </div>
           ) : filteredEntities.length === 0 ? (
             <div className="text-center py-4" style={{ color: "#7c7c7c" }}>
-              No {activeTab} found.
+              {activeTab === "events" ? (t("noEventsFound") || "No events found.") : (t("noCoursesFound") || "No courses found.")}
             </div>
           ) : (
             <div className="entity-list-container" ref={entityListRef}>
@@ -891,17 +882,11 @@ function StaffPage() {
                 return (
                   <div className="entity-item-card" key={item._id}>
                     <div className="entity-thumbnail">
-                      {poster ? (
-                        <img src={poster} alt="Thumbnail" />
-                      ) : (
-                        <div
-                          style={{
-                            background: "#2a2a2a",
-                            width: "100%",
-                            height: "100%",
-                          }}
-                        />
-                      )}
+                      <img
+                        src={poster || "/img/sidebar-logo.svg"}
+                        alt="Thumbnail"
+                        onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
+                      />
                     </div>
                     <div className="entity-text-details">
                       <h6>{title}</h6>
@@ -944,7 +929,7 @@ function StaffPage() {
             {savingAssignments ? (
               <Spinner animation="border" size="sm" />
             ) : (
-              "Save"
+              t("save") || "Save"
             )}
           </button>
         </Modal.Body>

@@ -56,7 +56,7 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="text">{t("personalInfo")}</span>
         </Link>
 
-         <Link
+        <Link
           href="/Notification"
           className={`menu-item ${isActive("/Notification") ? "active" : ""}`}>
           <span className="icon" style={{ position: "relative" }}>
@@ -85,7 +85,7 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="text">{t("tickets")}</span>
         </Link>
 
-        <Link
+        {/* <Link
           href="/Payment"
           className={`menu-item ${isActive("/Payment") ? "active" : ""}`}
           onClick={(e) => e.preventDefault()}
@@ -96,7 +96,7 @@ export default function Sidebar({ toggleSidebar }) {
             <img src="/img/wallet-icon.svg" alt="" />
           </span>
           <span className="text">{t("payment")}</span>
-        </Link>
+        </Link> */}
 
         <Link
           href="/Messagee"
@@ -107,7 +107,7 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="text">{t("messages")}</span>
         </Link>
 
-       
+
 
         <Link
           href="/MyFavorite"

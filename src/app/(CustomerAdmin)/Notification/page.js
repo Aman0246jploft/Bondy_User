@@ -9,21 +9,32 @@ import { useSocket } from "@/context/SocketContext";
 
 export default function NotificationPage() {
   const { t, language } = useLanguage();
-    const { fetchUnreadNotificationCount } = useSocket();
+  const { fetchUnreadNotificationCount, unreadNotificationCount } = useSocket();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState([]);
   const [deletingMultiple, setDeletingMultiple] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalNotifications, setTotalNotifications] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [activeTab, setActiveTab] = useState("all");
   const PAGE_SIZE = 10;
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (page = currentPage, tab = activeTab) => {
     try {
       setLoading(true);
-      // Fetching max 50 for now, can implement pagination later if needed
-      const res = await notificationApi.getMyNotifications({ pageNo: 1, size: 100 });
-      if (res?.status || res?.status === "SUCCESS") {
+      const params = {
+        page: page,
+        limit: PAGE_SIZE,
+      };
+      if (tab !== "all") {
+        params.category = tab;
+      }
+      const res = await notificationApi.getMyNotifications(params);
+      if (res?.status === "SUCCESS" || res?.status === true || res?.data) {
         setNotifications(res?.data?.notifications || []);
+        setTotalNotifications(res?.data?.total || 0);
+        setTotalPages(res?.data?.totalPages || 1);
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -34,10 +45,10 @@ export default function NotificationPage() {
   };
 
   useEffect(() => {
-    fetchNotifications();
-      fetchUnreadNotificationCount();
+    fetchNotifications(currentPage, activeTab);
+    fetchUnreadNotificationCount();
     document.title = `Notification - Bondy`;
-  }, []);
+  }, [currentPage, activeTab]);
 
   const handleMarkAllRead = async () => {
     try {
@@ -61,6 +72,7 @@ export default function NotificationPage() {
         setNotifications((prev) =>
           prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
         );
+        fetchUnreadNotificationCount();
       }
     } catch (error) {
       console.error(error);
@@ -72,7 +84,7 @@ export default function NotificationPage() {
       const res = await notificationApi.deleteNotification(id);
       if (res?.status || res?.status === "SUCCESS") {
         toast.success(t("notificationDeleted") || "Notification deleted");
-        setNotifications((prev) => prev.filter((n) => n._id !== id));
+        fetchNotifications(currentPage, activeTab);
         setSelectedIds((prev) => prev.filter((sid) => sid !== id));
       }
     } catch (error) {
@@ -87,8 +99,13 @@ export default function NotificationPage() {
       const res = await notificationApi.deleteMultipleNotifications(selectedIds);
       if (res?.status || res?.status === "SUCCESS") {
         toast.success(t("notificationsDeleted") || `${selectedIds.length} notification(s) deleted`);
-        setNotifications((prev) => prev.filter((n) => !selectedIds.includes(n._id)));
         setSelectedIds([]);
+        const remainingOnPage = notifications.length - selectedIds.filter(id => notifications.some(n => n._id === id)).length;
+        if (remainingOnPage === 0 && currentPage > 1) {
+          setCurrentPage((p) => p - 1);
+        } else {
+          fetchNotifications(currentPage, activeTab);
+        }
       }
     } catch (error) {
       toast.error(t("failedToDeleteNotification") || "Failed to delete notifications");
@@ -103,14 +120,14 @@ export default function NotificationPage() {
     );
   };
 
-  const toggleSelectAll = (list) => {
-    const allSelected = list.every((n) => selectedIds.includes(n._id));
+  const toggleSelectAll = () => {
+    const allSelected = notifications.every((n) => selectedIds.includes(n._id));
     if (allSelected) {
-      setSelectedIds((prev) => prev.filter((id) => !list.some((n) => n._id === id)));
+      setSelectedIds((prev) => prev.filter((id) => !notifications.some((n) => n._id === id)));
     } else {
       setSelectedIds((prev) => [
         ...prev,
-        ...list.filter((n) => !prev.includes(n._id)).map((n) => n._id),
+        ...notifications.filter((n) => !prev.includes(n._id)).map((n) => n._id),
       ]);
     }
   };
@@ -131,16 +148,12 @@ export default function NotificationPage() {
     }
   };
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-  const readCount = notifications.filter((n) => n.isRead).length;
-
-  const renderPagination = (list) => {
-    const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
-    if (list.length <= PAGE_SIZE) return null;
+  const renderPagination = () => {
+    if (totalNotifications <= PAGE_SIZE) return null;
     return (
       <div className="d-flex justify-content-between align-items-center px-1 py-3" style={{ borderTop: "1px solid #2a2a2a", marginTop: 8 }}>
         <span style={{ color: "#888", fontSize: 13 }}>
-          {t("showing") || "Showing"} {Math.min((currentPage - 1) * PAGE_SIZE + 1, list.length)}–{Math.min(currentPage * PAGE_SIZE, list.length)} {t("of") || "of"} {list.length}
+          {t("showing") || "Showing"} {Math.min((currentPage - 1) * PAGE_SIZE + 1, totalNotifications)}–{Math.min(currentPage * PAGE_SIZE, totalNotifications)} {t("of") || "of"} {totalNotifications}
         </span>
         <div className="d-flex gap-2 flex-wrap">
           <button className="common_btn" style={{ padding: "6px 14px", fontSize: 13 }} disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
@@ -191,20 +204,50 @@ export default function NotificationPage() {
           </div>
         </div>
         <div className="d-flex flex-column align-items-end justify-content-between">
-          {/* <span
-            className="text-danger mb-2"
-            style={{ cursor: "pointer", fontSize: "14px", padding: "4px" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(notif._id);
-            }}
-            title={t("delete") || "Delete"}
-          >
-            ✕
-          </span> */}
           <p style={{ fontSize: "12px", margin: 0 }}>{formatTime(notif.createdAt)}</p>
         </div>
       </div>
+    );
+  };
+
+  const getTabTitle = (key, labelKey) => {
+    const label = t(labelKey) || labelKey;
+    if (activeTab === key) {
+      return `${label} (${totalNotifications})`;
+    }
+    return label;
+  };
+
+  const renderTabContent = () => {
+    if (notifications.length === 0) {
+      return <div className="text-center py-4 text-muted">{t("noNotifications")}</div>;
+    }
+    return (
+      <>
+        <div className="d-flex align-items-center justify-content-between mb-2 px-1">
+          <label style={{ fontSize: 14, color: "#aaa", cursor: "pointer", userSelect: "none" }}>
+            <input
+              type="checkbox"
+              checked={notifications.every((n) => selectedIds.includes(n._id))}
+              onChange={toggleSelectAll}
+              style={{ marginRight: 6, accentColor: "#23ada4" }}
+            />
+            {t("selectAll") || "Select All"}
+          </label>
+          {selectedIds.length > 0 && (
+            <button
+              className="common_btn"
+              style={{ padding: "5px 14px", fontSize: 13, background: "#e74c3c", border: "none" }}
+              disabled={deletingMultiple}
+              onClick={handleDeleteSelected}
+            >
+              {deletingMultiple ? <Spinner animation="border" size="sm" /> : `${t("deleteSelected") || "Delete Selected"} (${selectedIds.length})`}
+            </button>
+          )}
+        </div>
+        {notifications.map(renderNotificationCard)}
+        {renderPagination()}
+      </>
     );
   };
 
@@ -213,7 +256,7 @@ export default function NotificationPage() {
       <div className="cards notification-card">
         <div className="card-title">
           <h3>{t("notifications")}</h3>
-          {unreadCount > 0 && (
+          {unreadNotificationCount > 0 && (
             <p onClick={handleMarkAllRead} style={{ cursor: "pointer" }}>
               {t("markAllRead")}{" "}
               <svg
@@ -246,111 +289,28 @@ export default function NotificationPage() {
           </div>
         ) : (
           <div className="ticket-tabs">
-            <Tabs defaultActiveKey="all" onSelect={() => { setSelectedIds([]); setCurrentPage(1); }}>
-              <Tab eventKey="all" title={`${t("all")} (${notifications.length})`}>
-                {notifications.length === 0 ? (
-                  <div className="text-center py-4 text-muted">{t("noNotifications")}</div>
-                ) : (
-                  <>
-                    <div className="d-flex align-items-center justify-content-between mb-2 px-1">
-                      <label style={{ fontSize: 14, color: "#aaa", cursor: "pointer", userSelect: "none" }}>
-                        <input
-                          type="checkbox"
-                          checked={notifications.every((n) => selectedIds.includes(n._id))}
-                          onChange={() => toggleSelectAll(notifications)}
-                          style={{ marginRight: 6, accentColor: "#23ada4" }}
-                        />
-                        {t("selectAll") || "Select All"}
-                      </label>
-                      {selectedIds.length > 0 && (
-                        <button
-                          className="common_btn"
-                          style={{ padding: "5px 14px", fontSize: 13, background: "#e74c3c", border: "none" }}
-                          disabled={deletingMultiple}
-                          onClick={handleDeleteSelected}
-                        >
-                          {deletingMultiple ? <Spinner animation="border" size="sm" /> : `${t("deleteSelected") || "Delete Selected"} (${selectedIds.length})`}
-                        </button>
-                      )}
-                    </div>
-                    {notifications.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map(renderNotificationCard)}
-                    {renderPagination(notifications)}
-                  </>
-                )}
+            <Tabs
+              activeKey={activeTab}
+              onSelect={(k) => {
+                setActiveTab(k);
+                setSelectedIds([]);
+                setCurrentPage(1);
+              }}
+            >
+              <Tab eventKey="all" title={getTabTitle("all", "all")}>
+                {renderTabContent()}
               </Tab>
 
-              <Tab eventKey="unread" title={`${t("unread")} (${unreadCount})`}>
-                {unreadCount === 0 ? (
-                  <div className="text-center py-4 text-muted">{t("noUnreadNotifications") || "No unread notifications"}</div>
-                ) : (
-                  (() => {
-                    const list = notifications.filter((n) => !n.isRead);
-                    return (
-                      <>
-                        <div className="d-flex align-items-center justify-content-between mb-2 px-1">
-                          <label style={{ fontSize: 14, color: "#aaa", cursor: "pointer", userSelect: "none" }}>
-                            <input
-                              type="checkbox"
-                              checked={list.every((n) => selectedIds.includes(n._id))}
-                              onChange={() => toggleSelectAll(list)}
-                              style={{ marginRight: 6, accentColor: "#23ada4" }}
-                            />
-                            {t("selectAll") || "Select All"}
-                          </label>
-                          {selectedIds.length > 0 && (
-                            <button
-                              className="common_btn"
-                              style={{ padding: "5px 14px", fontSize: 13, background: "#e74c3c", border: "none" }}
-                              disabled={deletingMultiple}
-                              onClick={handleDeleteSelected}
-                            >
-                              {deletingMultiple ? <Spinner animation="border" size="sm" /> : `${t("deleteSelected") || "Delete Selected"} (${selectedIds.length})`}
-                            </button>
-                          )}
-                        </div>
-                        {list.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map(renderNotificationCard)}
-                        {renderPagination(list)}
-                      </>
-                    );
-                  })()
-                )}
+              <Tab eventKey="bookings" title={getTabTitle("bookings", "bookings")}>
+                {renderTabContent()}
               </Tab>
 
-              <Tab eventKey="read" title={`${t("read")} (${readCount})`}>
-                {readCount === 0 ? (
-                  <div className="text-center py-4 text-muted">{t("noReadNotifications") || "No read notifications"}</div>
-                ) : (
-                  (() => {
-                    const list = notifications.filter((n) => n.isRead);
-                    return (
-                      <>
-                        <div className="d-flex align-items-center justify-content-between mb-2 px-1">
-                          <label style={{ fontSize: 14, color: "#aaa", cursor: "pointer", userSelect: "none" }}>
-                            <input
-                              type="checkbox"
-                              checked={list.every((n) => selectedIds.includes(n._id))}
-                              onChange={() => toggleSelectAll(list)}
-                              style={{ marginRight: 6, accentColor: "#23ada4" }}
-                            />
-                            {t("selectAll") || "Select All"}
-                          </label>
-                          {selectedIds.length > 0 && (
-                            <button
-                              className="common_btn"
-                              style={{ padding: "5px 14px", fontSize: 13, background: "#e74c3c", border: "none" }}
-                              disabled={deletingMultiple}
-                              onClick={handleDeleteSelected}
-                            >
-                              {deletingMultiple ? <Spinner animation="border" size="sm" /> : `${t("deleteSelected") || "Delete Selected"} (${selectedIds.length})`}
-                            </button>
-                          )}
-                        </div>
-                        {list.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map(renderNotificationCard)}
-                        {renderPagination(list)}
-                      </>
-                    );
-                  })()
-                )}
+              <Tab eventKey="payments" title={getTabTitle("payments", "payments")}>
+                {renderTabContent()}
+              </Tab>
+
+              <Tab eventKey="eventupdates" title={getTabTitle("eventupdates", "eventupdates")}>
+                {renderTabContent()}
               </Tab>
             </Tabs>
           </div>

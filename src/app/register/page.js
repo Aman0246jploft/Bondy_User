@@ -2,6 +2,7 @@
 import Link from "next/link";
 import React, { useEffect, useRef, useState, Suspense } from "react";
 import { Col, Container, Form, Nav, Row, Tab } from "react-bootstrap";
+import LanguageSelector from "@/components/LanguageSelector";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { parsePhoneNumber } from "react-phone-number-input";
@@ -19,7 +20,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [selectedTab, setSelectedTab] = useState("Customer");
   const [show2, setShow2] = useState(false);
   const [show, setShow] = useState(false);
@@ -228,20 +229,28 @@ function RegisterForm() {
   const handleCustomerSignup = async (e) => {
     e.preventDefault();
 
-    const errors = validateCustomerForm(customerData);
+    const trimmedData = {
+      email: customerData.email ? customerData.email.trim() : "",
+      contactNumber: customerData.contactNumber ? customerData.contactNumber.trim() : "",
+      password: customerData.password ? customerData.password.trim() : "",
+      confirmPassword: customerData.confirmPassword ? customerData.confirmPassword.trim() : "",
+      referralCode: customerData.referralCode ? customerData.referralCode.trim() : "",
+    };
+    setCustomerData((prev) => ({ ...prev, ...trimmedData }));
+
+    const errors = validateCustomerForm({ ...customerData, ...trimmedData });
     setCustomerErrors(errors);
     if (Object.keys(errors).length > 0) {
-      toast.error(Object.values(errors)[0]);
       return;
     }
 
     setLoading(true);
     try {
       let finalCountryCode = "+1";
-      let finalContactNumber = customerData.contactNumber;
+      let finalContactNumber = trimmedData.contactNumber;
 
-      if (customerData.contactNumber) {
-        const parsed = parsePhoneNumber(customerData.contactNumber);
+      if (trimmedData.contactNumber) {
+        const parsed = parsePhoneNumber(trimmedData.contactNumber);
         if (parsed) {
           finalCountryCode = `+${parsed.countryCallingCode}`;
           finalContactNumber = parsed.nationalNumber;
@@ -275,7 +284,6 @@ function RegisterForm() {
     const errors = validateOrganizerForm(organizerData);
     setOrganizerErrors(errors);
     if (Object.keys(errors).length > 0) {
-      toast.error(Object.values(errors)[0]);
       return;
     }
 
@@ -387,21 +395,16 @@ function RegisterForm() {
         >
           <img src="/img/google_icon.svg" alt="google" />
         </button>
-        <button
-          type="button"
-          disabled
-          title="Facebook login coming soon"
-          style={{ background: "none", border: "none", padding: 0, opacity: 0.4, cursor: "not-allowed" }}
-        >
-          <img src="/img/facebook_icon.svg" alt="facebook" />
-        </button>
       </div>
     </>
   );
 
   return (
     <GuestRoute>
-      <div className="login_sec">
+      <div className="login_sec" style={{ position: "relative" }}>
+        <div style={{ position: "absolute", top: "20px", right: "20px", zIndex: 1050 }}>
+          <LanguageSelector />
+        </div>
         <Container fluid>
           <Row className="justify-content-between align-items-center gy-4">
             <Col xl={5} lg={7}>
@@ -563,6 +566,13 @@ function RegisterForm() {
                                   <Link href="/login">{t("login")}</Link>
                                 </span>
                               </div>
+                              <div className="other_signup mt-2">
+                                <span>
+                                  <Link href="/" className="text-decoration-underline" style={{ color: "#23ada4" }}>
+                                    {t("continueAsGuest")}
+                                  </Link>
+                                </span>
+                              </div>
                             </Tab.Pane>
 
                             <Tab.Pane eventKey="Organizer">
@@ -686,7 +696,31 @@ function RegisterForm() {
                                       onChange={handleOrganizerChange}
                                     />
                                     <label htmlFor="terms">
-                                      {t("acceptTermsConditions")}
+                                      {language === "mn" ? (
+                                        <>
+                                          <Link
+                                            href="/terms"
+                                            target="_blank"
+                                            className="text-decoration-underline text-primary"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            Үйлчилгээний нөхцлийг
+                                          </Link>{" "}
+                                          зөвшөөрөх
+                                        </>
+                                      ) : (
+                                        <>
+                                          Accept{" "}
+                                          <Link
+                                            href="/terms"
+                                            target="_blank"
+                                            className="text-decoration-underline text-primary"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            Terms & Conditions
+                                          </Link>
+                                        </>
+                                      )}
                                     </label>
                                   </div>
                                   {organizerErrors.acceptTerms && (
@@ -709,6 +743,13 @@ function RegisterForm() {
                                 <span>
                                   {t("alreadyHaveAccount")}{" "}
                                   <Link href="/login">{t("login")}</Link>
+                                </span>
+                              </div>
+                              <div className="other_signup mt-2">
+                                <span>
+                                  <Link href="/" className="text-decoration-underline" style={{ color: "#23ada4" }}>
+                                    {t("continueAsGuest")}
+                                  </Link>
                                 </span>
                               </div>
                             </Tab.Pane>

@@ -36,7 +36,7 @@ const TopEvents = () => {
       const img =
         event?.posterImage?.[0] ||
         event?.mediaLinks?.[0] ||
-        "/img/no-image.png";
+        "/img/sidebar-logo.svg";
 
       return {
         id: event?._id || `top-event-${index}`,
@@ -77,7 +77,7 @@ const TopEvents = () => {
               alt={item.name}
               onError={(e) => {
                 e.currentTarget.onerror = null;
-                e.currentTarget.src = "/img/no-image.png";
+                e.currentTarget.src = "/img/sidebar-logo.svg";
               }}
             />
             <div>
@@ -96,7 +96,7 @@ const TopEvents = () => {
               alt={item.name}
               onError={(e) => {
                 e.currentTarget.onerror = null;
-                e.currentTarget.src = "/img/no-image.png";
+                e.currentTarget.src = "/img/sidebar-logo.svg";
               }}
             />
             <div>

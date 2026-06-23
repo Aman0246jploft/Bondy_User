@@ -211,7 +211,7 @@ function page() {
             <div className="ticket-cards" key={ticket._id}>
               <div className="ticket-inner">
                 <div className="ticket-lft">
-                  <Form.Check />
+                  {/* <Form.Check /> */}
                   <div>
                     <h5 title={title}>{title}</h5>
                     <p className="ref" title={`# ${ticket.bookingId}`}># {ticket.bookingId}</p>

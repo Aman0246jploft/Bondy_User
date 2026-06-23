@@ -93,36 +93,36 @@ export default function OrganizerReferralPage() {
     fetchCode();
     fetchStats();
     fetchRewards();
-    document.title = "Organizer Referral - Bondy";
+    document.title = t("organizerReferralTitle") || "Organizer Referral - Bondy";
   }, []);
 
   const handleCopyLink = () => {
     if (!referralLink) return;
     navigator.clipboard.writeText(referralLink);
-    toast.success("Referral link copied!");
+    toast.success(t("referralLinkCopied") || "Referral link copied!");
   };
 
   const handleCopyCode = (code) => {
     navigator.clipboard.writeText(code);
-    toast.success(`Coupon code ${code} copied!`);
+    toast.success(t("couponCodeCopied", { code }) || `Coupon code ${code} copied!`);
   };
 
   const handleInvite = async (e) => {
     e.preventDefault();
     if (!inviteEmail.trim()) {
-      toast.error("Please enter a valid email address");
+      toast.error(t("enterValidEmail") || "Please enter a valid email address");
       return;
     }
     setInviting(true);
     try {
       const res = await referralApi.invite(inviteEmail.trim());
       if (res?.status) {
-        toast.success(`Invite sent successfully to ${inviteEmail}!`);
+        toast.success(t("inviteSentSuccessfully", { email: inviteEmail.trim() }) || `Invite sent successfully to ${inviteEmail}!`);
         setInviteEmail("");
         fetchStats();
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to send invite");
+      toast.error(err?.response?.data?.message || t("failedToSendInvite") || "Failed to send invite");
     } finally {
       setInviting(false);
     }
@@ -140,7 +140,7 @@ export default function OrganizerReferralPage() {
       <div className="card-header d-flex justify-content-between align-items-center mb-4">
         <div>
           <h2 className="card-title">{t("referral") || "Referrals"}</h2>
-          <p className="card-desc">Track and manage your earned rewards in MNT.</p>
+          <p className="card-desc">{t("referralTrackDesc") || "Track and manage your earned rewards in MNT."}</p>
         </div>
       </div>
 
@@ -148,25 +148,25 @@ export default function OrganizerReferralPage() {
       <Row className="g-3 mb-4">
         <Col xs={6} md={3}>
           <div className="card-varticl mb-3">
-            <span>Total Earned</span>
-            <h3>{totalCoupons} <span style={{ fontSize: "14px", fontWeight: "normal", color: "#8b949e" }}>Coupons</span></h3>
+            <span>{t("totalEarned") || "Total Earned"}</span>
+            <h3>{totalCoupons} <span style={{ fontSize: "14px", fontWeight: "normal", color: "#8b949e" }}>{t("couponsLabel") || "Coupons"}</span></h3>
           </div>
         </Col>
         <Col xs={6} md={3}>
           <div className="card-varticl mb-3">
-            <span>Active Now</span>
-            <h3>{String(activeCoupons).padStart(2, "0")} <span style={{ fontSize: "14px", fontWeight: "normal", color: "#8b949e" }}>Coupons</span></h3>
+            <span>{t("activeNow") || "Active Now"}</span>
+            <h3>{String(activeCoupons).padStart(2, "0")} <span style={{ fontSize: "14px", fontWeight: "normal", color: "#8b949e" }}>{t("couponsLabel") || "Coupons"}</span></h3>
           </div>
         </Col>
         <Col xs={6} md={3}>
           <div className="card-varticl mb-3">
-            <span>Used</span>
+            <span>{t("used") || "Used"}</span>
             <h3>{String(usedCoupons).padStart(2, "0")}</h3>
           </div>
         </Col>
         <Col xs={6} md={3}>
           <div className="card-varticl mb-3">
-            <span>Expired</span>
+            <span>{t("expired") || "Expired"}</span>
             <h3>{String(expiredCoupons).padStart(2, "0")}</h3>
           </div>
         </Col>
@@ -174,9 +174,9 @@ export default function OrganizerReferralPage() {
 
       {/* Referral Link Sharing Section */}
       <div className="card-varticl mb-4">
-        <h5 className="mb-2 fw-semibold text-white" style={{ fontSize: "16px" }}>Invite Friends & Earn Discount Coupons</h5>
+        <h5 className="mb-2 fw-semibold text-white" style={{ fontSize: "16px" }}>{t("inviteFriendsEarnCoupons") || "Invite Friends & Earn Discount Coupons"}</h5>
         <p className="text-secondary mb-3" style={{ fontSize: "13px" }}>
-          Get ₮75,000 coupon credit for every organizer who joins and hosts their first event or friend who books their first experience.
+          {t("referralPageBenefitDesc") || "Get ₮75,000 coupon credit for every organizer who joins and hosts their first event or friend who books their first experience."}
         </p>
         <div className="d-flex align-items-center bg-black p-2 rounded-2" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
           {loadingCode ? (
@@ -196,7 +196,7 @@ export default function OrganizerReferralPage() {
                 className="btn btn-sm px-3 py-1 fw-semibold text-nowrap ms-2"
                 style={{ backgroundColor: "#23ada4", color: "#ffffff", borderRadius: "5px" }}
               >
-                Copy Link
+                {t("copyLink") || "Copy Link"}
               </button>
             </>
           )}
@@ -204,11 +204,11 @@ export default function OrganizerReferralPage() {
       </div>
 
       {/* Coupons Section */}
-      <h5 className="mb-3 fw-bold text-white" style={{ fontSize: "18px" }}>Your Reward Coupons</h5>
+      <h5 className="mb-3 fw-bold text-white" style={{ fontSize: "18px" }}>{t("yourRewardCoupons") || "Your Reward Coupons"}</h5>
       {loadingRewards ? (
         <div className="text-center py-4"><Spinner animation="border" className="text-info" /></div>
       ) : rewards.length === 0 ? (
-        <p className="text-secondary mb-4" style={{ fontSize: "13px" }}>No coupons earned yet. Start inviting other organizers to earn rewards!</p>
+        <p className="text-secondary mb-4" style={{ fontSize: "13px" }}>{t("noCouponsEarnedYet") || "No coupons earned yet. Start inviting other organizers to earn rewards!"}</p>
       ) : (
         <div className="d-flex flex-column gap-3 mb-4">
           {rewards.map((reward) => {
@@ -245,11 +245,11 @@ export default function OrganizerReferralPage() {
                     fontSize: "12px"
                   }}
                 >
-                  <div>VALUE</div>
+                  <div>{t("valueLabel") || "VALUE"}</div>
                   <div style={{ fontSize: "18px" }}>
                     {reward.discountType === "percentage" ? `${reward.discountValue}%` : `₮${reward.discountValue}`}
                   </div>
-                  <div style={{ fontSize: "11px" }}>OFF</div>
+                  <div style={{ fontSize: "11px" }}>{t("offLabel") || "OFF"}</div>
                 </div>
 
                 {/* Right side details */}
@@ -259,22 +259,22 @@ export default function OrganizerReferralPage() {
                       <span className="fw-bold text-white d-block" style={{ fontSize: "15px" }}>{reward.code}</span>
                       <span className="text-secondary" style={{ fontSize: "12px" }}>
                         {isUsed
-                          ? `Used on ${new Date(reward.updatedAt).toLocaleDateString()}`
-                          : `Expires on ${new Date(reward.validUntil).toLocaleDateString()}`}
+                          ? `${t("usedOn") || "Used on"} ${new Date(reward.updatedAt).toLocaleDateString()}`
+                          : `${t("expiresOn") || "Expires on"} ${new Date(reward.validUntil).toLocaleDateString()}`}
                       </span>
                     </div>
                     <span
                       className="px-2 py-0.5 rounded-2 fw-semibold"
                       style={{ fontSize: "10px", color: statusColor, backgroundColor: statusBg, border: `1px solid ${statusColor}44` }}
                     >
-                      {status}
+                      {status === "AVAILABLE" ? (t("statusAvailable") || "AVAILABLE") : status === "USED" ? (t("statusUsed") || "USED") : (t("statusExpired") || "EXPIRED")}
                     </span>
                   </div>
 
                   <div className="d-flex justify-content-between align-items-center mt-2">
                     <span className="text-secondary" style={{ fontSize: "11px" }}>
-                      {reward.maxDiscountAmount ? `Max Discount: ₮${reward.maxDiscountAmount.toLocaleString()}` : ""}
-                      {reward.minOrderAmount ? ` • Min Order: ₮${reward.minOrderAmount.toLocaleString()}` : ""}
+                      {reward.maxDiscountAmount ? `${t("maxDiscount") || "Max Discount"}: ₮${reward.maxDiscountAmount.toLocaleString()}` : ""}
+                      {reward.minOrderAmount ? ` • ${t("minOrder") || "Min Order"}: ₮${reward.minOrderAmount.toLocaleString()}` : ""}
                     </span>
                     {!isUsed && !isExpired && (
                       <button
@@ -282,7 +282,7 @@ export default function OrganizerReferralPage() {
                         className="btn btn-sm px-2 py-1 text-white border-0 fw-semibold"
                         style={{ backgroundColor: "#23ada4", borderRadius: "5px", fontSize: "11px" }}
                       >
-                        Copy Code
+                        {t("copyCode") || "Copy Code"}
                       </button>
                     )}
                   </div>
@@ -297,13 +297,13 @@ export default function OrganizerReferralPage() {
       <Row className="g-3 mb-4">
         <Col xs={6}>
           <div className="card-varticl text-center">
-            <span>Total Referrals</span>
+            <span>{t("totalReferrals") || "Total Referrals"}</span>
             <h3>{loadingStats ? "—" : stats.totalReferrals}</h3>
           </div>
         </Col>
         <Col xs={6}>
           <div className="card-varticl text-center">
-            <span>Pending Referrals</span>
+            <span>{t("pendingReferrals") || "Pending Referrals"}</span>
             <h3>{loadingStats ? "—" : (stats.pendingReferrals + stats.pendingValidation)}</h3>
           </div>
         </Col>
@@ -311,14 +311,14 @@ export default function OrganizerReferralPage() {
 
       {/* Recent Referrals List */}
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="m-0 fw-bold text-white" style={{ fontSize: "18px" }}>Recent Referrals</h5>
+        <h5 className="m-0 fw-bold text-white" style={{ fontSize: "18px" }}>{t("recentReferrals") || "Recent Referrals"}</h5>
         {history.length > 5 && (
           <span 
             className="text-info" 
             style={{ fontSize: "13px", cursor: "pointer" }}
             onClick={() => setShowAllReferrals(!showAllReferrals)}
           >
-            {showAllReferrals ? "Show Less" : "View All"}
+            {showAllReferrals ? (t("showLess") || "Show Less") : (t("viewAll") || "View All")}
           </span>
         )}
       </div>
@@ -326,7 +326,7 @@ export default function OrganizerReferralPage() {
       {loadingStats ? (
         <div className="text-center py-4"><Spinner animation="border" className="text-info" /></div>
       ) : history.length === 0 ? (
-        <p className="text-secondary" style={{ fontSize: "13px" }}>No referrals recorded yet.</p>
+        <p className="text-secondary" style={{ fontSize: "13px" }}>{t("noReferralsRecordedYet") || "No referrals recorded yet."}</p>
       ) : (
         <div className="d-flex flex-column gap-2">
           {(showAllReferrals ? history : history.slice(0, 5)).map((referral) => {
@@ -334,13 +334,13 @@ export default function OrganizerReferralPage() {
               ? `${referral.referee.firstName || ""} ${referral.referee.lastName || ""}`.trim()
               : referral.refereeEmail;
 
-            let statusLabel = "Pending";
+            let statusLabel = t("pending") || "Pending";
             let statusDot = "#ffa100";
             if (referral.status === "SUCCESSFUL_REFERRAL") {
-              statusLabel = "Completed";
+              statusLabel = t("completed") || "Completed";
               statusDot = "#2ec4b6";
             } else if (referral.status === "PENDING_VALIDATION") {
-              statusLabel = "Pending validation";
+              statusLabel = t("pendingValidation") || "Pending validation";
               statusDot = "#e71d36";
             }
 
@@ -350,28 +350,13 @@ export default function OrganizerReferralPage() {
                 className="card-varticl-attention mb-2"
               >
                 <div className="d-flex align-items-center">
-                  {referral.referee?.profileImage ? (
-                    <img
-                      src={getFullImageUrl(referral.referee.profileImage)}
-                      alt="referee"
-                      className="rounded-circle me-3"
-                      style={{ width: "40px", height: "40px", objectFit: "cover" }}
-                    />
-                  ) : (
-                    <div
-                      className="rounded-circle me-3 d-flex align-items-center justify-content-center"
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        background: "#0b0c10",
-                        fontSize: "14px",
-                        fontWeight: "bold",
-                        color: "#23ada4"
-                      }}
-                    >
-                      {refereeName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <img
+                    src={referral.referee?.profileImage ? getFullImageUrl(referral.referee.profileImage) : "/img/sidebar-logo.svg"}
+                    alt="referee"
+                    className="rounded-circle me-3"
+                    style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                    onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
+                  />
                   <div>
                     <span className="fw-bold text-white d-block" style={{ fontSize: "14px" }}>{refereeName}</span>
                     <span className="d-flex align-items-center" style={{ fontSize: "11px", color: "#8b949e" }}>

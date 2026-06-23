@@ -176,7 +176,7 @@ function InterestPageContent() {
                   </p>
                 </div>
                 <main>
-                  <div className="d-flex justify-content-end mb-2">
+                  {/* <div className="d-flex justify-content-end mb-2">
                     {categories.length > 0 && (
                       <Button
                         variant="link"
@@ -186,7 +186,7 @@ function InterestPageContent() {
                         {allSelected ? "Deselect All" : "Select All"}
                       </Button>
                     )}
-                  </div>
+                  </div> */}
                   <div className="interest-scroll-area">
                     <InterestSelector
                       categories={categories}

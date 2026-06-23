@@ -17,7 +17,9 @@ import InterestSelector from "@/components/InterestSelector";
 function PersonalInfoContent() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
-  const fileRef = useRef(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [backupProfileData, setBackupProfileData] = useState(null);
+
   const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
@@ -31,6 +33,7 @@ function PersonalInfoContent() {
     contactNumber: "",
     zipcode: "",
     profileImage: "",
+    backgroundImage: "",
     latitude: 0,
     longitude: 0,
     address: "",
@@ -43,6 +46,10 @@ function PersonalInfoContent() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [errors, setErrors] = useState({});
   const [preview, setPreview] = useState(null);
+  const [backgroundPreview, setBackgroundPreview] = useState(null);
+
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [backgroundImageFile, setBackgroundImageFile] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -89,7 +96,7 @@ function PersonalInfoContent() {
             }
           }
 
-          setProfileData({
+          const fetchedData = {
             firstName: profile?.firstName || "",
             lastName: profile?.lastName || "",
             email: profile?.email || "",
@@ -106,16 +113,27 @@ function PersonalInfoContent() {
               : "",
             zipcode: location?.zipcode || "",
             profileImage: profile?.profileImage || "",
+            backgroundImage: profile?.backgroundImage || "",
             latitude: location?.coordinates?.[1] || 0,
             longitude: location?.coordinates?.[0] || 0,
             address: location?.address || "",
-          });
+          };
+
+          setProfileData(fetchedData);
           setSelectedCategoryIds(
             (profile?.categories || []).map(
               (category) => category._id || category,
             ),
           );
           setPreview(getFullImageUrl(profile?.profileImage));
+          setBackgroundPreview(getFullImageUrl(profile?.backgroundImage));
+
+          setBackupProfileData({
+            ...fetchedData,
+            selectedCategoryIds: (profile?.categories || []).map(
+              (category) => category._id || category,
+            ),
+          });
         }
       } catch (error) {
         console.error("Failed to fetch profile:", error);
@@ -195,52 +213,65 @@ function PersonalInfoContent() {
     }
   };
 
-  const handleFileChange = async (e) => {
+  const handleProfileFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
+    setProfileImageFile(file);
     const localPreview = URL.createObjectURL(file);
     setPreview(localPreview);
+  };
 
-    const formData = new FormData();
-    formData.append("files", file);
+  const handleBackgroundFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setBackgroundImageFile(file);
+    const localPreview = URL.createObjectURL(file);
+    setBackgroundPreview(localPreview);
+  };
 
-    try {
-      setLoading(true);
-      const response = await authApi.uploadFile(formData);
-      if (response?.status) {
-        const filePath = response?.data?.files[0];
-        setProfileData((prev) => ({ ...prev, profileImage: filePath }));
-        setPreview(getFullImageUrl(filePath));
-        toast.success(t("imageUploadedSuccessfully"));
-      }
-    } catch (error) {
-      console.error("Upload failed:", error);
-      toast.error(t("imageUploadFailed"));
-    } finally {
-      setLoading(false);
+  const handleDiscard = () => {
+    if (backupProfileData) {
+      const { selectedCategoryIds: backupCatIds, ...rest } = backupProfileData;
+      setProfileData({ ...rest });
+      setSelectedCategoryIds(backupCatIds || []);
+      setPreview(getFullImageUrl(backupProfileData.profileImage));
+      setBackgroundPreview(getFullImageUrl(backupProfileData.backgroundImage));
     }
+    setProfileImageFile(null);
+    setBackgroundImageFile(null);
+    setIsEditMode(false);
+    setErrors({});
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
 
-    // Validation
-    const newErrors = {};
-    if (!profileData.firstName) newErrors.firstName = t("firstNameRequired");
-    if (!profileData.lastName) newErrors.lastName = t("lastNameRequired");
-    if (!profileData.country) newErrors.country = t("countryRequired");
-    if (!profileData.state) newErrors.state = t("stateRequired");
-    if (!profileData.city) newErrors.city = t("cityRequired");
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      toast.error(t("pleaseFixErrors"));
-      return;
-    }
-
     try {
       setLoading(true);
+
+      let uploadedProfileImage = profileData.profileImage;
+      let uploadedBackgroundImage = profileData.backgroundImage;
+
+      // 1. Upload profile image if a new file was selected
+      if (profileImageFile) {
+        const formData = new FormData();
+        formData.append("files", profileImageFile);
+        const response = await authApi.uploadFile(formData);
+        if (response?.status) {
+          uploadedProfileImage = response.data.files[0];
+        }
+      }
+
+      // 2. Upload background image if a new file was selected
+      if (backgroundImageFile) {
+        const formData = new FormData();
+        formData.append("files", backgroundImageFile);
+        const response = await authApi.uploadFile(formData);
+        if (response?.status) {
+          uploadedBackgroundImage = response.data.files[0];
+        }
+      }
+
       // Parse phone number
       let finalCountryCode = profileData.countryCode;
       let finalContactNumber = profileData.contactNumber;
@@ -264,7 +295,8 @@ function PersonalInfoContent() {
         dob: profileData.dob,
         contactNumber: finalContactNumber,
         countryCode: finalCountryCode,
-        profileImage: profileData.profileImage,
+        profileImage: uploadedProfileImage,
+        backgroundImage: uploadedBackgroundImage,
         categories: selectedCategoryIds,
         location: {
           latitude: Number(profileData.latitude) || 0,
@@ -280,6 +312,47 @@ function PersonalInfoContent() {
       const response = await authApi.updateProfile(updatePayload);
       if (response?.status) {
         toast.success(t("profileUpdatedSuccessfully"));
+
+        const finalProfile = response.data.user;
+        const location = finalProfile.location || {};
+
+        const updatedFetchedData = {
+          firstName: finalProfile.firstName || "",
+          lastName: finalProfile.lastName || "",
+          email: finalProfile.email || "",
+          state: location.state || "",
+          stateCode: profileData.stateCode,
+          city: location.city || "",
+          country: location.country || "",
+          countryCode: profileData.countryCode,
+          dob: finalProfile.dob ? finalProfile.dob.split("T")[0] : "",
+          contactNumber: finalProfile.contactNumber
+            ? finalProfile.countryCode
+              ? `${finalProfile.countryCode}${finalProfile.contactNumber}`
+              : finalProfile.contactNumber
+            : "",
+          zipcode: location.zipcode || "",
+          profileImage: finalProfile.profileImage || "",
+          backgroundImage: finalProfile.backgroundImage || "",
+          latitude: location.coordinates?.[1] || 0,
+          longitude: location.coordinates?.[0] || 0,
+          address: location.address || "",
+        };
+
+        setProfileData(updatedFetchedData);
+        setPreview(getFullImageUrl(finalProfile.profileImage));
+        setBackgroundPreview(getFullImageUrl(finalProfile.backgroundImage));
+
+        setBackupProfileData({
+          ...updatedFetchedData,
+          selectedCategoryIds: (finalProfile.categories || []).map(
+            (category) => category._id || category,
+          ),
+        });
+
+        setProfileImageFile(null);
+        setBackgroundImageFile(null);
+        setIsEditMode(false);
         setErrors({});
       }
     } catch (error) {
@@ -294,20 +367,55 @@ function PersonalInfoContent() {
     <div>
       <div className="cards">
         <Form onSubmit={handleSave}>
-          <div className="personal-profile">
-            <div className="personal-profile-lft">
-              <div
-                className="personal-profile-img"
-                style={{ cursor: "pointer" }}
-                onClick={() => fileRef.current.click()}>
-                <img src={preview || "/img/sidebar-logo.svg"} alt="Profile" />
+          {/* Cover/Background Image Container */}
+          <div className="profile-cover-banner">
+            <img
+              src={backgroundPreview || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='200' viewBox='0 0 800 200'><rect width='100%' height='100%' fill='%231f1f1f'/><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%231a1a1a'/><stop offset='100%25' stop-color='%2323ada4' stop-opacity='0.15'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23g)'/></svg>"}
+              alt="Cover"
+              className="profile-cover-img"
+              onError={(e) => {
+                e.target.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='200' viewBox='0 0 800 200'><rect width='100%' height='100%' fill='%231f1f1f'/><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%231a1a1a'/><stop offset='100%25' stop-color='%2323ada4' stop-opacity='0.15'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23g)'/></svg>";
+              }}
+            />
+            {isEditMode && (
+              <label htmlFor="cover-upload-input" className="cover-edit-overlay">
+                <img src="/img/edit-icon.svg" alt="Edit Cover" className="edit-icon-img" />
+                <span>{t("changeCover") || "Change Cover"}</span>
                 <input
+                  id="cover-upload-input"
                   type="file"
                   hidden
-                  ref={fileRef}
-                  onChange={handleFileChange}
+                  onChange={handleBackgroundFileChange}
                   accept="image/*"
                 />
+              </label>
+            )}
+          </div>
+
+          <div className="personal-profile">
+            <div className="personal-profile-lft">
+              <div className="personal-profile-img-container">
+                <div className="personal-profile-img">
+                  <img
+                    src={preview || "/img/default-user.png"}
+                    alt="Profile"
+                    onError={(e) => {
+                      e.target.src = "/img/default-user.png";
+                    }}
+                  />
+                </div>
+                {isEditMode && (
+                  <label htmlFor="profile-upload-input" className="profile-image-edit-overlay">
+                    <img src="/img/edit-icon.svg" alt="Edit Profile" className="edit-icon-img" />
+                    <input
+                      id="profile-upload-input"
+                      type="file"
+                      hidden
+                      onChange={handleProfileFileChange}
+                      accept="image/*"
+                    />
+                  </label>
+                )}
               </div>
               <div className="personal-profile-info">
                 <h4>
@@ -317,13 +425,34 @@ function PersonalInfoContent() {
               </div>
             </div>
             <div className="personal-profile-rgt">
-              <button
-                className="edit-profile-btn"
-                type="button"
-                onClick={() => fileRef.current.click()}>
-                <img src="/img/edit-icon.svg" alt="Edit" />
-                <span>{t("EditProfile") || t("edit")}</span>
-              </button>
+              {!isEditMode ? (
+                <button
+                  className="edit-profile-btn"
+                  type="button"
+                  onClick={() => setIsEditMode(true)}>
+                  <img src="/img/edit-icon.svg" alt="Edit" />
+                  <span>{t("EditProfile") || t("edit")}</span>
+                </button>
+              ) : (
+                <div className="d-flex gap-2">
+                  <button
+                    className="outline-btn"
+                    type="button"
+                    onClick={handleDiscard}
+                    style={{ borderRadius: "50px", padding: "8px 16px", fontSize: "14px" }}>
+                    {t("discard") || "Discard"}
+                  </button>
+                  <button
+                    className="custom-btn"
+                    type="submit"
+                    disabled={loading}
+                    style={{ borderRadius: "50px", padding: "8px 16px", fontSize: "14px" }}>
+                    {loading
+                      ? t("saving") || "Saving..."
+                      : t("saveChanges") || "Save Changes"}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <Row className="profile-cms-inpt">
@@ -337,6 +466,7 @@ function PersonalInfoContent() {
                   placeholder={t("firstName")}
                   value={profileData.firstName}
                   onChange={handleChange}
+                  disabled={!isEditMode}
                 />
                 <label htmlFor="firstName">{t("firstName")}</label>
                 <span className="form-icon">
@@ -356,6 +486,7 @@ function PersonalInfoContent() {
                   placeholder={t("lastName")}
                   value={profileData.lastName}
                   onChange={handleChange}
+                  disabled={!isEditMode}
                 />
                 <label htmlFor="lastName">{t("lastName")}</label>
                 <span className="form-icon">
@@ -393,6 +524,7 @@ function PersonalInfoContent() {
                   value={profileData.dob}
                   onChange={handleChange}
                   max={new Date().toISOString().split("T")[0]}
+                  disabled={!isEditMode}
                 />
                 <label htmlFor="dob">{t("dob")}</label>
                 <span className="form-icon">
@@ -408,7 +540,8 @@ function PersonalInfoContent() {
                   className="form-select"
                   id="country"
                   value={profileData.country}
-                  onChange={handleCountryChange}>
+                  onChange={handleCountryChange}
+                  disabled={!isEditMode}>
                   <option value="">{t("selectCountry")}</option>
                   {countries.map((c) => (
                     <option key={c.isoCode} value={c.name}>
@@ -432,7 +565,7 @@ function PersonalInfoContent() {
                   id="state"
                   value={profileData.state}
                   onChange={handleStateChange}
-                  disabled={!profileData.country}>
+                  disabled={!isEditMode || !profileData.country}>
                   <option value="">{t("selectState")}</option>
                   {states.map((s) => (
                     <option key={s.isoCode} value={s.name}>
@@ -458,7 +591,7 @@ function PersonalInfoContent() {
                   id="city"
                   value={profileData.city}
                   onChange={handleCityChange}
-                  disabled={!profileData.state}>
+                  disabled={!isEditMode || !profileData.state}>
                   <option value="">{t("selectCity")}</option>
                   {cities.map((city) => (
                     <option key={city.name} value={city.name}>
@@ -475,27 +608,11 @@ function PersonalInfoContent() {
                 )}
               </div>
             </Col>
-            {/* <Col md={6}>
-              <div className="form-floating custom-floting">
-                <input
-                  type="text"
-                  className="form-control"
-                  id="zipcode"
-                  placeholder="Zip code"
-                  value={profileData.zipcode}
-                  onChange={handleChange}
-                />
-                <label htmlFor="zipcode">{t("zipcode") || "Zip code"}</label>
-                <span className="form-icon">
-                  <img src="/img/form-has.svg" alt="" />
-                </span>
-              </div>
-            </Col> */}
 
             {/* Row 5: Contact Number */}
             <Col md={6}>
               <div
-                className={`phone_input_wrapper custom-floting ${profileData.contactNumber ? "has-value" : ""}`}>
+                className={`phone_input_wrapper custom-floting ${profileData.contactNumber ? "has-value" : ""} ${!isEditMode ? "disabled" : ""}`}>
                 <PhoneInput
                   country={"us"}
                   value={profileData.contactNumber}
@@ -504,6 +621,7 @@ function PersonalInfoContent() {
                   containerClass="phone_input"
                   dropdownClass="phone_input_dropdown"
                   buttonClass="phone_input_button"
+                  disabled={!isEditMode}
                 />
                 <label className="phone-field-label">
                   {t("contactNumber")}
@@ -528,27 +646,108 @@ function PersonalInfoContent() {
                           : [...prev, id],
                       );
                     }}
+                    disabled={!isEditMode}
                   />
                 </div>
-              </div>
-            </Col>
-
-            <Col md={12}>
-              <div className="d-flex gap-2 justify-content-end mt-2">
-                <button
-                  className="outline-btn"
-                  type="button"
-                  onClick={() => window.location.reload()}>
-                  {t("discard")}
-                </button>
-                <button className="custom-btn" type="submit" disabled={loading}>
-                  {loading ? t("saving") : t("saveChanges")}
-                </button>
               </div>
             </Col>
           </Row>
         </Form>
       </div>
+
+      <style jsx>{`
+        .profile-cover-banner {
+          position: relative;
+          width: 100%;
+          height: 200px;
+          border-radius: 20px 20px 0 0;
+          overflow: hidden;
+          background-color: #1a1a1a;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-bottom: none;
+        }
+        .profile-cover-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .cover-edit-overlay {
+          position: absolute;
+          top: 15px;
+          right: 15px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(4px);
+          padding: 8px 16px;
+          border-radius: 30px;
+          cursor: pointer;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          transition: all 0.2s ease;
+        }
+        .cover-edit-overlay:hover {
+          background: var(--primary-teal, #23ada4);
+          border-color: var(--primary-teal, #23ada4);
+          transform: translateY(-1px);
+        }
+        .cover-edit-overlay span {
+          font-size: 13px;
+          font-weight: 600;
+          color: #fff;
+        }
+        .edit-icon-img {
+          width: 14px;
+          height: 14px;
+          filter: brightness(0) invert(1);
+        }
+        .personal-profile {
+          border-radius: 0 0 20px 20px !important;
+          margin-top: 0 !important;
+          border-top: none !important;
+          background: rgba(26, 26, 26, 0.65) !important;
+          backdrop-filter: blur(12px) saturate(180%);
+          -webkit-backdrop-filter: blur(12px) saturate(180%);
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+        .personal-profile-img-container {
+          position: relative;
+        }
+        .profile-image-edit-overlay {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          background: var(--primary-teal, #23ada4);
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+          border: 2px solid #1a1a1a;
+          transition: transform 0.2s ease;
+        }
+        .profile-image-edit-overlay:hover {
+          transform: scale(1.1);
+        }
+        .bg-teal-soft {
+          background-color: rgba(35, 173, 164, 0.12);
+          color: #23ada4;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 5px 12px;
+          border-radius: 30px;
+          border: 1px solid rgba(35, 173, 164, 0.25);
+          display: inline-flex;
+          align-items: center;
+        }
+        .phone_input_wrapper.disabled {
+          opacity: 0.8;
+          pointer-events: none;
+        }
+      `}</style>
     </div>
   );
 }

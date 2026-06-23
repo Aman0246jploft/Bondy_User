@@ -102,39 +102,51 @@ function OrganizerProfileContent() {
   return (
     <div className="cards profile-dashboard-container">
       {/* Header Profile Section */}
-      <div className="profile-header-card mb-4">
-        <div className="profile-header-main">
-          <div className="profile-avatar-container">
+      <div className="profile-header-container mb-4">
+        {profile.backgroundImage && (
+          <div className="profile-header-banner">
             <img
-              src={getFullImageUrl(profile.profileImage) || "/img/default-user.png"}
-              alt="Avatar"
-              className="profile-avatar-img"
-              onError={(e) => { e.target.src = "/img/default-user.png"; }}
+              src={getFullImageUrl(profile.backgroundImage)}
+              alt="Cover"
+              className="profile-cover-img"
+              onError={(e) => { e.target.style.display = "none"; }}
             />
-            {isVerified && (
-              <span className="verified-badge-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" fill="#23ada4" />
-                </svg>
-              </span>
-            )}
           </div>
-          <div className="profile-info-details">
-            <div className="profile-name-row">
-              <h3>{`${profile.firstName || ""} ${profile.lastName || ""}`}</h3>
-              {isVerified && <span className="badge bg-teal-soft ms-2">{t("verifiedOrganizer") || "Verified Organizer"}</span>}
+        )}
+        <div className="profile-header-card">
+          <div className="profile-header-main">
+            <div className="profile-avatar-container">
+              <img
+                src={getFullImageUrl(profile.profileImage) || "/img/default-user.png"}
+                alt="Avatar"
+                className="profile-avatar-img"
+                onError={(e) => { e.target.src = "/img/default-user.png"; }}
+              />
+              {isVerified && (
+                <span className="verified-badge-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" fill="#23ada4" />
+                  </svg>
+                </span>
+              )}
             </div>
-            <p className="joined-date-text">
-              <Calendar size={15} className="me-2 text-teal" />
-              {t("organizerSince") || "Organizer since"} {getJoinedDate(profile.createdAt)}
-            </p>
+            <div className="profile-info-details">
+              <div className="profile-name-row">
+                <h3>{`${profile.firstName || ""} ${profile.lastName || ""}`}</h3>
+                {isVerified && <span className="badge bg-teal-soft ms-2">{t("verifiedOrganizer") || "Verified Organizer"}</span>}
+              </div>
+              <p className="joined-date-text">
+                <Calendar size={15} className="me-2 text-teal" />
+                {t("organizerSince") || "Organizer since"} {getJoinedDate(profile.createdAt)}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <Link href="/OrganizerPersonalInfo" className="edit-profile-action-btn">
-          <Edit3 size={15} className="me-2" />
-          <span>{t("editProfile") || "Edit Profile"}</span>
-        </Link>
+          <Link href="/OrganizerPersonalInfo" className="edit-profile-action-btn">
+            <Edit3 size={15} className="me-2" />
+            <span>{t("editProfile") || "Edit Profile"}</span>
+          </Link>
+        </div>
       </div>
 
       {/* Quick Actions Grid */}
@@ -302,16 +314,36 @@ function OrganizerProfileContent() {
           color: #fff;
         }
 
-        .profile-header-card {
+        .profile-header-container {
+          position: relative;
           background-color: #262626;
           border-radius: 16px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .profile-header-banner {
+          width: 100%;
+          height: 150px;
+          overflow: hidden;
+        }
+
+        .profile-cover-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .profile-header-card {
+          background-color: transparent !important;
+          border: none !important;
+          border-radius: 0 !important;
           padding: 24px;
           display: flex;
           justify-content: space-between;
           align-items: center;
           flex-wrap: wrap;
           gap: 15px;
-          border: 1px solid rgba(255, 255, 255, 0.04);
         }
 
         .profile-header-main {

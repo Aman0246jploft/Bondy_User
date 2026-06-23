@@ -21,6 +21,16 @@ function OTPContent() {
   const [redirectPath, setRedirectPath] = useState("/");
   const inputRefs = useRef([]);
 
+  const [timer, setTimer] = useState(60);
+
+  useEffect(() => {
+    if (timer <= 0) return;
+    const interval = setInterval(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
+
   useEffect(() => {
     document.title = `${t("verifyAndContinue")} - Bondy`;
   }, [t]);
@@ -181,6 +191,7 @@ function OTPContent() {
       });
       if (response.status) {
         toast.success(t("otpResentSuccessfully"));
+        setTimer(60);
       }
     } catch (error) {
       // error handled by apiClient
@@ -234,10 +245,16 @@ function OTPContent() {
 
                       <div className="other_signup mb-4">
                         <span>
-                          {t("didntReceiveCode")} {" "}
-                          <Link href="#" onClick={handleResend}>
-                            {t("resend")}
-                          </Link>
+                          {t("didntReceiveCode")}{" "}
+                          {timer > 0 ? (
+                            <span style={{ color: "#888", fontWeight: "normal" }}>
+                              {t("resend")} ({timer}s)
+                            </span>
+                          ) : (
+                            <Link href="#" onClick={handleResend}>
+                              {t("resend")}
+                            </Link>
+                          )}
                         </span>
                       </div>
 

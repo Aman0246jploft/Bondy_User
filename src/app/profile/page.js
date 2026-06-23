@@ -153,7 +153,20 @@ function ProfileContent() {
         setShowConfirm(false);
         if (res?.status === true) {
           toast.success(res?.message);
-        } else {
+          setUserProfile((prev) => ({
+            ...prev,
+            isBlocked: true,
+          }));
+        }
+      } else if (actionType === "unblock") {
+        const res = await blockUserApi.unblockUser({ toUser: userId });
+        setShowConfirm(false);
+        if (res?.status === true) {
+          toast.success(res?.message);
+          setUserProfile((prev) => ({
+            ...prev,
+            isBlocked: false,
+          }));
         }
       }
     } catch (error) {
@@ -195,9 +208,14 @@ function ProfileContent() {
       <div className="profile-page">
         <div className="profile_cover">
           <img
-            src="/img/sidebar-logo.svg"
+            src={
+              userProfile?.backgroundImage
+                ? userProfile.backgroundImage
+                : "/img/sidebar-logo.svg"
+            }
             alt="Background"
             className="banner-img"
+            onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
           />
         </div>
 
@@ -244,13 +262,13 @@ function ProfileContent() {
 
                         {showMenu && (
                           <div className="menu_dropdown">
-                              <div onClick={() => handleAction("block")}>
-                                {t("block")}
-                              </div>
-                              <div onClick={() => handleAction("report")}>
-                                {t("report")}
-                              </div>
+                            <div onClick={() => handleAction(userProfile?.isBlocked ? "unblock" : "block")}>
+                              {userProfile?.isBlocked ? t("unblock") || "Unblock" : t("block") || "Block"}
                             </div>
+                            <div onClick={() => handleAction("report")}>
+                              {t("report")}
+                            </div>
+                          </div>
                         )}
                       </>
                     )}
@@ -337,7 +355,7 @@ function ProfileContent() {
                       )}
 
                     {!userProfile?.isMyProfile && (
-                        <button
+                      <button
                         className="btn-message"
                         onClick={() => {
                           console.log("User Profile State:", userProfile);
@@ -350,7 +368,7 @@ function ProfileContent() {
                             router.push(`/Messagee?userId=${userId}`);
                           }
                         }}
-                        >
+                      >
                         <img src="/img/message.svg" /> {t("messages")}
                       </button>
                     )}
@@ -359,12 +377,12 @@ function ProfileContent() {
 
                 {/* Statistics */}
 
-                <div className="about-section mt-4">
+                {/* <div className="about-section mt-4">
                   <h4 className="about-title">{t("aboutMe")}</h4>
                   <p className="about-text">
                     {userProfile?.bio || t("noBioAvailable")}
                   </p>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -395,11 +413,20 @@ function ProfileContent() {
                       <Tab.Pane eventKey="first">
                         <SessionCart
                           title={t("nextSession")}
-                          events={userProfile?.events?.upcoming_events}
+                          events={[
+                            ...(userProfile?.events?.upcoming_events || []),
+                            ...(userProfile?.courses?.upcoming_courses || []),
+                          ]}
+                          isMyProfile={userProfile?.isMyProfile}
                         />
                         <SessionCart
                           title={t("pastSessions")}
-                          events={userProfile?.events?.previous_events}
+                          events={[
+                            ...(userProfile?.events?.previous_events || []),
+                            ...(userProfile?.courses?.previous_courses || []),
+                          ]}
+                          isPast={true}
+                          isMyProfile={userProfile?.isMyProfile}
                         />
                       </Tab.Pane>
                     </Tab.Content>
@@ -416,11 +443,13 @@ function ProfileContent() {
             <h4>
               {actionType === "block"
                 ? t("confirmBlockUser")
-                : t("confirmReportUser")}
+                : actionType === "unblock"
+                  ? t("confirmUnblockUser") || "Are you sure you want to unblock this user?"
+                  : t("confirmReportUser")}
             </h4>
 
             <p style={{ fontSize: "13px", color: "#aaa" }}>
-              {actionType === "block"}
+              {actionType === "block" ? t("blockUserWarning") || "Blocked users cannot message or follow you." : ""}
             </p>
 
             <div className="btns">
@@ -438,7 +467,7 @@ function ProfileContent() {
                   color: "#fff",
                 }}
               >
-                {t("yes")}, {t(actionType)}
+                {t("yes")}, {t(actionType) || actionType}
               </button>
             </div>
           </div>

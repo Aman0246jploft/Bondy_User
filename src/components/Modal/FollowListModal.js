@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import VerifyDropdwons from "@/components/VerifyDropdwons";
+import { useLanguage } from "@/context/LanguageContext";
 
 const FollowListModal = ({ show, onHide, userId, type }) => {
+    const { t } = useLanguage();
     const [list, setList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
@@ -88,7 +90,7 @@ const FollowListModal = ({ show, onHide, userId, type }) => {
         <Modal show={show} onHide={onHide} centered scrollable className="follow-modal">
             <Modal.Header closeButton className="bg-dark text-white border-secondary">
                 <Modal.Title className="text-capitalize">
-                    {type === "followers" ? "Followers" : "Following"}
+                    {type === "followers" ? t("followers") || "Followers" : t("following") || "Following"}
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body
@@ -99,7 +101,9 @@ const FollowListModal = ({ show, onHide, userId, type }) => {
             >
                 {list.length === 0 && !loading ? (
                     <div className="p-4 text-center text-muted">
-                        No {type} found.
+                        {type === "followers" 
+                            ? t("noFollowersFound") || "No followers found." 
+                            : t("noFollowingFound") || "No following found."}
                     </div>
                 ) : (
                     <ListGroup variant="flush">
@@ -129,21 +133,23 @@ const FollowListModal = ({ show, onHide, userId, type }) => {
                                         </h6>
                                     </div>
                                     <div>
-                                        <button
-                                            className={`btn btn-sm ${item.isFollowed ? 'btn-outline-teal' : 'btn-teal'}`}
-                                            style={{
-                                                borderRadius: '20px',
-                                                fontSize: '12px',
-                                                padding: '4px 15px',
-                                                minWidth: '80px',
-                                                borderColor: 'var(--primary-teal, #23ada4)',
-                                                backgroundColor: item.isFollowed ? 'transparent' : 'var(--primary-teal, #23ada4)',
-                                                color: item.isFollowed ? 'var(--primary-teal, #23ada4)' : '#fff'
-                                            }}
-                                            onClick={(e) => handleFollowToggle(e, user._id, item.isFollowed, idx)}
-                                        >
-                                            {item.isFollowed ? 'Following' : 'Follow'}
-                                        </button>
+                                        {!item.isSelf && (
+                                            <button
+                                                className={`btn btn-sm ${item.isFollowed ? 'btn-outline-teal' : 'btn-teal'}`}
+                                                style={{
+                                                    borderRadius: '20px',
+                                                    fontSize: '12px',
+                                                    padding: '4px 15px',
+                                                    minWidth: '80px',
+                                                    borderColor: 'var(--primary-teal, #23ada4)',
+                                                    backgroundColor: item.isFollowed ? 'transparent' : 'var(--primary-teal, #23ada4)',
+                                                    color: item.isFollowed ? 'var(--primary-teal, #23ada4)' : '#fff'
+                                                }}
+                                                onClick={(e) => handleFollowToggle(e, user._id, item.isFollowed, idx)}
+                                            >
+                                                {item.isFollowed ? t("followed") || 'Following' : t("follow") || 'Follow'}
+                                            </button>
+                                        )}
                                     </div>
                                 </ListGroup.Item>
                             );

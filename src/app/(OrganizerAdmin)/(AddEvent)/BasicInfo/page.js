@@ -433,7 +433,7 @@ function BasicInfoContent() {
                                 border: "2px solid #ddd",
                               }}
                               onError={(e) => {
-                                e.target.src = "/img/details_img02.png";
+                                e.target.src = "/img/sidebar-logo.svg";
                               }}
                             />
                             <button

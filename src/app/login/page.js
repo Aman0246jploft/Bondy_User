@@ -2,6 +2,7 @@
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { Col, Container, Form, Nav, Row, Tab } from "react-bootstrap";
+import LanguageSelector from "@/components/LanguageSelector";
 import authApi from "@/api/authApi";
 import staffApi from "@/api/staffApi";
 import { useRouter } from "next/navigation";
@@ -23,25 +24,57 @@ export default function Page() {
   }, [t]);
 
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({});
+
+  const validateForm = (data) => {
+    const newErrors = {};
+    const email = data.email.trim();
+    const password = data.password.trim();
+    if (!email) {
+      newErrors.email = t("emailRequired");
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        newErrors.email = t("pleaseEnterValidEmail");
+      }
+    }
+    if (!password) {
+      newErrors.password = t("passwordRequired");
+    } else {
+      const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
+      if (!passwordRegex.test(password)) {
+        newErrors.password = t("passwordComplexity");
+      }
+    }
+    return newErrors;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!formData.email.trim()) { toast.error(t("emailRequired")); return; }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email.trim())) { toast.error(t("pleaseEnterValidEmail")); return; }
-    if (!formData.password) { toast.error(t("passwordRequired")); return; }
+    const trimmedData = {
+      email: formData.email.trim(),
+      password: formData.password.trim(),
+    };
+    setFormData(trimmedData);
+
+    const validationErrors = validateForm(trimmedData);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
 
     setLoading(true);
     try {
       if (activeTab === "Staff") {
         const response = await staffApi.loginStaff({
-          email: formData.email,
-          password: formData.password
+          email: trimmedData.email,
+          password: trimmedData.password
         });
         if (response?.status) {
           localStorage.setItem("token", response.data.token);
@@ -52,12 +85,12 @@ export default function Page() {
       } else {
         const roleType = activeTab === "Organizer" ? "ORGANIZER" : "CUSTOMER";
         const response = await authApi.loginInit({
-          email: formData.email,
-          password: formData.password,
+          email: trimmedData.email,
+          password: trimmedData.password,
           type: roleType,
         });
         if (response?.status) {
-          localStorage.setItem("loginEmail", formData.email);
+          localStorage.setItem("loginEmail", trimmedData.email);
           localStorage.setItem("loginType", roleType);
           router.push("/otp?flow=login");
         }
@@ -157,23 +190,16 @@ export default function Page() {
         >
           <img src="/img/google_icon.svg" alt="google" />
         </button>
-
-        {/* Facebook — disabled */}
-        <button
-          type="button"
-          disabled
-          title="Facebook login coming soon"
-          style={{ background: "none", border: "none", padding: 0, opacity: 0.4, cursor: "not-allowed" }}
-        >
-          <img src="/img/facebook_icon.svg" alt="facebook" />
-        </button>
       </div>
     </>
   );
 
   return (
     <GuestRoute>
-      <div className="login_sec">
+      <div className="login_sec" style={{ position: "relative" }}>
+        <div style={{ position: "absolute", top: "20px", right: "20px", zIndex: 1050 }}>
+          <LanguageSelector />
+        </div>
         <Container fluid>
           <Row className="justify-content-between align-items-center gy-4">
             <Col xl={5} lg={7}>
@@ -195,7 +221,7 @@ export default function Page() {
                       <p>{t("smartTravelPlans")}</p>
                     </div>
 
-                    <Tab.Container id="Login" activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
+                    <Tab.Container id="Login" activeKey={activeTab} onSelect={(k) => { setActiveTab(k); setErrors({}); }}>
                       <Row>
                         <Col sm={12} className="mb-4">
                           <Nav variant="pills" className="custom-nav-pills justify-content-center m-auto">
@@ -215,6 +241,9 @@ export default function Page() {
                               <Form className="login_field" noValidate onSubmit={handleLogin}>
                                 <Form.Group className="mb-3" controlId="customerEmail">
                                   <Form.Control type="email" name="email" placeholder={t("email")} value={formData.email} onChange={handleChange} />
+                                  {errors.email && (
+                                    <div className="text-danger small mt-1">{errors.email}</div>
+                                  )}
                                 </Form.Group>
                                 <Form.Group className="mb-3" controlId="customerPassword">
                                   <div className="d-flex gap-2 position-relative">
@@ -223,6 +252,9 @@ export default function Page() {
                                       <img src={show ? "/img/lock.svg" : "/img/unlock.svg"} alt="toggle password" />
                                     </button>
                                   </div>
+                                  {errors.password && (
+                                    <div className="text-danger small mt-1">{errors.password}</div>
+                                  )}
                                 </Form.Group>
                                 <div className="text-end mb-3">
                                   <Link href="/forgot-password" className="forgot-password">{t("forgotPasswordQuestion")}</Link>
@@ -234,6 +266,13 @@ export default function Page() {
                               <SocialButtons />
                               <div className="other_signup">
                                 <span>{" "}{t("dontHaveAccount")}{" "}<Link href="/register">{t("signUp")}</Link></span>
+                              </div>
+                              <div className="other_signup mt-2">
+                                <span>
+                                  <Link href="/" className="text-decoration-underline" style={{ color: "#23ada4" }}>
+                                    {t("continueAsGuest")}
+                                  </Link>
+                                </span>
                               </div>
                               <div className="text-center mt-3 border-top pt-3">
                                 <button
@@ -252,6 +291,9 @@ export default function Page() {
                               <Form className="login_field" noValidate onSubmit={handleLogin}>
                                 <Form.Group className="mb-3" controlId="organizerEmail">
                                   <Form.Control type="email" name="email" placeholder={t("email")} value={formData.email} onChange={handleChange} />
+                                  {errors.email && (
+                                    <div className="text-danger small mt-1">{errors.email}</div>
+                                  )}
                                 </Form.Group>
                                 <Form.Group className="mb-3" controlId="organizerPassword">
                                   <div className="d-flex gap-2 position-relative">
@@ -260,6 +302,9 @@ export default function Page() {
                                       <img src={show ? "/img/lock.svg" : "/img/unlock.svg"} alt="toggle password" />
                                     </button>
                                   </div>
+                                  {errors.password && (
+                                    <div className="text-danger small mt-1">{errors.password}</div>
+                                  )}
                                 </Form.Group>
                                 <div className="text-end mb-3">
                                   <Link href="/forgot-password" className="forgot-password">{t("forgotPasswordQuestion")}</Link>
@@ -271,6 +316,13 @@ export default function Page() {
                               <SocialButtons />
                               <div className="other_signup">
                                 <span>{" "}{t("dontHaveAccount")}{" "}<Link href="/register">{t("signUp")}</Link></span>
+                              </div>
+                              <div className="other_signup mt-2">
+                                <span>
+                                  <Link href="/" className="text-decoration-underline" style={{ color: "#23ada4" }}>
+                                    {t("continueAsGuest")}
+                                  </Link>
+                                </span>
                               </div>
                               <div className="text-center mt-3 border-top pt-3">
                                 <button
@@ -289,6 +341,9 @@ export default function Page() {
                               <Form className="login_field" noValidate onSubmit={handleLogin}>
                                 <Form.Group className="mb-3" controlId="staffEmail">
                                   <Form.Control type="email" name="email" placeholder={t("email")} value={formData.email} onChange={handleChange} />
+                                  {errors.email && (
+                                    <div className="text-danger small mt-1">{errors.email}</div>
+                                  )}
                                 </Form.Group>
                                 <Form.Group className="mb-3" controlId="staffPassword">
                                   <div className="d-flex gap-2 position-relative">
@@ -297,6 +352,9 @@ export default function Page() {
                                       <img src={show ? "/img/lock.svg" : "/img/unlock.svg"} alt="toggle password" />
                                     </button>
                                   </div>
+                                  {errors.password && (
+                                    <div className="text-danger small mt-1">{errors.password}</div>
+                                  )}
                                 </Form.Group>
                                 <button type="submit" disabled={loading} className="common_btn w-100 d-block text-center text-decoration-none border-0 mt-4">
                                   {loading ? t("signingIn") : t("signIn")}

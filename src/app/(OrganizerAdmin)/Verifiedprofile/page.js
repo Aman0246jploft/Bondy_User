@@ -27,10 +27,15 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Link from "next/link";
 
 function VerificationPageContent() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+
+  const handleImageError = (e) => {
+    e.target.onerror = null;
+    e.target.src = "/img/sidebar-logo.svg";
+  };
 
   // Active checklist item dropdown
   const [activeTab, setActiveTab] = useState(null); // 'phone', 'email', 'identity', 'bank', 'profile'
@@ -80,7 +85,7 @@ function VerificationPageContent() {
     fetchProfile();
     fetchBanks();
     fetchCategories();
-    document.title = "Organizer Verification - Bondy";
+    document.title = t("organizerVerificationTitle") || "Organizer Verification - Bondy";
   }, []);
 
   const fetchProfile = async () => {
@@ -179,7 +184,7 @@ function VerificationPageContent() {
 
   const handleSubmitProfileFields = async () => {
     if (!businessName || !businessCategory) {
-      toast.error("Business Name and Category are required");
+      toast.error(t("businessNameCategoryRequired") || "Business Name and Category are required");
       return;
     }
     try {
@@ -191,12 +196,12 @@ function VerificationPageContent() {
         socialMediaLink
       });
       if (res?.status) {
-        toast.success("Organizer profile submitted successfully!");
+        toast.success(t("organizerProfileSubmitted") || "Organizer profile submitted successfully!");
         setIsEditingProfileFields(false);
         fetchProfile();
       }
     } catch (err) {
-      toast.error("Failed to submit organizer profile details");
+      toast.error(t("failedToSubmitProfile") || "Failed to submit organizer profile details");
     } finally {
       setSubmitting(false);
     }
@@ -224,11 +229,11 @@ function VerificationPageContent() {
         contactNumber: phoneVal
       });
       if (res?.status) {
-        toast.success(res.message || "OTP sent successfully to your phone number!");
+        toast.success(res.message || t("phoneOtpSent") || "OTP sent successfully to your phone number!");
         setPhoneOtpSent(true);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to send phone OTP");
+      toast.error(err.response?.data?.message || t("failedToSendPhoneOtp") || "Failed to send phone OTP");
     } finally {
       setSubmitting(false);
     }
@@ -236,7 +241,7 @@ function VerificationPageContent() {
 
   const handleVerifyPhoneOtp = async () => {
     if (!phoneOtp) {
-      toast.error("Please enter the OTP received");
+      toast.error(t("enterReceivedOtp") || "Please enter the OTP received");
       return;
     }
     try {
@@ -245,13 +250,13 @@ function VerificationPageContent() {
         otp: phoneOtp
       });
       if (res?.status) {
-        toast.success("Phone number verified successfully!");
+        toast.success(t("phoneNumberVerified") || "Phone number verified successfully!");
         setPhoneOtpSent(false);
         setPhoneOtp("");
         fetchProfile();
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Invalid OTP");
+      toast.error(err.response?.data?.message || t("invalidOtp") || "Invalid OTP");
     } finally {
       setSubmitting(false);
     }
@@ -260,7 +265,7 @@ function VerificationPageContent() {
   // 2. Email Verification Handlers
   const handleSendEmailOtp = async () => {
     if (!emailVal) {
-      toast.error("Please enter a valid email address");
+      toast.error(t("enterValidEmail") || "Please enter a valid email address");
       return;
     }
     try {
@@ -269,11 +274,11 @@ function VerificationPageContent() {
         email: emailVal
       });
       if (res?.status) {
-        toast.success(res.message || "OTP sent successfully to your email!");
+        toast.success(res.message || t("emailOtpSent") || "OTP sent successfully to your email!");
         setEmailOtpSent(true);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to send email OTP");
+      toast.error(err.response?.data?.message || t("failedToSendEmailOtp") || "Failed to send email OTP");
     } finally {
       setSubmitting(false);
     }
@@ -281,7 +286,7 @@ function VerificationPageContent() {
 
   const handleVerifyEmailOtp = async () => {
     if (!emailOtp) {
-      toast.error("Please enter the OTP received");
+      toast.error(t("enterReceivedOtp") || "Please enter the OTP received");
       return;
     }
     try {
@@ -290,13 +295,13 @@ function VerificationPageContent() {
         otp: emailOtp
       });
       if (res?.status) {
-        toast.success("Email verified successfully!");
+        toast.success(t("emailVerified") || "Email verified successfully!");
         setEmailOtpSent(false);
         setEmailOtp("");
         fetchProfile();
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Invalid OTP");
+      toast.error(err.response?.data?.message || t("invalidOtp") || "Invalid OTP");
     } finally {
       setSubmitting(false);
     }
@@ -320,10 +325,10 @@ function VerificationPageContent() {
         } else {
           setNationalIdBack(fileUrl);
         }
-        toast.success("Document uploaded successfully!");
+        toast.success(t("documentUploaded") || "Document uploaded successfully!");
       }
     } catch (err) {
-      toast.error("Failed to upload document file");
+      toast.error(t("failedToUploadDocument") || "Failed to upload document file");
     } finally {
       setSubmitting(false);
     }
@@ -331,7 +336,7 @@ function VerificationPageContent() {
 
   const handleSubmitIdentity = async () => {
     if (!nationalIdFront || !nationalIdBack) {
-      toast.error("Please upload both front and back images of your ID");
+      toast.error(t("uploadBothIdImages") || "Please upload both front and back images of your ID");
       return;
     }
     try {
@@ -351,12 +356,12 @@ function VerificationPageContent() {
 
       const res = await apiClient.post("/verification/submit", payload);
       if (res?.status) {
-        toast.success("Identity documents submitted successfully!");
+        toast.success(t("identitySubmitted") || "Identity documents submitted successfully!");
         setIsEditingIdentity(false);
         fetchProfile();
       }
     } catch (err) {
-      toast.error("Failed to submit ID verification");
+      toast.error(t("failedToSubmitId") || "Failed to submit ID verification");
     } finally {
       setSubmitting(false);
     }
@@ -365,7 +370,7 @@ function VerificationPageContent() {
   // 4. Bank account handler
   const handleSubmitBank = async () => {
     if (!bankAccount.bankName || !bankAccount.bankHolderName || !bankAccount.accountNumber) {
-      toast.error("Please fill in all required bank details");
+      toast.error(t("fillRequiredBankDetails") || "Please fill in all required bank details");
       return;
     }
     try {
@@ -374,12 +379,12 @@ function VerificationPageContent() {
         bankVerification: bankAccount
       });
       if (res?.status) {
-        toast.success("Bank details submitted successfully!");
+        toast.success(t("bankSubmitted") || "Bank details submitted successfully!");
         setIsEditingBank(false);
         fetchProfile();
       }
     } catch (err) {
-      toast.error("Failed to submit bank details");
+      toast.error(t("failedToSubmitBank") || "Failed to submit bank details");
     } finally {
       setSubmitting(false);
     }
@@ -484,16 +489,16 @@ function VerificationPageContent() {
                   <div className="d-flex align-items-center justify-content-between py-2">
                     <div className="d-flex align-items-center text-teal gap-2">
                       <CheckCircle size={18} />
-                      <span>Your phone number ({phoneCountryCode} {phoneVal}) is successfully verified.</span>
+                      <span>{t("phoneSuccessfullyVerified", { number: `${phoneCountryCode} ${phoneVal}` })}</span>
                     </div>
                     <button className="custom-btn" onClick={() => setIsEditingPhone(true)}>
-                      Change
+                      {t("change") || "Change"}
                     </button>
                   </div>
                 ) : (
                   <div className="py-2">
                     <Form.Group className="mb-3">
-                      <Form.Label className="text-light">Phone Number</Form.Label>
+                      <Form.Label className="text-light">{t("phoneNumber") || "Phone Number"}</Form.Label>
                       <div className="d-flex gap-2">
                         <Form.Control
                           type="text"
@@ -508,10 +513,10 @@ function VerificationPageContent() {
                           className="custom-input-dark"
                           value={phoneVal}
                           onChange={(e) => setPhoneVal(e.target.value)}
-                          placeholder="Phone number"
+                          placeholder={t("phoneNumber") || "Phone Number"}
                         />
                         <button className="custom-btn" onClick={handleSendPhoneOtp} disabled={submitting}>
-                          {phoneOtpSent ? "Resend OTP" : "Save & Send OTP"}
+                          {phoneOtpSent ? (t("resendOtp") || "Resend OTP") : (t("saveSendOtp") || "Save & Send OTP")}
                         </button>
                         {isPhoneVerified && (
                           <button
@@ -526,7 +531,7 @@ function VerificationPageContent() {
                               }
                             }}
                           >
-                            Cancel
+                            {t("cancel") || "Cancel"}
                           </button>
                         )}
                       </div>
@@ -534,17 +539,17 @@ function VerificationPageContent() {
 
                     {phoneOtpSent && (
                       <Form.Group className="mb-3">
-                        <Form.Label className="text-light">Enter 5-Digit OTP</Form.Label>
+                        <Form.Label className="text-light">{t("enter5DigitOtp") || "Enter 5-Digit OTP"}</Form.Label>
                         <div className="d-flex gap-2">
                           <Form.Control
                             type="text"
                             className="custom-input-dark"
                             value={phoneOtp}
                             onChange={(e) => setPhoneOtp(e.target.value)}
-                            placeholder="Enter OTP (e.g. 12345)"
+                            placeholder={t("enterOtpPlaceholder") || "Enter OTP (e.g. 12345)"}
                           />
                           <button className="custom-btn" onClick={handleVerifyPhoneOtp} disabled={submitting}>
-                            Verify
+                            {t("verify") || "Verify"}
                           </button>
                         </div>
                       </Form.Group>
@@ -583,16 +588,16 @@ function VerificationPageContent() {
                   <div className="d-flex align-items-center justify-content-between py-2">
                     <div className="d-flex align-items-center text-teal gap-2">
                       <CheckCircle size={18} />
-                      <span>Your email address ({emailVal}) is successfully verified.</span>
+                      <span>{t("emailSuccessfullyVerified", { email: emailVal })}</span>
                     </div>
                     <button className="custom-btn" onClick={() => setIsEditingEmail(true)}>
-                      Change
+                      {t("change") || "Change"}
                     </button>
                   </div>
                 ) : (
                   <div className="py-2">
                     <Form.Group className="mb-3">
-                      <Form.Label className="text-light">Email Address</Form.Label>
+                      <Form.Label className="text-light">{t("emailAddress") || "Email Address"}</Form.Label>
                       <div className="d-flex gap-2">
                         <Form.Control
                           type="email"
@@ -602,7 +607,7 @@ function VerificationPageContent() {
                           placeholder="name@example.com"
                         />
                         <button className="custom-btn" onClick={handleSendEmailOtp} disabled={submitting}>
-                          {emailOtpSent ? "Resend OTP" : "Save & Send OTP"}
+                          {emailOtpSent ? (t("resendOtp") || "Resend OTP") : (t("saveSendOtp") || "Save & Send OTP")}
                         </button>
                         {isEmailVerified && (
                           <button
@@ -616,7 +621,7 @@ function VerificationPageContent() {
                               }
                             }}
                           >
-                            Cancel
+                            {t("cancel") || "Cancel"}
                           </button>
                         )}
                       </div>
@@ -624,17 +629,17 @@ function VerificationPageContent() {
 
                     {emailOtpSent && (
                       <Form.Group className="mb-3">
-                        <Form.Label className="text-light">Enter 5-Digit OTP</Form.Label>
+                        <Form.Label className="text-light">{t("enter5DigitOtp") || "Enter 5-Digit OTP"}</Form.Label>
                         <div className="d-flex gap-2">
                           <Form.Control
                             type="text"
                             className="custom-input-dark"
                             value={emailOtp}
                             onChange={(e) => setEmailOtp(e.target.value)}
-                            placeholder="Enter OTP (e.g. 12345)"
+                            placeholder={t("enterOtpPlaceholder") || "Enter OTP (e.g. 12345)"}
                           />
                           <button className="custom-btn" onClick={handleVerifyEmailOtp} disabled={submitting}>
-                            Verify
+                            {t("verify") || "Verify"}
                           </button>
                         </div>
                       </Form.Group>
@@ -676,30 +681,30 @@ function VerificationPageContent() {
                     {isIdVerified ? (
                       <div className="d-flex align-items-center text-teal gap-2 mb-3">
                         <CheckCircle size={18} />
-                        <span>Your government ID has been reviewed and approved by administrators.</span>
+                        <span>{t("idApprovedDesc") || "Your government ID has been reviewed and approved by administrators."}</span>
                       </div>
                     ) : (
                       <div className="d-flex align-items-center text-warning gap-2 mb-3">
                         <RefreshCw size={18} className="spinner-icon" />
-                        <span>Your ID document submission is under review by our team. We'll update you shortly.</span>
+                        <span>{t("idPendingDesc") || "Your ID document submission is under review by our team. We'll update you shortly."}</span>
                       </div>
                     )}
 
                     {/* Render National ID details if they exist */}
                     {profile?.verifications?.idVerification?.nationalId?.frontImage && (
                       <div className="mb-4">
-                        <span className="text-teal d-block mb-3 small fw-bold">National ID Card</span>
+                        <span className="text-teal d-block mb-3 small fw-bold">{t("nationalIdCard") || "National ID Card"}</span>
                         <Row>
                           <Col md={6} className="mb-3">
-                            <label className="text-muted mb-2 d-block small">ID Card Front Image</label>
+                            <label className="text-muted mb-2 d-block small">{t("idCardFrontImage") || "ID Card Front Image"}</label>
                             <div className="uploader-box cursor-default" style={{ borderStyle: "solid" }}>
-                              <img src={getFullImageUrl(profile.verifications.idVerification.nationalId.frontImage)} alt="Front Preview" className="preview-image" />
+                              <img src={getFullImageUrl(profile.verifications.idVerification.nationalId.frontImage)} alt="Front Preview" className="preview-image" onError={handleImageError} />
                             </div>
                           </Col>
                           <Col md={6} className="mb-3">
-                            <label className="text-muted mb-2 d-block small">ID Card Back Image</label>
+                            <label className="text-muted mb-2 d-block small">{t("idCardBackImage") || "ID Card Back Image"}</label>
                             <div className="uploader-box cursor-default" style={{ borderStyle: "solid" }}>
-                              <img src={getFullImageUrl(profile.verifications.idVerification.nationalId.backImage)} alt="Back Preview" className="preview-image" />
+                              <img src={getFullImageUrl(profile.verifications.idVerification.nationalId.backImage)} alt="Back Preview" className="preview-image" onError={handleImageError} />
                             </div>
                           </Col>
                         </Row>
@@ -709,18 +714,18 @@ function VerificationPageContent() {
                     {/* Render Driving Licence details if they exist */}
                     {profile?.verifications?.idVerification?.drivingLicence?.frontImage && (
                       <div className="mb-4">
-                        <span className="text-teal d-block mb-3 small fw-bold">Driving Licence</span>
+                        <span className="text-teal d-block mb-3 small fw-bold">{t("drivingLicence") || "Driving Licence"}</span>
                         <Row>
                           <Col md={6} className="mb-3">
-                            <label className="text-muted mb-2 d-block small">Licence Front Image</label>
+                            <label className="text-muted mb-2 d-block small">{t("licenceFrontImage") || "Licence Front Image"}</label>
                             <div className="uploader-box cursor-default" style={{ borderStyle: "solid" }}>
-                              <img src={getFullImageUrl(profile.verifications.idVerification.drivingLicence.frontImage)} alt="Front Preview" className="preview-image" />
+                              <img src={getFullImageUrl(profile.verifications.idVerification.drivingLicence.frontImage)} alt="Front Preview" className="preview-image" onError={handleImageError} />
                             </div>
                           </Col>
                           <Col md={6} className="mb-3">
-                            <label className="text-muted mb-2 d-block small">Licence Back Image</label>
+                            <label className="text-muted mb-2 d-block small">{t("licenceBackImage") || "Licence Back Image"}</label>
                             <div className="uploader-box cursor-default" style={{ borderStyle: "solid" }}>
-                              <img src={getFullImageUrl(profile.verifications.idVerification.drivingLicence.backImage)} alt="Back Preview" className="preview-image" />
+                              <img src={getFullImageUrl(profile.verifications.idVerification.drivingLicence.backImage)} alt="Back Preview" className="preview-image" onError={handleImageError} />
                             </div>
                           </Col>
                         </Row>
@@ -729,7 +734,7 @@ function VerificationPageContent() {
 
                     <div className="text-center">
                       <button className="custom-btn w-100 py-2 d-flex align-items-center justify-content-center gap-2" onClick={() => setIsEditingIdentity(true)}>
-                        Update ID Document
+                        {t("updateIdDocument") || "Update ID Document"}
                       </button>
                     </div>
                   </div>
@@ -737,11 +742,11 @@ function VerificationPageContent() {
                   <div className="py-2">
                     {isIdPending && (
                       <div className="alert alert-warning mb-3 py-2">
-                        Your submitted documents are currently under review. Resubmitting will start a new review process.
+                        {t("resubmitIdWarning") || "Your submitted documents are currently under review. Resubmitting will start a new review process."}
                       </div>
                     )}
                     <div className="mb-3">
-                      <Form.Label className="text-light text-start d-block">Select ID Document Type</Form.Label>
+                      <Form.Label className="text-light text-start d-block">{t("selectIdDocumentType") || "Select ID Document Type"}</Form.Label>
                       <Form.Select
                         className="custom-input-dark custom_select"
                         value={idType}
@@ -751,24 +756,24 @@ function VerificationPageContent() {
                           setNationalIdBack(null);
                         }}
                       >
-                        <option value="nationalId">National ID Card</option>
-                        <option value="drivingLicence">Driving Licence</option>
+                        <option value="nationalId">{t("nationalIdCard") || "National ID Card"}</option>
+                        <option value="drivingLicence">{t("drivingLicence") || "Driving Licence"}</option>
                       </Form.Select>
                     </div>
 
                     <Row>
                       <Col md={6} className="mb-3">
-                        <label className="text-white mb-2">{idType === "nationalId" ? "ID Card Front Image" : "Licence Front Image"}</label>
+                        <label className="text-white mb-2">{idType === "nationalId" ? (t("idCardFrontImage") || "ID Card Front Image") : (t("licenceFrontImage") || "Licence Front Image")}</label>
                         <div
                           className="uploader-box"
                           onClick={() => fileRefFront.current.click()}
                         >
                           {nationalIdFront ? (
-                            <img src={getFullImageUrl(nationalIdFront)} alt="Front Preview" className="preview-image" />
+                            <img src={getFullImageUrl(nationalIdFront)} alt="Front Preview" className="preview-image" onError={handleImageError} />
                           ) : (
                             <div className="uploader-placeholder">
                               <Upload size={24} className="mb-2 text-teal" />
-                              <span>Upload Front Image</span>
+                              <span>{t("uploadFrontImage") || "Upload Front Image"}</span>
                             </div>
                           )}
                           <input
@@ -782,17 +787,17 @@ function VerificationPageContent() {
                       </Col>
 
                       <Col md={6} className="mb-3">
-                        <label className="text-white mb-2">{idType === "nationalId" ? "ID Card Back Image" : "Licence Back Image"}</label>
+                        <label className="text-white mb-2">{idType === "nationalId" ? (t("idCardBackImage") || "ID Card Back Image") : (t("licenceBackImage") || "Licence Back Image")}</label>
                         <div
                           className="uploader-box"
                           onClick={() => fileRefBack.current.click()}
                         >
                           {nationalIdBack ? (
-                            <img src={getFullImageUrl(nationalIdBack)} alt="Back Preview" className="preview-image" />
+                            <img src={getFullImageUrl(nationalIdBack)} alt="Back Preview" className="preview-image" onError={handleImageError} />
                           ) : (
                             <div className="uploader-placeholder">
                               <Upload size={24} className="mb-2 text-teal" />
-                              <span>Upload Back Image</span>
+                              <span>{t("uploadBackImage") || "Upload Back Image"}</span>
                             </div>
                           )}
                           <input
@@ -825,7 +830,7 @@ function VerificationPageContent() {
                             }
                           }}
                         >
-                          Cancel
+                          {t("cancel") || "Cancel"}
                         </button>
                       )}
                       <button
@@ -833,7 +838,7 @@ function VerificationPageContent() {
                         onClick={handleSubmitIdentity}
                         disabled={submitting || !nationalIdFront || !nationalIdBack}
                       >
-                        Submit ID for Review
+                        {t("submitIdForReview") || "Submit ID for Review"}
                       </button>
                     </div>
                   </div>
@@ -875,28 +880,28 @@ function VerificationPageContent() {
                       <div className="icon-wrapper mb-2" style={{ width: "60px", height: "60px", backgroundColor: "rgba(35, 173, 164, 0.1)" }}>
                         <Landmark size={32} className="text-teal" />
                       </div>
-                      <h5 className="text-white mb-1" style={{ fontWeight: "600" }}>Verified</h5>
-                      <p className="text-muted small">Your bank account is verified.</p>
+                      <h5 className="text-white mb-1" style={{ fontWeight: "600" }}>{t("verified") || "Verified"}</h5>
+                      <p className="text-muted small">{t("bankAccountVerifiedDesc") || "Your bank account is verified."}</p>
                     </div>
 
                     {/* Bank Info Rows */}
                     <div className="p-3 mb-4" style={{ backgroundColor: "#262626", borderRadius: "12px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
                       <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
-                        <span className="text-muted small">Bank Name</span>
+                        <span className="text-muted small">{t("bankNameTitle") || "Bank Name"}</span>
                         <span className="text-white fw-bold small">{bankAccount.bankName}</span>
                       </div>
                       <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
-                        <span className="text-muted small">Account Holder Name</span>
+                        <span className="text-muted small">{t("accountHolderNameLabel") || "Account Holder Name"}</span>
                         <span className="text-white fw-bold small">{bankAccount.bankHolderName}</span>
                       </div>
                       <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
-                        <span className="text-muted small">Account Number</span>
+                        <span className="text-muted small">{t("accountNumberLabel") || "Account Number"}</span>
                         <span className="text-white fw-bold small">
                           {bankAccount.accountNumber ? `**** **** **** ${bankAccount.accountNumber.slice(-4)}` : "N/A"}
                         </span>
                       </div>
                       <div className="d-flex justify-content-between py-2">
-                        <span className="text-muted small">Verified on</span>
+                        <span className="text-muted small">{t("verifiedOn") || "Verified on"}</span>
                         <span className="text-white fw-bold small">
                           {profile?.verifications?.bankVerification?.verifiedAt
                             ? new Date(profile.verifications.bankVerification.verifiedAt).toLocaleDateString("en-US", {
@@ -915,7 +920,7 @@ function VerificationPageContent() {
 
                     <div className="text-center">
                       <button className="custom-btn w-100 py-2 d-flex align-items-center justify-content-center gap-2" onClick={() => setIsEditingBank(true)}>
-                        Update Bank Account
+                        {t("updateBankAccount") || "Update Bank Account"}
                       </button>
                     </div>
                   </div>
@@ -923,19 +928,19 @@ function VerificationPageContent() {
                   <div className="py-2">
                     {isBankPending && (
                       <div className="alert alert-warning mb-3 py-2">
-                        Bank details have been submitted and are currently pending verification. Updating below will submit a new request.
+                        {t("resubmitBankWarning") || "Bank details have been submitted and are currently pending verification. Updating below will submit a new request."}
                       </div>
                     )}
                     <Row className="g-3">
                       <Col md={6}>
                         <Form.Group>
-                          <Form.Label className="text-light">Bank Name</Form.Label>
+                          <Form.Label className="text-light">{t("bankNameTitle") || "Bank Name"}</Form.Label>
                           <Form.Select
                             className="custom-input-dark custom_select"
                             value={bankAccount.bankName}
                             onChange={(e) => setBankAccount({ ...bankAccount, bankName: e.target.value })}
                           >
-                            <option value="">Select Bank</option>
+                            <option value="">{t("selectBank") || "Select Bank"}</option>
                             {banksList.map((b) => (
                               <option key={b._id} value={b.bankName}>
                                 {b.bankName}
@@ -947,26 +952,26 @@ function VerificationPageContent() {
 
                       <Col md={6}>
                         <Form.Group>
-                          <Form.Label className="text-light">Bank Holder Name</Form.Label>
+                          <Form.Label className="text-light">{t("accountHolderNameLabel") || "Account Holder Name"}</Form.Label>
                           <Form.Control
                             type="text"
                             className="custom-input-dark"
                             value={bankAccount.bankHolderName}
                             onChange={(e) => setBankAccount({ ...bankAccount, bankHolderName: e.target.value })}
-                            placeholder="Account Holder Name"
+                            placeholder={t("accountHolderNameLabel") || "Account Holder Name"}
                           />
                         </Form.Group>
                       </Col>
 
                       <Col md={6}>
                         <Form.Group>
-                          <Form.Label className="text-light">Account Number</Form.Label>
+                          <Form.Label className="text-light">{t("accountNumberLabel") || "Account Number"}</Form.Label>
                           <Form.Control
                             type="text"
                             className="custom-input-dark"
                             value={bankAccount.accountNumber}
                             onChange={(e) => setBankAccount({ ...bankAccount, accountNumber: e.target.value })}
-                            placeholder="Account Number"
+                            placeholder={t("accountNumberLabel") || "Account Number"}
                           />
                         </Form.Group>
                       </Col>
@@ -989,7 +994,7 @@ function VerificationPageContent() {
                             }
                           }}
                         >
-                          Cancel
+                          {t("cancel") || "Cancel"}
                         </button>
                       )}
                       <button
@@ -997,7 +1002,7 @@ function VerificationPageContent() {
                         onClick={handleSubmitBank}
                         disabled={submitting || !bankAccount.bankName || !bankAccount.bankHolderName || !bankAccount.accountNumber}
                       >
-                        Submit Bank Details
+                        {t("submitBankDetails") || "Submit Bank Details"}
                       </button>
                     </div>
                   </div>
@@ -1039,41 +1044,47 @@ function VerificationPageContent() {
                       <div className="icon-wrapper mb-2" style={{ width: "60px", height: "60px", backgroundColor: "rgba(35, 173, 164, 0.1)" }}>
                         <UserCheck size={32} className="text-teal" />
                       </div>
-                      <h5 className="text-white mb-1" style={{ fontWeight: "600" }}>Organizer Profile Details</h5>
-                      <p className="text-muted small">Status: <strong className="text-white">{profile.organizerVerificationStatus || "unverified"}</strong></p>
+                      <h5 className="text-white mb-1" style={{ fontWeight: "600" }}>{t("organizerProfileDetails") || "Organizer Profile Details"}</h5>
+                      <p className="text-muted small">{t("statusLabel") || "Status:"} <strong className="text-white">{profile.organizerVerificationStatus ? (t(profile.organizerVerificationStatus.toLowerCase()) || profile.organizerVerificationStatus) : (t("unverified") || "unverified")}</strong></p>
                     </div>
 
                     {/* Business Details Info Rows */}
                     <div className="p-3 mb-4" style={{ backgroundColor: "#262626", borderRadius: "12px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
                       <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
-                        <span className="text-muted small">Business Name</span>
-                        <span className="text-white fw-bold small">{businessName || "Not Set"}</span>
+                        <span className="text-muted small">{t("businessNameLabel") || "Business Name"}</span>
+                        <span className="text-white fw-bold small">{businessName || (t("notSet") || "Not Set")}</span>
                       </div>
                       <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
-                        <span className="text-muted small">Business Category</span>
+                        <span className="text-muted small">{t("businessCategory") || "Business Category"}</span>
                         <span className="text-white fw-bold small">
-                          {categoriesList.find(c => c._id === businessCategory)?.name || businessCategory || "Not Set"}
+                          {(() => {
+                            const cat = categoriesList.find(c => c._id === businessCategory);
+                            if (cat) {
+                              return language === "mn" ? (cat.name_thi || cat.name) : cat.name;
+                            }
+                            return businessCategory || (t("notSet") || "Not Set");
+                          })()}
                         </span>
                       </div>
                       <div className="d-flex justify-content-between py-2 border-bottom border-secondary" style={{ borderColor: "rgba(255,255,255,0.05) !important" }}>
-                        <span className="text-muted small">Short Description</span>
-                        <span className="text-white fw-bold small text-end" style={{ maxWidth: "250px" }}>{shortDesc || "Not Set"}</span>
+                        <span className="text-muted small">{t("shortDescription") || "Short Description"}</span>
+                        <span className="text-white fw-bold small text-end" style={{ maxWidth: "250px" }}>{shortDesc || (t("notSet") || "Not Set")}</span>
                       </div>
                       <div className="d-flex justify-content-between py-2">
-                        <span className="text-muted small">Social Media Link</span>
+                        <span className="text-muted small">{t("socialMediaLinkLabel") || "Social Media Link"}</span>
                         <span className="text-white fw-bold small text-end text-truncate" style={{ maxWidth: "250px" }}>
                           {socialMediaLink ? (
                             <a href={socialMediaLink.startsWith("http") ? socialMediaLink : `https://${socialMediaLink}`} target="_blank" rel="noopener noreferrer" className="text-teal">
                               {socialMediaLink}
                             </a>
-                          ) : "Not Set"}
+                          ) : (t("notSet") || "Not Set")}
                         </span>
                       </div>
                     </div>
 
                     <div className="text-center">
                       <button className="custom-btn w-100 py-2 d-flex align-items-center justify-content-center gap-2" onClick={() => setIsEditingProfileFields(true)}>
-                        Update Profile Details
+                        {t("updateProfileDetails") || "Update Profile Details"}
                       </button>
                     </div>
                   </div>
@@ -1082,29 +1093,29 @@ function VerificationPageContent() {
                     <Row className="g-3">
                       <Col md={6}>
                         <Form.Group>
-                          <Form.Label className="text-light">Business Name</Form.Label>
+                          <Form.Label className="text-light">{t("businessNameLabel") || "Business Name"}</Form.Label>
                           <Form.Control
                             type="text"
                             className="custom-input-dark"
                             value={businessName}
                             onChange={(e) => setBusinessName(e.target.value)}
-                            placeholder="Business Name"
+                            placeholder={t("businessNameLabel") || "Business Name"}
                           />
                         </Form.Group>
                       </Col>
 
                       <Col md={6}>
                         <Form.Group>
-                          <Form.Label className="text-light">Business Category</Form.Label>
+                          <Form.Label className="text-light">{t("businessCategory") || "Business Category"}</Form.Label>
                           <Form.Select
                             className="custom-input-dark custom_select"
                             value={businessCategory}
                             onChange={(e) => setBusinessCategory(e.target.value)}
                           >
-                            <option value="">Select Category</option>
+                            <option value="">{t("selectCategory") || "Select Category"}</option>
                             {categoriesList.map((c) => (
                               <option key={c._id} value={c._id}>
-                                {c.name}
+                                {language === "mn" ? (c.name_thi || c.name) : c.name}
                               </option>
                             ))}
                           </Form.Select>
@@ -1113,7 +1124,7 @@ function VerificationPageContent() {
 
                       <Col md={12}>
                         <Form.Group>
-                          <Form.Label className="text-light">Short Description</Form.Label>
+                          <Form.Label className="text-light">{t("shortDescription") || "Short Description"}</Form.Label>
                           <Form.Control
                             as="textarea"
                             rows={3}
@@ -1121,20 +1132,20 @@ function VerificationPageContent() {
                             style={{ height: "auto" }}
                             value={shortDesc}
                             onChange={(e) => setShortDesc(e.target.value)}
-                            placeholder="Brief description about your business..."
+                            placeholder={t("briefBusinessDescPlaceholder") || "Brief description about your business..."}
                           />
                         </Form.Group>
                       </Col>
 
                       <Col md={12}>
                         <Form.Group>
-                          <Form.Label className="text-light">Social Media Link</Form.Label>
+                          <Form.Label className="text-light">{t("socialMediaLinkLabel") || "Social Media Link"}</Form.Label>
                           <Form.Control
                             type="text"
                             className="custom-input-dark"
                             value={socialMediaLink}
                             onChange={(e) => setSocialMediaLink(e.target.value)}
-                            placeholder="e.g. instagram.com/mybusiness"
+                            placeholder={t("socialMediaPlaceholder") || "e.g. instagram.com/mybusiness"}
                           />
                         </Form.Group>
                       </Col>
@@ -1154,14 +1165,14 @@ function VerificationPageContent() {
                           }
                         }}
                       >
-                        Cancel
+                        {t("cancel") || "Cancel"}
                       </button>
                       <button
                         className="custom-btn"
                         onClick={handleSubmitProfileFields}
                         disabled={submitting || !businessName || !businessCategory}
                       >
-                        Submit Profile Details
+                        {t("submitProfileDetails") || "Submit Profile Details"}
                       </button>
                     </div>
                   </div>
@@ -1176,7 +1187,7 @@ function VerificationPageContent() {
       {/* Safety / Security Footer */}
       <div className="verification-secure-footer mt-5">
         <Lock size={16} className="text-teal me-2" />
-        <span>Your information is secure. Used only for verification and account safety.</span>
+        <span>{t("infoSecureFooter") || "Your information is secure. Used only for verification and account safety."}</span>
       </div>
 
       <style jsx>{`

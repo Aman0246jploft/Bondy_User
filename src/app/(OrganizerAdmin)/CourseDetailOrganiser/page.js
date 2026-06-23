@@ -1695,10 +1695,10 @@ function CourseDetailsContent() {
                   <p className="text-white mb-0" style={{ fontSize: "14px" }}>
                     {course.startDate
                       ? new Date(course.startDate).toLocaleDateString(locale, {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
                       : "N/A"}
                   </p>
                 </div>
@@ -1822,10 +1822,10 @@ function CourseDetailsContent() {
                   <p className="text-white mb-0" style={{ fontSize: "14px" }}>
                     {course.endDate
                       ? new Date(course.endDate).toLocaleDateString(locale, {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
                       : "N/A"}
                   </p>
                 </div>
@@ -1838,7 +1838,7 @@ function CourseDetailsContent() {
                 <div>
                   <h6 className="small text-muted mb-1">Refund Policy</h6>
                   <p className="text-white mb-0" style={{ fontSize: "14px" }}>
-                    {course.refundPolicy}
+                    {course.refundPolicy === "No Refund" ? t("noRefund") : course.refundPolicy === "1 Day Before" ? t("oneDayBefore") : course.refundPolicy === "7 Days Before" ? t("sevenDaysBefore") : course.refundPolicy}
                   </p>
                 </div>
               </>
@@ -1857,10 +1857,10 @@ function CourseDetailsContent() {
                     const fillPercent =
                       batch.seats > 0
                         ? Math.round(
-                            ((batch.seats - batch.availableSeats) /
-                              batch.seats) *
-                              100,
-                          )
+                          ((batch.seats - batch.availableSeats) /
+                            batch.seats) *
+                          100,
+                        )
                         : 0;
                     return (
                       <div
@@ -2430,7 +2430,7 @@ function CourseDetailsContent() {
               style={{ color: "#ccc", fontSize: "14px", marginBottom: "20px" }}>
               {cancelMode === "slot"
                 ? // ${selectedSlot?.batchName} for
-                  `Are you sure you want to cancel  ${selectedSlot?.date ? selectedSlot.date.split("T")[0] : ""}?`
+                `Are you sure you want to cancel  ${selectedSlot?.date ? selectedSlot.date.split("T")[0] : ""}?`
                 : "Are you sure you want to cancel this entire course? This will cancel all pending bookings and notify enrolled students."}
             </p>
             <div className="form-group mb-4">

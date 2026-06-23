@@ -101,11 +101,11 @@ const CourseSection = ({
                       <span className="event-badge">Featured</span>
                     )}
                     <img
-                      src={getFullImageUrl(item.posterImage?.[0]) || "/img/no-image.png"}
+                      src={getFullImageUrl(item.posterImage?.[0]) || "/img/sidebar-logo.svg"}
                       alt={item.courseTitle}
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = "/img/no-image.png";
+                        e.target.src = "/img/sidebar-logo.svg";
                       }}
                     />
                   </div>

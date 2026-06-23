@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { Col, Row, Form, Pagination, Modal, Spinner } from "react-bootstrap";
+import { Col, Row, Form, Modal, Spinner } from "react-bootstrap";
 import courseApi from "@/api/courseApi";
 import authApi from "@/api/authApi";
 import categoryApi from "@/api/categoryApi";
 import promotionsApi from "@/api/promotionsApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
+import PaginationComponent from "@/components/PaginationComponent";
 
 function CoursesManagement() {
   const { t, language } = useLanguage();
@@ -198,7 +199,7 @@ function CoursesManagement() {
     } catch (err) {
       toast.error(
         t("failedToLoadPromotionPackages") ||
-          "Failed to load promotion packages",
+        "Failed to load promotion packages",
       );
     } finally {
       setLoadingPackages(false);
@@ -235,8 +236,8 @@ function CoursesManagement() {
     } catch (err) {
       toast.error(
         err?.response?.data?.message ||
-          t("checkoutFailed") ||
-          "Checkout failed. Please try again.",
+        t("checkoutFailed") ||
+        "Checkout failed. Please try again.",
       );
     } finally {
       setCheckingOut(false);
@@ -338,7 +339,7 @@ function CoursesManagement() {
               </Col>
 
               {/* Category */}
-              <Col lg={3} md={6} xs={12}>
+              {/* <Col lg={3} md={6} xs={12}>
                 <Form.Select
                   value={filters.categoryId}
                   onChange={handleCategoryChange}
@@ -357,7 +358,7 @@ function CoursesManagement() {
                     </option>
                   ))}
                 </Form.Select>
-              </Col>
+              </Col> */}
 
               {/* Draft status toggles */}
               <Col lg={3} md={6} xs={12}>
@@ -466,7 +467,7 @@ function CoursesManagement() {
                           <img
                             src={
                               course.posterImage?.[0] ||
-                              "/img/details_img02.png"
+                              "/img/sidebar-logo.svg"
                             }
                             alt={course.courseTitle}
                             style={{
@@ -634,23 +635,23 @@ function CoursesManagement() {
                               <span>
                                 {course.startDate
                                   ? new Date(
-                                      course.startDate,
-                                    ).toLocaleDateString(locale, {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    })
+                                    course.startDate,
+                                  ).toLocaleDateString(locale, {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  })
                                   : "N/A"}
                                 {" - "}
                                 {course.endDate
                                   ? new Date(course.endDate).toLocaleDateString(
-                                      locale,
-                                      {
-                                        day: "numeric",
-                                        month: "short",
-                                        year: "numeric",
-                                      },
-                                    )
+                                    locale,
+                                    {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric",
+                                    },
+                                  )
                                   : "N/A"}
                               </span>
                             </div>
@@ -724,13 +725,12 @@ function CoursesManagement() {
                                     : course.status === "Upcoming"
                                       ? "#007bff"
                                       : "#6c757d",
-                                border: `1px solid ${
-                                  course.status === "Live"
-                                    ? "rgba(35, 173, 164, 0.3)"
-                                    : course.status === "Upcoming"
-                                      ? "rgba(0, 123, 255, 0.3)"
-                                      : "rgba(108, 117, 125, 0.3)"
-                                }`,
+                                border: `1px solid ${course.status === "Live"
+                                  ? "rgba(35, 173, 164, 0.3)"
+                                  : course.status === "Upcoming"
+                                    ? "rgba(0, 123, 255, 0.3)"
+                                    : "rgba(108, 117, 125, 0.3)"
+                                  }`,
                               }}>
                               {t(course.status.toLowerCase()) || course.status}
                             </span>
@@ -788,7 +788,7 @@ function CoursesManagement() {
                       </div>
 
                       <div className="d-flex align-items-center gap-3">
-                        {!isPast && (
+                        {(course.status?.toLowerCase() === "upcoming" || course.isDraft) && (
                           <Link
                             href={`/AddProgram?courseId=${course._id}`}
                             className="text-decoration-none"
@@ -806,7 +806,7 @@ function CoursesManagement() {
                           <img src="/img/Arrow-Right.svg" alt="arrow" />
                         </Link>
 
-                        {!isPast &&
+                        {course.status?.toLowerCase() === "upcoming" && !course.isDraft &&
                           (isFeaturedActive(course) ? (
                             <span
                               style={{
@@ -851,42 +851,11 @@ function CoursesManagement() {
             )}
           </div>
 
-          {totalPages > 1 && (
-            <div className="d-flex justify-content-center mt-4">
-              <Pagination>
-                <Pagination.First
-                  onClick={() => handlePageChange(1)}
-                  disabled={pagination.page === 1}
-                />
-                <Pagination.Prev
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page === 1}
-                />
-
-                {getPaginationItems().map((item, index) =>
-                  item === "ellipsis" ? (
-                    <Pagination.Ellipsis key={`ellipsis-${index}`} disabled />
-                  ) : (
-                    <Pagination.Item
-                      key={item}
-                      active={item === pagination.page}
-                      onClick={() => handlePageChange(item)}>
-                      {item}
-                    </Pagination.Item>
-                  ),
-                )}
-
-                <Pagination.Next
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page === totalPages}
-                />
-                <Pagination.Last
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={pagination.page === totalPages}
-                />
-              </Pagination>
-            </div>
-          )}
+          <PaginationComponent
+            currentPage={pagination.page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
 

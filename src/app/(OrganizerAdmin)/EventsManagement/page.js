@@ -225,11 +225,11 @@ function page() {
                   <div className="ticket-cards" key={event._id}>
                     <div className="ticket-inner">
                       <div className="ticket-lft">
-                        <Form.Check />
+                        {/* <Form.Check /> */}
                         <div className="event-info-box-img">
                           <img
                             src={
-                              event.posterImage?.[0] || "/img/details_img02.png"
+                              event.posterImage?.[0] || "/img/sidebar-logo.svg"
                             }
                             alt={event.eventTitle}
                             style={{
@@ -296,8 +296,8 @@ function page() {
                           {event.isDraft
                             ? t("draftLabel") || "Draft"
                             : t(event.status?.toLowerCase()) ||
-                              event.status ||
-                              t("upcoming")}
+                            event.status ||
+                            t("upcoming")}
                         </span>
                         <p
                           className="text-truncate-1"
@@ -358,11 +358,13 @@ function page() {
                           <img src="/img/Arrow-Right.svg" alt="arrow" />
                         </Link>
                       )}
-                      <Link href={`/EventDetailOrganiser?eventId=${event._id}`}>
-                        {t("Info")}{" "}
-                        <img src="/img/Arrow-Right.svg" alt="arrow" />
-                      </Link>
-                      {!isPastOrEnded &&
+                      {!event.isDraft && (
+                        <Link href={`/EventDetailOrganiser?eventId=${event._id}`}>
+                          {t("Info")}{" "}
+                          <img src="/img/Arrow-Right.svg" alt="arrow" />
+                        </Link>
+                      )}
+                      {event.status?.toLowerCase() === "upcoming" && !event.isDraft &&
                         (isFeaturedActive(event) ? (
                           <span
                             style={{

@@ -255,7 +255,7 @@ export default function Mapview({ searchParams }) {
       marker.addListener("mouseover", () => {
         const content = `
           <div style="width: 200px; padding: 0; background: #fff; overflow: hidden;">
-            <img src="${event.posterImage?.[0] || "/img/no-image.png"}" style="width:100%; height:110px; object-fit:cover; border-radius: 8px 8px 0 0;" />
+            <img src="${event.posterImage?.[0] || "/img/sidebar-logo.svg"}" style="width:100%; height:110px; object-fit:cover; border-radius: 8px 8px 0 0;" />
             <div style="padding: 10px;">
               <h6 style="margin: 0 0 5px; font-weight: 700; color: #333; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${event.eventTitle}</h6>
               <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
@@ -323,9 +323,9 @@ export default function Mapview({ searchParams }) {
                   >
                     <div className="img-container">
                       <img
-                        src={event.posterImage?.[0] || "/img/no-image.png"}
+                        src={event.posterImage?.[0] || "/img/sidebar-logo.svg"}
                         alt={event.eventTitle}
-                        onError={(e) => { e.target.src = "/img/no-image.png"; }}
+                        onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
                       />
                     </div>
                     <div className="card-content flex-grow-1">

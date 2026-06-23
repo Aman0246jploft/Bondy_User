@@ -12,6 +12,7 @@ function page() {
   const [tickets, setTickets] = useState([]);
   const [pagination, setPagination] = useState({});
   const [activeTab, setActiveTab] = useState("all");
+  const [bookingType, setBookingType] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [reviewModal, setReviewModal] = useState(null);
@@ -43,10 +44,14 @@ function page() {
     }
   };
 
-  const fetchTickets = async (tab, page) => {
+  const fetchTickets = async (tab, page, bType) => {
     setLoading(true);
     try {
       let params = { page, limit: 10 };
+
+      if (bType && bType !== "all") {
+        params.bookingType = bType;
+      }
 
       if (tab === "all") {
         params.status = "PAID,PENDING,CANCELLED,REFUND_INITIATED,FAILED";
@@ -61,9 +66,9 @@ function page() {
       }
 
       const res = await bookingApi.getTicketList(params);
-      if (res.status && res.data) {
-        setTickets(res.data.tickets);
-        setPagination(res.data.pagination);
+      if (res?.status && res?.data) {
+        setTickets(res?.data?.tickets);
+        setPagination(res?.data?.pagination);
       }
     } catch (error) {
       console.error("Error fetching tickets:", error);
@@ -73,9 +78,9 @@ function page() {
   };
 
   useEffect(() => {
-    fetchTickets(activeTab, currentPage);
-    document.title = `${t("myTickets")} - Bondy`;
-  }, [activeTab, currentPage]);
+    fetchTickets(activeTab, currentPage, bookingType);
+    document.title = "My Tickets - Bondy";
+  }, [activeTab, currentPage, bookingType]);
 
   useEffect(() => {
     fetchUserReviews();
@@ -83,6 +88,11 @@ function page() {
 
   const handleTabSelect = (k) => {
     setActiveTab(k);
+    setCurrentPage(1);
+  };
+
+  const handleTypeChange = (e) => {
+    setBookingType(e.target.value);
     setCurrentPage(1);
   };
 
@@ -100,30 +110,17 @@ function page() {
 
   const getEventDetails = (ticket) => {
     const item = ticket.eventId || ticket.courseId;
-    if (!item)
-      return { title: t("unknownEvent") || "Unknown Event", date: "N/A" };
+    if (!item) return { title: t("unknownEvent") || "Unknown Event", date: "N/A" };
 
-    const title =
-      ticket.bookingType === "EVENT" ? item.eventTitle : item.courseTitle;
-    let dateStr =
-      ticket.bookingType === "EVENT" ? item.startDate : item.createdAt;
+    const title = ticket.bookingType === "EVENT" ? item.eventTitle : item.courseTitle;
+    let dateStr = ticket.bookingType === "EVENT" ? item.startDate : item.createdAt;
 
     try {
       if (dateStr) {
         const d = new Date(dateStr);
         const locale = language === "mn" ? "mn-MN" : "en-US";
-        dateStr =
-          d.toLocaleDateString(locale, {
-            weekday: "short",
-            day: "numeric",
-            month: "short",
-          }) +
-          " " +
-          d.toLocaleTimeString(locale, {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          });
+        dateStr = d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' }) +
+          " " + d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false });
       }
     } catch (e) {
       dateStr = "N/A";
@@ -140,22 +137,13 @@ function page() {
   const openReviewModal = (ticket) => {
     const item = ticket.eventId || ticket.courseId;
     const entityModel = ticket.bookingType === "EVENT" ? "Event" : "Course";
-    const entityId =
-      ticket.bookingType === "EVENT"
-        ? ticket.eventId?._id
-        : ticket.courseId?._id;
-    const title =
-      ticket.bookingType === "EVENT" ? item?.eventTitle : item?.courseTitle;
+    const entityId = ticket.bookingType === "EVENT" ? ticket.eventId?._id : ticket.courseId?._id;
+    const title = ticket.bookingType === "EVENT" ? item?.eventTitle : item?.courseTitle;
     const existing = submittedReviews[entityId];
     setReviewRating(existing?.rating || 0);
     setReviewText(existing?.review || "");
     setReviewError("");
-    setReviewModal({
-      entityId,
-      entityModel,
-      title,
-      reviewId: existing?.reviewId || null,
-    });
+    setReviewModal({ entityId, entityModel, title, reviewId: existing?.reviewId || null });
   };
 
   const handleSubmitReview = async () => {
@@ -170,33 +158,17 @@ function page() {
     try {
       let res;
       if (reviewModal.reviewId) {
-        res = await reviewApi.updateReview(reviewModal.reviewId, {
-          review: trimmed,
-          rating: reviewRating,
-        });
+        res = await reviewApi.updateReview(reviewModal.reviewId, { review: trimmed, rating: reviewRating });
       } else {
-        res = await reviewApi.addReview({
-          entityId: reviewModal.entityId,
-          entityModel: reviewModal.entityModel,
-          review: trimmed,
-          rating: reviewRating,
-        });
+        res = await reviewApi.addReview({ entityId: reviewModal.entityId, entityModel: reviewModal.entityModel, review: trimmed, rating: reviewRating });
       }
       if (res?.status === true && (res?.data?._id || res?.data?.review)) {
         const saved = res.data;
         setSubmittedReviews((prev) => ({
           ...prev,
-          [reviewModal.entityId]: {
-            reviewId: saved._id || reviewModal.reviewId,
-            rating: reviewRating,
-            review: trimmed,
-          },
+          [reviewModal.entityId]: { reviewId: saved._id || reviewModal.reviewId, rating: reviewRating, review: trimmed },
         }));
-        toast.success(
-          reviewModal.reviewId
-            ? t("reviewUpdatedSuccessfully")
-            : t("reviewAddedSuccessfully"),
-        );
+        toast.success(reviewModal.reviewId ? t("reviewUpdatedSuccessfully") : t("reviewAddedSuccessfully"));
         setReviewModal(null);
       } else {
         setReviewError(t("reviewSubmitFailed") || "Failed to submit review.");
@@ -213,29 +185,20 @@ function page() {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case "PAID":
-        return <span className="status-badge complete">{t("confirmed")}</span>;
-      case "PENDING":
-        return <span className="status-badge pending">{t("pending")}</span>;
-      case "CANCELLED":
-        return <span className="status-badge cancel">{t("canceled")}</span>;
-      case "FAILED":
-        return <span className="status-badge cancel">{t("failed")}</span>;
-      case "REFUND_INITIATED":
-        return <span className="status-badge cancel">{t("refunded")}</span>;
-      default:
-        return <span className="status-badge pending">{status}</span>;
+      case "PAID": return <span className="status-badge complete">{t("confirmed")}</span>;
+      case "PENDING": return <span className="status-badge pending">{t("pending")}</span>;
+      case "CANCELLED": return <span className="status-badge cancel">{t("canceled")}</span>;
+      case "FAILED": return <span className="status-badge cancel">{t("failed")}</span>;
+      case "REFUND_INITIATED": return <span className="status-badge cancel">{t("refunded")}</span>;
+      default: return <span className="status-badge pending">{status}</span>;
     }
   };
 
   const renderTicketList = () => {
-    if (loading)
-      return <div className="text-center p-5">{t("loadingTickets")}</div>;
+    if (loading) return <div className="text-center p-5">{t("loadingTickets")}</div>;
 
     if (tickets.length === 0) {
-      return (
-        <div className="text-center p-5 text-muted">{t("noTicketsFound")}</div>
-      );
+      return <div className="text-center p-5 text-muted">{t("noTicketsFound")}</div>;
     }
 
     const locale = language === "mn" ? "mn-MN" : "en-US";
@@ -248,12 +211,10 @@ function page() {
             <div className="ticket-cards" key={ticket._id}>
               <div className="ticket-inner">
                 <div className="ticket-lft">
-                  <Form.Check />
+                  {/* <Form.Check /> */}
                   <div>
                     <h5 title={title}>{title}</h5>
-                    <p className="ref" title={`# ${ticket.bookingId}`}>
-                      # {ticket.bookingId}
-                    </p>
+                    <p className="ref" title={`# ${ticket.bookingId}`}># {ticket.bookingId}</p>
                   </div>
                 </div>
                 <div className="ticket-rgt">
@@ -262,76 +223,49 @@ function page() {
               </div>
               <div className="ticket-bottom">
                 <p>
-                  {t("bookingDate")}{" "}
-                  <span>
-                    {new Date(ticket.createdAt).toLocaleDateString(locale)}
-                  </span>{" "}
+                  {t("bookingDate")} <span>{new Date(ticket.createdAt).toLocaleDateString(locale)}</span>{" "}
                   <span>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="4"
                       height="4"
                       viewBox="0 0 4 4"
-                      fill="none">
+                      fill="none"
+                    >
                       <circle cx="2" cy="2" r="2" fill="#999999" />
                     </svg>
                   </span>{" "}
-                  <span>
-                    {new Date(ticket.createdAt).toLocaleTimeString(locale, {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    })}
-                  </span>
+                  <span>{new Date(ticket.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
                 </p>
                 <p>
                   {t("totalPaid")} <span>₮{ticket.totalAmount}</span>
                 </p>
                 {ticket.ticketName && (
                   <p>
-                    {t("ticketType") || "Type"}:{" "}
-                    <span>{ticket.ticketName}</span>
+                    {t("ticketType") || "Type"}: <span>{ticket.ticketName}</span>
                   </p>
                 )}
                 <p>
                   <span>
                     <img src="/img/ticket-white.svg" />
                   </span>{" "}
-                  <span>
-                    {ticket.qty} {t("ticketsSuffix")}
-                  </span>
+                  <span>{ticket.qty} {t("ticketsSuffix")}</span>
                 </p>
                 <Link href={`/TicketDetails?id=${ticket._id}`}>
-                  {t("ticketDetails")} <img src="/img/Arrow-Right.svg" />
+                  {t("TicketDetails")} <img src="/img/Arrow-Right.svg" />
                 </Link>
-                {isPastTicket(ticket) &&
-                  (() => {
-                    const entityId =
-                      ticket.bookingType === "EVENT"
-                        ? ticket.eventId?._id
-                        : ticket.courseId?._id;
-                    const isEditing = !!submittedReviews[entityId];
-                    return (
-                      <button
-                        onClick={() => openReviewModal(ticket)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "var(--primary-teal)",
-                          fontSize: "16px",
-                          fontWeight: "500",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          padding: 0,
-                        }}>
-                        {isEditing
-                          ? t("editReview") || "Edit Review"
-                          : t("addReview") || "Add Review"}
-                      </button>
-                    );
-                  })()}
+                {isPastTicket(ticket) && (() => {
+                  const entityId = ticket.bookingType === "EVENT" ? ticket.eventId?._id : ticket.courseId?._id;
+                  const isEditing = !!submittedReviews[entityId];
+                  return (
+                    <button
+                      onClick={() => openReviewModal(ticket)}
+                      style={{ background: "none", border: "none", color: "var(--primary-teal)", fontSize: "16px", fontWeight: "500", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", padding: 0 }}
+                    >
+                      {isEditing ? (t("editReview") || "Edit Review") : (t("addReview") || "Add Review")}
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           );
@@ -341,19 +275,16 @@ function page() {
             <Button
               variant="outline-secondary"
               onClick={handlePrevPage}
-              disabled={currentPage === 1}>
+              disabled={currentPage === 1}
+            >
               {t("previous")}
             </Button>
-            <span>
-              {t("pageOf")
-                ?.replace("{current}", currentPage)
-                .replace("{total}", pagination.totalPages) ||
-                `Page ${currentPage} of ${pagination.totalPages}`}
-            </span>
+            <span>{t("pageOf")?.replace("{current}", currentPage).replace("{total}", pagination.totalPages) || `Page ${currentPage} of ${pagination.totalPages}`}</span>
             <Button
               variant="outline-secondary"
               onClick={handleNextPage}
-              disabled={currentPage === pagination.totalPages}>
+              disabled={currentPage === pagination.totalPages}
+            >
               {t("next")}
             </Button>
           </div>
@@ -365,14 +296,35 @@ function page() {
   return (
     <div>
       <div className="cards my-tickets">
-        <div className="card-title">
+        <div className="card-title d-flex justify-content-between align-items-center">
           <h3>{t("myTickets")}</h3>
+          <div className="d-flex align-items-center mb-2">
+            <Form.Select
+              value={bookingType}
+              onChange={handleTypeChange}
+              size="sm"
+              className="bg-dark text-white border-0 shadow-none"
+              style={{
+                width: '160px',
+                backgroundColor: '#242424',
+                border: '1px solid rgba(35, 173, 164, 0.3)',
+                borderRadius: '8px',
+                fontSize: '14px',
+                padding: '6px 12px'
+              }}
+            >
+              <option value="all">{t("allTypes") || "All Types"}</option>
+              <option value="EVENT">{t("events") || "Events"}</option>
+              <option value="COURSE">{t("courses") || "Courses"}</option>
+            </Form.Select>
+          </div>
         </div>
         <div className="ticket-tabs">
           <Tabs
             activeKey={activeTab}
             onSelect={handleTabSelect}
-            className="mb-3">
+            className="mb-3"
+          >
             <Tab eventKey="all" title={t("all")}>
               {activeTab === "all" && renderTicketList()}
             </Tab>
@@ -389,37 +341,18 @@ function page() {
         </div>
       </div>
 
-      <Modal
-        show={!!reviewModal}
-        onHide={() => setReviewModal(null)}
-        centered
-        contentClassName="review-modal-content">
-        <Modal.Body>
+      <Modal show={!!reviewModal} onHide={() => setReviewModal(null)} centered contentClassName="review-modal-content">
+        <Modal.Body >
           <h4 style={{ color: "#fff", fontWeight: "700", marginBottom: "8px" }}>
-            {reviewModal?.reviewId
-              ? t("editReview") || "Edit Review"
-              : t("howWasYourEvent") || "How was your Event"}
+            {reviewModal?.reviewId ? (t("editReview") || "Edit Review") : (t("howWasYourEvent") || "How was your Event")}
           </h4>
           <p style={{ color: "#aaa", marginBottom: "24px", fontSize: "14px" }}>
-            {t("shareYourExperience") ||
-              "Share your experience and let us know how your event went."}
+            {t("shareYourExperience") || "Share your experience and let us know how your event went."}
           </p>
           <div className="d-flex justify-content-center gap-3 mb-4">
             {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                onClick={() => setReviewRating(star)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  cursor: "pointer",
-                }}>
-                <svg
-                  width="42"
-                  height="42"
-                  viewBox="0 0 24 24"
-                  fill={star <= reviewRating ? "var(--primary-teal)" : "#555"}>
+              <button key={star} onClick={() => setReviewRating(star)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+                <svg width="42" height="42" viewBox="0 0 24 24" fill={star <= reviewRating ? "var(--primary-teal)" : "#555"}>
                   <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                 </svg>
               </button>
@@ -427,56 +360,18 @@ function page() {
           </div>
           <textarea
             value={reviewText}
-            onChange={(e) => {
-              setReviewText(e.target.value);
-              setReviewError("");
-            }}
+            onChange={(e) => { setReviewText(e.target.value); setReviewError(""); }}
             placeholder={t("comment") || "Comment"}
             rows={4}
-            style={{
-              width: "100%",
-              background: "#1a1a1a",
-              border: `1px solid ${reviewError ? "#e74c3c" : "#444"}`,
-              borderRadius: "12px",
-              color: "#fff",
-              padding: "12px 16px",
-              fontSize: "14px",
-              resize: "none",
-              outline: "none",
-              marginBottom: reviewError ? "8px" : "20px",
-            }}
+            style={{ width: "100%", background: "#1a1a1a", border: `1px solid ${reviewError ? "#e74c3c" : "#444"}`, borderRadius: "12px", color: "#fff", padding: "12px 16px", fontSize: "14px", resize: "none", outline: "none", marginBottom: reviewError ? "8px" : "20px" }}
           />
-          {reviewError && (
-            <p
-              style={{
-                color: "#e74c3c",
-                fontSize: "13px",
-                marginBottom: "12px",
-                textAlign: "left",
-              }}>
-              {reviewError}
-            </p>
-          )}
+          {reviewError && <p style={{ color: "#e74c3c", fontSize: "13px", marginBottom: "12px", textAlign: "left" }}>{reviewError}</p>}
           <button
             onClick={handleSubmitReview}
             disabled={!reviewRating || reviewSubmitting}
-            style={{
-              width: "100%",
-              background: "var(--primary-teal)",
-              border: "none",
-              borderRadius: "50px",
-              color: "#fff",
-              fontWeight: "700",
-              fontSize: "16px",
-              padding: "14px",
-              cursor: reviewRating ? "pointer" : "not-allowed",
-              opacity: reviewRating ? 1 : 0.6,
-            }}>
-            {reviewSubmitting
-              ? t("submitting") || "Submitting..."
-              : reviewModal?.reviewId
-                ? t("updateReview") || "Update Review"
-                : t("addReview") || "Add Review"}
+            style={{ width: "100%", background: "var(--primary-teal)", border: "none", borderRadius: "50px", color: "#fff", fontWeight: "700", fontSize: "16px", padding: "14px", cursor: reviewRating ? "pointer" : "not-allowed", opacity: reviewRating ? 1 : 0.6 }}
+          >
+            {reviewSubmitting ? (t("submitting") || "Submitting...") : reviewModal?.reviewId ? (t("updateReview") || "Update Review") : (t("addReview") || "Add Review")}
           </button>
         </Modal.Body>
       </Modal>

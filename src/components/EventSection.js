@@ -145,12 +145,12 @@ const EventSection = ({
                       src={
                         item.posterImage && item.posterImage[0]
                           ? item.posterImage[0]
-                          : "/img/no-image.png"
+                          : "/img/sidebar-logo.svg"
                       }
                       alt={item.eventTitle}
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = "/img/no-image.png";
+                        e.target.src = "/img/sidebar-logo.svg";
                       }}
                     />
                   </div>

@@ -3,8 +3,37 @@
 import React from "react";
 import { Pagination } from "react-bootstrap";
 
+const getPageRange = (currentPage, totalPages) => {
+  const delta = 1;
+  const range = [];
+  const rangeWithDots = [];
+  let l;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+      range.push(i);
+    }
+  }
+
+  for (let i of range) {
+    if (l) {
+      if (i - l === 2) {
+        rangeWithDots.push(l + 1);
+      } else if (i - l > 2) {
+        rangeWithDots.push("...");
+      }
+    }
+    rangeWithDots.push(i);
+    l = i;
+  }
+
+  return rangeWithDots;
+};
+
 const PaginationComponent = ({ currentPage, totalPages, onPageChange }) => {
   if (totalPages <= 1) return null;
+
+  const pages = getPageRange(currentPage, totalPages);
 
   return (
     <div className="d-flex justify-content-center mt-5 mb-5">
@@ -14,15 +43,21 @@ const PaginationComponent = ({ currentPage, totalPages, onPageChange }) => {
           disabled={currentPage === 1}
         />
 
-        {[...Array(totalPages)].map((_, idx) => (
-          <Pagination.Item
-            key={idx + 1}
-            active={idx + 1 === currentPage}
-            onClick={() => onPageChange(idx + 1)}
-          >
-            {idx + 1}
-          </Pagination.Item>
-        ))}
+        {pages.map((page, idx) => {
+          if (page === "...") {
+            return <Pagination.Ellipsis key={`ellipsis-${idx}`} disabled />;
+          }
+
+          return (
+            <Pagination.Item
+              key={page}
+              active={page === currentPage}
+              onClick={() => onPageChange(page)}
+            >
+              {page}
+            </Pagination.Item>
+          );
+        })}
 
         <Pagination.Next
           onClick={() => onPageChange(currentPage + 1)}

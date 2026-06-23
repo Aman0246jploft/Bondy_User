@@ -221,12 +221,14 @@ function EventDetailsContent() {
     );
   }
 
-  // Estimate total revenue based on tickets soldQty
+  // Estimate total revenue based on tickets soldQty (use actual totalRevenue from backend if available)
   const estimatedRevenue =
-    event.tickets?.reduce(
-      (sum, ticket) => sum + (ticket.soldQty || 0) * (ticket.price || 0),
-      0,
-    ) || 0;
+    event.totalRevenue !== undefined
+      ? event.totalRevenue
+      : event.tickets?.reduce(
+          (sum, ticket) => sum + (ticket.soldQty || 0) * (ticket.price || 0),
+          0,
+        ) || 0;
 
   const status = event.status?.toLowerCase();
   const isPastOrEnded =
@@ -1310,7 +1312,7 @@ function EventDetailsContent() {
                     {t("refundPolicy") || "Refund Policy"}
                   </h6>
                   <p className="text-white font-weight-medium mb-0">
-                    {event.refundPolicy}
+                    {event.refundPolicy === "No Refund" ? t("noRefund") : event.refundPolicy === "1 Day Before" ? t("oneDayBefore") : event.refundPolicy === "7 Days Before" ? t("sevenDaysBefore") : event.refundPolicy}
                   </p>
                 </Col>
               )}
