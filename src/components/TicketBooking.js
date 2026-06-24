@@ -57,6 +57,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
     }, [item, type, scheduleId, t]);
 
     const formatPrice = (amount) => {
+        if (amount === 0) return t("free") || "Free";
         if (amount == null || amount === undefined) return t("priceNotAvailable") || "N/A";
         try {
             const locale = language === "mn" ? "mn-MN" : "en-US";
@@ -74,10 +75,15 @@ export default function TicketBooking({ item, type, scheduleId }) {
     useEffect(() => {
         if (item && type === "EVENT" && item.original?.tickets) {
             const initial = {};
-            item.original.tickets.forEach(ticket => {
-                initial[ticket._id] = 0;
+            const isFreeEvent = item.price === 0;
+            item.original.tickets.forEach((ticket, idx) => {
+                // If it is a free event, auto-select quantity 1 for the first ticket, else 0
+                initial[ticket._id] = (isFreeEvent && idx === 0) ? 1 : 0;
             });
             setSelectedTickets(initial);
+            if (isFreeEvent) {
+                setQty(1);
+            }
         }
     }, [item, type]);
 
@@ -287,6 +293,108 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 promoApplied: false,
                 promoMessage: msg,
             }));
+        }
+    };
+
+    // Direct booking/enrollment for free events or courses
+    const handleFreeEnrollment = async () => {
+        if (!item) return;
+        setLoading(true);
+        try {
+            let initResponse;
+            if (type === "EVENT") {
+                const activeTickets = Object.entries(selectedTickets)
+                    .filter(([_, q]) => q > 0)
+                    .map(([ticketId, q]) => ({ ticketId, qty: q }));
+                if (activeTickets.length === 0) {
+                    toast.error(t("pleaseSelectTickets") || "Please select at least one ticket");
+                    setLoading(false);
+                    return;
+                }
+
+                const payload = {
+                    tickets: activeTickets,
+                    discountCode: appliedPromoCode,
+                    bookingType: "EVENT",
+                    eventId: item._id,
+                };
+                initResponse = await bookingApi.initiateBooking(payload);
+            } else if (type === "COURSE") {
+                if (item?.enrollmentType === "Ongoing") {
+                    const slotEntries = Object.values(selectedSlots);
+                    if (selectedPassType === "single" && slotEntries.length === 0) {
+                        toast.error(t("pleaseSelectBatchFirst") || "Please select at least one schedule");
+                        setLoading(false);
+                        return;
+                    }
+                    const ongoingSlots = slotEntries;
+                    const payload = {
+                        qty: qty,
+                        discountCode: appliedPromoCode,
+                        bookingType: type,
+                        courseId: item._id,
+                        ongoingSlots,
+                        ...(selectedPassType !== "single" && { passType: selectedPassType }),
+                    };
+                    initResponse = await bookingApi.initiateBooking(payload);
+                } else {
+                    if (!selectedBatchId) {
+                        toast.error(t("pleaseSelectBatchFirst") || "Please select a batch/schedule first");
+                        setLoading(false);
+                        return;
+                    }
+                    const payload = {
+                        qty: qty,
+                        discountCode: appliedPromoCode,
+                        bookingType: type,
+                        courseId: item._id,
+                        batchId: selectedBatchId,
+                    };
+                    initResponse = await bookingApi.initiateBooking(payload);
+                }
+            }
+
+            if (initResponse && initResponse.status) {
+                const txId = initResponse.data.transactionId;
+                setTransactionId(txId);
+
+                // If the transaction is already PAID, show success modal directly
+                if (initResponse.data.transaction?.status === "PAID") {
+                    setModalShow(true);
+                    toast.success(t("bookingConfirmed") || "Booking confirmed successfully!");
+                } else {
+                    // Call confirmPayment automatically for free booking
+                    if (Array.isArray(txId)) {
+                        for (const subTxId of txId) {
+                            const confirmResponse = await bookingApi.confirmPayment({
+                                transactionId: subTxId,
+                            });
+                            if (!confirmResponse.status) {
+                                throw new Error(confirmResponse.message || t("paymentFailed"));
+                            }
+                        }
+                        setModalShow(true);
+                        toast.success(t("bookingConfirmed") || "Booking confirmed successfully!");
+                    } else {
+                        const confirmResponse = await bookingApi.confirmPayment({
+                            transactionId: txId,
+                        });
+                        if (confirmResponse.status) {
+                            setModalShow(true);
+                            toast.success(t("bookingConfirmed") || "Booking confirmed successfully!");
+                        } else {
+                            toast.error(confirmResponse.message || t("paymentFailed"));
+                        }
+                    }
+                }
+            } else {
+                toast.error(initResponse?.message || t("bookingInitiationFailed"));
+            }
+        } catch (error) {
+            console.error("Free enrollment booking error:", error);
+            toast.error(error.message || t("failedToInitiateBooking"));
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -619,9 +727,11 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                             </div>
                                             <div className="d-flex justify-content-between align-items-center mt-3">
                                                 <div className="d-flex flex-column gap-1">
-                                                    <span className="text-muted" style={{ fontSize: "12px" }}>
-                                                        {t("available") || "Available"}: {availableQty}
-                                                    </span>
+                                                    {ticket.price !== 0 && (
+                                                        <span className="text-muted" style={{ fontSize: "12px" }}>
+                                                            {t("available") || "Available"}: {availableQty}
+                                                        </span>
+                                                    )}
                                                     {!salesStarted && (
                                                         <span className="text-info" style={{ fontSize: "12px", fontWeight: "500" }}>
                                                             🕒 {t("salesStartOn") || "Sales start on"}: {new Date(ticket.salesStart).toLocaleDateString()}
@@ -971,14 +1081,16 @@ export default function TicketBooking({ item, type, scheduleId }) {
                         <div className="tickets_btn">
                             <button
                                 className="common_btn  mt-4"
-                                onClick={() => setStep(2)}
-                                disabled={type === "EVENT"
+                                onClick={item.price === 0 ? handleFreeEnrollment : () => setStep(2)}
+                                disabled={loading || (type === "EVENT"
                                     ? qty === 0
                                     : item?.enrollmentType === "Ongoing"
                                         ? qty === 0 || (selectedPassType === "single" && Object.keys(selectedSlots).length === 0)
-                                        : qty === 0 || !selectedBatchId}
+                                        : qty === 0 || !selectedBatchId)}
                             >
-                                {type === "EVENT" ? (t("chooseTicket") || "Choose Ticket") : t("payNow")}
+                                {loading ? (t("loading") || "Loading...") : (type === "EVENT"
+                                    ? (item.price === 0 ? (t("enrollNow") || "Enroll Now") : (t("chooseTicket") || "Choose Ticket"))
+                                    : (item.price === 0 ? (t("enrollNow") || "Enroll Now") : t("payNow")))}
                             </button>
                         </div>
                     </div>

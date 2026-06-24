@@ -34,6 +34,7 @@ function BookingPageContent() {
   }, [bookingItem]);
 
   const formatPrice = (amount) => {
+    if (amount === 0) return t("free") || "Free";
     if (amount == null || amount === undefined) return t("priceNotAvailable") || "N/A";
     try {
       const locale = language === "mn" ? "mn-MN" : "en-US";
@@ -233,10 +234,14 @@ function BookingPageContent() {
               <div className="onwards_sec">
                 <h4 className="mb-0">
                   {bookingItem.price != null && bookingItem.price !== undefined ? (
-                    <>
-                      <span className="price-text">{formatPrice(bookingItem.price)}</span>{" "}
-                      <span>{t("onwards")}</span>
-                    </>
+                    bookingItem.price === 0 ? (
+                      <span className="price-text">{formatPrice(bookingItem.price)}</span>
+                    ) : (
+                      <>
+                        <span className="price-text">{formatPrice(bookingItem.price)}</span>{" "}
+                        <span>{t("onwards")}</span>
+                      </>
+                    )
                   ) : (
                     <span className="price-text">{t("priceNotAvailable") || "Price Not Available"}</span>
                   )}

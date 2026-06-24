@@ -6527,3 +6527,106 @@ ul.pagination {
   text-transform: capitalize;
   font-weight: 500;
 }
+
+/* ===== Ticket Cards ===== */
+.tickets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ticket-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 18px 20px;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.ticket-card:hover {
+  border-color: #23ada4;
+  background: rgba(35, 173, 164, 0.06);
+}
+
+.ticket-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.ticket-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.ticket-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #23ada4;
+  white-space: nowrap;
+}
+
+.ticket-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: pre-line;
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.ticket-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ticket-avail {
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(35, 173, 164, 0.15);
+  color: #23ada4;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.ticket-sale-end {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ===== Event Info Grid ===== */
+.event-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.event-info-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.event-info-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.event-info-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+}

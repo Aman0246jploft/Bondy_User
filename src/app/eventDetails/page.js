@@ -31,6 +31,8 @@ function EventDetailsContent() {
   const [reviews, setReviews] = useState([]);
   const [comments, setComments] = useState([]);
   const [attendees, setAttendees] = useState(null);
+  const [similarEvents, setSimilarEvents] = useState([]);
+  const [refundPolicy, setRefundPolicy] = useState("");
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const { t, language } = useLanguage();
@@ -47,6 +49,8 @@ function EventDetailsContent() {
           setReviews(response?.data?.reviews || []);
           setComments(response?.data?.comments || []);
           setAttendees(response?.data?.attendees);
+          setSimilarEvents(response?.data?.similarEvents || []);
+          setRefundPolicy(response?.data?.refundPolicy || response?.data?.event?.refundPolicy || "");
           setIsWishlisted(response?.data?.event?.isWishlisted || false);
         }
       } catch (error) {
@@ -142,6 +146,19 @@ function EventDetailsContent() {
     return `${dateStr} at ${formatTime(sTime, true, language)} to ${formatTime(eTime, true, language)}`;
   };
 
+  // Get minimum ticket price from tickets array
+  const getMinTicketPrice = (tickets) => {
+    if (!tickets || tickets.length === 0) return null;
+    const prices = tickets.map((tk) => tk.price).filter((p) => typeof p === "number");
+    if (prices.length === 0) return null;
+    return Math.min(...prices);
+  };
+
+  const minPrice = getMinTicketPrice(event?.tickets);
+
+  // Check if "View All" attendees button should be shown
+  const canShowViewAll = event?.showAttendees && attendees?.total > 0;
+
   return (
     <>
       <Header />
@@ -170,7 +187,9 @@ function EventDetailsContent() {
               </div>
               <div className="onwards_sec">
                 <h4 className="mb-0">
-                  <span className="price-text">₮{event?.ticketPrice} </span>
+                  <span className="price-text">
+                    {minPrice != null ? `₮${minPrice}` : t("freeLabel")}
+                  </span>
                 </h4>
                 <AuthButton
                   requiresAuth
@@ -281,18 +300,14 @@ function EventDetailsContent() {
                   </div>
                   <div className="event_time_mange">
                     <h5>{t("location")}</h5>
-                    <span>{event?.venueAddress?.address}</span>
-                  </div>
-                  {/* <div className="event_time_mange">
-                    <h5>Date & Time</h5>
                     <span>
-                      {formatEventDateTime(
-                        event?.startDate,
-                        event?.startTime,
-                        event?.endTime
-                      )}
+                      {event?.venueName && <strong>{event.venueName}</strong>}
+                      {event?.venueName && event?.venueAddress?.address && <br />}
+                      {event?.venueAddress?.address}
+                      {event?.venueAddress?.city && `, ${event.venueAddress.city}`}
+                      {event?.venueAddress?.country && `, ${event.venueAddress.country}`}
                     </span>
-                  </div> */}
+                  </div>
                 </div>
                 <div className="map-container">
                   <Map
@@ -302,7 +317,7 @@ function EventDetailsContent() {
                     address={event?.venueAddress?.address}
                     venueName={event?.venueName}
                     imageUrl={event?.posterImage?.[0]}
-                    ticketPrice={event?.ticketPrice}
+                    ticketPrice={minPrice}
                     startDate={event?.startDate}
                     startTime={event?.startTime}
                     endTime={event?.endTime}
@@ -318,6 +333,84 @@ function EventDetailsContent() {
                 <div className="content-section">
                   <h3 className="section-heading">{t("whatToExpect")}</h3>
                   <ExpandableText text={event?.longdesc} limit={300} />
+                </div>
+
+                {/* Tickets Section */}
+                {event?.tickets && event.tickets.length > 0 && (
+                  <div className="content-section">
+                    <h3 className="section-heading">{t("tickets")}</h3>
+                    <div className="tickets-list">
+                      {event.tickets.map((ticket) => (
+                        <div key={ticket._id} className="ticket-card">
+                          <div className="ticket-card-header">
+                            <h5 className="ticket-name">{ticket.ticketName}</h5>
+                            <span className="ticket-price">₮{ticket.price}</span>
+                          </div>
+                          <p className="ticket-desc">{ticket.ticketShortDesc}</p>
+                          <div className="ticket-meta">
+                            <span className="ticket-avail">
+                              {ticket.availableQty != null
+                                ? `${ticket.availableQty} / ${ticket.qty} ${t("availability")}`
+                                : `${ticket.qty} ${t("availability")}`}
+                            </span>
+                            {ticket.salesEnd && (
+                              <span className="ticket-sale-end">
+                                {t("salesEndOn")}{" "}
+                                {new Date(ticket.salesEnd).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Event Details Info */}
+                <div className="content-section">
+                  <h3 className="section-heading">{t("eventDetails")}</h3>
+                  <div className="event-info-grid">
+                    {event?.ageRestriction && (
+                      <div className="event-info-item">
+                        <span className="event-info-label">{t("ageRestriction")}</span>
+                        <span className="event-info-value">{event.ageRestriction}</span>
+                      </div>
+                    )}
+                    {event?.dressCode && (
+                      <div className="event-info-item">
+                        <span className="event-info-label">{t("dressCode")}</span>
+                        <span className="event-info-value">{event.dressCode}</span>
+                      </div>
+                    )}
+                    {/* {event?.visibility && (
+                      <div className="event-info-item">
+                        <span className="event-info-label">{t("visibility")}</span>
+                        <span className="event-info-value">{event.visibility}</span>
+                      </div>
+                    )} */}
+                    {(refundPolicy || event?.refundPolicy) && (
+                      <div className="event-info-item">
+                        <span className="event-info-label">{t("refundPolicy")}</span>
+                        <span className="event-info-value">{refundPolicy || event?.refundPolicy}</span>
+                      </div>
+                    )}
+                    {event?.addOns && (
+                      <div className="event-info-item">
+                        <span className="event-info-label">{t("addons")}</span>
+                        <span className="event-info-value">{event.addOns}</span>
+                      </div>
+                    )}
+                    {event?.notes && (
+                      <div className="event-info-item">
+                        <span className="event-info-label">{t("notes")}</span>
+                        <span className="event-info-value">{event.notes}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Event Gallery Section */}
@@ -361,7 +454,9 @@ function EventDetailsContent() {
                   </div>
                   <div className="onwards_sec mt-4">
                     <h4 className="mb-0">
-                      <span className="price-text">₮{event?.ticketPrice} </span>
+                      <span className="price-text">
+                        {minPrice != null ? `₮${minPrice}` : t("freeLabel")}
+                      </span>
                     </h4>
                     <AuthButton
                       requiresAuth
@@ -428,14 +523,16 @@ function EventDetailsContent() {
                         )}
                       </div>
                     </div>
-                    <AuthButton
-                      requiresAuth
-                      onClick={() => router.push(`/eventAttendees?id=${event?._id}`)}
-                      className="text-teal text-decoration-none small"
-                      style={{ color: "#26a69a", background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                    >
-                      {t("viewAll")}
-                    </AuthButton>
+                    {canShowViewAll && (
+                      <AuthButton
+                        requiresAuth
+                        onClick={() => router.push(`/eventAttendees?id=${event?._id}`)}
+                        className="text-teal text-decoration-none small"
+                        style={{ color: "#26a69a", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                      >
+                        {t("viewAll")}
+                      </AuthButton>
+                    )}
                   </div>
 
                   <hr className="border-secondary opacity-25 my-4" />
@@ -510,12 +607,80 @@ function EventDetailsContent() {
       <div className="details_fq">
         <FAQ />
       </div>
-      <EventSection
-        type="recommended"
-        limit={4}
-        showSeeAll={false}
-        customTitle={t("eventsYouMayLike")}
-      />
+
+      {/* Similar Events Section */}
+      {similarEvents && similarEvents.length > 0 ? (
+        <section className="recommended-section">
+          <div className="container">
+            <div className="main_title align_title position-relative z-2 border-bottm">
+              <h2>{t("eventsYouMayLike")}</h2>
+            </div>
+            <div className="row gy-5">
+              {similarEvents.map((item) => (
+                <div key={item._id} className="col-lg-3 col-md-6 col-sm-12">
+                  <Link href={`/eventDetails?id=${item._id}`}>
+                    <div className="event_main_cart">
+                      <div className="recommended-card">
+                        {(item.isFeatured || item.fetcherEvent) && (
+                          <span className="event-badge">{t("featured")}</span>
+                        )}
+                        <img
+                          src={
+                            item.posterImage && item.posterImage[0]
+                              ? item.posterImage[0]
+                              : "/img/sidebar-logo.svg"
+                          }
+                          alt={item.eventTitle}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/img/sidebar-logo.svg";
+                          }}
+                        />
+                      </div>
+                      <div className="card-overlay">
+                        <div className="overlay-content">
+                          <span className="artist-name">{item.eventTitle}</span>
+                          <div className="event-meta">
+                            <span>
+                              <img src="/img/date_icon.svg" alt="date" />{" "}
+                              {item.startDate
+                                ? new Date(item.startDate).toLocaleDateString()
+                                : t("dateTBD")}
+                            </span>
+                            <span>
+                              <img src="/img/loc_icon.svg" alt="location" />{" "}
+                              {item.venueAddress
+                                ? item.venueAddress.city || t("locationLabel")
+                                : t("onlineLabel")}
+                            </span>
+                          </div>
+                          <div className="price-tag">
+                            {(() => {
+                              if (!item.tickets || item.tickets.length === 0) return t("freeLabel");
+                              const prices = item.tickets.map((tk) => tk.price).filter((p) => typeof p === "number");
+                              if (prices.length === 0) return t("freeLabel");
+                              const minP = Math.min(...prices);
+                              return `₮${minP}`;
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : (
+        <EventSection
+          type="recommended"
+          limit={4}
+          showSeeAll={false}
+          customTitle={t("eventsYouMayLike")}
+        />
+      )}
+
       <Footer />
     </>
   );
