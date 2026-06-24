@@ -209,7 +209,7 @@ function page() {
                         name="startDate"
                         value={eventData.startDate}
                         onChange={handleInputChange}
-                        min={nextDay}
+                        min={eventData._id ? undefined : nextDay}
                       />
                       <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
                         <img src="/img/white-calendar.svg" alt="calendar" />
@@ -248,7 +248,7 @@ function page() {
                         name="endDate"
                         value={eventData.endDate}
                         onChange={handleInputChange}
-                        min={eventData.startDate || nextDay}
+                        min={eventData._id ? undefined : (eventData.startDate || nextDay)}
                       />
                       <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
                         <img src="/img/white-calendar.svg" alt="calendar" />

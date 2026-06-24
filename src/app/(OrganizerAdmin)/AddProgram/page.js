@@ -911,7 +911,7 @@ function Page() {
                           value={formData.startDate}
                           onChange={handleChange}
                           name="startDate"
-                          min={nextDay}
+                          min={courseId ? undefined : nextDay}
                         />
                         <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
                           <img src="/img/white-calendar.svg" alt="calendar" />
@@ -948,7 +948,7 @@ function Page() {
                               value={formData.endDate}
                               onChange={handleChange}
                               name="endDate"
-                              min={formData.startDate || nextDay}
+                              min={courseId ? undefined : (formData.startDate || nextDay)}
                             />
                             <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
                               <img src="/img/white-calendar.svg" alt="calendar" />

@@ -457,7 +457,7 @@ function page() {
                                     e.target.value,
                                   )
                                 }
-                                min={today}
+                                min={eventData._id ? undefined : today}
                                 max={formatDateVal(eventData.startDate)}
                               />
                               <span
@@ -488,7 +488,7 @@ function page() {
                                     e.target.value,
                                   )
                                 }
-                                min={formatDateVal(ticket.salesStart) || today}
+                                min={eventData._id ? undefined : (formatDateVal(ticket.salesStart) || today)}
                                 max={formatDateVal(eventData.startDate)}
                               />
                               <span

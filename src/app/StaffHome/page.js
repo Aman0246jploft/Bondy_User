@@ -155,16 +155,27 @@ function StaffHome() {
     if (!activeEntity) return;
     try {
       setLoadingAttendees(true);
-      // Backend expects /attendee/event/:eventId for attendees.
-      // For courses, we can query by courseId or use standard category/event attendees
       const entityId = activeEntity._id;
-      const res = await staffApi.getEventAttendees(entityId, { limit: 1000 });
+      let res;
+      if (entityType === "event") {
+        res = await staffApi.getEventBookingAttendees(entityId, { limit: 1000 });
+      } else {
+        res = await staffApi.getCourseBookingAttendees(entityId, { limit: 1000 });
+      }
       if (res?.status) {
         const list = res.data?.attendees || [];
         setAttendees(list);
+
+        let total = 0;
+        let checkedIn = 0;
+        list.forEach(a => {
+          total += a.qty || a.tickets?.totalQty || 0;
+          checkedIn += a.checkedInQty || a.tickets?.checkedInQty || 0;
+        });
+
         setAttendeeStats({
-          total: res.data?.stats?.totalAttendees || list.length,
-          checkedIn: res.data?.stats?.checkedIn || list.filter(a => a.isCheckedIn).length,
+          total,
+          checkedIn,
         });
       }
     } catch (err) {
@@ -405,8 +416,8 @@ function StaffHome() {
   // Filtered attendees for manual check-in list
   const filteredAttendees = attendees.filter(a => {
     const q = attendeeSearch.toLowerCase();
-    const name = `${a.firstName || ""} ${a.lastName || ""}`.toLowerCase();
-    return name.includes(q) || a.ticketNumber?.toLowerCase().includes(q) || a.email?.toLowerCase().includes(q);
+    const name = `${a.user?.firstName || ""} ${a.user?.lastName || ""}`.toLowerCase();
+    return name.includes(q) || a.bookingId?.toLowerCase().includes(q) || a.user?.email?.toLowerCase().includes(q);
   });
 
   return (
@@ -702,6 +713,12 @@ function StaffHome() {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .attendee-item-row:hover {
+          background: #181818;
+          border-color: rgba(35, 173, 164, 0.5);
         }
         .attendee-item-info {
           display: flex;
@@ -1184,9 +1201,9 @@ function StaffHome() {
 
             <div className="attendees-stats-header">
               <span>List of Attendees</span>
-              <span>
+              {/* <span>
                 {attendeeStats.checkedIn} / {attendeeStats.total} checked-in
-              </span>
+              </span> */}
             </div>
 
             {loadingAttendees ? (
@@ -1200,25 +1217,39 @@ function StaffHome() {
             ) : (
               <div className="attendee-list-scroll">
                 {filteredAttendees.map((a) => (
-                  <div className="attendee-item-row" key={a._id}>
+                  <div
+                    className="attendee-item-row"
+                    key={a.transactionId || a._id}
+                    onClick={() => handleVerifyCode(a.bookingId)}
+                  >
                     <div className="attendee-item-info">
                       <div className="attendee-item-avatar">
-                        <svg width="20" height="20" fill="#7c7c7c" viewBox="0 0 16 16">
-                          <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
-                        </svg>
+                        {a.user?.profileImage ? (
+                          <img src={a.user.profileImage} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <svg width="20" height="20" fill="#7c7c7c" viewBox="0 0 16 16">
+                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
+                          </svg>
+                        )}
                       </div>
                       <div className="attendee-item-text">
-                        <h6>{`${a.firstName || ""} ${a.lastName || ""}`}</h6>
-                        <p>{`Ticket: ${a.ticketNumber}`}</p>
+                        <h6>{`${a.user?.firstName || ""} ${a.user?.lastName || ""}`}</h6>
+                        <p>{`Booking ID: ${a.bookingId || "N/A"}`}</p>
                       </div>
                     </div>
 
-                    {a.isCheckedIn ? (
-                      <button className="checkin-action-btn checked" disabled>
+                    {(a.isFullyCheckedIn || a.tickets?.isFullyCheckedIn) ? (
+                      <button className="checkin-action-btn checked" disabled onClick={(e) => e.stopPropagation()}>
                         &#10003;
                       </button>
                     ) : (
-                      <button className="checkin-action-btn" onClick={() => handleCheckInSubmit(a.ticketNumber)}>
+                      <button
+                        className="checkin-action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCheckInSubmit(a.bookingId);
+                        }}
+                      >
                         &#10142;
                       </button>
                     )}
@@ -1763,10 +1794,10 @@ function StaffHome() {
                               <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style={{ borderRadius: "10px", fontSize: "11px" }}>Checked In</span>
                             ) : (
                               <button
-                                 className="btn btn-sm"
-                                 disabled={checkingIn}
-                                 onClick={() => handlePerformCheckInForSlot(slotDate, slot.batchId)}
-                                 style={{ background: "#23ada4", color: "#fff", borderRadius: "10px", fontSize: "11px", border: "none", padding: "4px 10px" }}
+                                className="btn btn-sm"
+                                disabled={checkingIn}
+                                onClick={() => handlePerformCheckInForSlot(slotDate, slot.batchId)}
+                                style={{ background: "#23ada4", color: "#fff", borderRadius: "10px", fontSize: "11px", border: "none", padding: "4px 10px" }}
                               >
                                 Check In
                               </button>
