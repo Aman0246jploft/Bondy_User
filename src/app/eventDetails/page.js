@@ -336,7 +336,7 @@ function EventDetailsContent() {
                 </div>
 
                 {/* Tickets Section */}
-                {event?.tickets && event.tickets.length > 0 && (
+                {/* {event?.tickets && event.tickets.length > 0 && (
                   <div className="content-section">
                     <h3 className="section-heading">{t("tickets")}</h3>
                     <div className="tickets-list">
@@ -368,7 +368,7 @@ function EventDetailsContent() {
                       ))}
                     </div>
                   </div>
-                )}
+                )} */}
 
                 {/* Event Details Info */}
                 <div className="content-section">
