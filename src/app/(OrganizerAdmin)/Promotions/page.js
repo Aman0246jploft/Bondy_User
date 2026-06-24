@@ -25,10 +25,12 @@ export default function PromotionsPage() {
       ]);
 
       if (eventRes?.status) {
-        setEventPackages(eventRes?.data?.packages || []);
+        const data = eventRes.data;
+        setEventPackages(data?.packages || (Array.isArray(data) ? data : []));
       }
       if (courseRes?.status) {
-        setCoursePackages(courseRes?.data?.packages || []);
+        const data = courseRes.data;
+        setCoursePackages(data?.packages || (Array.isArray(data) ? data : []));
       }
     } catch (error) {
       console.error("Error fetching promotion packages:", error);

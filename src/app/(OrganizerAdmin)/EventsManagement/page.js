@@ -555,7 +555,7 @@ function page() {
                         }}>
                         <h5
                           className="text-truncate-1"
-                          style={{ color: "#fff", marginBottom: "4px" }}>
+                          style={{ color: "#fff", marginBottom: "4px", textTransform: "capitalize" }}>
                           {pkg.name}
                         </h5>
                         <h3 style={{ color: "#23ada4", margin: "8px 0" }}>
@@ -566,11 +566,12 @@ function page() {
                             color: "#999",
                             fontSize: "13px",
                             marginBottom: "12px",
+                            textTransform: "capitalize"
                           }}>
                           {pkg.durationInDays} {t("daysSuffix") || "days"}
                         </p>
                         {pkg.placements?.length > 0 && (
-                          <ul style={{ paddingLeft: "16px", margin: 0 }}>
+                          <ul style={{ paddingLeft: "16px", margin: 0, textTransform: "capitalize" }}>
                             {pkg.placements.map((p, i) => (
                               <li
                                 key={i}

@@ -19,6 +19,7 @@ export const translations = {
     freeEventDesc: "Free events",
     addAnotherTicketType: "Add Another Ticket Type",
     authRequiredTitle: "Account Required",
+    selectPlanBoost: "Select a plan to boost visibility on the Discover Feed and Homepage.",
     activePromotion: "Active Promotion",
     authRequiredDesc: "You need an account to access this. Login to continue.",
     authRequiredLogin: "Login",
@@ -1428,6 +1429,7 @@ export const translations = {
     ticketTitle: "Тасалбарын гарчиг",
     // Auth Required Modal
     authRequiredTitle: "Бүртгэл шаардлагатай",
+    selectPlanBoost: "Discover Feed болон Нүүр хуудсанд харагдах байдлыг нэмэгдүүлэхийн тулд багц сонгоно уу.",
     authRequiredDesc: "Энэ функцийг ашиглахын тулд нэвтэрч орно уу.",
     authRequiredLogin: "Нэвтрэх",
     authRequiredCreateAccount: "Бүртгэл үүсгэх",
