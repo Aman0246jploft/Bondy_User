@@ -28,6 +28,24 @@ function page() {
     ? eventData.tickets
     : [{ ticketName: "", ticketShortDesc: "", price: "", qty: "", salesStart: "", salesEnd: "" }];
 
+  const [isFreeEvent, setIsFreeEvent] = useState(() => {
+    if (eventData.tickets && Array.isArray(eventData.tickets)) {
+      if (eventData.tickets.length === 0) return true;
+      if (eventData.tickets.length === 1 && Number(eventData.tickets[0].price) === 0) return true;
+    }
+    return false;
+  });
+
+  const handleFreeEventToggle = (checked) => {
+    setIsFreeEvent(checked);
+    if (checked) {
+      updateTickets([]);
+      updateEventData({ refundPolicy: "" });
+    } else {
+      updateTickets([{ ticketName: "", ticketShortDesc: "", price: "", qty: "", salesStart: "", salesEnd: "" }]);
+    }
+  };
+
   const updateTickets = (updatedTickets) => {
     // Keep flat fields in sync with the first ticket for backward compatibility
     const firstTicket = updatedTickets[0] || {};
@@ -79,6 +97,7 @@ function page() {
 
   const validateTickets = (isDraftMode = false) => {
     if (isDraftMode) return true; // Drafts skip validation
+    if (isFreeEvent) return true; // Free events skip validation
 
     // Validation for non-drafts
     for (let i = 0; i < ticketsList.length; i++) {
@@ -114,6 +133,23 @@ function page() {
         toast.error(`${tPrefix}${t("ticketSalesEndDateMustBeAfterStart") || "Sales end date must be after start date"}`);
         return false;
       }
+
+      // Validate against event start date
+      if (eventData.startDate) {
+        const eventStartOnlyDate = formatDateVal(eventData.startDate);
+        const ticketStartOnlyDate = formatDateVal(tck.salesStart);
+        const ticketEndOnlyDate = formatDateVal(tck.salesEnd);
+
+        if (ticketStartOnlyDate > eventStartOnlyDate) {
+          toast.error(`${tPrefix}${t("salesStartDateMustBeBeforeEventStart") || "Ticket sales start date must be on or before the event start date"}`);
+          return false;
+        }
+
+        if (ticketEndOnlyDate > eventStartOnlyDate) {
+          toast.error(`${tPrefix}${t("salesEndDateMustBeBeforeEventStart") || "Ticket sales end date must be on or before the event start date"}`);
+          return false;
+        }
+      }
     }
 
     if (!eventData.refundPolicy || eventData.refundPolicy.trim() === "") {
@@ -127,13 +163,24 @@ function page() {
   const handleNext = (e) => {
     e.preventDefault();
     if (!validateTickets(false)) return;
+    if (isFreeEvent) {
+      updateEventData({
+        tickets: [],
+        refundPolicy: "",
+      });
+    }
     router.push("/Agerestraction");
   };
 
   const handleSaveDraft = async () => {
     try {
       const isPublishedEdit = eventData._id && eventData.isDraft === false;
-      const payload = { ...eventData, isDraft: !isPublishedEdit };
+      const payload = {
+        ...eventData,
+        tickets: isFreeEvent ? [] : ticketsList,
+        refundPolicy: isFreeEvent ? "" : (eventData.refundPolicy || ""),
+        isDraft: !isPublishedEdit
+      };
       // Clean the payload
       if (payload.eventCategory && typeof payload.eventCategory === 'object') {
         payload.eventCategory = payload.eventCategory._id;
@@ -246,235 +293,276 @@ function page() {
           </ul>
           <Form onSubmit={handleNext}>
             <div className="event-form-card">
-              {ticketsList.map((ticket, index) => (
-                <div
-                  key={index}
-                  className="mb-4 pb-4 border-bottom border-secondary">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="text-white" style={{ color: "#23ada4" }}>
-                      {t("ticketTitle") || `Ticket ${index + 1}`}
-                    </h5>
-                    {ticketsList.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeTicketType(index)}
-                        className="btn p-0 border-0 bg-transparent">
-                        <TrashIcon />
-                      </button>
-                    )}
+              {/* Free Event Toggle */}
+              <div className="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-secondary">
+                <div>
+                  <h5 className="text-white mb-1">{t("freeEvent") || "Free Event"}</h5>
+                  {/* <p className="text-secondary small mb-0">
+                    {t("freeEventDesc") || "Enable this option if entry to this event is completely free"}
+                  </p> */}
+                </div>
+                <div className="form-check form-switch">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="free-event-switch"
+                    checked={isFreeEvent}
+                    onChange={(e) => handleFreeEventToggle(e.target.checked)}
+                    style={{ width: "3.2em", height: "1.6em", cursor: "pointer" }}
+                  />
+                </div>
+              </div>
+
+              {!isFreeEvent ? (
+                <>
+                  {ticketsList.map((ticket, index) => (
+                    <div
+                      key={index}
+                      className="mb-4 pb-4 border-bottom border-secondary">
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="text-white" style={{ color: "#23ada4" }}>
+                          {t("ticket") || "Ticket"} {index + 1}
+                        </h5>
+                        {ticketsList.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeTicketType(index)}
+                            className="btn p-0 border-0 bg-transparent">
+                            <TrashIcon />
+                          </button>
+                        )}
+                      </div>
+                      <Row>
+                        <Col md={12} className="mb-3">
+                          <div className="event-frm-bx">
+                            <label className="form-label">
+                              {t("ticketNameLabel")}{" "}
+                              <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={ticket.ticketName || ""}
+                              onChange={(e) =>
+                                handleTicketChange(
+                                  index,
+                                  "ticketName",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder={t("ticketNamePlaceholder")}
+                              maxLength={25}
+                            />
+                            <div className="text-end mt-1">
+                              <small className="text-white">
+                                {(ticket.ticketName?.length || 0)}/25
+                              </small>
+                            </div>
+                          </div>
+                        </Col>
+                        <Col md={12} className="mb-3">
+                          <div className="event-frm-bx">
+                            <label className="form-label">
+                              {t("shortDescriptionOptional") ||
+                                "Short Description (Optional)"}
+                            </label>
+                            <textarea
+                              className="form-control"
+                              rows={2}
+                              value={ticket.ticketShortDesc || ""}
+                              onChange={(e) =>
+                                handleTicketChange(
+                                  index,
+                                  "ticketShortDesc",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder={
+                                t("ticketShortDescPlaceholder") ||
+                                "Enter short description"
+                              }
+                              maxLength={200}
+                            />
+                            <div className="text-end mt-1">
+                              <small className="text-white">
+                                {(ticket.ticketShortDesc?.length || 0)}/200
+                              </small>
+                            </div>
+                          </div>
+                        </Col>
+                        <Col md={6} className="mb-3">
+                          <div className="event-frm-bx">
+                            <label className="form-label">
+                              {t("pricePerTicketLabel")}{" "}
+                              <span className="text-danger">*</span>
+                            </label>
+                            <div className="price-input-wrapper position-relative">
+                              <span
+                                className="price-symbol position-absolute"
+                                style={{
+                                  left: "12px",
+                                  top: "50%",
+                                  transform: "translateY(-50%)",
+                                  color: "#23ada4",
+                                  fontWeight: "bold",
+                                }}>
+                                ₮
+                              </span>
+                              <input
+                                type="number"
+                                className="form-control px-cms-30"
+                                value={ticket.price === "" ? "" : ticket.price}
+                                placeholder="0"
+                                onChange={(e) =>
+                                  handleTicketChange(index, "price", e.target.value)
+                                }
+                                min={0}
+                              />
+                            </div>
+                          </div>
+                        </Col>
+                        <Col md={6} className="mb-3">
+                          <div className="event-frm-bx">
+                            <label className="form-label">
+                              {t("quantityAvailableLabel")}{" "}
+                              <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              value={ticket.qty === "" ? "" : ticket.qty}
+                              placeholder="1"
+                              onChange={(e) =>
+                                handleTicketChange(index, "qty", e.target.value)
+                              }
+                              min={1}
+                            />
+                          </div>
+                        </Col>
+                        <Col md={6} className="mb-3">
+                          <div className="event-frm-bx">
+                            <label className="form-label">
+                              {t("salesStartDateLabel")}{" "}
+                              <span className="text-danger">*</span>
+                            </label>
+                            <div className="date-input-wrapper">
+                              <input
+                                type="date"
+                                className="date-input form-control"
+                                value={formatDateVal(ticket.salesStart)}
+                                onChange={(e) =>
+                                  handleTicketChange(
+                                    index,
+                                    "salesStart",
+                                    e.target.value,
+                                  )
+                                }
+                                min={today}
+                                max={formatDateVal(eventData.startDate)}
+                              />
+                              <span
+                                className="calendar-icon"
+                                onClick={(e) => {
+                                  e.currentTarget.previousSibling?.showPicker();
+                                }}>
+                                <img src="/img/white-calendar.svg" alt="calendar" />
+                              </span>
+                            </div>
+                          </div>
+                        </Col>
+                        <Col md={6} className="mb-3">
+                          <div className="event-frm-bx">
+                            <label className="form-label">
+                              {t("salesEndDateLabel")}{" "}
+                              <span className="text-danger">*</span>
+                            </label>
+                            <div className="date-input-wrapper">
+                              <input
+                                type="date"
+                                className="date-input form-control"
+                                value={formatDateVal(ticket.salesEnd)}
+                                onChange={(e) =>
+                                  handleTicketChange(
+                                    index,
+                                    "salesEnd",
+                                    e.target.value,
+                                  )
+                                }
+                                min={formatDateVal(ticket.salesStart) || today}
+                                max={formatDateVal(eventData.startDate)}
+                              />
+                              <span
+                                className="calendar-icon"
+                                onClick={(e) => {
+                                  e.currentTarget.previousSibling?.showPicker();
+                                }}>
+                                <img src="/img/white-calendar.svg" alt="calendar" />
+                              </span>
+                            </div>
+                          </div>
+                        </Col>
+                      </Row>
+                    </div>
+                  ))}
+
+                  <div className="mb-4">
+                    <button
+                      type="button"
+                      onClick={addTicketType}
+                      className="outline-btn w-100"
+                      style={{ borderRadius: "8px", borderStyle: "dashed" }}>
+                      + {t("addAnotherTicketType") || "Add Another Ticket Type"}
+                    </button>
                   </div>
-                  <Row>
-                    <Col md={12} className="mb-3">
+
+                  <Row className="mb-3">
+                    <Col md={12}>
                       <div className="event-frm-bx">
                         <label className="form-label">
-                          {t("ticketNameLabel")}{" "}
+                          {t("refundPolicyLabel")}{" "}
                           <span className="text-danger">*</span>
                         </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={ticket.ticketName || ""}
-                          onChange={(e) =>
-                            handleTicketChange(
-                              index,
-                              "ticketName",
-                              e.target.value,
-                            )
-                          }
-                          placeholder={t("ticketNamePlaceholder")}
-                          maxLength={100}
-                        />
-                      </div>
-                    </Col>
-                    <Col md={12} className="mb-3">
-                      <div className="event-frm-bx">
-                        <label className="form-label">
-                          {t("shortDescriptionOptional") ||
-                            "Short Description (Optional)"}
-                        </label>
-                        <textarea
-                          className="form-control"
-                          rows={2}
-                          value={ticket.ticketShortDesc || ""}
-                          onChange={(e) =>
-                            handleTicketChange(
-                              index,
-                              "ticketShortDesc",
-                              e.target.value,
-                            )
-                          }
-                          placeholder={
-                            t("ticketShortDescPlaceholder") ||
-                            "Enter short description"
-                          }
-                        />
-                      </div>
-                    </Col>
-                    <Col md={6} className="mb-3">
-                      <div className="event-frm-bx">
-                        <label className="form-label">
-                          {t("pricePerTicketLabel")}{" "}
-                          <span className="text-danger">*</span>
-                        </label>
-                        <div className="price-input-wrapper position-relative">
-                          <span
-                            className="price-symbol position-absolute"
-                            style={{
-                              left: "12px",
-                              top: "50%",
-                              transform: "translateY(-50%)",
-                              color: "#23ada4",
-                              fontWeight: "bold",
-                            }}>
-                            ₮
-                          </span>
-                          <input
-                            type="number"
-                            className="form-control px-cms-30"
-                            value={ticket.price === "" ? "" : ticket.price}
-                            placeholder="0"
-                            onChange={(e) =>
-                              handleTicketChange(index, "price", e.target.value)
-                            }
-                            min={0}
-                          />
-                        </div>
-                      </div>
-                    </Col>
-                    <Col md={6} className="mb-3">
-                      <div className="event-frm-bx">
-                        <label className="form-label">
-                          {t("quantityAvailableLabel")}{" "}
-                          <span className="text-danger">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          className="form-control"
-                          value={ticket.qty === "" ? "" : ticket.qty}
-                          placeholder="1"
-                          onChange={(e) =>
-                            handleTicketChange(index, "qty", e.target.value)
-                          }
-                          min={1}
-                        />
-                      </div>
-                    </Col>
-                    <Col md={6} className="mb-3">
-                      <div className="event-frm-bx">
-                        <label className="form-label">
-                          {t("salesStartDateLabel")}{" "}
-                          <span className="text-danger">*</span>
-                        </label>
-                        <div className="date-input-wrapper">
-                          <input
-                            type="date"
-                            className="date-input form-control"
-                            value={formatDateVal(ticket.salesStart)}
-                            onChange={(e) =>
-                              handleTicketChange(
-                                index,
-                                "salesStart",
-                                e.target.value,
-                              )
-                            }
-                            min={today}
-                          />
-                          <span
-                            className="calendar-icon"
-                            onClick={(e) => {
-                              e.currentTarget.previousSibling?.showPicker();
-                            }}>
-                            <img src="/img/white-calendar.svg" alt="calendar" />
-                          </span>
-                        </div>
-                      </div>
-                    </Col>
-                    <Col md={6} className="mb-3">
-                      <div className="event-frm-bx">
-                        <label className="form-label">
-                          {t("salesEndDateLabel")}{" "}
-                          <span className="text-danger">*</span>
-                        </label>
-                        <div className="date-input-wrapper">
-                          <input
-                            type="date"
-                            className="date-input form-control"
-                            value={formatDateVal(ticket.salesEnd)}
-                            onChange={(e) =>
-                              handleTicketChange(
-                                index,
-                                "salesEnd",
-                                e.target.value,
-                              )
-                            }
-                            min={formatDateVal(ticket.salesStart) || today}
-                          />
-                          <span
-                            className="calendar-icon"
-                            onClick={(e) => {
-                              e.currentTarget.previousSibling?.showPicker();
-                            }}>
-                            <img src="/img/white-calendar.svg" alt="calendar" />
-                          </span>
-                        </div>
+                        <select
+                          className="form-select"
+                          name="refundPolicy"
+                          value={eventData.refundPolicy || ""}
+                          onChange={handleRefundPolicyChange}
+                          style={{
+                            backgroundColor: "#1a1a1a",
+                            color: "white",
+                            border: "1px solid rgba(35, 173, 164, 0.3)",
+                            height: "45px",
+                          }}>
+                          <option value="">
+                            {t("selectRefundPolicy") || "Select Refund Policy"}
+                          </option>
+                          {refundPolicies.map((policy) => {
+                            const translationKey =
+                              policy === "No Refund"
+                                ? "noRefund"
+                                : policy === "1 Day Before"
+                                  ? "oneDayBefore"
+                                  : policy === "7 Days Before"
+                                    ? "sevenDaysBefore"
+                                    : "";
+                            return (
+                              <option key={policy} value={policy}>
+                                {translationKey
+                                  ? t(translationKey) || policy
+                                  : policy}
+                              </option>
+                            );
+                          })}
+                        </select>
                       </div>
                     </Col>
                   </Row>
+                </>
+              ) : (
+                <div className="text-center py-4 text-secondary">
+                  {t("freeEventEnabledMessage") || t("This event is free of charge. No tickets or refund policy required.")}
                 </div>
-              ))}
-
-              <div className="mb-4">
-                <button
-                  type="button"
-                  onClick={addTicketType}
-                  className="outline-btn w-100"
-                  style={{ borderRadius: "8px", borderStyle: "dashed" }}>
-                  + {t("addAnotherTicketType") || "Add Another Ticket Type"}
-                </button>
-              </div>
-
-              <Row className="mb-3">
-                <Col md={12}>
-                  <div className="event-frm-bx">
-                    <label className="form-label">
-                      {t("refundPolicyLabel")}{" "}
-                      <span className="text-danger">*</span>
-                    </label>
-                    <select
-                      className="form-select"
-                      name="refundPolicy"
-                      value={eventData.refundPolicy || ""}
-                      onChange={handleRefundPolicyChange}
-                      style={{
-                        backgroundColor: "#1a1a1a",
-                        color: "white",
-                        border: "1px solid rgba(35, 173, 164, 0.3)",
-                        height: "45px",
-                      }}>
-                      <option value="">
-                        {t("selectRefundPolicy") || "Select Refund Policy"}
-                      </option>
-                      {refundPolicies.map((policy) => {
-                        const translationKey =
-                          policy === "No Refund"
-                            ? "noRefund"
-                            : policy === "1 Day Before"
-                              ? "oneDayBefore"
-                              : policy === "7 Days Before"
-                                ? "sevenDaysBefore"
-                                : "";
-                        return (
-                          <option key={policy} value={policy}>
-                            {translationKey
-                              ? t(translationKey) || policy
-                              : policy}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-                </Col>
-              </Row>
+              )}
 
               <div className="d-flex gap-2 justify-content-end mt-4">
                 <Link href="/DateTime" className="outline-btn">

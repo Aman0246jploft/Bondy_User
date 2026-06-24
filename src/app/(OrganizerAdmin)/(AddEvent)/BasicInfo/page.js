@@ -11,10 +11,12 @@ import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
 
 function BasicInfoContent() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { eventData, updateEventData, loadEventForEdit } = useEventContext();
   const [categories, setCategories] = useState([]);
-  const [uploading, setUploading] = useState(false);
+  const [uploadingPoster, setUploadingPoster] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -112,7 +114,7 @@ function BasicInfoContent() {
     const formData = new FormData();
     formData.append("files", file);
 
-    setUploading(true);
+    setUploadingPoster(true);
     try {
       const response = await authApi.uploadFile(formData);
       if (
@@ -127,7 +129,7 @@ function BasicInfoContent() {
       console.error("Error uploading image:", error);
       toast.error(t("imageUploadFailed"));
     } finally {
-      setUploading(false);
+      setUploadingPoster(false);
     }
   };
 
@@ -141,7 +143,7 @@ function BasicInfoContent() {
       return;
     }
 
-    setUploading(true);
+    setUploadingGallery(true);
     try {
       const newLinks = [];
       for (const file of files) {
@@ -165,7 +167,7 @@ function BasicInfoContent() {
       console.error("Error uploading image:", error);
       toast.error(t("failedToUploadImage"));
     } finally {
-      setUploading(false);
+      setUploadingGallery(false);
     }
   };
 
@@ -184,7 +186,7 @@ function BasicInfoContent() {
       return;
     }
 
-    setUploading(true);
+    setUploadingVideo(true);
     try {
       const newLinks = [];
       for (const file of files) {
@@ -208,7 +210,7 @@ function BasicInfoContent() {
       console.error("Error uploading video:", error);
       toast.error(t("failedToUploadVideo"));
     } finally {
-      setUploading(false);
+      setUploadingVideo(false);
     }
   };
 
@@ -380,23 +382,38 @@ function BasicInfoContent() {
                     </div>
                   </div>
                 </Col>
-                <Col md={6}>
+                <Col md={12}>
                   <div className="event-frm-bx">
                     <label className="form-label">
                       {t("eventCategoryLabel")} <span className="text-danger">*</span>
                     </label>
-                    <select
-                      className="form-select"
-                      name="eventCategory"
-                      value={eventData.eventCategory}
-                      onChange={handleInputChange}>
-                      <option value="">{t("selectEventCategory")}</option>
-                      {categories.map((cat) => (
-                        <option key={cat._id} value={cat._id}>
-                          {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="d-flex flex-wrap gap-2 mb-3">
+                      {categories.map((cat) => {
+                        const isSelected = eventData.eventCategory === cat._id;
+                        return (
+                          <button
+                            key={cat._id}
+                            type="button"
+                            className={`custom-btn ${isSelected ? "" : "outline-btn"}`}
+                            style={{ borderRadius: "20px", padding: "8px 16px", fontSize: "14px", display: "inline-flex", alignItems: "center", gap: "8px" }}
+                            onClick={() => updateEventData({ eventCategory: cat._id })}
+                          >
+                            {cat.image && (
+                              <img
+                                src={getFullImageUrl(cat.image)}
+                                alt={cat.name}
+                                style={{ width: "16px", height: "16px", borderRadius: "50%", objectFit: "cover" }}
+                                onError={(e) => { e.target.src = "/img/sidebar-logo.svg" }}
+                              />
+                            )}
+                            {(() => {
+                              const displayName = language === "mn" && cat.name_thi ? cat.name_thi : cat.name;
+                              return displayName ? displayName.charAt(0).toUpperCase() + displayName.slice(1) : "";
+                            })()}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </Col>
                 <Col md={12}>
@@ -413,7 +430,7 @@ function BasicInfoContent() {
                       accept="image/*"
                     />
                     <label htmlFor="upload">
-                      {uploading ? t("uploading") : t("upload")}
+                      {uploadingPoster ? t("uploading") : t("upload")}
                     </label>
                   </div>
                   {eventData.posterImage &&
@@ -520,7 +537,7 @@ function BasicInfoContent() {
                   accept="image/*"
                 />
                 <label htmlFor="upload-gallery">
-                  {uploading ? t("uploading") : t("upload")}
+                  {uploadingGallery ? t("uploading") : t("upload")}
                 </label>
               </div>
               <div className="upload-images mt-2">
@@ -554,7 +571,7 @@ function BasicInfoContent() {
                   accept="video/*"
                 />
                 <label htmlFor="upload-video">
-                  {uploading ? t("uploading") : t("uploadVideo") || "Upload"}
+                  {uploadingVideo ? t("uploading") : t("uploadVideo") || "Upload"}
                 </label>
               </div>
               <div className="upload-images mt-2">

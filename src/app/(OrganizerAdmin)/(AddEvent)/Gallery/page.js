@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import { useEventContext } from "@/context/EventContext";
 import authApi from "@/api/authApi";
@@ -13,7 +13,8 @@ import eventApi from "@/api/eventApi";
 function page() {
   const { t } = useLanguage();
   const { eventData, updateEventData } = useEventContext();
-  const [uploading, setUploading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const router = useRouter();
 
   const handleImageUpload = async (e) => {
@@ -26,7 +27,7 @@ function page() {
       return;
     }
 
-    setUploading(true);
+    setUploadingImage(true);
     try {
       // Upload one by one or loop
       // Assuming api supports single file update mostly, but we can call it multiple times
@@ -52,7 +53,7 @@ function page() {
       console.error("Error uploading image:", error);
       toast.error(t("failedToUploadImage"));
     } finally {
-      setUploading(false);
+      setUploadingImage(false);
     }
   };
 
@@ -71,7 +72,7 @@ function page() {
       return;
     }
 
-    setUploading(true);
+    setUploadingVideo(true);
     try {
       const newLinks = [];
       for (const file of files) {
@@ -95,7 +96,7 @@ function page() {
       console.error("Error uploading video:", error);
       toast.error(t("failedToUploadVideo"));
     } finally {
-      setUploading(false);
+      setUploadingVideo(false);
     }
   };
 
@@ -138,7 +139,7 @@ function page() {
                   }
                   const fieldsToRemove = ['duration', 'status', 'totalAttendees', 'isBooked', 'totalRevenue', 'createdAt', 'updatedAt', '__v'];
                   fieldsToRemove.forEach(field => delete payload[field]);
-                  
+
                   const isEditMode = !!eventData._id;
                   let response;
                   if (isEditMode) {
@@ -238,7 +239,7 @@ function page() {
                       accept="image/*"
                     />
                     <label htmlFor="upload">
-                      {uploading ? t("uploading") : t("upload")}
+                      {uploadingImage ? t("uploading") : t("upload")}
                     </label>
                   </div>
                   <div className="upload-images">
@@ -274,7 +275,7 @@ function page() {
                       accept="video/*"
                     />
                     <label htmlFor="upload-video">
-                      {uploading ? t("uploading") : t("uploadVideo")}
+                      {uploadingVideo ? t("uploading") : t("uploadVideo")}
                     </label>
                   </div>
                   <div className="upload-images">

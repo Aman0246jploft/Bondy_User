@@ -39,6 +39,7 @@ function RegisterForm() {
     password: "",
     confirmPassword: "",
     referralCode: "",
+    acceptTerms: false,
   });
 
   // Organizer Form State
@@ -91,6 +92,8 @@ function RegisterForm() {
       errors.confirmPassword = t("passwordsNotMatch");
     }
 
+    if (!data.acceptTerms) errors.acceptTerms = t("acceptTerms");
+
     return errors;
   };
 
@@ -118,9 +121,10 @@ function RegisterForm() {
   };
 
   const handleCustomerChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setCustomerData((prev) => {
-      const next = { ...prev, [name]: value };
+      const nextValue = type === "checkbox" ? checked : value;
+      const next = { ...prev, [name]: nextValue };
       const nextErrors = { ...customerErrors };
 
       if (name === "email") {
@@ -141,6 +145,10 @@ function RegisterForm() {
             ? ""
             : t("passwordsNotMatch")
           : t("confirmPasswordRequired");
+      }
+
+      if (name === "acceptTerms") {
+        nextErrors.acceptTerms = checked ? "" : t("acceptTerms");
       }
 
       setCustomerErrors(nextErrors);
@@ -374,7 +382,7 @@ function RegisterForm() {
     <>
       <div className="other_text">
         <span></span>
-        <h6>{t("orSignUpWith")}</h6>
+        <h6>{t("orSignInWith")}</h6>
         <span></span>
       </div>
       <div className="social_icon">
@@ -549,6 +557,67 @@ function RegisterForm() {
                                   )}
                                 </Form.Group>
 
+                                <Form.Group className="mb-3">
+                                  <div className="custom-checkbox">
+                                    <input
+                                      type="checkbox"
+                                      id="terms-customer"
+                                      name="acceptTerms"
+                                      checked={customerData.acceptTerms}
+                                      onChange={handleCustomerChange}
+                                    />
+                                    <label htmlFor="terms-customer">
+                                      {language === "mn" ? (
+                                        <>
+                                          Би{" "}
+                                          <Link
+                                            href="/terms"
+                                            target="_blank"
+                                            className="text-decoration-underline text-primary"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            Үйлчилгээний нөхцөл
+                                          </Link>{" "}
+                                          болон{" "}
+                                          <Link
+                                            href="/privacy-policy"
+                                            target="_blank"
+                                            className="text-decoration-underline text-primary"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            Нууцлалын бодлогыг
+                                          </Link>{" "}
+                                          зөвшөөрч байна
+                                        </>
+                                      ) : (
+                                        <>
+                                          I agree to the{" "}
+                                          <Link
+                                            href="/terms"
+                                            target="_blank"
+                                            className="text-decoration-underline text-primary"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            Terms & Conditions
+                                          </Link>{" "}
+                                          and{" "}
+                                          <Link
+                                            href="/privacy-policy"
+                                            target="_blank"
+                                            className="text-decoration-underline text-primary"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            Privacy Policy
+                                          </Link>
+                                        </>
+                                      )}
+                                    </label>
+                                  </div>
+                                  {customerErrors.acceptTerms && (
+                                    <div className="text-danger small mt-1">{customerErrors.acceptTerms}</div>
+                                  )}
+                                </Form.Group>
+
                                 <button
                                   type="submit"
                                   disabled={loading}
@@ -698,19 +767,29 @@ function RegisterForm() {
                                     <label htmlFor="terms">
                                       {language === "mn" ? (
                                         <>
+                                          Би{" "}
                                           <Link
                                             href="/terms"
                                             target="_blank"
                                             className="text-decoration-underline text-primary"
                                             onClick={(e) => e.stopPropagation()}
                                           >
-                                            Үйлчилгээний нөхцлийг
+                                            Үйлчилгээний нөхцөл
                                           </Link>{" "}
-                                          зөвшөөрөх
+                                          болон{" "}
+                                          <Link
+                                            href="/privacy-policy"
+                                            target="_blank"
+                                            className="text-decoration-underline text-primary"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            Нууцлалын бодлогыг
+                                          </Link>{" "}
+                                          зөвшөөрч байна
                                         </>
                                       ) : (
                                         <>
-                                          Accept{" "}
+                                          I agree to the{" "}
                                           <Link
                                             href="/terms"
                                             target="_blank"
@@ -718,6 +797,15 @@ function RegisterForm() {
                                             onClick={(e) => e.stopPropagation()}
                                           >
                                             Terms & Conditions
+                                          </Link>{" "}
+                                          and{" "}
+                                          <Link
+                                            href="/privacy-policy"
+                                            target="_blank"
+                                            className="text-decoration-underline text-primary"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            Privacy Policy
                                           </Link>
                                         </>
                                       )}

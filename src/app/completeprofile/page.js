@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import VerificationModl from "@/components/Modal/VerificationModl";
 import { Upload, Camera } from "lucide-react";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function CompleteProfile() {
   return (
@@ -19,6 +20,7 @@ export default function CompleteProfile() {
 
 function CompleteProfileContent() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -29,7 +31,7 @@ function CompleteProfileContent() {
     firstName: "",
     lastName: "",
     gender: "",
-    dob: null,
+    dob: "",
     bio: "",
     profileImage: "",
     backgroundImage: "",
@@ -117,7 +119,7 @@ function CompleteProfileContent() {
               firstName: profile?.firstName || "",
               lastName: profile?.lastName || "",
               gender: profile?.gender || "",
-              dob: profile?.dob ? new Date(profile.dob) : null,
+              dob: profile?.dob ? profile.dob.split("T")[0] : "",
               bio: profile?.bio || "",
               profileImage: profile?.profileImage || "",
               backgroundImage: profile?.backgroundImage || "",
@@ -152,6 +154,10 @@ function CompleteProfileContent() {
     e.preventDefault();
     if (!customerData.firstName || !customerData.lastName) {
       toast.error("Please enter your name");
+      return;
+    }
+    if (!customerData.dob) {
+      toast.error("Please enter your date of birth");
       return;
     }
 
@@ -466,6 +472,25 @@ function CompleteProfileContent() {
                       </Col>
                     </Row>
 
+                    <Row className="mt-3">
+                      <Col xs={12}>
+                        <div className="select_gender">
+                          <span>{t("dob") || "Date of birth"}</span>
+                          <Form.Group controlId="dob">
+                            <Form.Control
+                              type="date"
+                              name="dob"
+                              className="custom_field_input custom_date_input"
+                              value={customerData.dob}
+                              onChange={handleCustomerChange}
+                              max={new Date().toISOString().split("T")[0]}
+                              required
+                            />
+                          </Form.Group>
+                        </div>
+                      </Col>
+                    </Row>
+
                     <Button
                       type="submit"
                       className="common_btn w-100 mt-4 border-0"
@@ -549,6 +574,21 @@ function CompleteProfileContent() {
           justify-content: center;
           color: #fff;
           border: 1px solid #161616;
+        }
+        :global(.compplete_profile_sec .custom_date_input) {
+          color: #fff !important;
+          background-color: transparent !important;
+          border: none !important;
+          width: 140px !important;
+          font-size: 14px !important;
+          outline: none !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+          height: auto !important;
+        }
+        :global(.compplete_profile_sec .custom_date_input::-webkit-calendar-picker-indicator) {
+          filter: invert(1);
+          cursor: pointer;
         }
       `}</style>
     </div>

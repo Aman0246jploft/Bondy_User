@@ -43,12 +43,14 @@ function page() {
     });
   };
 
-  const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const nextDay = tomorrow.toISOString().split("T")[0];
 
   const handleNext = (e) => {
     e.preventDefault();
 
-    if (!eventData.startDate || !eventData.endDate || !eventData.venueName) {
+    if (!eventData.startDate || !eventData.endDate || !eventData.startTime || !eventData.endTime || !eventData.venueName) {
       toast.error(t("pleaseFillRequiredFields"));
       return;
     }
@@ -63,12 +65,24 @@ function page() {
       return;
     }
 
+    // Check same-day timing order
+    if (eventData.startDate === eventData.endDate) {
+      const [startHour, startMin] = eventData.startTime.split(":").map(Number);
+      const [endHour, endMin] = eventData.endTime.split(":").map(Number);
+      const startVal = startHour * 60 + startMin;
+      const endVal = endHour * 60 + endMin;
+      if (endVal <= startVal) {
+        toast.error(t("endTimeMustBeAfterStartTime") || "End time must be after start time on the same day");
+        return;
+      }
+    }
+
     // Combine date and time for validation
     const startDateTime = new Date(
-      `${eventData.startDate}T${eventData.startTime || "00:00"}`,
+      `${eventData.startDate}T${eventData.startTime}`,
     );
     const endDateTime = new Date(
-      `${eventData.endDate}T${eventData.endTime || "00:00"}`,
+      `${eventData.endDate}T${eventData.endTime}`,
     );
     const now = new Date();
 
@@ -195,8 +209,11 @@ function page() {
                         name="startDate"
                         value={eventData.startDate}
                         onChange={handleInputChange}
-                        min={today}
+                        min={nextDay}
                       />
+                      <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
+                        <img src="/img/white-calendar.svg" alt="calendar" />
+                      </span>
                     </div>
                   </div>
                 </Col>
@@ -211,6 +228,9 @@ function page() {
                         value={eventData.startTime}
                         onChange={handleInputChange}
                       />
+                      <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
+                        <img src="/img/org-img/clock.svg" alt="clock" />
+                      </span>
                     </div>
                   </div>
                 </Col>
@@ -228,8 +248,11 @@ function page() {
                         name="endDate"
                         value={eventData.endDate}
                         onChange={handleInputChange}
-                        min={eventData.startDate || today}
+                        min={eventData.startDate || nextDay}
                       />
+                      <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
+                        <img src="/img/white-calendar.svg" alt="calendar" />
+                      </span>
                     </div>
                   </div>
                 </Col>
@@ -244,6 +267,9 @@ function page() {
                         value={eventData.endTime}
                         onChange={handleInputChange}
                       />
+                      <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
+                        <img src="/img/org-img/clock.svg" alt="clock" />
+                      </span>
                     </div>
                   </div>
                 </Col>

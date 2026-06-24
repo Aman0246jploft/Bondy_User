@@ -307,7 +307,7 @@ const VenueAutocomplete = ({
   }
 
   return (
-    <>
+    <div style={{ position: "relative", width: "100%" }}>
       <Form.Control
         ref={inputRef}
         type="text"
@@ -316,11 +316,52 @@ const VenueAutocomplete = ({
         placeholder={effectivePlaceholder}
         className={className}
         disabled={disabled || !isLoaded}
+        style={{ paddingRight: inputValue ? "40px" : "12px" }}
       />
+      {inputValue && (
+        <button
+          type="button"
+          onClick={() => {
+            setInputValue("");
+            if (inputRef.current) {
+              inputRef.current.value = "";
+            }
+            if (onPlaceSelected) {
+              onPlaceSelected({
+                latitude: null,
+                longitude: null,
+                city: "",
+                country: "",
+                state: "",
+                zipcode: "",
+                address: "",
+              });
+            }
+          }}
+          style={{
+            position: "absolute",
+            right: "12px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <img
+            src="/img/org-img/close.svg"
+            alt="Clear"
+            style={{ width: "16px", height: "16px", opacity: 0.7 }}
+          />
+        </button>
+      )}
       {!isLoaded && !error && (
         <small className="text-muted">{t("loading")}</small>
       )}
-    </>
+    </div>
   );
 };
 

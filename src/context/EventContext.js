@@ -44,11 +44,7 @@ export const EventProvider = ({ children }) => {
 
         // Other settings (defaults)
         accessAndPrivacy: true,
-        ageRestriction: {
-            type: "MIN_AGE",
-            minAge: 18,
-            maxAge: 100
-        },
+        ageRestriction: "18+",
         dressCode: "Business Casual",
         fetcherEvent: false,
         isDraft: false,
@@ -116,7 +112,7 @@ export const EventProvider = ({ children }) => {
             mediaLinks: [],
             shortTeaserVideo: [],
             accessAndPrivacy: true,
-            ageRestriction: { type: "MIN_AGE", minAge: 18 },
+            ageRestriction: "18+",
             dressCode: "Business Casual",
             fetcherEvent: false,
             isDraft: false,
@@ -143,6 +139,16 @@ export const EventProvider = ({ children }) => {
         }
         if (transformedEvent.createdBy && typeof transformedEvent.createdBy === 'object') {
             transformedEvent.createdBy = transformedEvent.createdBy._id;
+        }
+
+        // Normalize age restriction to string for API/validation compatibility
+        if (transformedEvent.ageRestriction && typeof transformedEvent.ageRestriction === 'object') {
+            const minAge = transformedEvent.ageRestriction.minAge;
+            if (minAge === 18) transformedEvent.ageRestriction = "18+";
+            else if (minAge === 21) transformedEvent.ageRestriction = "21+";
+            else transformedEvent.ageRestriction = "ALL";
+        } else if (!transformedEvent.ageRestriction) {
+            transformedEvent.ageRestriction = "ALL";
         }
 
         // Format dates for input fields (YYYY-MM-DD)

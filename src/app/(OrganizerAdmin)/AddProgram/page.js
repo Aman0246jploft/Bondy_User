@@ -54,10 +54,17 @@ function Page() {
   const router = useRouter();
   const { t, language } = useLanguage();
 
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const nextDay = tomorrow.toISOString().split("T")[0];
+
   const [step, setStep] = useState(1);
   const [courseId, setCourseId] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploadingPoster, setUploadingPoster] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [refundPolicies, setRefundPolicies] = useState([]);
   const [bookingCutOffOptions, setBookingCutOffOptions] = useState([
@@ -147,11 +154,14 @@ function Page() {
     const limits = {
       courseTitle: 100,
       shortdesc: 250,
+      longdesc: 1000,
       whatYouWillLearn: 1000,
+      venueName: 100,
       price: 9,
       oneMonthPassPrice: 9,
       threeMonthPassPrice: 9,
       totalSeats: 9,
+      totalSessions: 4,
     };
 
     if (limits[name] && value.toString().length > limits[name]) {
@@ -277,7 +287,7 @@ function Page() {
     uploadData.append("files", files[0]);
 
     try {
-      setLoading(true);
+      setUploadingPoster(true);
       const response = await apiClient.post("/user/upload", uploadData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -291,7 +301,7 @@ function Page() {
     } catch (err) {
       toast.error(t("imageUploadFailed"));
     } finally {
-      setLoading(false);
+      setUploadingPoster(false);
     }
   };
 
@@ -305,7 +315,7 @@ function Page() {
     }
 
     try {
-      setLoading(true);
+      setUploadingGallery(true);
       const newLinks = [];
       for (const file of files) {
         const uploadData = new FormData();
@@ -325,7 +335,7 @@ function Page() {
     } catch (err) {
       toast.error(t("failedToUploadGallery") || "Failed to upload gallery images");
     } finally {
-      setLoading(false);
+      setUploadingGallery(false);
     }
   };
 
@@ -337,7 +347,7 @@ function Page() {
     uploadData.append("files", file);
 
     try {
-      setLoading(true);
+      setUploadingVideo(true);
       const response = await apiClient.post("/user/upload", uploadData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -351,7 +361,7 @@ function Page() {
     } catch (err) {
       toast.error(t("failedToUploadTeaser") || "Failed to upload teaser video");
     } finally {
-      setLoading(false);
+      setUploadingVideo(false);
     }
   };
 
@@ -386,6 +396,15 @@ function Page() {
 
     if (!formToSave.batchName || !formToSave.startTime || !formToSave.endTime || !formToSave.days.length || !formToSave.seats) {
       toast.error("Please fill all required schedule fields");
+      return;
+    }
+
+    const [startHour, startMin] = formToSave.startTime.split(":").map(Number);
+    const [endHour, endMin] = formToSave.endTime.split(":").map(Number);
+    const startVal = startHour * 60 + startMin;
+    const endVal = endHour * 60 + endMin;
+    if (endVal <= startVal) {
+      toast.error(t("endTimeMustBeAfterStartTime") || "End time must be after start time");
       return;
     }
 
@@ -507,6 +526,12 @@ function Page() {
         return false;
       }
     } else if (currentStep === 2) {
+      const isNewOrDraft = !courseId || formData.isDraft;
+      if (isNewOrDraft && formData.startDate && formData.startDate < nextDay) {
+        toast.error(t("startDateMustBeInFuture") || "Start date must be in the future");
+        return false;
+      }
+
       if (formData.enrollmentType === "Ongoing") {
         if (!formData.startDate || !formData.venueName || !formData.venueAddress?.address) {
           toast.error("Please fill all location & start date fields");
@@ -516,6 +541,10 @@ function Page() {
           toast.error("Please select an end date or check 'No end date'");
           return false;
         }
+        if (formData.endDate && formData.endDate < formData.startDate) {
+          toast.error(t("endDateMustBeAfterStart") || "End date must be after start date");
+          return false;
+        }
         if (!formData.batches || formData.batches.length === 0) {
           toast.error("Please add at least one weekly schedule class time");
           return false;
@@ -523,6 +552,10 @@ function Page() {
       } else {
         if (!formData.startDate || !formData.endDate || !formData.totalSessions || !formData.venueName || !formData.venueAddress?.address) {
           toast.error("Please fill all location & duration fields");
+          return false;
+        }
+        if (formData.endDate && formData.endDate < formData.startDate) {
+          toast.error(t("endDateMustBeAfterStart") || "End date must be after start date");
           return false;
         }
         if (!formData.batches || formData.batches.length === 0) {
@@ -671,7 +704,13 @@ function Page() {
                         ? t("enterClassName") || "Enter class name"
                         : t("enterCourseName") || "Enter course name"
                     }
+                    maxLength={100}
                   />
+                  <div className="text-end mt-1">
+                    <small className="text-secondary">
+                      {(formData.courseTitle?.length || 0)}/100
+                    </small>
+                  </div>
                 </div>
 
                 <div className="event-frm-bx">
@@ -691,7 +730,13 @@ function Page() {
                         : t("briefCourseSummary") || "Brief summary of the course"
                     }
                     rows={2}
+                    maxLength={250}
                   />
+                  <div className="text-end mt-1">
+                    <small className="text-secondary">
+                      {(formData.shortdesc?.length || 0)}/250
+                    </small>
+                  </div>
                 </div>
 
                 <div className="event-frm-bx">
@@ -711,7 +756,13 @@ function Page() {
                         : t("courseDetailsPlaceholder") || "In-depth details about the program structure"
                     }
                     rows={4}
+                    maxLength={1000}
                   />
+                  <div className="text-end mt-1">
+                    <small className="text-secondary">
+                      {(formData.longdesc?.length || 0)}/1000
+                    </small>
+                  </div>
                 </div>
 
                 {formData.enrollmentType !== "Ongoing" && (
@@ -724,7 +775,13 @@ function Page() {
                       onChange={handleChange}
                       placeholder={t("whatYouWillLearnPlaceholder") || "Key takeaways or skills acquired"}
                       rows={3}
+                      maxLength={1000}
                     />
+                    <div className="text-end mt-1">
+                      <small className="text-secondary">
+                        {(formData.whatYouWillLearn?.length || 0)}/1000
+                      </small>
+                    </div>
                   </div>
                 )}
 
@@ -743,10 +800,21 @@ function Page() {
                           key={cat._id}
                           type="button"
                           className={`custom-btn ${isSelected ? "" : "outline-btn"}`}
-                          style={{ borderRadius: "20px", padding: "8px 16px", fontSize: "14px" }}
+                          style={{ borderRadius: "20px", padding: "8px 16px", fontSize: "14px", display: "inline-flex", alignItems: "center", gap: "8px" }}
                           onClick={() => setFormData(prev => ({ ...prev, courseCategory: cat._id }))}
                         >
-                          {language === "mn" && cat.name_thi ? cat.name_thi : cat.name}
+                          {cat.image && (
+                            <img
+                              src={getFullImageUrl(cat.image)}
+                              alt={cat.name}
+                              style={{ width: "16px", height: "16px", borderRadius: "50%", objectFit: "cover" }}
+                              onError={(e) => { e.target.src = "/img/sidebar-logo.svg" }}
+                            />
+                          )}
+                          {(() => {
+                            const displayName = language === "mn" && cat.name_thi ? cat.name_thi : cat.name;
+                            return displayName ? displayName.charAt(0).toUpperCase() + displayName.slice(1) : "";
+                          })()}
                         </button>
                       );
                     })}
@@ -765,12 +833,12 @@ function Page() {
                   </div>
                   <input type="file" id="upload-poster" className="d-none" onChange={handleImageUpload} accept="image/*" />
                   <label htmlFor="upload-poster" style={{ cursor: "pointer" }}>
-                    {loading ? t("uploading") || "Uploading..." : t("uploadImage") || "Upload Image"}
+                    {uploadingPoster ? t("uploading") || "Uploading..." : t("uploadImage") || "Upload Image"}
                   </label>
                 </div>
                 {formData.posterImage && formData.posterImage.length > 0 && (
                   <div className="mb-4">
-                    <img src={getFullImageUrl(formData.posterImage[0])} alt="Poster" style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }} />
+                    <img src={getFullImageUrl(formData.posterImage[0])} alt="Poster" onError={(e) => { e.target.src = "/img/sidebar-logo.svg" }} style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }} />
                   </div>
                 )}
 
@@ -782,13 +850,13 @@ function Page() {
                   </div>
                   <input type="file" id="upload-gallery" className="d-none" multiple onChange={handleGalleryUpload} accept="image/*" />
                   <label htmlFor="upload-gallery" style={{ cursor: "pointer" }}>
-                    {t("uploadPhotos") || "Upload Photos"}
+                    {uploadingGallery ? t("uploading") || "Uploading..." : t("uploadPhotos") || "Upload Photos"}
                   </label>
                 </div>
                 <div className="d-flex gap-2 flex-wrap mb-4">
                   {formData.mediaLinks && formData.mediaLinks.map((url, idx) => (
                     <div key={idx} className="position-relative" style={{ width: "90px", height: "90px" }}>
-                      <img src={getFullImageUrl(url)} alt="Gallery" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
+                      <img src={getFullImageUrl(url)} alt="Gallery" onError={(e) => { e.target.src = "/img/sidebar-logo.svg" }} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
                       <button
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, mediaLinks: prev.mediaLinks.filter((_, i) => i !== idx) }))}
@@ -809,7 +877,7 @@ function Page() {
                   </div>
                   <input type="file" id="upload-video" className="d-none" onChange={handleVideoUpload} accept="video/*" />
                   <label htmlFor="upload-video" style={{ cursor: "pointer" }}>
-                    {t("uploadVideo") || "Upload Video"}
+                    {uploadingVideo ? t("uploading") || "Uploading..." : t("uploadVideo") || "Upload Video"}
                   </label>
                 </div>
                 {formData.shortTeaserVideo && formData.shortTeaserVideo.length > 0 && (
@@ -843,7 +911,7 @@ function Page() {
                           value={formData.startDate}
                           onChange={handleChange}
                           name="startDate"
-                          min={new Date().toISOString().split("T")[0]}
+                          min={nextDay}
                         />
                         <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
                           <img src="/img/white-calendar.svg" alt="calendar" />
@@ -880,7 +948,7 @@ function Page() {
                               value={formData.endDate}
                               onChange={handleChange}
                               name="endDate"
-                              min={formData.startDate || new Date().toISOString().split("T")[0]}
+                              min={formData.startDate || nextDay}
                             />
                             <span className="calendar-icon" onClick={(e) => e.currentTarget.previousSibling?.showPicker()}>
                               <img src="/img/white-calendar.svg" alt="calendar" />
@@ -916,7 +984,13 @@ function Page() {
                     value={formData.venueName}
                     onChange={handleChange}
                     placeholder={t("venueNamePlaceholder") || "e.g. Creative Space"}
+                    maxLength={100}
                   />
+                  <div className="text-end mt-1">
+                    <small className="text-secondary">
+                      {(formData.venueName?.length || 0)}/100
+                    </small>
+                  </div>
                 </div>
 
                 <div className="event-frm-bx mb-3">

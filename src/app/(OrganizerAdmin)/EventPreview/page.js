@@ -17,7 +17,18 @@ function page() {
   const [publishing, setPublishing] = useState(false);
   const [categories, setCategories] = useState([]);
   const router = useRouter();
+  const getAgeString = () => {
+    if (!eventData.ageRestriction) return "ALL";
+    if (typeof eventData.ageRestriction === "string") {
+      return eventData.ageRestriction;
+    }
+    const minAge = eventData.ageRestriction?.minAge;
+    if (minAge === 18) return "18+";
+    if (minAge === 21) return "21+";
+    return "ALL";
+  };
 
+  const activeAge = getAgeString();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -98,16 +109,16 @@ function page() {
           <div style={{ display: "flex", alignItems: "flex-start", gap: "16px", flexWrap: "wrap", marginBottom: "16px" }}>
             <div className="event-dtl-card-img" style={{ flexShrink: 0 }}>
               <img
-                src={getFullImageUrl(eventData.posterImage[0]) || "/img/org-img/event-dtl-img.png"}
+                src={getFullImageUrl(eventData.posterImage[0]) || "/img/sidebar-logo.svg"}
                 alt="Event Poster"
-                onError={(e) => { e.target.src = "/img/org-img/event-dtl-img.png" }}
+                onError={(e) => { e.target.src = "/img/sidebar-logo.svg" }}
               />
             </div>
             <h3 style={{ flex: 1, minWidth: 0, wordBreak: "break-word", overflowWrap: "anywhere", margin: 0, alignSelf: "center" }}>
               {eventData.eventTitle || "Event Title"}
             </h3>
           </div>
-          {/* Category / Start Date / Tags below image */}
+          {/* Category / Start Date below image */}
           <ul className="event-dtl-rgt">
             <li>
               <h6>{t("category")}</h6>
@@ -116,10 +127,6 @@ function page() {
             <li>
               <h6>{t("startDate")}</h6>
               <p>{eventData.startDate} {formatTime(eventData.startTime, true, language)}</p>
-            </li>
-            <li>
-              <h6>{t("tagsLabel")}</h6>
-              <p style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>{eventData.tags && eventData.tags.join(", ")}</p>
             </li>
             <li>
               <span className="status-badge pending">{eventData.isDraft ? t("draftLabel") : t("reviewLabel")}</span>
@@ -143,7 +150,6 @@ function page() {
               <p>
                 <span>{eventData.startDate}</span>
                 <span className="mx-2 text-secondary">•</span>
-                <span>{eventData.startTime}</span>
                 <span>{formatTime(eventData.startTime, true, language)}</span>
               </p>
             </li>
@@ -155,7 +161,6 @@ function page() {
               <p>
                 <span>{eventData.endDate}</span>
                 <span className="mx-2 text-secondary">•</span>
-                <span>{eventData.endTime}</span>
                 <span>{formatTime(eventData.endTime, true, language)}</span>
               </p>
             </li>
@@ -175,76 +180,98 @@ function page() {
           <h4 className="line-title">
             <span>{t("ticketAndPricing")}</span>
           </h4>
-          {eventData.tickets && eventData.tickets.length > 0 ? (
-            eventData.tickets.map((ticket, index) => (
-              <div key={index} className="mb-4">
-                <h5 className="text-white mb-2" style={{ color: "#23ada4" }}>{t("ticketTitle") || `Ticket ${index + 1}`}: {ticket.ticketName}</h5>
-                <ul className="event-dtl-rgt">
-                  <li>
-                    <h6>{t("quantityAvailable")}</h6>
-                    <p>{ticket.qty}</p>
-                  </li>
-                  <li>
-                    <h6>{t("pricePerTicketLabel")}</h6>
-                    <p>₮{ticket.price}</p>
-                  </li>
-                  {ticket.ticketShortDesc && (
-                    <li>
-                      <h6>{t("shortDescription")}</h6>
-                      <p>{ticket.ticketShortDesc}</p>
-                    </li>
-                  )}
-                  {ticket.salesStart && (
-                    <li>
-                      <h6>{t("salesStartDateLabel")}</h6>
-                      <p>{ticket.salesStart.includes("T") ? ticket.salesStart.split("T")[0] : ticket.salesStart}</p>
-                    </li>
-                  )}
-                  {ticket.salesEnd && (
-                    <li>
-                      <h6>{t("salesEndDateLabel")}</h6>
-                      <p>{ticket.salesEnd.includes("T") ? ticket.salesEnd.split("T")[0] : ticket.salesEnd}</p>
-                    </li>
-                  )}
-                </ul>
-              </div>
-            ))
-          ) : (
+          {(!eventData.tickets || eventData.tickets.length === 0 || (eventData.tickets.length === 1 && Number(eventData.tickets[0].price) === 0)) ? (
             <ul className="event-dtl-rgt">
               <li>
-                <h6>{t("ticketName")}</h6>
-                <p>{eventData.ticketName}</p>
-              </li>
-              <li>
-                <h6>{t("quantityAvailable")}</h6>
-                <p>{eventData.ticketQtyAvailable}</p>
+                <h6>{t("ticketType")}</h6>
+                <p>{t("freeEvent") || "Free Event"}</p>
               </li>
               <li>
                 <h6>{t("pricePerTicketLabel")}</h6>
-                <p>₮{eventData.ticketPrice}</p>
-              </li>
-              <li>
-                <h6>{t("salesStartDateLabel")}</h6>
-                <p>{eventData.ticketSelesStartDate}</p>
-              </li>
-              <li>
-                <h6>{t("salesEndDateLabel")}</h6>
-                <p>{eventData.ticketSelesEndDate}</p>
+                <p>{t("free") || "Free"}</p>
               </li>
             </ul>
+          ) : (
+            <>
+              {eventData.tickets && eventData.tickets.map((ticket, index) => (
+                <div key={index} className="mb-4">
+                  <h5 className="text-white mb-2" style={{ color: "#23ada4" }}>{t("ticketTitle") || `Ticket ${index + 1}`}: {ticket.ticketName}</h5>
+                  <ul className="event-dtl-rgt">
+                    <li>
+                      <h6>{t("quantityAvailable")}</h6>
+                      <p>{ticket.qty}</p>
+                    </li>
+                    <li>
+                      <h6>{t("pricePerTicketLabel")}</h6>
+                      <p>₮{ticket.price}</p>
+                    </li>
+                    {ticket.ticketShortDesc && (
+                      <li>
+                        <h6>{t("shortDescription")}</h6>
+                        <p>{ticket.ticketShortDesc}</p>
+                      </li>
+                    )}
+                    {ticket.salesStart && (
+                      <li>
+                        <h6>{t("salesStartDateLabel")}</h6>
+                        <p>{ticket.salesStart.includes("T") ? ticket.salesStart.split("T")[0] : ticket.salesStart}</p>
+                      </li>
+                    )}
+                    {ticket.salesEnd && (
+                      <li>
+                        <h6>{t("salesEndDateLabel")}</h6>
+                        <p>{ticket.salesEnd.includes("T") ? ticket.salesEnd.split("T")[0] : ticket.salesEnd}</p>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              ))}
+
+              <ul className="event-dtl-rgt mt-2">
+                <li>
+                  <h6>{t("refundPolicy")}</h6>
+                  <p>
+                    {eventData.refundPolicy === "No Refund"
+                      ? t("noRefund")
+                      : eventData.refundPolicy === "1 Day Before"
+                        ? t("oneDayBefore")
+                        : eventData.refundPolicy === "7 Days Before"
+                          ? t("sevenDaysBefore")
+                          : eventData.refundPolicy}
+                  </p>
+                </li>
+              </ul>
+            </>
           )}
-          <ul className="event-dtl-rgt mt-2">
+        </div>
+        <div className="additional-info common-dtl-list mt-20">
+          <h4 className="line-title">
+            <span>{t("additionalSettings") || "Settings & Restrictions"}</span>
+          </h4>
+          <ul className="event-dtl-rgt">
             <li>
-              <h6>{t("refundPolicy")}</h6>
+              <h6>{t("visibilityLabel")}</h6>
+              <p>{eventData.visibility === "PUBLIC" ? (t("publicLabel") || "Public") : (t("privateLabel") || "Private")}</p>
+            </li>
+            <li>
+              <h6>{t("ageRestrictionLabel")}</h6>
               <p>
-                {eventData.refundPolicy === "No Refund"
-                  ? t("noRefund")
-                  : eventData.refundPolicy === "1 Day Before"
-                    ? t("oneDayBefore")
-                    : eventData.refundPolicy === "7 Days Before"
-                      ? t("sevenDaysBefore")
-                      : eventData.refundPolicy}
+                {activeAge === "ALL" 
+                  ? (t("allAges") || "All Ages") 
+                  : activeAge}
               </p>
+            </li>
+            <li>
+              <h6>{t("showAttendeesLabel")}</h6>
+              <p>{eventData.showAttendees !== false ? (t("yes") || "Yes") : (t("no") || "No")}</p>
+            </li>
+            <li>
+              <h6>{t("entryNotesLabel")}</h6>
+              <p style={{ wordBreak: "break-word" }}>{eventData.notes || "N/A"}</p>
+            </li>
+            <li>
+              <h6>{t("dressCodeLabel")}</h6>
+              <p style={{ wordBreak: "break-word" }}>{eventData.dressCode || "N/A"}</p>
             </li>
           </ul>
         </div>
@@ -285,7 +312,7 @@ function page() {
           <div className="gallery-grid">
             {eventData.mediaLinks.map((link, index) => (
               <div className={`gallery-item ${index === 0 ? "large" : ""}`} key={index}>
-                <img src={getFullImageUrl(link)} alt={`Gallery ${index}`} onError={(e) => { e.target.src = "/img/org-img/gallery-img-01.png" }} />
+                <img src={getFullImageUrl(link)} alt={`Gallery ${index}`} onError={(e) => { e.target.src = "/img/sidebar-logo.svg" }} />
               </div>
             ))}
           </div>
