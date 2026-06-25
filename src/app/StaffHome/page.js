@@ -111,7 +111,7 @@ function StaffHome() {
       }
     } catch (err) {
       console.error("Failed to load assigned items", err);
-      toast.error("Failed to load assigned events/courses");
+      // toast.error("Failed to load assigned events/courses");
     } finally {
       setLoadingAssigned(false);
     }
@@ -126,7 +126,7 @@ function StaffHome() {
     if (!activeEntity) {
       setPendingTabSelection(tabName);
       setShowAssignedEventsOverlay(true);
-      toast.error("Please select an event or course first.");
+      // toast.error("Please select an event or course first.");
       return;
     }
 

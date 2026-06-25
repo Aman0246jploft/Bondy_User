@@ -1500,7 +1500,13 @@ export const translations = {
     logOut: "Log out",
     updateYourPasswordHeader: "Update your Password",
     enterCurrentPassword: "Enter Current Password",
-    enterNewPassword: "Enter New Password"
+    enterNewPassword: "Enter New Password",
+    noEventCourseSelectedDesc: "No event or course selected. Please select one to start checking in attendees.",
+    selectEventCourse: "Select Event / Course",
+    scan: "Scan",
+    history: "History",
+    ticketNumber: "Ticket Number",
+    update: "Update"
   },
   mn: {
     Info: "Мэдээлэл",
@@ -3007,6 +3013,11 @@ export const translations = {
     logOut: "Гарах",
     updateYourPasswordHeader: "Нууц үгээ шинэчлэх",
     enterCurrentPassword: "Одоогийн нууц үг оруулах",
-    enterNewPassword: "Шинэ нууц үг оруулах"
+    enterNewPassword: "Шинэ нууц үг оруулах",
+    noEventCourseSelectedDesc: "Арга хэмжээ эсвэл курс сонгогдоогүй байна. Оролцогчдыг бүртгэж эхлэхийн тулд нэгийг сонгоно уу.",
+    selectEventCourse: "Арга хэмжээ / курс сонгох",
+    scan: "Уншуулах",
+    history: "Түүх",
+    update: "Шинэчлэх"
   },
 };
