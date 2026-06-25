@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation";
 import staffApi from "@/api/staffApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import jsQR from "jsqr";
+import { useLanguage } from "@/context/LanguageContext";
+import LanguageSelector from "@/components/LanguageSelector";
 
 function StaffHome() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   // Authentication check
   const [authorized, setAuthorized] = useState(false);
@@ -55,6 +58,17 @@ function StaffHome() {
   const [checkingIn, setCheckingIn] = useState(false);
   const [verifyError, setVerifyError] = useState(null);
   const [originalCode, setOriginalCode] = useState("");
+
+  // Profile & Password Update Overlay States
+  const [showProfileOverlay, setShowProfileOverlay] = useState(false);
+  const [showChangePasswordOverlay, setShowChangePasswordOverlay] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Check authorization
   useEffect(() => {
@@ -403,6 +417,48 @@ function StaffHome() {
     localStorage.removeItem("userProfile");
     toast.success("Logged out successfully");
     router.push("/login");
+  };
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    if (!oldPassword) {
+      toast.error("Please enter your current password");
+      return;
+    }
+    if (!newPassword) {
+      toast.error("Please enter a new password");
+      return;
+    }
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      toast.error("Password must be at least 8 characters and include uppercase, lowercase, number, and special character");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    try {
+      setUpdatingPassword(true);
+      const res = await staffApi.changePassword({
+        oldPassword,
+        newPassword,
+        confirmPassword,
+      });
+      if (res?.status) {
+        toast.success("Password updated successfully");
+        setShowChangePasswordOverlay(false);
+        setOldPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+    } catch (err) {
+      console.error("Failed to update password", err);
+      toast.error(err?.response?.data?.message || "Failed to update password");
+    } finally {
+      setUpdatingPassword(false);
+    }
   };
 
   if (!authorized) {
@@ -973,15 +1029,46 @@ function StaffHome() {
       {activeTab === "home" && (
         <>
           <div className="screen-header">
-            <h1>Staff</h1>
-            <button className="logout-btn-header" onClick={handleLogout}>
-              Logout
-            </button>
+            <h1>{t("staff") || "Staff"}</h1>
+            {(() => {
+              const imageUrl = staffProfile?.profileImage || staffProfile?.profilePhoto;
+              if (imageUrl) {
+                return (
+                  <img
+                    src={getFullImageUrl(imageUrl)}
+                    alt="profile"
+                    onClick={() => setShowProfileOverlay(true)}
+                    style={{ width: "36px", height: "36px", borderRadius: "50%", cursor: "pointer", objectFit: "cover", border: "2px solid #23ada4" }}
+                  />
+                );
+              }
+              return (
+                <div
+                  onClick={() => setShowProfileOverlay(true)}
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "50%",
+                    cursor: "pointer",
+                    background: "#23ada4",
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: "700",
+                    fontSize: "14px",
+                    border: "2px solid #23ada4"
+                  }}
+                >
+                  {staffProfile?.firstName?.charAt(0).toUpperCase() || "S"}
+                </div>
+              );
+            })()}
           </div>
           <div className="screen-body">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h5 className="m-0" style={{ fontSize: "15px", fontWeight: "600", color: "#8c8c8c" }}>
-                {activeEntity ? (activeEntity.courseTitle ? "Your Active Course" : "Your Active Event") : "Your Active Event / Course"}
+                {activeEntity ? (activeEntity.courseTitle ? (t("activeCourse") || "Your Active Course") : (t("activeEvent") || "Your Active Event")) : (t("activeEventOrCourse") || "Your Active Event / Course")}
               </h5>
               <button
                 onClick={() => {
@@ -996,7 +1083,7 @@ function StaffHome() {
                   fontSize: "14px",
                 }}
               >
-                View All
+                {t("viewAll") || "View All"}
               </button>
             </div>
 
@@ -1025,7 +1112,7 @@ function StaffHome() {
                 <div className="event-card-details flex-grow-1">
                   <div className="d-flex justify-content-between align-items-center mb-1">
                     <h5 className="m-0" style={{ fontSize: "15px" }}>{activeEntity.eventTitle || activeEntity.courseTitle}</h5>
-                    <span className="active-badge">Active</span>
+                    <span className="active-badge">{t("active") || "Active"}</span>
                   </div>
                   <p className="category mb-2">
                     {entityType === "event"
@@ -1056,7 +1143,7 @@ function StaffHome() {
               </div>
             ) : (
               <div className="text-center py-4 px-3 mb-4" style={{ background: "#121212", border: "1px dashed rgba(255, 255, 255, 0.15)", borderRadius: "20px" }}>
-                <p style={{ color: "#8c8c8c", fontSize: "14px", marginBottom: "15px" }}>No event or course selected. Please select one to start checking in attendees.</p>
+                <p style={{ color: "#8c8c8c", fontSize: "14px", marginBottom: "15px" }}>{t("noEventCourseSelectedDesc") || "No event or course selected. Please select one to start checking in attendees."}</p>
                 <button
                   className="common_btn"
                   style={{ background: "#23ada4", border: "none", borderRadius: "20px", padding: "8px 20px", fontSize: "13px", fontWeight: "600", color: "#fff" }}
@@ -1065,12 +1152,12 @@ function StaffHome() {
                     setShowAssignedEventsOverlay(true);
                   }}
                 >
-                  Select Event / Course
+                  {t("selectEventCourse") || "Select Event / Course"}
                 </button>
               </div>
             )}
 
-            <h5 className="mb-3" style={{ fontSize: "15px", fontWeight: "600", color: "#8c8c8c" }}>Quick Actions</h5>
+            <h5 className="mb-3" style={{ fontSize: "15px", fontWeight: "600", color: "#8c8c8c" }}>{t("quickActions") || "Quick Actions"}</h5>
 
             <div className="quick-action-row" onClick={() => handleTabClick("scan")}>
               <div className="quick-action-lft">
@@ -1080,8 +1167,8 @@ function StaffHome() {
                   </svg>
                 </div>
                 <div className="quick-action-text">
-                  <h6>Scan QR</h6>
-                  <p>Scan tickets at the door</p>
+                  <h6>{t("scanQr") || "Scan QR"}</h6>
+                  <p>{t("scanTicketsAtDoor") || "Scan tickets at the door"}</p>
                 </div>
               </div>
               <span style={{ color: "#7c7c7c" }}>&#8250;</span>
@@ -1095,8 +1182,8 @@ function StaffHome() {
                   </svg>
                 </div>
                 <div className="quick-action-text">
-                  <h6>Attendees</h6>
-                  <p>View attendees & status</p>
+                  <h6>{t("attendees") || "Attendees"}</h6>
+                  <p>{t("viewAttendeesStatus") || "View attendees & status"}</p>
                 </div>
               </div>
               <span style={{ color: "#7c7c7c" }}>&#8250;</span>
@@ -1110,8 +1197,8 @@ function StaffHome() {
                   </svg>
                 </div>
                 <div className="quick-action-text">
-                  <h6>Scan History</h6>
-                  <p>View recent check-ins</p>
+                  <h6>{t("scanHistory") || "Scan History"}</h6>
+                  <p>{t("viewRecentCheckins") || "View recent check-ins"}</p>
                 </div>
               </div>
               <span style={{ color: "#7c7c7c" }}>&#8250;</span>
@@ -1133,7 +1220,7 @@ function StaffHome() {
                     fontSize: "14px",
                   }}
                 >
-                  View Event Details
+                  {t("viewEventDetails") || "View Event Details"}
                 </button>
               </div>
             )}
@@ -1150,11 +1237,11 @@ function StaffHome() {
             <button className="back-arrow-btn" onClick={() => setActiveTab("home")}>
               &#8592;
             </button>
-            <h1 className="w-100 text-center" style={{ marginRight: "30px" }}>Scan QR</h1>
+            <h1 className="w-100 text-center" style={{ marginRight: "30px" }}>{t("scanQr") || "Scan QR"}</h1>
           </div>
           <div className="screen-body text-center">
             <p style={{ color: "#8c8c8c", fontSize: "15px", marginBottom: "20px" }}>
-              Align QR code within the frame
+              {t("alignQrWithinFrame") || "Align QR code within the frame"}
             </p>
 
             <div className="scan-camera-wrapper">
@@ -1167,12 +1254,12 @@ function StaffHome() {
             <div className="scanner-manual-input-box">
               <input
                 type="text"
-                placeholder="Enter ticket number manually"
+                placeholder={t("enterTicketManually") || "Enter ticket number manually"}
                 value={manualTicketNumber}
                 onChange={(e) => setManualTicketNumber(e.target.value)}
               />
               <button onClick={() => handleCheckInSubmit(manualTicketNumber)} disabled={checkingInScanner}>
-                {checkingInScanner ? <Spinner animation="border" size="sm" /> : "Verify & Check-in"}
+                {checkingInScanner ? <Spinner animation="border" size="sm" /> : (t("verifyAndCheckin") || "Verify & Check-in")}
               </button>
             </div>
           </div>
@@ -1188,19 +1275,19 @@ function StaffHome() {
             <button className="back-arrow-btn" onClick={() => setActiveTab("home")}>
               &#8592;
             </button>
-            <h1 className="w-100 text-center" style={{ marginRight: "30px" }}>Enter Manually</h1>
+            <h1 className="w-100 text-center" style={{ marginRight: "30px" }}>{t("enterManually") || "Enter Manually"}</h1>
           </div>
           <div className="screen-body">
             <input
               type="text"
               className="attendees-search-box"
-              placeholder="Search by name, email or ticket ID..."
+              placeholder={t("searchAttendeesPlaceholder") || "Search by name, email or ticket ID..."}
               value={attendeeSearch}
               onChange={(e) => setAttendeeSearch(e.target.value)}
             />
 
             <div className="attendees-stats-header">
-              <span>List of Attendees</span>
+              <span>{t("listOfAttendees") || "List of Attendees"}</span>
               {/* <span>
                 {attendeeStats.checkedIn} / {attendeeStats.total} checked-in
               </span> */}
@@ -1212,7 +1299,7 @@ function StaffHome() {
               </div>
             ) : filteredAttendees.length === 0 ? (
               <div className="text-center py-5" style={{ color: "#7c7c7c" }}>
-                No attendees found.
+                {t("noAttendeesFound") || "No attendees found."}
               </div>
             ) : (
               <div className="attendee-list-scroll">
@@ -1234,7 +1321,7 @@ function StaffHome() {
                       </div>
                       <div className="attendee-item-text">
                         <h6>{`${a.user?.firstName || ""} ${a.user?.lastName || ""}`}</h6>
-                        <p>{`Booking ID: ${a.bookingId || "N/A"}`}</p>
+                        <p>{`${t("bookingID") || "Booking ID"}: ${a.bookingId || "N/A"}`}</p>
                       </div>
                     </div>
 
@@ -1270,7 +1357,7 @@ function StaffHome() {
             <button className="back-arrow-btn" onClick={() => setActiveTab("home")}>
               &#8592;
             </button>
-            <h1 className="w-100 text-center" style={{ marginRight: "30px" }}>Scan History</h1>
+            <h1 className="w-100 text-center" style={{ marginRight: "30px" }}>{t("scanHistory") || "Scan History"}</h1>
           </div>
           <div className="screen-body">
             {loadingHistory ? (
@@ -1279,7 +1366,7 @@ function StaffHome() {
               </div>
             ) : scanHistory.length === 0 ? (
               <div className="text-center py-5" style={{ color: "#7c7c7c" }}>
-                No recent check-ins recorded.
+                {t("noRecentCheckinsRecorded") || "No recent check-ins recorded."}
               </div>
             ) : (
               <div className="history-list-scroll">
@@ -1319,21 +1406,21 @@ function StaffHome() {
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5Z" />
           </svg>
-          <span>Home</span>
+          <span>{t("home") || "Home"}</span>
         </button>
 
         <button className={`nav-tab-item ${activeTab === "scan" ? "active" : ""}`} onClick={() => handleTabClick("scan")}>
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M.5 5A.5.5 0 0 1 0 4.5v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3A.5.5 0 0 0 1 1.5v3A.5.5 0 0 1 .5 5Zm0 6a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5Zm15-6a.5.5 0 0 1-.5-.5v-3A.5.5 0 0 0 14 1h-3a.5.5 0 0 1 0-1h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-.5.5Zm0 6a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5ZM3 3h2v2H3V3Zm2 5H3v3h3V8ZM3 6h2v1H3V6Zm3-3h2v1H6V3Zm0 2h1v2H6V5Zm3-2h4v2H9V3Zm2 3h2v1h-2V6Zm-2 2h2v1H9V8Zm3 0h1v3h-2V9h1V8Zm-3 2h1v1H9v-1Zm-2 1v1H5v-1h1Z" />
           </svg>
-          <span>Scan</span>
+          <span>{t("scan") || "Scan"}</span>
         </button>
 
         <button className={`nav-tab-item ${activeTab === "attendees" ? "active" : ""}`} onClick={() => handleTabClick("attendees")}>
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5.968-3.073L3.75 8.1l2.218-2.827L8 8l-2.032 2.927z" />
           </svg>
-          <span>Attendees</span>
+          <span>{t("attendees") || "Attendees"}</span>
         </button>
 
         <button className={`nav-tab-item ${activeTab === "history" ? "active" : ""}`} onClick={() => handleTabClick("history")}>
@@ -1341,7 +1428,7 @@ function StaffHome() {
             <path d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z" />
             <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z" />
           </svg>
-          <span>History</span>
+          <span>{t("history") || "History"}</span>
         </button>
       </div>
 
@@ -1354,7 +1441,7 @@ function StaffHome() {
             <button className="back-arrow-btn" onClick={() => setShowAssignedEventsOverlay(false)}>
               &#8592;
             </button>
-            <h2>Assigned Events & Courses</h2>
+            <h2>{t("assignedEventsAndCourses") || "Assigned Events & Courses"}</h2>
           </div>
           <div className="overlay-body">
             {/* Dynamic Events / Courses Toggle */}
@@ -1373,7 +1460,7 @@ function StaffHome() {
                   transition: "background 0.2s ease"
                 }}
               >
-                Events ({assignedEvents.length})
+                {t("events") || "Events"} ({assignedEvents.length})
               </button>
               <button
                 onClick={() => setOverlayTab("courses")}
@@ -1389,14 +1476,14 @@ function StaffHome() {
                   transition: "background 0.2s ease"
                 }}
               >
-                Courses ({assignedCourses.length})
+                {t("courses") || "Courses"} ({assignedCourses.length})
               </button>
             </div>
 
             {overlayTab === "events" ? (
               assignedEvents.length === 0 ? (
                 <div className="text-center py-5" style={{ color: "#7c7c7c" }}>
-                  No assigned events found.
+                  {t("noAssignedEventsFound") || "No assigned events found."}
                 </div>
               ) : (
                 <div className="d-flex flex-column gap-3">
@@ -1454,7 +1541,7 @@ function StaffHome() {
             ) : (
               assignedCourses.length === 0 ? (
                 <div className="text-center py-5" style={{ color: "#7c7c7c" }}>
-                  No assigned courses found.
+                  {t("noAssignedCoursesFound") || "No assigned courses found."}
                 </div>
               ) : (
                 <div className="d-flex flex-column gap-3">
@@ -1531,7 +1618,7 @@ function StaffHome() {
             >
               &#8592;
             </button>
-            <h2>{detailEntity.courseTitle ? "Course Details" : "Event Details"}</h2>
+            <h2>{detailEntity.courseTitle ? (t("courseDetails") || "Course Details") : (t("eventDetails") || "Event Details")}</h2>
           </div>
           <div className="overlay-body d-flex flex-column">
             {/* Cover Image */}
@@ -1552,7 +1639,7 @@ function StaffHome() {
               {detailEntity.eventTitle || detailEntity.courseTitle}
             </h3>
             <p style={{ color: "#8c8c8c", fontSize: "14px", lineHeight: "1.5", marginBottom: "25px" }}>
-              {detailEntity.shortdesc || detailEntity.longdesc || "No description provided."}
+              {detailEntity.shortdesc || detailEntity.longdesc || (t("noDescriptionProvided") || "No description provided.")}
             </p>
 
             {/* Venue & Date */}
@@ -1595,7 +1682,7 @@ function StaffHome() {
                 ) : (
                   <h3>{detailStats.checkedIn}</h3>
                 )}
-                <p>Booked</p>
+                <p>{t("booked") || "Booked"}</p>
               </div>
               <div className="details-stat-box" style={{ borderLeft: "1px solid rgba(255, 255, 255, 0.08)", borderRight: "1px solid rgba(255, 255, 255, 0.08)" }}>
                 <h3>
@@ -1606,7 +1693,7 @@ function StaffHome() {
                       : 0
                     )}
                 </h3>
-                <p>Reserved</p>
+                <p>{t("reserved") || "Reserved"}</p>
               </div>
               <div className="details-stat-box">
                 <h3>
@@ -1615,7 +1702,7 @@ function StaffHome() {
                     : 100
                   )}
                 </h3>
-                <p>Capacity</p>
+                <p>{t("capacity") || "Capacity"}</p>
               </div>
             </div>
 
@@ -1631,7 +1718,7 @@ function StaffHome() {
                 }}
               >
                 <span style={{ fontSize: "16px", marginBottom: "3px" }}>&#128247;</span>
-                <span>Scan QR</span>
+                <span>{t("scanQr") || "Scan QR"}</span>
               </button>
 
               <button
@@ -1644,7 +1731,7 @@ function StaffHome() {
                 }}
               >
                 <span style={{ fontSize: "16px", marginBottom: "3px" }}>&#128100;</span>
-                <span>Attendees</span>
+                <span>{t("attendees") || "Attendees"}</span>
               </button>
 
               <button
@@ -1657,7 +1744,7 @@ function StaffHome() {
                 }}
               >
                 <span style={{ fontSize: "16px", marginBottom: "3px" }}>&#128196;</span>
-                <span>Scan History</span>
+                <span>{t("scanHistory") || "Scan History"}</span>
               </button>
             </div>
           </div>
@@ -1669,21 +1756,21 @@ function StaffHome() {
       {/* --------------------------------------------------------------- */}
       <Modal show={showVerifyModal} onHide={closeVerifyModal} centered contentClassName="verify-modal-content">
         <Modal.Header closeButton closeVariant="white" className="border-0 pb-0">
-          <Modal.Title style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Ticket Verification</Modal.Title>
+          <Modal.Title style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>{t("ticketVerification") || "Ticket Verification"}</Modal.Title>
         </Modal.Header>
         <Modal.Body className="pt-3">
           {loadingVerify ? (
             <div className="text-center py-4">
               <Spinner animation="border" variant="teal" className="mb-2" />
-              <p className="m-0 text-muted" style={{ fontSize: "14px" }}>Verifying ticket/QR details...</p>
+              <p className="m-0 text-muted" style={{ fontSize: "14px" }}>{t("verifyingTicketDetails") || "Verifying ticket/QR details..."}</p>
             </div>
           ) : verifyError ? (
             <div className="text-center py-3">
               <div className="verify-error-icon mb-3">&#9888;</div>
-              <h5 className="text-danger mb-2" style={{ fontSize: "16px", fontWeight: "600" }}>Verification Failed</h5>
+              <h5 className="text-danger mb-2" style={{ fontSize: "16px", fontWeight: "600" }}>{t("verificationFailed") || "Verification Failed"}</h5>
               <p className="text-muted mb-4" style={{ fontSize: "14px" }}>{verifyError}</p>
               <button className="common_btn w-100" onClick={closeVerifyModal} style={{ background: "#333", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
-                Close
+                {t("close") || "Close"}
               </button>
             </div>
           ) : verifiedTicket ? (() => {
@@ -1693,7 +1780,7 @@ function StaffHome() {
               <div className="verify-details-container">
                 {/* Event Info */}
                 <div className="verify-event-info mb-3">
-                  <span className="verify-label">Event / Course</span>
+                  <span className="verify-label">{t("eventOrCourse") || "Event / Course"}</span>
                   <div className="verify-val">{verifiedTicket.event?.title || "Unknown"}</div>
                 </div>
 
@@ -1701,19 +1788,19 @@ function StaffHome() {
                 <div className="badge-wrapper mb-4">
                   {isCheckedInToday ? (
                     <div className="badge-status checked-in" style={{ background: "rgba(52, 199, 89, 0.15)", color: "#34c759" }}>
-                      Checked In Today
+                      {t("checkedInToday") || "Checked In Today"}
                     </div>
                   ) : verifiedTicket.isAlreadyCheckedIn ? (
                     <div className="badge-status checked-in">
-                      Already Checked In
+                      {t("alreadyCheckedIn") || "Already Checked In"}
                     </div>
                   ) : verifiedTicket.isExpired ? (
                     <div className="badge-status expired">
-                      Expired Ticket
+                      {t("expiredTicket") || "Expired Ticket"}
                     </div>
                   ) : (
                     <div className="badge-status valid">
-                      Valid Ticket
+                      {t("validTicket") || "Valid Ticket"}
                     </div>
                   )}
                 </div>
@@ -1722,20 +1809,20 @@ function StaffHome() {
                 {verifiedTicket.attendee && (
                   <div className="verify-section mb-3">
                     <div className="verify-row">
-                      <span className="verify-label">Attendee Name</span>
+                      <span className="verify-label">{t("attendeeName") || "Attendee Name"}</span>
                       <span className="verify-val">{verifiedTicket.attendee.firstName} {verifiedTicket.attendee.lastName}</span>
                     </div>
                     <div className="verify-row">
-                      <span className="verify-label">Email</span>
+                      <span className="verify-label">{t("email") || "Email"}</span>
                       <span className="verify-val" style={{ wordBreak: "break-all" }}>{verifiedTicket.attendee.email}</span>
                     </div>
                     <div className="verify-row">
-                      <span className="verify-label">Ticket Number</span>
+                      <span className="verify-label">{t("ticketNumber") || "Ticket Number"}</span>
                       <span className="verify-val">{verifiedTicket.attendee.ticketNumber}</span>
                     </div>
                     {verifiedTicket.attendee.ticketName && (
                       <div className="verify-row">
-                        <span className="verify-label">Ticket Type</span>
+                        <span className="verify-label">{t("ticketType") || "Ticket Type"}</span>
                         <span className="verify-val">{verifiedTicket.attendee.ticketName}</span>
                       </div>
                     )}
@@ -1746,27 +1833,27 @@ function StaffHome() {
                 {verifiedTicket.transaction && (
                   <div className="verify-section mb-4">
                     <div className="verify-row">
-                      <span className="verify-label">Booking ID</span>
+                      <span className="verify-label">{t("bookingID") || "Booking ID"}</span>
                       <span className="verify-val">{verifiedTicket.transaction.bookingId}</span>
                     </div>
                     {verifiedTicket.transaction.passType && (
                       <div className="verify-row">
-                        <span className="verify-label">Pass Type</span>
+                        <span className="verify-label">{t("passType") || "Pass Type"}</span>
                         <span className="verify-val" style={{ textTransform: "capitalize" }}>{verifiedTicket.transaction.passType.replace("_", " ")}</span>
                       </div>
                     )}
                     {verifiedTicket.transaction.passExpiryDate && (
                       <div className="verify-row">
-                        <span className="verify-label">Pass Expiry</span>
+                        <span className="verify-label">{t("passExpiry") || "Pass Expiry"}</span>
                         <span className="verify-val">{new Date(verifiedTicket.transaction.passExpiryDate).toLocaleDateString()}</span>
                       </div>
                     )}
                     <div className="verify-row">
-                      <span className="verify-label">Total Qty</span>
+                      <span className="verify-label">{t("totalQty") || "Total Qty"}</span>
                       <span className="verify-val">{verifiedTicket.transaction.qty} ticket(s)</span>
                     </div>
                     <div className="verify-row">
-                      <span className="verify-label">Checked In Qty</span>
+                      <span className="verify-label">{t("checkedInQty") || "Checked In Qty"}</span>
                       <span className="verify-val">{verifiedTicket.transaction.checkedInQty} / {verifiedTicket.transaction.qty}</span>
                     </div>
                   </div>
@@ -1775,7 +1862,7 @@ function StaffHome() {
                 {/* Ongoing Slots/Sessions (if present) */}
                 {verifiedTicket.transaction && verifiedTicket.transaction.ongoingSlots && verifiedTicket.transaction.ongoingSlots.length > 0 && (
                   <div className="verify-section mb-4">
-                    <div className="verify-label mb-2" style={{ fontWeight: "600", color: "#23ada4" }}>Booked Slots ({verifiedTicket.transaction.ongoingSlots.length})</div>
+                    <div className="verify-label mb-2" style={{ fontWeight: "600", color: "#23ada4" }}>{t("bookedSlots") || "Booked Slots"} ({verifiedTicket.transaction.ongoingSlots.length})</div>
                     <div className="d-flex flex-column gap-2" style={{ maxHeight: "150px", overflowY: "auto" }}>
                       {verifiedTicket.transaction.ongoingSlots.map((slot) => {
                         const slotDate = slot.selectedDate;
@@ -1791,7 +1878,7 @@ function StaffHome() {
                               <span style={{ fontSize: "11px", color: "#8c8c8c" }}>Batch: {slot.batchId.slice(-6).toUpperCase()}</span>
                             </div>
                             {isSlotChecked ? (
-                              <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style={{ borderRadius: "10px", fontSize: "11px" }}>Checked In</span>
+                              <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style={{ borderRadius: "10px", fontSize: "11px" }}>{t("checkedIn") || "Checked In"}</span>
                             ) : (
                               <button
                                 className="btn btn-sm"
@@ -1799,7 +1886,7 @@ function StaffHome() {
                                 onClick={() => handlePerformCheckInForSlot(slotDate, slot.batchId)}
                                 style={{ background: "#23ada4", color: "#fff", borderRadius: "10px", fontSize: "11px", border: "none", padding: "4px 10px" }}
                               >
-                                Check In
+                                {t("checkIn") || "Check In"}
                               </button>
                             )}
                           </div>
@@ -1811,7 +1898,7 @@ function StaffHome() {
 
                 {verifiedTicket.isAlreadyCheckedIn && verifiedTicket.checkedInAt && (
                   <div className="verify-checkin-time text-muted mb-4" style={{ fontSize: "12px", textAlign: "center" }}>
-                    Checked in at: {new Date(verifiedTicket.checkedInAt).toLocaleString()}
+                    {t("checkedInAtSuffix") || "Checked in at:"} {new Date(verifiedTicket.checkedInAt).toLocaleString()}
                   </div>
                 )}
 
@@ -1820,21 +1907,21 @@ function StaffHome() {
                   {!verifiedTicket.isAlreadyCheckedIn && !verifiedTicket.isExpired ? (
                     <>
                       <button className="common_btn flex-grow-1" onClick={closeVerifyModal} style={{ background: "#222", border: "1px solid #444", color: "#ccc", borderRadius: "20px", height: "40px" }}>
-                        Cancel
+                        {t("cancel") || "Cancel"}
                       </button>
                       {(verifiedTicket.transaction?.passType || !verifiedTicket.transaction?.ongoingSlots || verifiedTicket.transaction.ongoingSlots.length === 0) && (
                         isCheckedInToday ? (
                           <button className="common_btn flex-grow-1" disabled style={{ background: "rgba(52, 199, 89, 0.15)", color: "#34c759", border: "1px solid #34c759", borderRadius: "20px", height: "40px" }}>
-                            Scanned for Today
+                            {t("scannedForToday") || "Scanned for Today"}
                           </button>
                         ) : (
                           <button className="common_btn flex-grow-1" onClick={handlePerformCheckIn} disabled={checkingIn} style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
                             {checkingIn ? (
                               <Spinner animation="border" size="sm" />
                             ) : verifiedTicket.transaction?.passType ? (
-                              "Check In Pass"
+                              t("checkInPass") || "Check In Pass"
                             ) : (
-                              "Check In"
+                              t("checkIn") || "Check In"
                             )}
                           </button>
                         )
@@ -1842,7 +1929,7 @@ function StaffHome() {
                     </>
                   ) : (
                     <button className="common_btn w-100" onClick={closeVerifyModal} style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
-                      Close
+                      {t("close") || "Close"}
                     </button>
                   )}
                 </div>
@@ -1851,6 +1938,357 @@ function StaffHome() {
           })() : null}
         </Modal.Body>
       </Modal>
+
+      {/* 2. PROFILE OVERLAY */}
+
+      {showProfileOverlay && (
+        <div className="custom-staff-overlay" style={{ zIndex: 2100 }}>
+          <div className="overlay-header">
+            <button
+              onClick={() => setShowProfileOverlay(false)}
+              style={{ background: "transparent", border: "none", color: "#fff", fontSize: "20px", padding: 0 }}
+            >
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                <path fillRule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z" />
+              </svg>
+            </button>
+            <h2 style={{ fontSize: "18px", fontWeight: "600", flexGrow: 1, textAlign: "center", marginRight: "24px" }}>{t("profile") || "Profile"}</h2>
+          </div>
+          <div className="overlay-body" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {/* Staff Card */}
+            <div style={{ background: "#121212", borderRadius: "16px", padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                {(() => {
+                  const imageUrl = staffProfile?.profileImage || staffProfile?.profilePhoto;
+                  if (imageUrl) {
+                    return (
+                      <img
+                        src={getFullImageUrl(imageUrl)}
+                        alt="profile"
+                        style={{ width: "56px", height: "56px", borderRadius: "50%", objectFit: "cover" }}
+                      />
+                    );
+                  }
+                  return (
+                    <div
+                      style={{
+                        width: "56px",
+                        height: "56px",
+                        borderRadius: "50%",
+                        background: "#23ada4",
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: "700",
+                        fontSize: "20px",
+                      }}
+                    >
+                      {staffProfile?.firstName?.charAt(0).toUpperCase() || "S"}
+                    </div>
+                  );
+                })()}
+                <div>
+                  <h4 style={{ margin: "0 0 4px 0", fontSize: "16px", fontWeight: "700", color: "#fff" }}>
+                    {staffProfile?.firstName} {staffProfile?.lastName}
+                  </h4>
+                  <span style={{ fontSize: "12px", color: "#7c7c7c", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z" />
+                    </svg>
+                    {t("memberSince") || "Member since"} Jan 2025
+                  </span>
+                </div>
+              </div>
+              <span className="active-badge" style={{ background: "rgba(35, 173, 164, 0.15)", color: "#23ada4", padding: "4px 10px", borderRadius: "12px", fontSize: "10px", fontWeight: "700" }}>
+                {t("active") || "Active"}
+              </span>
+            </div>
+
+            {/* Assigned Badges Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div
+                onClick={() => {
+                  setOverlayTab("events");
+                  setShowAssignedEventsOverlay(true);
+                  setShowProfileOverlay(false);
+                }}
+                style={{ background: "#121212", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", padding: "16px", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}
+              >
+                <div style={{ background: "rgba(35, 173, 164, 0.1)", color: "#23ada4", borderRadius: "8px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M0 4.5A1.5 1.5 0 0 1 1.5 3h13A1.5 1.5 0 0 1 16 4.5V6a.5.5 0 0 1-.5.5 1.5 1.5 0 0 0 0 3 .5.5 0 0 1 .5.5v1.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 11.5V10a.5.5 0 0 1 .5-.5 1.5 1.5 0 0 0 0-3A.5.5 0 0 1 0 6V4.5ZM1.5 4a.5.5 0 0 0-.5.5v1.05a2.5 2.5 0 0 1 0 4.9v1.05a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-1.05a2.5 2.5 0 0 1 0-4.9V4.5a.5.5 0 0 0-.5-.5h-13Z" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: "13px", fontWeight: "600" }}>{t("assignedEvents") || "Assigned Events"}</span>
+              </div>
+              <div
+                onClick={() => {
+                  setOverlayTab("courses");
+                  setShowAssignedEventsOverlay(true);
+                  setShowProfileOverlay(false);
+                }}
+                style={{ background: "#121212", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", padding: "16px", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}
+              >
+                <div style={{ background: "rgba(35, 173, 164, 0.1)", color: "#23ada4", borderRadius: "8px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8.211 2.047a.5.5 0 0 0-.422 0l-7.5 3.5a.5.5 0 0 0 .025.917l7.5 3a.5.5 0 0 0 .372 0L14 7.14V13a1 1 0 0 0-1 1v2h3v-2a1 1 0 0 0-1-1V6.73l1.176-.47a.5.5 0 0 0 .025-.917l-7.5-3.5ZM8 8.46 1.758 5.965 8 3.052l6.242 2.913L8 8.46Z" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: "13px", fontWeight: "600" }}>{t("assignedCourse") || "Assigned Course"}</span>
+              </div>
+            </div>
+
+            {/* Options List */}
+            <div style={{ background: "#121212", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
+              {/* Email */}
+              <div style={{ padding: "16px", display: "flex", alignItems: "center", gap: "15px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ color: "#23ada4" }}>
+                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z" />
+                  </svg>
+                </div>
+                <div>
+                  <span style={{ display: "block", fontSize: "12px", color: "#7c7c7c" }}>{t("emailAddress") || "Email Address"}</span>
+                  <span style={{ fontSize: "14px", color: "#fff", fontWeight: "500" }}>{staffProfile?.email}</span>
+                </div>
+              </div>
+
+              {/* Change Password */}
+              <div
+                onClick={() => setShowChangePasswordOverlay(true)}
+                style={{ padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                  <div style={{ color: "#23ada4" }}>
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span style={{ display: "block", fontSize: "14px", color: "#fff", fontWeight: "600" }}>{t("changePassword") || "Change Password"}</span>
+                    <span style={{ fontSize: "11px", color: "#7c7c7c" }}>{t("updateYourPasswordDesc") || "Update your password"}</span>
+                  </div>
+                </div>
+                <span style={{ color: "#7c7c7c", fontSize: "20px" }}>&#8250;</span>
+              </div>
+
+              {/* Language */}
+              <div style={{ padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                  <div style={{ color: "#23ada4" }}>
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286H4.545zm1.634-.736L5.433 3.98 4.69 5.978h1.49z" />
+                      <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span style={{ display: "block", fontSize: "14px", color: "#fff", fontWeight: "600" }}>{t("preferredLanguage") || "Language"}</span>
+                  </div>
+                </div>
+                <LanguageSelector />
+              </div>
+            </div>
+
+            {/* Logout Button */}
+            <button
+              onClick={() => {
+                handleLogout();
+                setShowProfileOverlay(false);
+              }}
+              style={{
+                marginTop: "auto",
+                background: "transparent",
+                border: "none",
+                color: "#ff5c5c",
+                fontWeight: "600",
+                fontSize: "15px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                padding: "20px"
+              }}
+            >
+              <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z" />
+                <path fillRule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
+              </svg>
+              {t("logOut") || "Log out"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 3. CHANGE PASSWORD OVERLAY */}
+      {showChangePasswordOverlay && (
+        <div className="custom-staff-overlay" style={{ zIndex: 2200 }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 0 }}></div>
+          <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
+            <div className="overlay-header" style={{ borderBottom: "none" }}>
+              <button
+                onClick={() => setShowChangePasswordOverlay(false)}
+                style={{ background: "transparent", border: "none", color: "#fff", fontSize: "20px", padding: 0 }}
+              >
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                  <path fillRule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z" />
+                </svg>
+              </button>
+            </div>
+            <div className="overlay-body" style={{ padding: "30px 24px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "30px", color: "#fff", textAlign: "center" }}>{t("updateYourPasswordHeader") || "Update your Password"}</h2>
+
+              <form onSubmit={handleUpdatePassword} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                {/* Current Password */}
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showOldPassword ? "text" : "password"}
+                    placeholder={t("enterCurrentPassword") || "Enter Current Password"}
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: "54px",
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "27px",
+                      padding: "0 50px 0 20px",
+                      color: "#fff",
+                      fontSize: "14px",
+                      outline: "none"
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPassword(!showOldPassword)}
+                    style={{
+                      position: "absolute",
+                      right: "20px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "transparent",
+                      border: "none",
+                      color: "#8c8c8c",
+                      padding: 0
+                    }}
+                  >
+                    <img
+                      src={showOldPassword ? "/img/lock.svg" : "/img/unlock.svg"}
+                      alt="toggle password"
+                      style={{ width: "20px", opacity: 0.7 }}
+                    />
+                  </button>
+                </div>
+
+                {/* New Password */}
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder={t("enterNewPassword") || "Enter New Password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: "54px",
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "27px",
+                      padding: "0 50px 0 20px",
+                      color: "#fff",
+                      fontSize: "14px",
+                      outline: "none"
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    style={{
+                      position: "absolute",
+                      right: "20px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "transparent",
+                      border: "none",
+                      color: "#8c8c8c",
+                      padding: 0
+                    }}
+                  >
+                    <img
+                      src={showNewPassword ? "/img/lock.svg" : "/img/unlock.svg"}
+                      alt="toggle password"
+                      style={{ width: "20px", opacity: 0.7 }}
+                    />
+                  </button>
+                </div>
+
+                {/* Confirm Password */}
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder={t("confirmPassword") || "Confirm Password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: "54px",
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "27px",
+                      padding: "0 50px 0 20px",
+                      color: "#fff",
+                      fontSize: "14px",
+                      outline: "none"
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      position: "absolute",
+                      right: "20px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "transparent",
+                      border: "none",
+                      color: "#8c8c8c",
+                      padding: 0
+                    }}
+                  >
+                    <img
+                      src={showConfirmPassword ? "/img/lock.svg" : "/img/unlock.svg"}
+                      alt="toggle password"
+                      style={{ width: "20px", opacity: 0.7 }}
+                    />
+                  </button>
+                </div>
+
+                {/* Update Button */}
+                <button
+                  type="submit"
+                  disabled={updatingPassword}
+                  className="common_btn"
+                  style={{
+                    width: "100%",
+                    height: "54px",
+                    background: "#23ada4",
+                    color: "#fff",
+                    borderRadius: "27px",
+                    border: "none",
+                    fontWeight: "600",
+                    fontSize: "16px",
+                    marginTop: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  {updatingPassword ? <Spinner animation="border" size="sm" /> : (t("update") || "Update")}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -514,7 +514,7 @@ function CoursesManagement() {
                                 fontSize: "14px",
                                 color: "#888",
                               }}>
-                              {course.courseCategory?.name || "General"}
+                              {course.courseCategory?.name || ""}
                             </p>
 
                             {/* Date info */}
@@ -642,17 +642,21 @@ function CoursesManagement() {
                                     year: "numeric",
                                   })
                                   : "N/A"}
-                                {" - "}
-                                {course.endDate
-                                  ? new Date(course.endDate).toLocaleDateString(
-                                    locale,
-                                    {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    },
-                                  )
-                                  : "N/A"}
+                                {course.enrollmentType !== "Ongoing" && (
+                                  <>
+                                    {" - "}
+                                    {course.endDate
+                                      ? new Date(course.endDate).toLocaleDateString(
+                                        locale,
+                                        {
+                                          day: "numeric",
+                                          month: "short",
+                                          year: "numeric",
+                                        },
+                                      )
+                                      : "N/A"}
+                                  </>
+                                )}
                               </span>
                             </div>
 
@@ -707,7 +711,7 @@ function CoursesManagement() {
                           )}
 
                           {/* Session status (Live, Upcoming, Past) */}
-                          {course.status && (
+                          {!course.isDraft && course.status && (
                             <span
                               className="px-2 py-1 rounded text-uppercase"
                               style={{
