@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 :root {
   --primary-teal: #23ada4;
   --dark-bg: #242424;
@@ -6,10 +7,11 @@
 }
 
 body {
-  font-family: "SF Pro Display" !important;
+  /* font-family: "SF Pro Display" !important; */
   font-weight: normal;
   background: var(--dark-bg) !important;
   color: var(--white);
+  font-family: "Inter", sans-serif !important;
 }
 
 .mt-20 {
@@ -117,6 +119,7 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 14px;
   font-weight: 400;
   margin-bottom: 0;
+  margin-top: 10px;
 }
 
 .dashboard-filter {
@@ -309,6 +312,7 @@ input[type="number"]::-webkit-outer-spin-button {
   color: var(--white);
   font-size: 16px;
   font-weight: 500;
+  white-space: pre;
 }
 
 .custom-table-wrapper {
@@ -1028,7 +1032,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .earning-cards h4 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--primary-teal);
   margin-bottom: 0;
@@ -1885,7 +1889,7 @@ input[type="number"]::-webkit-outer-spin-button {
 .status-badge {
   padding: 8px 16px;
   border-radius: 50px;
-  font-size: 0.875rem;
+  font-size: 12px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -2332,3 +2336,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin-bottom: 30px;
   }
 }
+
+ .custom-table-wrapper {
+    max-width: 100%;
+  }

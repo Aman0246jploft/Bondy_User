@@ -253,7 +253,7 @@ export default function CommentsSection({ entityId, entityModel }) {
         <div className="comments-section mt-5 pt-4" style={{ borderTop: "1px solid #333" }}>
             <h3 className="mb-4" style={{ color: "var(--white, #fff)" }}>{t("comments")} ({total})</h3>
 
-            <div className="mb-5 d-flex align-items-start">
+            <div className="mb-5">
 
 
 

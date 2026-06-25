@@ -9,7 +9,7 @@ const VerifyDropdwons = ({ fullName }) => {
   const displayName = fullName?.trim() || "Bondy";
 
   return (
-    <div className="verified-wrapper">
+    <div className="verified-wrapper p-0">
       {/* Clickable Icon */}
       <div className="verified-trigger" onClick={() => setIsOpen(!isOpen)}>
         <img src="/img/veriy_icon.svg" alt={t("verifiedOrganizer")} />

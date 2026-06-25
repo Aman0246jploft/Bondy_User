@@ -745,7 +745,7 @@ function MessageContent() {
                                                         {t("userProfile")}
                                                     </Link>
                                                     <a href="#" className="clear-chat" onClick={(e) => { e.preventDefault(); handleClearChatClick(); }}>
-                                                        <img src="/img/delete.svg" className="me-2" style={{ filter: "invert(40%) sepia(91%) saturate(3452%) hue-rotate(346deg) brightness(103%) contrast(106%)" }} alt="" />
+                                                        <img src="/img/clear_chat.svg" className="me-2" style={{ filter: "invert(40%) sepia(91%) saturate(3452%) hue-rotate(346deg) brightness(103%) contrast(106%)" }} alt="" />
                                                     {t("clearChat")}
                                                     </a>
                                                     {isBlockedByMe ? (

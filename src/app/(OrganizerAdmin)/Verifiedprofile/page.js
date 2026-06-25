@@ -745,10 +745,10 @@ function VerificationPageContent() {
                         {t("resubmitIdWarning") || "Your submitted documents are currently under review. Resubmitting will start a new review process."}
                       </div>
                     )}
-                    <div className="mb-3">
+                    <div className="mb-3 col-lg-4">
                       <Form.Label className="text-light text-start d-block">{t("selectIdDocumentType") || "Select ID Document Type"}</Form.Label>
                       <Form.Select
-                        className="custom-input-dark custom_select"
+                        className="custom-input-dark form-control"
                         value={idType}
                         onChange={(e) => {
                           setIdType(e.target.value);
@@ -936,7 +936,7 @@ function VerificationPageContent() {
                         <Form.Group>
                           <Form.Label className="text-light">{t("bankNameTitle") || "Bank Name"}</Form.Label>
                           <Form.Select
-                            className="custom-input-dark custom_select"
+                            className="custom-input-dark form-control"
                             value={bankAccount.bankName}
                             onChange={(e) => setBankAccount({ ...bankAccount, bankName: e.target.value })}
                           >
@@ -1108,7 +1108,7 @@ function VerificationPageContent() {
                         <Form.Group>
                           <Form.Label className="text-light">{t("businessCategory") || "Business Category"}</Form.Label>
                           <Form.Select
-                            className="custom-input-dark custom_select"
+                            className="custom-input-dark form-control"
                             value={businessCategory}
                             onChange={(e) => setBusinessCategory(e.target.value)}
                           >

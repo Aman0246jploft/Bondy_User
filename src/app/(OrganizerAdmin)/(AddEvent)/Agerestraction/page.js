@@ -211,7 +211,7 @@ function page() {
 
                 {/* Show Attendees Toggle */}
                 <Col md={12} className="mb-4">
-                  <div className="event-frm-bx d-flex justify-content-between align-items-center p-3" style={{ background: "#1a1a1a", borderRadius: "12px" }}>
+                  <div className="event-frm-bx d-flex justify-content-between align-items-center p-3" style={{ background: "#1c1d1e87", borderRadius: "12px" }}>
                     <div>
                       <label className="form-label mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>
                         {t("showAttendeesLabel") || "Show attendees"}
@@ -235,7 +235,7 @@ function page() {
 
                 {/* Entry Notes (Optional) */}
                 <Col md={12} className="mb-4">
-                  <div className="event-frm-bx p-3" style={{ background: "#1a1a1a", borderRadius: "12px" }}>
+                  <div className="event-frm-bx p-3" style={{ background: "#1c1d1e87", borderRadius: "12px" }}>
                     <label className="form-label" style={{ fontSize: "16px", fontWeight: "600" }}>
                       {t("entryNotesLabel") || "Entry Notes (Optional)"}
                     </label>
@@ -253,7 +253,7 @@ function page() {
 
                 {/* Dress Code (Optional) */}
                 <Col md={12} className="mb-4">
-                  <div className="event-frm-bx p-3" style={{ background: "#1a1a1a", borderRadius: "12px" }}>
+                  <div className="event-frm-bx p-3" style={{ background: "#1c1d1e87", borderRadius: "12px" }}>
                     <label className="form-label" style={{ fontSize: "16px", fontWeight: "600" }}>
                       {t("dressCodeLabel") || "Dress Code (Optional)"}
                     </label>

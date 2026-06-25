@@ -243,8 +243,7 @@ function ProfileContent() {
                   <div
                     style={{
                       position: "absolute",
-                      right: "-20px",
-                      top: "10px",
+                      right: "-20px", 
                     }}
                   >
                     {!userProfile?.isMyProfile && (
@@ -452,8 +451,8 @@ function ProfileContent() {
               {actionType === "block" ? t("blockUserWarning") || "Blocked users cannot message or follow you." : ""}
             </p>
 
-            <div className="btns">
-              <button
+            <div className="btns mt-4">
+              <button className="cancel_btn_user"
                 onClick={() => setShowConfirm(false)}
                 style={{ background: "#444", color: "#fff" }}
               >
@@ -461,6 +460,7 @@ function ProfileContent() {
               </button>
 
               <button
+              className="cnr_btn_user"
                 onClick={handleConfirm}
                 style={{
                   background: actionType === "block" ? "#e74c3c" : "#1abc9c",

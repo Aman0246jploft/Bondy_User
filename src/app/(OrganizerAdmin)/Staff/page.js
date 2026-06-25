@@ -373,6 +373,7 @@ function StaffPage() {
           font-size: 16px;
           font-weight: 600;
           margin: 0 0 4px 0;
+          text-transform: capitalize;
         }
         .staff-details p {
           color: #7c7c7c;
@@ -406,13 +407,13 @@ function StaffPage() {
           gap: 15px;
           margin-bottom: 25px;
         }
-        .back-arrow-btn {
-          background: transparent;
-          border: none;
+       .overlay-header .back-arrow-btn{
+          outline: none;       
+          background: #121212;
+          border: 1px solid rgba(255, 255, 255, .06);
           color: #fff;
-          font-size: 24px;
-          cursor: pointer;
-        }
+          border-radius: 12px;
+      }
         .photo-upload-circle {
           width: 110px;
           height: 110px;
@@ -583,8 +584,7 @@ function StaffPage() {
         .entity-text-details p {
           font-size: 12px;
           color: #7c7c7c;
-          margin: 0;
-          white-space: nowrap;
+          margin: 0; 
           overflow: hidden;
           text-overflow: ellipsis;
         }

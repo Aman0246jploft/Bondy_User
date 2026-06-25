@@ -1024,7 +1024,7 @@ function Page() {
                 <div className="mb-4">
                   {formData.batches && formData.batches.length > 0 ? (
                     formData.batches.map((batch, index) => (
-                      <div key={index} className="p-3 mb-2 rounded d-flex justify-content-between align-items-center" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.05)" }}>
+                      <div key={index} className="p-3 mb-2 rounded d-flex justify-content-between align-items-center" style={{ background: "#1c1d1e87", border: "1px solid rgba(255,255,255,0.05)" }}>
                         <div>
                           <h6 className="text-white mb-1" style={{ color: "#23ada4" }}>
                             {batch.batchName}
@@ -1191,7 +1191,7 @@ function Page() {
                       <p className="text-muted mb-3" style={{ fontSize: "12px", marginTop: "-5px" }}>{t("accessPassesDesc") || "Offer prepaid passes for regular students. You manage attendance at the door."}</p>
 
                       {/* 1 Month Pass */}
-                      <div className="p-3 mb-3 rounded" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
+                      <div className="p-3 mb-3 rounded" style={{ background: "#1c1d1e87", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
                         <div className="d-flex justify-content-between align-items-center">
                           <div>
                             <h5 className="text-white mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>{t("oneMonthPass") || "1-month pass"}</h5>
@@ -1226,7 +1226,7 @@ function Page() {
                               <input
                                 type="number"
                                 className="form-control"
-                                style={{ paddingLeft: '35px', backgroundColor: "#111", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontSize: "16px", height: "48px", borderRadius: "10px" }}
+                                style={{ paddingLeft: '35px', backgroundColor: "#1c1d1e87", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontSize: "16px", height: "48px", borderRadius: "10px" }}
                                 name="oneMonthPassPrice"
                                 value={formData.oneMonthPassPrice}
                                 onChange={handleChange}
@@ -1242,7 +1242,7 @@ function Page() {
                       </div>
 
                       {/* 3 Month Pass */}
-                      <div className="p-3 mb-3 rounded" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
+                      <div className="p-3 mb-3 rounded" style={{ background: "#1c1d1e87", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
                         <div className="d-flex justify-content-between align-items-center">
                           <div>
                             <h5 className="text-white mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>{t("threeMonthPass") || "3-month pass"}</h5>
@@ -1467,7 +1467,7 @@ function Page() {
                 </h5>
                 <div className="mb-4">
                   {formData.batches && formData.batches.map((batch, index) => (
-                    <div key={index} className="p-2 mb-2 rounded bg-dark border border-secondary" style={{ fontSize: "14px" }}>
+                    <div key={index} className="p-2 mb-2 rounded border border-secondary" style={{ fontSize: "14px" }}>
                       <strong>{batch.batchName}</strong> • {batch.startTime} - {batch.endTime} • {t("daysLabel") || "Days"}: {batch.days.join(", ")} • {t("seatsLabel") || "Seats"}: {batch.seats}
                     </div>
                   ))}

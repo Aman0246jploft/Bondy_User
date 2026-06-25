@@ -173,12 +173,12 @@ export default function OrganizerReferralPage() {
       </Row>
 
       {/* Referral Link Sharing Section */}
-      <div className="card-varticl mb-4">
+      <div className="card-varticl invite_friends_fr mb-4">
         <h5 className="mb-2 fw-semibold text-white" style={{ fontSize: "16px" }}>{t("inviteFriendsEarnCoupons") || "Invite Friends & Earn Discount Coupons"}</h5>
         <p className="text-secondary mb-3" style={{ fontSize: "13px" }}>
           {t("referralPageBenefitDesc") || "Get ₮75,000 coupon credit for every organizer who joins and hosts their first event or friend who books their first experience."}
         </p>
-        <div className="d-flex align-items-center bg-black p-2 rounded-2" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="d-flex align-items-center bg-black p-2 rounded-2" style={{ border: "1px solid rgba(255,255,255,0.06)", Background:" #242424 !important;" }}>
           {loadingCode ? (
             <Spinner animation="border" size="sm" className="text-info mx-auto" />
           ) : (
@@ -186,8 +186,8 @@ export default function OrganizerReferralPage() {
               <img src="/img/link.svg" alt="link" style={{ width: "16px", height: "16px", marginRight: "10px", filter: "invert(0.6)" }} />
               <input
                 type="text"
-                className="form-control bg-transparent text-white border-0 p-0 shadow-none"
-                style={{ fontSize: "13px" }}
+                className="form-control  text-white border-0 p-0 shadow-none"
+                style={{ fontSize: "13px",  border:"0px !important" }}
                 value={referralLink}
                 readOnly
               />

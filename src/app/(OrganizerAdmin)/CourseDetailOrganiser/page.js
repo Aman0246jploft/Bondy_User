@@ -1259,7 +1259,7 @@ function CourseDetailsContent() {
                             {dayData.slots?.length !== 1 ? "s" : ""}
                           </span>
                         </div>
-                        <span style={{ color: "#23ada4", fontSize: "18px" }}>
+                        <span style={{ color: "#23ada4", fontSize: "14px" }}>
                           {isOpen ? "▲" : "▼"}
                         </span>
                       </button>

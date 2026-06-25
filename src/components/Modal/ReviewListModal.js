@@ -146,10 +146,12 @@ const ReviewListModal = ({ show, onHide, entityId, entityModel }) => {
             </Modal.Body>
             <style jsx global>{`
                 .review-modal .modal-content {
-                    border-radius: 20px;
-                    border: 1px solid #333;
-                    background-color: #121212;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                    border-radius: 15px;
+                    border: 1px solid #444;
+                       overflow: hidden;
+                        background: transparent !important;
+                        padding: 0;
+                        box-shadow: none;
                 }
                 .review-card {
                     background-color: #1a1a1a;
