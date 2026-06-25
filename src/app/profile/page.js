@@ -298,7 +298,7 @@ function ProfileContent() {
                           {userProfile?.totalEventsHosted || 0} {t("eventsHosted")}
                         </span>
                       )}
-                      {userProfile?.role !== "CUSTOMER" && (
+                      {userProfile?.isMyProfile && (
                         <span
                           className="me-3"
                           style={{ cursor: "pointer" }}

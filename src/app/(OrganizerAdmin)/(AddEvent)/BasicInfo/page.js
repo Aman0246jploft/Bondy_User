@@ -14,6 +14,7 @@ function BasicInfoContent() {
   const { t, language } = useLanguage();
   const { eventData, updateEventData, loadEventForEdit } = useEventContext();
   const [categories, setCategories] = useState([]);
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const [uploadingPoster, setUploadingPoster] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -388,7 +389,7 @@ function BasicInfoContent() {
                       {t("eventCategoryLabel")} <span className="text-danger">*</span>
                     </label>
                     <div className="d-flex flex-wrap gap-2 mb-3">
-                      {categories.map((cat) => {
+                      {(showAllCategories ? categories : categories.slice(0, 8)).map((cat) => {
                         const isSelected = eventData.eventCategory === cat._id;
                         return (
                           <button
@@ -414,6 +415,18 @@ function BasicInfoContent() {
                         );
                       })}
                     </div>
+                    {categories.length > 8 && (
+                      <div className="mb-3">
+                        <button
+                          type="button"
+                          className="btn btn-link p-0 text-decoration-none"
+                          style={{ color: "#23ada4", fontSize: "14px", fontWeight: "600" }}
+                          onClick={() => setShowAllCategories(!showAllCategories)}
+                        >
+                          {showAllCategories ? t("showLess") || "Show Less" : t("showMore") || "Show More"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </Col>
                 <Col md={12}>

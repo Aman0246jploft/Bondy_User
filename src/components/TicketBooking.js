@@ -31,13 +31,68 @@ export default function TicketBooking({ item, type, scheduleId }) {
         totalAmount: 0,
         promoApplied: false,
         promoMessage: null,
+        appliedTaxes: [],
     });
+
+    const [showTaxTooltip, setShowTaxTooltip] = useState(false);
 
     const [promoCode, setPromoCode] = useState(""); // Input value
     const [appliedPromoCode, setAppliedPromoCode] = useState(""); // Validated/Applied value
     const [transactionId, setTransactionId] = useState(null); // Store initiated transaction ID (can be array for events)
 
     const { t, language } = useLanguage();
+
+    const getBookingCutOffTime = (startDate, startTime, bookingCutOff) => {
+        if (!startDate || !bookingCutOff) return null;
+        try {
+            const start = new Date(startDate);
+            if (startTime) {
+                const [hours, minutes] = startTime.split(":").map(Number);
+                start.setHours(hours || 0, minutes || 0, 0, 0);
+            }
+
+            const match = bookingCutOff.match(/^(\d+)([hmdw])$/i);
+            if (!match) return null;
+
+            const value = parseInt(match[1], 10);
+            const unit = match[2].toLowerCase();
+
+            let ms = 0;
+            if (unit === "h") ms = value * 60 * 60 * 1000;
+            else if (unit === "m") ms = value * 60 * 1000;
+            else if (unit === "d") ms = value * 24 * 60 * 60 * 1000;
+            else if (unit === "w") ms = value * 7 * 24 * 60 * 60 * 1000;
+
+            return new Date(start.getTime() - ms);
+        } catch (e) {
+            return null;
+        }
+    };
+
+    const isCutOff = () => {
+        const startDate = item?.startDate || item?.currentSchedule?.startDate;
+        const startTime = item?.original?.startTime || item?.currentSchedule?.startTime;
+        const bookingCutOff = item?.bookingCutOff;
+        if (!startDate || !bookingCutOff) return false;
+
+        // If it's a fixedStart course, check batches
+        if (type === "COURSE" && item?.enrollmentType === "fixedStart") {
+            if (selectedBatchId) {
+                const selectedBatch = item.batches?.find(b => b._id === selectedBatchId);
+                return selectedBatch ? !!selectedBatch.bookingCutOffPassed : false;
+            } else {
+                const activeBatches = item.batches?.filter(b => b.status === "Active") || [];
+                if (activeBatches.length === 0) return true;
+                return activeBatches.every(b => !!b.bookingCutOffPassed);
+            }
+        }
+
+        const cutoffTime = getBookingCutOffTime(startDate, startTime, bookingCutOff);
+        if (!cutoffTime) return false;
+        return Date.now() > cutoffTime.getTime();
+    };
+
+    const bookingCutOffPassed = isCutOff();
 
     // Auto-select preselected batch or first available batch
     useEffect(() => {
@@ -69,6 +124,82 @@ export default function TicketBooking({ item, type, scheduleId }) {
         } catch (e) {
             return `₮${amount}`;
         }
+    };
+
+    // For breakdown rows (taxes, discount, total) — shows ₮0 instead of "Free"
+    const formatAmount = (amount) => {
+        if (amount == null || amount === undefined || amount === 0) return "₮0";
+        try {
+            const locale = language === "mn" ? "mn-MN" : "en-US";
+            const formatted = new Intl.NumberFormat(locale, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            }).format(amount);
+            return `₮${formatted}`;
+        } catch (e) {
+            return `₮${amount}`;
+        }
+    };
+
+    const renderServiceChargeRow = () => {
+        const taxDescription = priceBreakdown.appliedTaxes?.[0]?.description;
+        return (
+            <div className="d-flex justify-content-between price_text align-items-center">
+                <span className="d-flex align-items-center" style={{ gap: "6px" }}>
+                    {t("serviceCharge") || "Service Charge"}
+                    {taxDescription && (
+                        <span
+                            className="position-relative d-inline-flex align-items-center"
+                            style={{ cursor: "help" }}
+                            onMouseEnter={() => setShowTaxTooltip(true)}
+                            onMouseLeave={() => setShowTaxTooltip(false)}
+                        >
+                            <span
+                                style={{
+                                    fontSize: "10px",
+                                    width: "14px",
+                                    height: "14px",
+                                    borderRadius: "50%",
+                                    border: "1px solid rgba(255,255,255,0.4)",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    color: "rgba(255,255,255,0.6)",
+                                    lineHeight: "1"
+                                }}
+                            >
+                                i
+                            </span>
+                            <span
+                                style={{
+                                    visibility: showTaxTooltip ? "visible" : "hidden",
+                                    opacity: showTaxTooltip ? 1 : 0,
+                                    width: "160px",
+                                    backgroundColor: "#222",
+                                    color: "#fff",
+                                    textAlign: "center",
+                                    borderRadius: "6px",
+                                    padding: "6px 8px",
+                                    position: "absolute",
+                                    zIndex: 99,
+                                    bottom: "125%",
+                                    left: "50%",
+                                    marginLeft: "-80px",
+                                    fontSize: "11px",
+                                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                                    boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+                                    transition: "opacity 0.2s ease, visibility 0.2s ease",
+                                    pointerEvents: "none",
+                                }}
+                            >
+                                {taxDescription}
+                            </span>
+                        </span>
+                    )}
+                </span>
+                <span>{formatAmount(priceBreakdown.taxes)}</span>
+            </div>
+        );
     };
 
     // Pre-populate ticket selections when event is loaded
@@ -104,6 +235,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                             totalAmount: 0,
                             promoApplied: false,
                             promoMessage: null,
+                            appliedTaxes: [],
                         });
                         return;
                     }
@@ -123,6 +255,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                             totalAmount: res.data.breakdown.totalAmount,
                             promoApplied: res.data.breakdown.promoApplied,
                             promoMessage: res.data.breakdown.promoMessage,
+                            appliedTaxes: res.data.appliedTaxes || [],
                         });
                     }
                 } else if (type === "COURSE") {
@@ -132,7 +265,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                         if (selectedPassType === "single" && slots.length === 0) {
                             setPriceBreakdown({
                                 basePrice: 0, taxes: 0, discount: 0, totalAmount: 0,
-                                promoApplied: false, promoMessage: null,
+                                promoApplied: false, promoMessage: null, appliedTaxes: [],
                             });
                             return;
                         }
@@ -148,7 +281,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                         if (!selectedBatchId) {
                             setPriceBreakdown({
                                 basePrice: 0, taxes: 0, discount: 0, totalAmount: 0,
-                                promoApplied: false, promoMessage: null,
+                                promoApplied: false, promoMessage: null, appliedTaxes: [],
                             });
                             return;
                         }
@@ -172,6 +305,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                             totalAmount: res?.data?.breakdown?.totalAmount,
                             promoMessage: res?.data?.breakdown?.promoMessage || null,
                             promoApplied: res?.data?.breakdown?.promoApplied || false,
+                            appliedTaxes: res?.data?.appliedTaxes || [],
                         });
                     }
                 }
@@ -699,6 +833,11 @@ export default function TicketBooking({ item, type, scheduleId }) {
             case 1:
                 return (
                     <div className="fade-in ">
+                        {/* {bookingCutOffPassed && (
+                            <div className="alert alert-danger text-center mb-4 fw-bold p-3 rounded-3" style={{ border: "1px solid rgba(220, 53, 69, 0.2)", backgroundColor: "rgba(220, 53, 69, 0.05)", color: "#ea868f" }}>
+                                ❌ {t("bookingClosedPassed") || "Booking is closed for this event/course because the booking cut-off time has passed."}
+                            </div>
+                        )} */}
                         {type === "EVENT" ? (
                             <div className="d-flex flex-column gap-3 mb-4">
                                 <h5 className="fw-bold mb-1 text-start">{t("selectTickets") || "Select Tickets"}</h5>
@@ -756,8 +895,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                 <div className="d-flex align-items-center gap-3 bg-dark rounded-pill px-2 py-1" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
                                                     <button
                                                         className="btn btn-sm text-white p-0 border-0 fs-5"
-                                                        style={{ width: "24px", height: "24px", lineHeight: "20px", opacity: ticketQty === 0 ? 0.4 : 1, cursor: ticketQty === 0 ? "not-allowed" : "pointer" }}
-                                                        disabled={ticketQty === 0}
+                                                        style={{ width: "24px", height: "24px", lineHeight: "20px", opacity: (bookingCutOffPassed || ticketQty === 0) ? 0.4 : 1, cursor: (bookingCutOffPassed || ticketQty === 0) ? "not-allowed" : "pointer" }}
+                                                        disabled={bookingCutOffPassed || ticketQty === 0}
                                                         onClick={() => {
                                                             const newQty = Math.max(0, ticketQty - 1);
                                                             setSelectedTickets(prev => ({ ...prev, [ticket._id]: newQty }));
@@ -769,8 +908,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                     <span className="text-white fw-bold" style={{ minWidth: "16px", textAlign: "center" }}>{ticketQty}</span>
                                                     <button
                                                         className="btn btn-sm text-white p-0 border-0 fs-5"
-                                                        style={{ width: "24px", height: "24px", lineHeight: "20px", opacity: (!isSalesActive || ticketQty >= availableQty || availableQty <= 0) ? 0.4 : 1, cursor: (!isSalesActive || ticketQty >= availableQty || availableQty <= 0) ? "not-allowed" : "pointer" }}
-                                                        disabled={!isSalesActive || ticketQty >= availableQty || availableQty <= 0}
+                                                        style={{ width: "24px", height: "24px", lineHeight: "20px", opacity: (bookingCutOffPassed || !isSalesActive || ticketQty >= availableQty || availableQty <= 0) ? 0.4 : 1, cursor: (bookingCutOffPassed || !isSalesActive || ticketQty >= availableQty || availableQty <= 0) ? "not-allowed" : "pointer" }}
+                                                        disabled={bookingCutOffPassed || !isSalesActive || ticketQty >= availableQty || availableQty <= 0}
                                                         onClick={() => {
                                                             const newQty = Math.min(availableQty, ticketQty + 1);
                                                             setSelectedTickets(prev => ({ ...prev, [ticket._id]: newQty }));
@@ -963,7 +1102,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                     key={batch._id}
                                                     className="p-3 rounded-3 text-start"
                                                     onClick={() => {
-                                                        if (!isFull) {
+                                                        if (!isFull && !batch.bookingCutOffPassed) {
                                                             setSelectedBatchId(batch._id);
                                                             if (qty > batch.availableSeats) setQty(batch.availableSeats);
                                                         }
@@ -971,8 +1110,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                     style={{
                                                         backgroundColor: isSelected ? "rgba(35, 173, 164, 0.1)" : "#111",
                                                         border: isSelected ? "1px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
-                                                        cursor: isFull ? "not-allowed" : "pointer",
-                                                        opacity: isFull ? 0.6 : 1,
+                                                        cursor: (isFull || batch.bookingCutOffPassed) ? "not-allowed" : "pointer",
+                                                        opacity: (isFull || batch.bookingCutOffPassed) ? 0.6 : 1,
                                                         transition: "all 0.2s ease",
                                                     }}
                                                 >
@@ -986,9 +1125,15 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                             </p>
                                                         </div>
                                                         <div className="text-end">
-                                                            <span className={`badge ${isFull ? "bg-danger" : "bg-success"}`} style={{ fontSize: "12px" }}>
-                                                                {isFull ? t("full") || "Full" : `${batch.availableSeats} ${t("seatsLeft") || "seats left"}`}
-                                                            </span>
+                                                            {batch.bookingCutOffPassed ? (
+                                                                <span className="badge bg-danger" style={{ fontSize: "12px" }}>
+                                                                    {t("bookingClosed") || "Closed"}
+                                                                </span>
+                                                            ) : (
+                                                                <span className={`badge ${isFull ? "bg-danger" : "bg-success"}`} style={{ fontSize: "12px" }}>
+                                                                    {isFull ? t("full") || "Full" : `${batch.availableSeats} ${t("seatsLeft") || "seats left"}`}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1062,35 +1207,32 @@ export default function TicketBooking({ item, type, scheduleId }) {
                         <div className="price_box">
                             <div className="d-flex justify-content-between price_text">
                                 <span className="">{t("ticketPrice")}</span>
-                                <span className="">{formatPrice(priceBreakdown.basePrice)}</span>
+                                <span className="">{formatAmount(priceBreakdown.basePrice)}</span>
                             </div>
-                            <div className="d-flex justify-content-between  price_text">
-                                <span className="">{t("taxes")}</span>
-                                <span className="">{formatPrice(priceBreakdown.taxes)}</span>
-                            </div>
+                            {renderServiceChargeRow()}
 
                             <div className="d-flex justify-content-between  price_text">
                                 <span>{t("discount")}</span>
-                                <span className="text-info">-{formatPrice(priceBreakdown.discount)}</span>
+                                <span className="text-info">-{formatAmount(priceBreakdown.discount)}</span>
                             </div>
                             <div className="d-flex justify-content-between align-items-center price_text">
                                 <span>{t("total")}</span>
-                                <span className="text-info">{formatPrice(priceBreakdown.totalAmount)}</span>
+                                <span className="text-info">{formatAmount(priceBreakdown.totalAmount)}</span>
                             </div>
                         </div>
                         <div className="tickets_btn">
                             <button
                                 className="common_btn  mt-4"
                                 onClick={item.price === 0 ? handleFreeEnrollment : () => setStep(2)}
-                                disabled={loading || (type === "EVENT"
+                                disabled={loading || bookingCutOffPassed || (type === "EVENT"
                                     ? qty === 0
                                     : item?.enrollmentType === "Ongoing"
                                         ? qty === 0 || (selectedPassType === "single" && Object.keys(selectedSlots).length === 0)
                                         : qty === 0 || !selectedBatchId)}
                             >
-                                {loading ? (t("loading") || "Loading...") : (type === "EVENT"
+                                {loading ? (t("loading") || "Loading...") : (bookingCutOffPassed ? (t("bookingClosed") || "Booking Closed") : (type === "EVENT"
                                     ? (item.price === 0 ? (t("enrollNow") || "Enroll Now") : (t("chooseTicket") || "Choose Ticket"))
-                                    : (item.price === 0 ? (t("enrollNow") || "Enroll Now") : t("payNow")))}
+                                    : (item.price === 0 ? (t("enrollNow") || "Enroll Now") : t("payNow"))))}
                             </button>
                         </div>
                     </div>
@@ -1104,19 +1246,16 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                 <h5 className="text-start">{t("priceDetails")}</h5>
                                 <div className="d-flex justify-content-between price_text">
                                     <span className="">{t("ticketPrice")}</span>
-                                    <span className="">{formatPrice(priceBreakdown.basePrice)}</span>
+                                    <span className="">{formatAmount(priceBreakdown.basePrice)}</span>
                                 </div>
-                                <div className="d-flex justify-content-between  price_text">
-                                    <span className="">{t("taxes")}</span>
-                                    <span className="">{formatPrice(priceBreakdown.taxes)}</span>
-                                </div>
+                                {renderServiceChargeRow()}
                                 <div className="d-flex justify-content-between  price_text">
                                     <span className="">{t("discount")}</span>
-                                    <span className="">-{formatPrice(priceBreakdown.discount)}</span>
+                                    <span className="">-{formatAmount(priceBreakdown.discount)}</span>
                                 </div>
                                 <div className="d-flex justify-content-between price_text">
                                     <span className="">{t("total")}</span>
-                                    <span className="">{formatPrice(priceBreakdown.totalAmount)}</span>
+                                    <span className="">{formatAmount(priceBreakdown.totalAmount)}</span>
                                 </div>
                             </div>
 
@@ -1208,19 +1347,16 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                 <h5 className="text-start">{t("priceDetails")}</h5>
                                 <div className="d-flex justify-content-between price_text">
                                     <span className="">{t("ticketPrice")}</span>
-                                    <span className="">{formatPrice(priceBreakdown.basePrice)}</span>
+                                    <span className="">{formatAmount(priceBreakdown.basePrice)}</span>
                                 </div>
-                                <div className="d-flex justify-content-between  price_text">
-                                    <span className="">{t("taxes")}</span>
-                                    <span className="">{formatPrice(priceBreakdown.taxes)}</span>
-                                </div>
+                                {renderServiceChargeRow()}
                                 <div className="d-flex justify-content-between  price_text">
                                     <span className="">{t("discount")}</span>
-                                    <span className="">-{formatPrice(priceBreakdown.discount)}</span>
+                                    <span className="">-{formatAmount(priceBreakdown.discount)}</span>
                                 </div>
                                 <div className="d-flex justify-content-between price_text">
                                     <span className="">{t("total")}</span>
-                                    <span className="">{formatPrice(priceBreakdown.totalAmount)}</span>
+                                    <span className="">{formatAmount(priceBreakdown.totalAmount)}</span>
                                 </div>
                             </div>
                         </div>

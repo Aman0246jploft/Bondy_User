@@ -188,7 +188,7 @@ function EventDetailsContent() {
               <div className="onwards_sec">
                 <h4 className="mb-0">
                   <span className="price-text">
-                    {minPrice != null ? `₮${minPrice}` : t("freeLabel")}
+                    {minPrice != null ? (minPrice === 0 ? (t("free") || "Free") : `₮${minPrice}`) : t("freeLabel")}
                   </span>
                 </h4>
                 <AuthButton
@@ -455,7 +455,7 @@ function EventDetailsContent() {
                   <div className="onwards_sec mt-4">
                     <h4 className="mb-0">
                       <span className="price-text">
-                        {minPrice != null ? `₮${minPrice}` : t("freeLabel")}
+                        {minPrice != null ? (minPrice === 0 ? (t("free") || "Free") : `₮${minPrice}`) : t("freeLabel")}
                       </span>
                     </h4>
                     <AuthButton
@@ -472,7 +472,7 @@ function EventDetailsContent() {
                 </div>
               </div>
               {/* <Reviews /> */}
-              {eventId && <CommentsSection entityId={eventId} entityModel="Event" />}
+              {/* {eventId && <CommentsSection entityId={eventId} entityModel="Event" />} */}
             </Container>
           </Col>
           <Col lg={4}>

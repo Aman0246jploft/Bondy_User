@@ -61,6 +61,7 @@ function Page() {
   const [step, setStep] = useState(1);
   const [courseId, setCourseId] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingPoster, setUploadingPoster] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
@@ -793,7 +794,7 @@ function Page() {
                       : t("courseCategory") || "Course Category"} <span className="text-danger">*</span>
                   </label>
                   <div className="d-flex flex-wrap gap-2 mb-3">
-                    {categories.map((cat) => {
+                    {(showAllCategories ? categories : categories.slice(0, 8)).map((cat) => {
                       const isSelected = formData.courseCategory === cat._id;
                       return (
                         <button
@@ -819,6 +820,18 @@ function Page() {
                       );
                     })}
                   </div>
+                  {categories.length > 8 && (
+                    <div className="mb-3">
+                      <button
+                        type="button"
+                        className="btn btn-link p-0 text-decoration-none"
+                        style={{ color: "#23ada4", fontSize: "14px", fontWeight: "600" }}
+                        onClick={() => setShowAllCategories(!showAllCategories)}
+                      >
+                        {showAllCategories ? t("showLess") || "Show Less" : t("showMore") || "Show More"}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Poster Image Upload */}
@@ -922,7 +935,7 @@ function Page() {
 
                   {formData.enrollmentType === "Ongoing" ?
                     <Col md={6} className="mb-3 d-flex flex-column justify-content-center">
-                      <div className="form-check form-switch pt-3">
+                      {/* <div className="form-check form-switch pt-3">
                         <input
                           className="form-check-input"
                           type="checkbox"
@@ -934,7 +947,7 @@ function Page() {
                         <label className="form-check-label text-white ms-2" htmlFor="no-end-date-toggle" style={{ cursor: "not-allowed" }}>
                           {t("noEndDateIndefinitely") || "No end date (Ongoing indefinitely)"}
                         </label>
-                      </div>
+                      </div> */}
                     </Col>
                     :
                     <>
@@ -1026,13 +1039,17 @@ function Page() {
                     formData.batches.map((batch, index) => (
                       <div key={index} className="p-3 mb-2 rounded d-flex justify-content-between align-items-center" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.05)" }}>
                         <div>
-                          <h6 className="text-white mb-1" style={{ color: "#23ada4" }}>
-                            {batch.batchName}
-                          </h6>
+                          {formData.enrollmentType !== "Ongoing" && (
+                            <h6 className="text-white mb-1" style={{ color: "#23ada4" }}>
+                              {batch.batchName}
+                            </h6>
+                          )}
                           <p className="small text-secondary mb-0">
                             <strong>{t("timeLabel") || "Time"}:</strong> {batch.startTime} - {batch.endTime} <br />
                             <strong>{t("daysLabel") || "Days"}:</strong> {batch.days.join(", ")} <br />
-                            <strong>{t("seatsPerSessionLabel") || "Seats per Session"}:</strong> {batch.seats}
+                            {formData.enrollmentType === "fixedStart" && (
+                              <span><strong>{t("seatsPerSessionLabel") || "Seats per Session"}:</strong> {batch.seats}</span>
+                            )}
                           </p>
                         </div>
                         <div>
