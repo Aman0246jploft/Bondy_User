@@ -33,7 +33,7 @@ function page() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await authApi.getCategoryList({ type: "event" });
+        const response = await authApi.getCategoryList();
         if (response?.data && response?.data?.categories) {
           setCategories(response?.data?.categories);
         }

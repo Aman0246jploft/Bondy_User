@@ -16,7 +16,7 @@ const authApi = {
             page: 1,
             limit: 1000000000,
             search: "",
-            // ...params
+            ...params
         }
     }),
     loginInit: (data) => apiClient.post("/user/login/init", data),

@@ -40,6 +40,13 @@ export default function CreateTicket(props) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const limits = {
+      subject: 100,
+      description: 1000,
+    };
+    if (limits[name] && value.length > limits[name]) {
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -130,7 +137,13 @@ export default function CreateTicket(props) {
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
+                    maxLength={100}
                   />
+                  <div className="text-end mt-1">
+                    <small className="text-secondary">
+                      {(formData.subject?.length || 0)}/100
+                    </small>
+                  </div>
                 </div>
               </Col>
               <Col md={12}>
@@ -141,7 +154,13 @@ export default function CreateTicket(props) {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
+                    maxLength={1000}
                   ></textarea>
+                  <div className="text-end mt-1">
+                    <small className="text-secondary">
+                      {(formData.description?.length || 0)}/1000
+                    </small>
+                  </div>
                 </div>
               </Col>
             </Row>
