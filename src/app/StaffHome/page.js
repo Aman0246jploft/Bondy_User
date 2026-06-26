@@ -481,8 +481,7 @@ function StaffHome() {
       <style jsx global>{`
         body {
           background: #000 !important;
-          color: #fff;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          color: #fff; 
           margin: 0;
           padding: 0;
           display: flex;

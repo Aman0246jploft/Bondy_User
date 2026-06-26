@@ -319,8 +319,10 @@ export default function ExploreItem({
                                 }}
                               >
                                 <img
-                                  src="/img/fi_992700.png"
+                                  src="/img/clock-icon-clg.svg"
                                   className="info-icon"
+                                  width={20}
+                                  height={20}
                                   alt="icon"
                                 />
                                 {/* {new Date(

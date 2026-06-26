@@ -166,7 +166,10 @@ const FollowListModal = ({ show, onHide, userId, type }) => {
                 .follow-modal .modal-content {
                     border-radius: 15px;
                     border: 1px solid #444;
-                    overflow: hidden;
+                       overflow: hidden;
+                        background: transparent !important;
+                        padding: 0;
+                        box-shadow: none;
                 }
                 .follow-modal .custom-scrollbar::-webkit-scrollbar {
                     width: 6px;

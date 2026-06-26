@@ -540,6 +540,7 @@ function TicketDetailsContent() {
           overflow-wrap: anywhere;
           word-break: break-word;
           max-width: 100%;
+          text-transform: capitalize;
         }
 
         .ticket-subtitle {

@@ -27,6 +27,7 @@ body {
   font-family: "Inter", sans-serif !important;
   font-weight: normal;
   background: var(--dark-bg) !important;
+      overflow-x: hidden;
 }
 
 .report_input {
@@ -406,7 +407,7 @@ select:-webkit-autofill {
 }
 
 .custom-btn {
-  padding: 14px 24px;
+  padding: 10px 24px;
   background-color: var(--primary-teal);
   border: 1px solid var(--primary-teal);
   color: var(--white);
@@ -555,12 +556,13 @@ select:-webkit-autofill {
 }
 
 .confirm_box {
-  background: #2b2a2a;
-  padding: 20px;
-  border-radius: 10px;
-  color: #fff;
-  width: 320px;
-  text-align: center;
+    padding: 30px;
+    color: #fff; 
+    text-align: center;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    background: rgb(28 29 30 / 98%);
+    max-width: 400px;
 }
 
 .confirm_box .btns {
@@ -569,18 +571,47 @@ select:-webkit-autofill {
   margin-top: 15px;
 }
 
-.confirm_box button {
-  padding: 6px 12px;
+.confirm_box button { 
   border: none;
   border-radius: 6px;
   cursor: pointer;
 }
-
+.cnr_btn_user {
+    background-color: #28c7b5 !important;
+    padding: 10px 24px;
+    font-weight: 500;
+    display: inline-flex;
+    transition: opacity 0.3s;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    margin: 0px 10px;
+}
+.cancel_btn_user {
+    border-radius: 10px;
+    border: 1.5px solid var(--primary-teal);
+    padding: 10px 24px;
+    border-radius: 10px;
+    background: transparent;
+    font-weight: 600;
+    text-align: center;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 590;
+    line-height: 25px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--primary-teal);
+    height: 50px;
+}
 .confirm_box button:last-child {
   background: #1abc9c;
   color: #fff;
 }
-
+.confirm_box h4 {
+    font-size: 20px;
+}
 .img-placeholder {
   background-color: #1f1f1f;
   background-image: url("/img/sidebar-logo.svg");
@@ -743,10 +774,11 @@ select:-webkit-autofill {
 
 .main_title h2 {
   color: var(--white);
-  font-size: 32px;
+  font-size: 24px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 600;
   line-height: normal;
+  margin-bottom: 0;
 }
 
 .main_title p {
@@ -1058,8 +1090,7 @@ select:-webkit-autofill {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.08),
     0 10px 30px rgba(0, 0, 0, 0.6);
-  flex-wrap: wrap;
-  max-width: 1000px;
+  flex-wrap: wrap; 
   margin: 40px auto 0;
 }
 
@@ -1311,7 +1342,7 @@ select:-webkit-autofill {
 /* recomended section css start */
 
 .recommended-section {
-  padding-top: 70px;
+  padding-top: 40px;
 }
 
 .section-title {
@@ -1559,7 +1590,7 @@ select:-webkit-autofill {
   }
 
   .main_title h2 {
-    font-size: 25px;
+    font-size: 24px;
     margin: 0;
   }
 }
@@ -3384,7 +3415,7 @@ a.view-map {
 .profile-page .profile_cover {
   width: 100%;
   max-width: 100%;
-  height: 250px;
+    max-height: 350px;
   margin: 0;
   position: relative;
   overflow: hidden;
@@ -3399,9 +3430,7 @@ a.view-map {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(0deg,
-      rgba(0, 0, 0, 0.7) 0%,
-      rgba(0, 0, 0, 0.8) 100%);
+  background: linear-gradient(0deg, #1c242385 0%, rgb(0 0 0 / 0%) 100%);
 }
 
 .profile-page .banner-img {
@@ -3436,7 +3465,7 @@ a.view-map {
 
 .profile-page .user-name {
   color: var(--white);
-  font-size: 32px;
+  font-size: 24px;
   font-style: normal;
   font-weight: 500;
   line-height: normal;
@@ -3590,7 +3619,7 @@ a.view-map {
 }
 
 .new_session_sec {
-  margin-top: 60px;
+  margin-top:40px;
 }
 
 .max_170 {
@@ -3629,6 +3658,7 @@ a.view-map {
   transition: transform 0.2s ease;
   display: flex;
   align-items: center;
+      margin-left: 6px;
 }
 
 .verified-wrapper .verified-trigger:hover {
@@ -5235,8 +5265,9 @@ a.view-map {
 
 .sidebar-closed .customer-sidebar .toggle-btn span:nth-child(3) {
   position: relative;
-  top: -7px;
+  top: -8px;
   transform: rotate(-50deg);
+      right: 2px;
 }
 
 .sidebar-closed .customer-sidebar .toggle-btn span:nth-child(2) {
@@ -5245,12 +5276,16 @@ a.view-map {
 
 .sidebar-closed .customer-sidebar .toggle-btn span:nth-child(1) {
   position: relative;
-  top: 10px;
+  top: 8px;
   transform: rotate(50deg);
+  left: -1px;
 }
 
 .customer-sidebar .sidebar-menu {
   padding: 20px 15px;
+}
+.app-layout.sidebar-closed .logo {
+    display: none;
 }
 
 .customer-sidebar .menu-item {
@@ -5383,6 +5418,8 @@ a.view-map {
   width: 46px;
   height: 46px;
   border-radius: 50%;
+      object-fit: cover;
+    object-position: top;
 }
 
 .accordion-wrapper.create_dropdwon .accordion-content {
@@ -5486,6 +5523,8 @@ a.view-map {
   .avatar img {
     width: 38px;
     height: 38px;
+        object-fit: cover;
+    object-position: top;
   }
 }
 
@@ -5891,11 +5930,10 @@ a.view-map {
 
 .MUiltiSelect {
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 4px;
   display: flex;
   max-width: 100%;
-  margin: 20px auto;
-  width: 1000px;
+  margin: 20px auto; 
 }
 
 .MUiltiSelect .category-checkbox {
@@ -5903,17 +5941,18 @@ a.view-map {
 }
 
 .MUiltiSelect .category-label {
-  color: #fff;
-  cursor: pointer;
-  -webkit-user-select: none;
-  user-select: none;
-  border: 1px solid #1d1d1d;
-  background: rgba(29, 29, 29, 0.2);
-  border-radius: 50px;
-  padding: 6px 15px;
-  font-size: 12px;
-  transition: all 0.3s;
-  text-transform: capitalize;
+    color: #fff;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    border: 1px solid #1d1d1d;
+    background: rgba(29, 29, 29, 0.2);
+    border-radius: 50px;
+    padding: 6px 10px;
+    font-size: 11px;
+    transition: all 0.3s;
+    text-transform: capitalize;
 }
 
 .MUiltiSelect .category-checkbox:checked+.category-label {
@@ -6004,18 +6043,12 @@ a.view-map {
 
 .Explore_sec .description {
   color: var(--white);
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 510;
-  line-height: normal;
-  margin-bottom: 25px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-height: 38px;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: normal;
+    margin-bottom: 25px;
+    opacity: 0.6;
 }
 
 .Explore_sec .info-list {
@@ -6055,7 +6088,7 @@ a.view-map {
 }
 
 .eventExplore {
-  padding-top: 70px;
+  padding-top: 40px;
 }
 
 @media (max-width: 768px) {
@@ -6627,6 +6660,14 @@ ul.pagination {
 
 .event-info-value {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   color: rgba(255, 255, 255, 0.75);
 }
+.verified-wrapper .verified-trigger img {
+    width: 20px;
+    height: 20px;
+}
+h4.ticket-text-wrap {
+    font-size: 16px;
+}
+.invite_friends_fr .form-control{ border: none !important;}

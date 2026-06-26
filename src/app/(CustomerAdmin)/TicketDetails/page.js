@@ -621,11 +621,13 @@ function TicketDetailsContent() {
 
         .ticket-page-title {
           margin: 0;
-          font-size: clamp(1.5rem, 3vw, 1.8rem);
+          font-size: clamp(1.5rem, 3vw, 1.4rem);
           line-height: 1.12;
           overflow-wrap: anywhere;
           word-break: break-word;
           max-width: 100%;
+          margin-bottom: 10px;
+          text-transform: capitalize;
         }
 
         .ticket-subtitle {

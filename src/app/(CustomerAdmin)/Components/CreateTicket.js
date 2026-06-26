@@ -110,7 +110,7 @@ export default function CreateTicket(props) {
         <Modal.Body>
           <Form>
             <Row>
-              <Col md={12}>
+              <Col md={6}>
                 <div className="event-frm-bx">
                   <label className="form-label">{t("ticketCategory") || "Ticket Category"}</label>
                   <select
