@@ -119,9 +119,7 @@ function OTPContent() {
         if (!isUnverifiedOrganizerWithBusiness) {
           if (response?.data?.token) {
             localStorage.setItem("token", response?.data?.token);
-            if (profile) {
-              localStorage.setItem("userProfile", JSON.stringify(profile));
-            }
+            // userProfile will be saved after getSelfProfile() call below with full data
           }
         } else {
           localStorage.removeItem("token");
@@ -131,7 +129,16 @@ function OTPContent() {
         let shouldShowModal = false;
         let nextPath = "/";
         try {
-          if (profile) {
+          // Fetch the full profile after login to get accurate categories data
+          const fullProfileRes = await authApi.getSelfProfile();
+          const fullProfile = fullProfileRes?.data?.user || profile;
+
+          // Save the FULL profile (with categories) to localStorage so AuthGuardContext reads correct data
+          if (fullProfile) {
+            localStorage.setItem("userProfile", JSON.stringify(fullProfile));
+          }
+
+          if (fullProfile) {
             if (userRole === "ORGANIZER") {
               if (!hasBusinessDetails) {
                 nextPath = "/completeprofile";
@@ -142,20 +149,27 @@ function OTPContent() {
                 }
               }
             } else {
-              if (!profile?.firstName || !profile?.lastName) {
+              // Customer: only redirect to setup pages if data is truly missing
+              if (!fullProfile?.firstName || !fullProfile?.lastName) {
                 nextPath = "/completeprofile";
-              } else if (!profile?.categories || profile?.categories.length === 0) {
+              } else if (!fullProfile?.categories || fullProfile?.categories.length === 0) {
                 nextPath = "/insterest";
               } else {
                 nextPath = "/";
               }
             }
           } else {
-            nextPath = "/completeprofile";
+            // No profile at all — new user
+            nextPath = userRole === "ORGANIZER" ? "/completeprofile" : "/completeprofile";
           }
         } catch (err) {
           console.error("Profile check failed:", err);
-          nextPath = "/completeprofile";
+          // If API fails, use the OTP response profile as fallback instead of blindly going to /completeprofile
+          if (profile?.firstName && profile?.lastName) {
+            nextPath = "/";
+          } else {
+            nextPath = "/completeprofile";
+          }
         }
 
         if (shouldShowModal) {

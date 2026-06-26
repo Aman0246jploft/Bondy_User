@@ -27,6 +27,7 @@ function InterestPageContent() {
   const [categories, setCategories] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
@@ -44,6 +45,12 @@ function InterestPageContent() {
         if (profileRes?.status) {
           const profileData = profileRes?.data?.user;
           setProfile(profileData);
+
+          // If user already has categories saved, skip this page
+          if (profileData?.categories && profileData.categories.length > 0) {
+            return router.push("/");
+          }
+
           // Ensure we only store IDs
           const existingInterests = (profileData?.categories || []).map(
             (cat) => cat?._id || cat,
@@ -52,6 +59,8 @@ function InterestPageContent() {
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
+      } finally {
+        setIsChecking(false);
       }
     };
     fetchData();
@@ -148,6 +157,10 @@ function InterestPageContent() {
   useEffect(() => {
     document.title = "Interest - Bondy";
   }, []);
+
+  if (isChecking) {
+    return null; // Don't flash the page while checking profile
+  }
 
   return (
     <div className="login_sec compplete_profile_sec">

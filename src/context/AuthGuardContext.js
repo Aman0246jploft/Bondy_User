@@ -32,6 +32,10 @@ export function AuthGuardProvider({ children }) {
 
   // Single global token check — runs on mount and pathname changes
   useEffect(() => {
+    // Skip guard checks on auth transition pages (OTP flow is mid-login)
+    const authTransitionPages = ["/otp", "/otpSinup", "/login", "/register"];
+    if (authTransitionPages.some((p) => pathname.startsWith(p))) return;
+
     const checkTokenAndStatus = async () => {
       const token = localStorage.getItem("token");
       if (!token) {

@@ -2039,7 +2039,7 @@ function StaffHome() {
             </div>
 
             {/* Options List */}
-            <div style={{ background: "#121212", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
+            <div style={{ background: "#121212", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)", }}>
               {/* Email */}
               <div style={{ padding: "16px", display: "flex", alignItems: "center", gap: "15px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                 <div style={{ color: "#23ada4" }}>

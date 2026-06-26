@@ -22,6 +22,7 @@ function CompleteProfileContent() {
   const router = useRouter();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [categories, setCategories] = useState([]);
   const [modalShow, setModalShow] = useState(false);
@@ -115,6 +116,16 @@ function CompleteProfileContent() {
             }
           } else {
             setIsOrganizer(false);
+
+            // If customer already has profile data filled, skip this step
+            if (profile?.firstName && profile?.lastName) {
+              if (!profile?.categories || profile?.categories.length === 0) {
+                return router.push("/insterest");
+              } else {
+                return router.push("/");
+              }
+            }
+
             setCustomerData({
               firstName: profile?.firstName || "",
               lastName: profile?.lastName || "",
@@ -134,6 +145,8 @@ function CompleteProfileContent() {
         }
       } catch (error) {
         console.error("Failed to load profile data:", error);
+      } finally {
+        setIsChecking(false);
       }
     };
 
@@ -231,6 +244,10 @@ function CompleteProfileContent() {
       setLoading(false);
     }
   };
+
+  if (isChecking) {
+    return null; // Don't flash the form while checking profile
+  }
 
   if (isOrganizer) {
     return (

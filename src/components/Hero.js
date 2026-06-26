@@ -226,11 +226,11 @@ const HeroSlider = ({ setView, onSearch }) => {
         })}
       </Swiper>
 
-      <div className="banner_video" style={{ pointerEvents: "none", zIndex: 1 }}>
+      {/* <div className="banner_video" style={{ pointerEvents: "none", zIndex: 1 }}>
         <video autoPlay muted loop playsInline className="bg_video">
           <source src="/img/video_banner.mp4" type="video/mp4" />
         </video>
-      </div>
+      </div> */}
 
       {/* ---------- NAV BUTTONS ---------- */}
       <button className="nav-btn prev-el">
