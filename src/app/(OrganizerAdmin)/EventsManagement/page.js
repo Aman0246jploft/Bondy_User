@@ -153,7 +153,7 @@ function page() {
       <div className="cards">
         <div className="card-header">
           <div>
-            <h2 className="card-title">{t("programManagement")}</h2>
+            <h2 className="card-title">{t("eventManagement")}</h2>
             <p className="card-desc">
               {t("heyUser")}, {t("welcomeBackSnapshot")}
             </p>

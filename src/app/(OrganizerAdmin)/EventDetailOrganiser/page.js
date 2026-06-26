@@ -226,9 +226,9 @@ function EventDetailsContent() {
     event.totalRevenue !== undefined
       ? event.totalRevenue
       : event.tickets?.reduce(
-          (sum, ticket) => sum + (ticket.soldQty || 0) * (ticket.price || 0),
-          0,
-        ) || 0;
+        (sum, ticket) => sum + (ticket.soldQty || 0) * (ticket.price || 0),
+        0,
+      ) || 0;
 
   const status = event.status?.toLowerCase();
   const isPastOrEnded =
@@ -549,7 +549,7 @@ function EventDetailsContent() {
               </svg>
             </div>
             <div className="kpi-content">
-              <h5>{t("estimatedRevenue") || "Gross Revenue"}</h5>
+              <h5>{t("estimatedRevenue") || "Estimated Revenue"}</h5>
               <h3>₮{estimatedRevenue.toLocaleString()}</h3>
               <p className="small text-muted">
                 {t("ticketsRevenueOnly") || "From direct ticket sales"}
@@ -653,8 +653,8 @@ function EventDetailsContent() {
               <h3>{event.leftSeats?.toLocaleString() || 0}</h3>
               <p className="small text-muted">
                 {event.ReservedExternally > 0
-                  ? `+${event.ReservedExternally} Reserved Externally`
-                  : "Available for public booking"}
+                  ? `+${event.ReservedExternally} ${t("reservedExternally") || "Reserved Externally"}`
+                  : t("availableForPublicBooking") || "Available for public booking"}
               </p>
             </div>
           </div>
@@ -909,10 +909,10 @@ function EventDetailsContent() {
                   <span className="text-white fw-bold">
                     {event.totalBooked || 0}
                   </span>{" "}
-                  / {event.totalTickets || 0} Booked
+                  / {event.totalTickets || 0} {t("booked") || "Booked"}
                 </span>
                 <span style={{ color: "#23ada4" }} className="fw-bold">
-                  {event.leftSeats || 0} Available
+                  {event.leftSeats || 0} {t("available") || "Available"}
                 </span>
               </div>
               <div className="progress-bar-container light">
@@ -1367,13 +1367,13 @@ function EventDetailsContent() {
                         className="d-flex justify-content-between small text-secondary mt-2"
                         style={{ fontSize: "11px" }}>
                         <span>
-                          Sales Start:{" "}
+                          {t("salesStart") || "Sales Start"}:{" "}
                           {tck.salesStart
                             ? new Date(tck.salesStart).toLocaleDateString()
                             : "N/A"}
                         </span>
                         <span>
-                          End:{" "}
+                          {t("end") || "End"}:{" "}
                           {tck.salesEnd
                             ? new Date(tck.salesEnd).toLocaleDateString()
                             : "N/A"}
@@ -1390,13 +1390,12 @@ function EventDetailsContent() {
             )}
           </div>
 
-          {/* Attendees List Card */}
+          {/* Attendees List Card
           <div className="content-card p-4 shadow-sm mb-4">
             <h4 className="card-heading-line mb-3">
               <span>{t("attendeesList") || "Event Attendees"}</span>
             </h4>
 
-            {/* Search Input */}
             <div className="mb-3">
               <input
                 type="text"
@@ -1466,13 +1465,12 @@ function EventDetailsContent() {
                       <Link
                         href={`/Message?userId=${attendee._id}`}
                         className="btn-message-attendee">
-                          {t("message") || "Message"}
+                        {t("message") || "Message"}
                       </Link>
                     </div>
                   ))}
                 </div>
 
-                {/* Pagination Controls */}
                 {attendeesPagination && attendeesPagination.totalPages > 1 && (
                   <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
                     <button
@@ -1492,9 +1490,8 @@ function EventDetailsContent() {
                         ) : (
                           <button
                             key={`attendees-page-${item}`}
-                            className={`btn-pagination page-number ${
-                              attendeesPage === item ? "active" : ""
-                            }`}
+                            className={`btn-pagination page-number ${attendeesPage === item ? "active" : ""
+                              }`}
                             onClick={() => setAttendeesPage(item)}
                             disabled={attendeesPage === item}>
                             {item}
@@ -1517,6 +1514,7 @@ function EventDetailsContent() {
               </p>
             )}
           </div>
+          */}
         </Col>
       </Row>
 
@@ -1842,8 +1840,8 @@ function EventDetailsContent() {
                     {Math.max(
                       0,
                       (event.totalTickets || 0) -
-                        (event.totalAttendees || 0) -
-                        tempReservedExternally,
+                      (event.totalAttendees || 0) -
+                      tempReservedExternally,
                     )}
                   </span>
                 </div>

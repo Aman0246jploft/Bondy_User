@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { Col, Container, Form, Nav, Row, Tab } from "react-bootstrap";
+import { Col, Container, Form, Nav, Row, Tab, Modal, Spinner } from "react-bootstrap";
 import LanguageSelector from "@/components/LanguageSelector";
 import authApi from "@/api/authApi";
 import staffApi from "@/api/staffApi";
@@ -18,6 +18,8 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("Customer");
+
+
 
   useEffect(() => {
     document.title = `${t("login")} - Bondy`;
@@ -162,6 +164,8 @@ export default function Page() {
     onError: () => toast.error("Google login failed. Please try again."),
   });
 
+
+
   const SocialButtons = () => (
     <>
       <div className="other_text">
@@ -223,16 +227,18 @@ export default function Page() {
 
                     <Tab.Container id="Login" activeKey={activeTab} onSelect={(k) => { setActiveTab(k); setErrors({}); }}>
                       <Row>
-                        <Col sm={12} className="mb-4">
-                          <Nav variant="pills" className="custom-nav-pills justify-content-center m-auto">
-                            <Nav.Item>
-                              <Nav.Link eventKey="Customer">{t("customer")}</Nav.Link>
-                            </Nav.Item>
-                            <Nav.Item>
-                              <Nav.Link eventKey="Organizer">{t("organizer")}</Nav.Link>
-                            </Nav.Item>
-                          </Nav>
-                        </Col>
+                        {activeTab !== "Staff" && (
+                          <Col sm={12} className="mb-4">
+                            <Nav variant="pills" className="custom-nav-pills justify-content-center m-auto">
+                              <Nav.Item>
+                                <Nav.Link eventKey="Customer">{t("customer")}</Nav.Link>
+                              </Nav.Item>
+                              <Nav.Item>
+                                <Nav.Link eventKey="Organizer">{t("organizer")}</Nav.Link>
+                              </Nav.Item>
+                            </Nav>
+                          </Col>
+                        )}
 
                         <Col sm={12}>
                           <Tab.Content>
@@ -356,7 +362,12 @@ export default function Page() {
                                     <div className="text-danger small mt-1">{errors.password}</div>
                                   )}
                                 </Form.Group>
-                                <button type="submit" disabled={loading} className="common_btn w-100 d-block text-center text-decoration-none border-0 mt-4">
+                                <div className="text-end mb-3">
+                                  <Link href="/forgot-password?role=staff" className="forgot-password">
+                                    {t("forgotPasswordQuestion")}
+                                  </Link>
+                                </div>
+                                <button type="submit" disabled={loading} className="common_btn w-100 d-block text-center text-decoration-none border-0 mt-3">
                                   {loading ? t("signingIn") : t("signIn")}
                                 </button>
                               </Form>

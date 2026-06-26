@@ -33,7 +33,7 @@ function page() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await authApi.getCategoryList({ type: "event" });
+        const response = await authApi.getCategoryList();
         if (response?.data && response?.data?.categories) {
           setCategories(response?.data?.categories);
         }
@@ -181,66 +181,134 @@ function page() {
             <span>{t("ticketAndPricing")}</span>
           </h4>
           {(!eventData.tickets || eventData.tickets.length === 0 || (eventData.tickets.length === 1 && Number(eventData.tickets[0].price) === 0)) ? (
-            <ul className="event-dtl-rgt">
-              <li>
-                <h6>{t("ticketType")}</h6>
-                <p>{t("freeEvent") || "Free Event"}</p>
-              </li>
-              <li>
-                <h6>{t("pricePerTicketLabel")}</h6>
-                <p>{t("free") || "Free"}</p>
-              </li>
-            </ul>
+            <div style={{
+              background: "rgba(35,173,164,0.08)",
+              border: "1px solid rgba(35,173,164,0.25)",
+              borderRadius: "12px",
+              padding: "20px 24px",
+              display: "flex",
+              alignItems: "center",
+              gap: "16px"
+            }}>
+              <div style={{
+                width: "44px",
+                height: "44px",
+                borderRadius: "50%",
+                background: "rgba(35,173,164,0.18)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0
+              }}>
+                <img src="/img/ticket.svg" alt="" style={{ width: "22px", opacity: 0.85 }} onError={(e) => { e.target.style.display = "none" }} />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.55)", marginBottom: "2px" }}>{t("ticketType")}</p>
+                <p style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "#23ada4" }}>{t("freeEvent") || "Free Event"} &mdash; {t("free") || "Free"}</p>
+              </div>
+            </div>
           ) : (
             <>
-              {eventData.tickets && eventData.tickets.map((ticket, index) => (
-                <div key={index} className="mb-4">
-                  <h5 className="text-white mb-2" style={{ color: "#23ada4" }}>{t("ticketTitle") || `Ticket ${index + 1}`}: {ticket.ticketName}</h5>
-                  <ul className="event-dtl-rgt">
-                    <li>
-                      <h6>{t("quantityAvailable")}</h6>
-                      <p>{ticket.qty}</p>
-                    </li>
-                    <li>
-                      <h6>{t("pricePerTicketLabel")}</h6>
-                      <p>₮{ticket.price}</p>
-                    </li>
-                    {ticket.ticketShortDesc && (
-                      <li>
-                        <h6>{t("shortDescription")}</h6>
-                        <p>{ticket.ticketShortDesc}</p>
-                      </li>
-                    )}
-                    {ticket.salesStart && (
-                      <li>
-                        <h6>{t("salesStartDateLabel")}</h6>
-                        <p>{ticket.salesStart.includes("T") ? ticket.salesStart.split("T")[0] : ticket.salesStart}</p>
-                      </li>
-                    )}
-                    {ticket.salesEnd && (
-                      <li>
-                        <h6>{t("salesEndDateLabel")}</h6>
-                        <p>{ticket.salesEnd.includes("T") ? ticket.salesEnd.split("T")[0] : ticket.salesEnd}</p>
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              ))}
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {eventData.tickets && eventData.tickets.map((ticket, index) => (
+                  <div key={index} style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "14px",
+                    overflow: "hidden"
+                  }}>
+                    {/* Ticket Header */}
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "14px 20px",
+                      background: "rgba(35,173,164,0.1)",
+                      borderBottom: "1px solid rgba(35,173,164,0.2)"
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{
+                          background: "#23ada4",
+                          color: "#fff",
+                          borderRadius: "6px",
+                          padding: "2px 10px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          letterSpacing: "0.5px",
+                          textTransform: "uppercase"
+                        }}>
+                          #{index + 1}
+                        </span>
+                        <span style={{ fontSize: "15px", fontWeight: 600, color: "#fff" }}>{ticket.ticketName}</span>
+                      </div>
+                      <span style={{
+                        fontSize: "18px",
+                        fontWeight: 700,
+                        color: "#23ada4"
+                      }}>₮{ticket.price}</span>
+                    </div>
+                    {/* Ticket Body */}
+                    <div style={{ padding: "16px 20px" }}>
+                      <div style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                        gap: "14px 20px"
+                      }}>
+                        <div>
+                          <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: "4px" }}>{t("quantityAvailable")}</p>
+                          <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#fff" }}>{ticket.qty}</p>
+                        </div>
+                        <div>
+                          <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: "4px" }}>{t("pricePerTicketLabel")}</p>
+                          <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#fff" }}>₮{ticket.price}</p>
+                        </div>
+                        {ticket.salesStart && (
+                          <div>
+                            <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: "4px" }}>{t("salesStartDateLabel")}</p>
+                            <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#fff" }}>{ticket.salesStart.includes("T") ? ticket.salesStart.split("T")[0] : ticket.salesStart}</p>
+                          </div>
+                        )}
+                        {ticket.salesEnd && (
+                          <div>
+                            <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: "4px" }}>{t("salesEndDateLabel")}</p>
+                            <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#fff" }}>{ticket.salesEnd.includes("T") ? ticket.salesEnd.split("T")[0] : ticket.salesEnd}</p>
+                          </div>
+                        )}
+                      </div>
+                      {ticket.ticketShortDesc && (
+                        <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                          <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: "4px" }}>{t("shortDescription")}</p>
+                          <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.75)", lineHeight: 1.5 }}>{ticket.ticketShortDesc}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-              <ul className="event-dtl-rgt mt-2">
-                <li>
-                  <h6>{t("refundPolicy")}</h6>
-                  <p>
-                    {eventData.refundPolicy === "No Refund"
-                      ? t("noRefund")
-                      : eventData.refundPolicy === "1 Day Before"
-                        ? t("oneDayBefore")
-                        : eventData.refundPolicy === "7 Days Before"
-                          ? t("sevenDaysBefore")
-                          : eventData.refundPolicy}
-                  </p>
-                </li>
-              </ul>
+              {/* Refund Policy Strip */}
+              <div style={{
+                marginTop: "14px",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.09)",
+                borderRadius: "10px",
+                padding: "12px 20px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px"
+              }}>
+                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.6px", whiteSpace: "nowrap" }}>{t("refundPolicy")}</span>
+                <span style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.15)" }}></span>
+                <span style={{ fontSize: "14px", fontWeight: 600, color: "#fff" }}>
+                  {eventData.refundPolicy === "No Refund"
+                    ? t("noRefund")
+                    : eventData.refundPolicy === "1 Day Before"
+                      ? t("oneDayBefore")
+                      : eventData.refundPolicy === "7 Days Before"
+                        ? t("sevenDaysBefore")
+                        : eventData.refundPolicy}
+                </span>
+              </div>
             </>
           )}
         </div>
@@ -256,8 +324,8 @@ function page() {
             <li>
               <h6>{t("ageRestrictionLabel")}</h6>
               <p>
-                {activeAge === "ALL" 
-                  ? (t("allAges") || "All Ages") 
+                {activeAge === "ALL"
+                  ? (t("allAges") || "All Ages")
                   : activeAge}
               </p>
             </li>

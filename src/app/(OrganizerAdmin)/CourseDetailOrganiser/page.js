@@ -205,9 +205,10 @@ function CourseDetailsContent() {
     );
   }
 
+  const isOngoing = course.enrollmentType === "Ongoing" || course.endDate === "2099-12-31";
   const isPastOrEnded =
     course.status?.toLowerCase() === "past" ||
-    new Date(course.endDate) < new Date();
+    (!isOngoing && new Date(course.endDate) < new Date());
   const isCancelled = course.status?.toLowerCase() === "cancelled";
   const enrolledPercent =
     course.totalSeats > 0
@@ -221,7 +222,7 @@ function CourseDetailsContent() {
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <Link href="/CoursesManagement" className="back-btn-dashboard">
-          <span className="me-2">←</span> Back to Courses
+          <span className="me-2">←</span> {t("backToCourses") || "Back to Courses"}
         </Link>
         <div className="d-flex gap-2 flex-wrap">
           <button
@@ -266,7 +267,7 @@ function CourseDetailsContent() {
                 </linearGradient>
               </defs>
             </svg>{" "}
-            View All Enrollments
+            {t("viewAllEnrollments") || "View All Enrollments"}
           </button>
           {!isPastOrEnded && !isCancelled && (
             <>
@@ -285,7 +286,7 @@ function CourseDetailsContent() {
                   borderRadius: "8px",
                   cursor: "pointer",
                 }}>
-                🚫 Cancel Course
+                🚫 {t("cancelCourse") || "Cancel Course"}
               </button>
               <Link
                 href={`/AddProgram?courseId=${course._id}`}
@@ -322,7 +323,7 @@ function CourseDetailsContent() {
                     fill="white"
                   />
                 </svg>{" "}
-                Edit Course
+                {t("editCourse") || "Edit Course"}
               </Link>
             </>
           )}
@@ -372,7 +373,7 @@ function CourseDetailsContent() {
               <div className="d-flex gap-2 flex-wrap mb-2 justify-content-center justify-content-md-start">
                 <span
                   className={`badge-status ${course.isDraft ? "draft" : course.status?.toLowerCase() || "upcoming"}`}>
-                  {course.isDraft ? "Draft" : course.status || "Upcoming"}
+                  {course.isDraft ? t("draft") || "Draft" : t(course.status?.toLowerCase()) || course.status || "Upcoming"}
                 </span>
                 <span
                   className="badge-status"
@@ -381,12 +382,12 @@ function CourseDetailsContent() {
                     color: "#ccc",
                     border: "1px solid rgba(255,255,255,0.15)",
                   }}>
-                  {course.enrollmentType || "Ongoing"}
+                  {t(course.enrollmentType?.toLowerCase()) || course.enrollmentType || "Ongoing"}
                 </span>
                 {course.isFeatured && (
-                  <span className="badge-status featured">⭐ Featured</span>
+                  <span className="badge-status featured">⭐ {t("featured") || "Featured"}</span>
                 )}
-                {course.sessionStatus && (
+                {course.sessionStatus && course.sessionStatus !== course.status?.toUpperCase() && (
                   <span
                     className="badge-status"
                     style={{
@@ -398,7 +399,7 @@ function CourseDetailsContent() {
                         course.sessionStatus === "LIVE" ? "#28a745" : "#007bff",
                       border: `1px solid ${course.sessionStatus === "LIVE" ? "rgba(40,167,69,0.3)" : "rgba(0,123,255,0.3)"}`,
                     }}>
-                    {course.sessionStatus}
+                    {t(course.sessionStatus?.toLowerCase()) || course.sessionStatus}
                   </span>
                 )}
               </div>
@@ -714,9 +715,9 @@ function CourseDetailsContent() {
               </svg>
             </div>
             <div className="kpi-content">
-              <h5>Per Session Price</h5>
+              <h5>{t("perSessionPrice") || "Per Session Price"}</h5>
               <h3>₮{(course.price || 0).toLocaleString()}</h3>
-              <p className="small text-muted">Single session rate</p>
+              <p className="small text-muted">{t("singleSessionRate") || "Single session rate"}</p>
             </div>
           </div>
         </Col>
@@ -748,7 +749,7 @@ function CourseDetailsContent() {
               </svg>
             </div>
             <div className="kpi-content">
-              <h5>Enrolled Students</h5>
+              <h5>{t("enrolledStudents") || "Enrolled Students"}</h5>
               <h3>
                 {course.acquiredSeats || 0}{" "}
                 <span className="total-cap">/ {course.totalSeats || 0}</span>
@@ -808,9 +809,9 @@ function CourseDetailsContent() {
               </svg>
             </div>
             <div className="kpi-content">
-              <h5>Seats Available</h5>
+              <h5>{t("seatsAvailable") || "Seats Available"}</h5>
               <h3>{course.leftSeats || 0}</h3>
-              <p className="small text-muted">Open for enrollment</p>
+              <p className="small text-muted">{t("openForEnrollment") || "Open for enrollment"}</p>
             </div>
           </div>
         </Col>
@@ -928,9 +929,9 @@ function CourseDetailsContent() {
               </svg>
             </div>
             <div className="kpi-content">
-              <h5>Total Batches</h5>
+              <h5>{t("totalBatches") || "Total Batches"}</h5>
               <h3>{course.batches?.length || 0}</h3>
-              <p className="small text-muted">Active class groups</p>
+              <p className="small text-muted">{t("activeClassGroups") || "Active class groups"}</p>
             </div>
           </div>
         </Col>
@@ -942,7 +943,7 @@ function CourseDetailsContent() {
           <Col xs={12}>
             <div className="content-card p-4">
               <h4 className="card-heading-line mb-3">
-                <span>Pass Pricing</span>
+                <span>{t("passPricing") || "Pass Pricing"}</span>
               </h4>
               <Row className="gx-3 gy-3">
                 {course.oneMonthPassEnabled && (
@@ -1065,7 +1066,7 @@ function CourseDetailsContent() {
                           <h4 className="pass-price">
                             ₮{(course.oneMonthPassPrice || 0).toLocaleString()}
                           </h4>
-                          <p className="pass-sub">30 days unlimited access</p>
+                          <p className="pass-sub">{t("thirtyDaysUnlimitedAccess") || "30 days unlimited access"}</p>
                         </div>
                       </div>
                     </div>
@@ -1192,7 +1193,7 @@ function CourseDetailsContent() {
                             ₮
                             {(course.threeMonthPassPrice || 0).toLocaleString()}
                           </h4>
-                          <p className="pass-sub">90 days unlimited access</p>
+                          <p className="pass-sub">{t("ninetyDaysUnlimitedAccess") || "90 days unlimited access"}</p>
                         </div>
                       </div>
                     </div>
@@ -1211,7 +1212,7 @@ function CourseDetailsContent() {
           {/* Description */}
           <div className="content-card mb-4 p-4">
             <h4 className="card-heading-line mb-3">
-              <span>Short Description</span>
+              <span>{t("shortDescription") || "Short Description"}</span>
             </h4>
             <ExpandableText text={course.shortdesc} limit={250} />
           </div>
@@ -1219,7 +1220,7 @@ function CourseDetailsContent() {
           {course.longdesc && (
             <div className="content-card mb-4 p-4">
               <h4 className="card-heading-line mb-3">
-                <span>Full Description</span>
+                <span>{t("fullDescription") || "Full Description"}</span>
               </h4>
               <ExpandableText text={course.longdesc} limit={450} />
             </div>
@@ -1228,7 +1229,7 @@ function CourseDetailsContent() {
           {course.whatYouWillLearn && (
             <div className="content-card mb-4 p-4">
               <h4 className="card-heading-line mb-3">
-                <span> What You Will Learn</span>
+                <span> {t("whatYouWillLearn") || "What You Will Learn"}</span>
               </h4>
               <ExpandableText text={course.whatYouWillLearn} limit={400} />
             </div>
@@ -1238,7 +1239,7 @@ function CourseDetailsContent() {
           {course.weeklySchedule && orderedSchedule.length > 0 && (
             <div className="content-card mb-4 p-4">
               <h4 className="card-heading-line mb-3">
-                <span>Weekly Schedule</span>
+                <span>{t("weeklySchedule") || "Weekly Schedule"}</span>
               </h4>
               <div className="d-flex flex-column gap-2">
                 {orderedSchedule.map((day) => {
@@ -1482,7 +1483,7 @@ function CourseDetailsContent() {
                     </linearGradient>
                   </defs>
                 </svg>{" "}
-                Location & Dates
+                {t("locationDates") || "Location & Dates"}
               </span>
             </h4>
             <div className="d-flex flex-column gap-3">
@@ -1559,7 +1560,7 @@ function CourseDetailsContent() {
                     <h6
                       className="mb-1 text-muted"
                       style={{ fontSize: "12px" }}>
-                      Venue
+                      {t("venue") || "Venue"}
                     </h6>
                     <p
                       className="text-white mb-0"
@@ -1690,7 +1691,7 @@ function CourseDetailsContent() {
                 </span>
                 <div>
                   <h6 className="mb-1 text-muted" style={{ fontSize: "12px" }}>
-                    Start Date
+                    {t("startDate") || "Start Date"}
                   </h6>
                   <p className="text-white mb-0" style={{ fontSize: "14px" }}>
                     {course.startDate
@@ -1703,146 +1704,149 @@ function CourseDetailsContent() {
                   </p>
                 </div>
               </div>
-              <div className="d-flex align-items-start gap-2">
-                <span className="icon-schedule">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none">
-                    <path
-                      d="M11.3334 9.33332C11.7016 9.33332 12 9.03485 12 8.66666C12 8.29847 11.7016 7.99999 11.3334 7.99999C10.9652 7.99999 10.6667 8.29847 10.6667 8.66666C10.6667 9.03485 10.9652 9.33332 11.3334 9.33332Z"
-                      fill="url(#paint0_linear_4557_4578)"
-                    />
-                    <path
-                      d="M11.3334 12C11.7016 12 12 11.7015 12 11.3333C12 10.9651 11.7016 10.6667 11.3334 10.6667C10.9652 10.6667 10.6667 10.9651 10.6667 11.3333C10.6667 11.7015 10.9652 12 11.3334 12Z"
-                      fill="url(#paint1_linear_4557_4578)"
-                    />
-                    <path
-                      d="M8.66671 8.66666C8.66671 9.03485 8.36823 9.33332 8.00004 9.33332C7.63185 9.33332 7.33337 9.03485 7.33337 8.66666C7.33337 8.29847 7.63185 7.99999 8.00004 7.99999C8.36823 7.99999 8.66671 8.29847 8.66671 8.66666Z"
-                      fill="url(#paint2_linear_4557_4578)"
-                    />
-                    <path
-                      d="M8.66671 11.3333C8.66671 11.7015 8.36823 12 8.00004 12C7.63185 12 7.33337 11.7015 7.33337 11.3333C7.33337 10.9651 7.63185 10.6667 8.00004 10.6667C8.36823 10.6667 8.66671 10.9651 8.66671 11.3333Z"
-                      fill="url(#paint3_linear_4557_4578)"
-                    />
-                    <path
-                      d="M4.66671 9.33332C5.0349 9.33332 5.33337 9.03485 5.33337 8.66666C5.33337 8.29847 5.0349 7.99999 4.66671 7.99999C4.29852 7.99999 4.00004 8.29847 4.00004 8.66666C4.00004 9.03485 4.29852 9.33332 4.66671 9.33332Z"
-                      fill="url(#paint4_linear_4557_4578)"
-                    />
-                    <path
-                      d="M4.66671 12C5.0349 12 5.33337 11.7015 5.33337 11.3333C5.33337 10.9651 5.0349 10.6667 4.66671 10.6667C4.29852 10.6667 4.00004 10.9651 4.00004 11.3333C4.00004 11.7015 4.29852 12 4.66671 12Z"
-                      fill="url(#paint5_linear_4557_4578)"
-                    />
-                    <path
-                      fill-rule="evenodd"
-                      clip-rule="evenodd"
-                      d="M4.66671 1.16666C4.94285 1.16666 5.16671 1.39051 5.16671 1.66666V2.17514C5.60804 2.16665 6.09426 2.16665 6.62901 2.16666H9.37099C9.90575 2.16665 10.392 2.16665 10.8334 2.17514V1.66666C10.8334 1.39051 11.0572 1.16666 11.3334 1.16666C11.6095 1.16666 11.8334 1.39051 11.8334 1.66666V2.21805C12.0067 2.23126 12.1708 2.24787 12.3261 2.26875C13.1077 2.37383 13.7403 2.59524 14.2392 3.09415C14.7381 3.59306 14.9595 4.22569 15.0646 5.00731C15.1667 5.76678 15.1667 6.73719 15.1667 7.96235V9.37093C15.1667 10.5961 15.1667 11.5665 15.0646 12.326C14.9595 13.1076 14.7381 13.7403 14.2392 14.2392C13.7403 14.7381 13.1077 14.9595 12.3261 15.0646C11.5666 15.1667 10.5962 15.1667 9.37101 15.1667H6.6291C5.40394 15.1667 4.4335 15.1667 3.67403 15.0646C2.89241 14.9595 2.25978 14.7381 1.76087 14.2392C1.26196 13.7403 1.04055 13.1076 0.935464 12.326C0.833355 11.5665 0.833364 10.5961 0.833374 9.37093V7.96238C0.833364 6.73721 0.833355 5.76678 0.935464 5.00731C1.04055 4.22569 1.26196 3.59306 1.76087 3.09415C2.25978 2.59524 2.89241 2.37383 3.67403 2.26875C3.82931 2.24787 3.99341 2.23126 4.16671 2.21805V1.66666C4.16671 1.39051 4.39057 1.16666 4.66671 1.16666ZM3.80727 3.25983C3.13655 3.35001 2.75012 3.51912 2.46798 3.80126C2.18584 4.0834 2.01672 4.46983 1.92655 5.14056C1.91128 5.25415 1.89851 5.37373 1.88783 5.49999H14.1123C14.1016 5.37373 14.0888 5.25415 14.0735 5.14056C13.9834 4.46983 13.8142 4.0834 13.5321 3.80126C13.25 3.51912 12.8635 3.35001 12.1928 3.25983C11.5077 3.16772 10.6046 3.16666 9.33337 3.16666H6.66671C5.39549 3.16666 4.49238 3.16772 3.80727 3.25983ZM1.83337 7.99999C1.83337 7.43065 1.83359 6.93514 1.8421 6.49999H14.158C14.1665 6.93514 14.1667 7.43065 14.1667 7.99999V9.33332C14.1667 10.6045 14.1656 11.5076 14.0735 12.1928C13.9834 12.8635 13.8142 13.2499 13.5321 13.5321C13.25 13.8142 12.8635 13.9833 12.1928 14.0735C11.5077 14.1656 10.6046 14.1667 9.33337 14.1667H6.66671C5.39549 14.1667 4.49238 14.1656 3.80727 14.0735C3.13655 13.9833 2.75012 13.8142 2.46798 13.5321C2.18584 13.2499 2.01672 12.8635 1.92655 12.1928C1.83444 11.5076 1.83337 10.6045 1.83337 9.33332V7.99999Z"
-                      fill="url(#paint6_linear_4557_4578)"
-                    />
-                    <defs>
-                      <linearGradient
-                        id="paint0_linear_4557_4578"
-                        x1="4.4237"
-                        y1="-0.59321"
-                        x2="11.5116"
-                        y2="18.9812"
-                        gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#23ADA4" />
-                        <stop offset="1" stop-color="#23ADA4" />
-                      </linearGradient>
-                      <linearGradient
-                        id="paint1_linear_4557_4578"
-                        x1="4.4237"
-                        y1="-0.59321"
-                        x2="11.5116"
-                        y2="18.9812"
-                        gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#23ADA4" />
-                        <stop offset="1" stop-color="#23ADA4" />
-                      </linearGradient>
-                      <linearGradient
-                        id="paint2_linear_4557_4578"
-                        x1="4.4237"
-                        y1="-0.59321"
-                        x2="11.5116"
-                        y2="18.9812"
-                        gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#23ADA4" />
-                        <stop offset="1" stop-color="#23ADA4" />
-                      </linearGradient>
-                      <linearGradient
-                        id="paint3_linear_4557_4578"
-                        x1="4.4237"
-                        y1="-0.59321"
-                        x2="11.5116"
-                        y2="18.9812"
-                        gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#23ADA4" />
-                        <stop offset="1" stop-color="#23ADA4" />
-                      </linearGradient>
-                      <linearGradient
-                        id="paint4_linear_4557_4578"
-                        x1="4.4237"
-                        y1="-0.59321"
-                        x2="11.5116"
-                        y2="18.9812"
-                        gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#23ADA4" />
-                        <stop offset="1" stop-color="#23ADA4" />
-                      </linearGradient>
-                      <linearGradient
-                        id="paint5_linear_4557_4578"
-                        x1="4.4237"
-                        y1="-0.59321"
-                        x2="11.5116"
-                        y2="18.9812"
-                        gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#23ADA4" />
-                        <stop offset="1" stop-color="#23ADA4" />
-                      </linearGradient>
-                      <linearGradient
-                        id="paint6_linear_4557_4578"
-                        x1="4.4237"
-                        y1="-0.59321"
-                        x2="11.5116"
-                        y2="18.9812"
-                        gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#23ADA4" />
-                        <stop offset="1" stop-color="#23ADA4" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </span>
-                <div>
-                  <h6 className="mb-1 text-muted" style={{ fontSize: "12px" }}>
-                    End Date
-                  </h6>
-                  <p className="text-white mb-0" style={{ fontSize: "14px" }}>
-                    {course.endDate
-                      ? new Date(course.endDate).toLocaleDateString(locale, {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                      : "N/A"}
-                  </p>
+              {!isOngoing && (
+                <div className="d-flex align-items-start gap-2">
+                  <span className="icon-schedule">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none">
+                      <path
+                        d="M11.3334 9.33332C11.7016 9.33332 12 9.03485 12 8.66666C12 8.29847 11.7016 7.99999 11.3334 7.99999C10.9652 7.99999 10.6667 8.29847 10.6667 8.66666C10.6667 9.03485 10.9652 9.33332 11.3334 9.33332Z"
+                        fill="url(#paint0_linear_4557_4578)"
+                      />
+                      <path
+                        d="M11.3334 12C11.7016 12 12 11.7015 12 11.3333C12 10.9651 11.7016 10.6667 11.3334 10.6667C10.9652 10.6667 10.6667 10.9651 10.6667 11.3333C10.6667 11.7015 10.9652 12 11.3334 12Z"
+                        fill="url(#paint1_linear_4557_4578)"
+                      />
+                      <path
+                        d="M8.66671 8.66666C8.66671 9.03485 8.36823 9.33332 8.00004 9.33332C7.63185 9.33332 7.33337 9.03485 7.33337 8.66666C7.33337 8.29847 7.63185 7.99999 8.00004 7.99999C8.36823 7.99999 8.66671 8.29847 8.66671 8.66666Z"
+                        fill="url(#paint2_linear_4557_4578)"
+                      />
+                      <path
+                        d="M8.66671 11.3333C8.66671 11.7015 8.36823 12 8.00004 12C7.63185 12 7.33337 11.7015 7.33337 11.3333C7.33337 10.9651 7.63185 10.6667 8.00004 10.6667C8.36823 10.6667 8.66671 10.9651 8.66671 11.3333Z"
+                        fill="url(#paint3_linear_4557_4578)"
+                      />
+                      <path
+                        d="M4.66671 9.33332C5.0349 9.33332 5.33337 9.03485 5.33337 8.66666C5.33337 8.29847 5.0349 7.99999 4.66671 7.99999C4.29852 7.99999 4.00004 8.29847 4.00004 8.66666C4.00004 9.03485 4.29852 9.33332 4.66671 9.33332Z"
+                        fill="url(#paint4_linear_4557_4578)"
+                      />
+                      <path
+                        d="M4.66671 12C5.0349 12 5.33337 11.7015 5.33337 11.3333C5.33337 10.9651 5.0349 10.6667 4.66671 10.6667C4.29852 10.6667 4.00004 10.9651 4.00004 11.3333C4.00004 11.7015 4.29852 12 4.66671 12Z"
+                        fill="url(#paint5_linear_4557_4578)"
+                      />
+                      <path
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M4.66671 1.16666C4.94285 1.16666 5.16671 1.39051 5.16671 1.66666V2.17514C5.60804 2.16665 6.09426 2.16665 6.62901 2.16666H9.37099C9.90575 2.16665 10.392 2.16665 10.8334 2.17514V1.66666C10.8334 1.39051 11.0572 1.16666 11.3334 1.16666C11.6095 1.16666 11.8334 1.39051 11.8334 1.66666V2.21805C12.0067 2.23126 12.1708 2.24787 12.3261 2.26875C13.1077 2.37383 13.7403 2.59524 14.2392 3.09415C14.7381 3.59306 14.9595 4.22569 15.0646 5.00731C15.1667 5.76678 15.1667 6.73719 15.1667 7.96235V9.37093C15.1667 10.5961 15.1667 11.5665 15.0646 12.326C14.9595 13.1076 14.7381 13.7403 14.2392 14.2392C13.7403 14.7381 13.1077 14.9595 12.3261 15.0646C11.5666 15.1667 10.5962 15.1667 9.37101 15.1667H6.6291C5.40394 15.1667 4.4335 15.1667 3.67403 15.0646C2.89241 14.9595 2.25978 14.7381 1.76087 14.2392C1.26196 13.7403 1.04055 13.1076 0.935464 12.326C0.833355 11.5665 0.833364 10.5961 0.833374 9.37093V7.96238C0.833364 6.73721 0.833355 5.76678 0.935464 5.00731C1.04055 4.22569 1.26196 3.59306 1.76087 3.09415C2.25978 2.59524 2.89241 2.37383 3.67403 2.26875C3.82931 2.24787 3.99341 2.23126 4.16671 2.21805V1.66666C4.16671 1.39051 4.39057 1.16666 4.66671 1.16666ZM3.80727 3.25983C3.13655 3.35001 2.75012 3.51912 2.46798 3.80126C2.18584 4.0834 2.01672 4.46983 1.92655 5.14056C1.91128 5.25415 1.89851 5.37373 1.88783 5.49999H14.1123C14.1016 5.37373 14.0888 5.25415 14.0735 5.14056C13.9834 4.46983 13.8142 4.0834 13.5321 3.80126C13.25 3.51912 12.8635 3.35001 12.1928 3.25983C11.5077 3.16772 10.6046 3.16666 9.33337 3.16666H6.66671C5.39549 3.16666 4.49238 3.16772 3.80727 3.25983ZM1.83337 7.99999C1.83337 7.43065 1.83359 6.93514 1.8421 6.49999H14.158C14.1665 6.93514 14.1667 7.43065 14.1667 7.99999V9.33332C14.1667 10.6045 14.1656 11.5076 14.0735 12.1928C13.9834 12.8635 13.8142 13.2499 13.5321 13.5321C13.25 13.8142 12.8635 13.9833 12.1928 14.0735C11.5077 14.1656 10.6046 14.1667 9.33337 14.1667H6.66671C5.39549 14.1667 4.49238 14.1656 3.80727 14.0735C3.13655 13.9833 2.75012 13.8142 2.46798 13.5321C2.18584 13.2499 2.01672 12.8635 1.92655 12.1928C1.83444 11.5076 1.83337 10.6045 1.83337 9.33332V7.99999Z"
+                        fill="url(#paint6_linear_4557_4578)"
+                      />
+                      <defs>
+                        <linearGradient
+                          id="paint0_linear_4557_4578"
+                          x1="4.4237"
+                          y1="-0.59321"
+                          x2="11.5116"
+                          y2="18.9812"
+                          gradientUnits="userSpaceOnUse">
+                          <stop stop-color="#23ADA4" />
+                          <stop offset="1" stop-color="#23ADA4" />
+                        </linearGradient>
+                        <linearGradient
+                          id="paint1_linear_4557_4578"
+                          x1="4.4237"
+                          y1="-0.59321"
+                          x2="11.5116"
+                          y2="18.9812"
+                          gradientUnits="userSpaceOnUse">
+                          <stop stop-color="#23ADA4" />
+                          <stop offset="1" stop-color="#23ADA4" />
+                        </linearGradient>
+                        <linearGradient
+                          id="paint2_linear_4557_4578"
+                          x1="4.4237"
+                          y1="-0.59321"
+                          x2="11.5116"
+                          y2="18.9812"
+                          gradientUnits="userSpaceOnUse">
+                          <stop stop-color="#23ADA4" />
+                          <stop offset="1" stop-color="#23ADA4" />
+                        </linearGradient>
+                        <linearGradient
+                          id="paint3_linear_4557_4578"
+                          x1="4.4237"
+                          y1="-0.59321"
+                          x2="11.5116"
+                          y2="18.9812"
+                          gradientUnits="userSpaceOnUse">
+                          <stop stop-color="#23ADA4" />
+                          <stop offset="1" stop-color="#23ADA4" />
+                        </linearGradient>
+                        <linearGradient
+                          id="paint4_linear_4557_4578"
+                          x1="4.4237"
+                          y1="-0.59321"
+                          x2="11.5116"
+                          y2="18.9812"
+                          gradientUnits="userSpaceOnUse">
+                          <stop stop-color="#23ADA4" />
+                          <stop offset="1" stop-color="#23ADA4" />
+                        </linearGradient>
+                        <linearGradient
+                          id="paint5_linear_4557_4578"
+                          x1="4.4237"
+                          y1="-0.59321"
+                          x2="11.5116"
+                          y2="18.9812"
+                          gradientUnits="userSpaceOnUse">
+                          <stop stop-color="#23ADA4" />
+                          <stop offset="1" stop-color="#23ADA4" />
+                        </linearGradient>
+                        <linearGradient
+                          id="paint6_linear_4557_4578"
+                          x1="4.4237"
+                          y1="-0.59321"
+                          x2="11.5116"
+                          y2="18.9812"
+                          gradientUnits="userSpaceOnUse">
+                          <stop stop-color="#23ADA4" />
+                          <stop offset="1" stop-color="#23ADA4" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </span>
+                  <div>
+                    <h6 className="mb-1 text-muted" style={{ fontSize: "12px" }}>
+                      {t("endDate") || "End Date"}
+                    </h6>
+                    <p className="text-white mb-0" style={{ fontSize: "14px" }}>
+                      {course.endDate
+                        ? new Date(course.endDate).toLocaleDateString(locale, {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                        : "N/A"}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </div>
+              )}
 
-            {course.refundPolicy && (
-              <>
-                <hr style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} />
-                <div>
-                  <h6 className="small text-muted mb-1">Refund Policy</h6>
-                  <p className="text-white mb-0" style={{ fontSize: "14px" }}>
-                    {course.refundPolicy === "No Refund" ? t("noRefund") : course.refundPolicy === "1 Day Before" ? t("oneDayBefore") : course.refundPolicy === "7 Days Before" ? t("sevenDaysBefore") : course.refundPolicy}
-                  </p>
-                </div>
-              </>
-            )}
+
+              {course.refundPolicy && (
+                <>
+                  <hr style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} />
+                  <div>
+                    <h6 className="small text-muted mb-1">{t("refundPolicyLabel") || "Refund Policy"}</h6>
+                    <p className="text-white mb-0" style={{ fontSize: "14px" }}>
+                      {course.refundPolicy === "No Refund" ? t("noRefund") : course.refundPolicy === "1 Day Before" ? t("oneDayBefore") : course.refundPolicy === "7 Days Before" ? t("sevenDaysBefore") : course.refundPolicy}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Batches */}
@@ -1977,7 +1981,7 @@ function CourseDetailsContent() {
           )}
 
           {/* Assigned Staff */}
-          {course.assignedStaff && course.assignedStaff.length > 0 && (
+          {/* {course.assignedStaff && course.assignedStaff.length > 0 && (
             <div className="content-card p-4">
               <h4 className="card-heading-line mb-3">
                 <span>
@@ -2048,7 +2052,7 @@ function CourseDetailsContent() {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
         </Col>
       </Row>
 
@@ -2116,7 +2120,7 @@ function CourseDetailsContent() {
                         fontSize: "11px",
                         padding: "4px 8px",
                       }}>
-                      Cancel this Slot
+                      {t("cancelSlot") || "Cancel Slot"}
                     </button>
                   )}
                 </div>
@@ -2129,7 +2133,7 @@ function CourseDetailsContent() {
                   {selectedSlot?.startTime
                     ? `🕒 ${formatTime(selectedSlot.startTime, true, language)} – ${formatTime(selectedSlot.endTime, true, language)} • `
                     : ""}
-                  {attendeesTotal} enrolled
+                  {attendeesTotal} {t("studentsCount") || "students"}
                 </p>
               </div>
               <button
@@ -2197,7 +2201,7 @@ function CourseDetailsContent() {
                     </svg>
                   </p>
                   <p style={{ color: "#555", fontSize: "14px" }}>
-                    No students enrolled yet.
+                    {t("noStudentsEnrolled") || "No students enrolled yet."}
                   </p>
                 </div>
               ) : (
@@ -2320,10 +2324,10 @@ function CourseDetailsContent() {
                                 border: `1px solid ${attendee.isFullyCheckedIn ? "rgba(40,167,69,0.3)" : attendee.checkedInQty > 0 ? "rgba(255,193,7,0.3)" : "rgba(108,117,125,0.2)"}`,
                               }}>
                               {attendee.isFullyCheckedIn
-                                ? "✓ Checked In"
+                                ? `✓ ${t("checkedIn") || "Checked In"}`
                                 : attendee.checkedInQty > 0
                                   ? `${attendee.checkedInQty}/${attendee.qty} In`
-                                  : "Not Checked In"}
+                                  : t("notCheckedIn") || "Not Checked In"}
                             </span>
                             <p
                               style={{
@@ -2424,14 +2428,13 @@ function CourseDetailsContent() {
             }}>
             <h5
               style={{ color: "#fff", fontWeight: 700, marginBottom: "16px" }}>
-              {cancelMode === "slot" ? "Cancel Slot" : "Cancel Course"}
+              {cancelMode === "slot" ? t("cancelSlot") || "Cancel Slot" : t("cancelCourse") || "Cancel Course"}
             </h5>
             <p
               style={{ color: "#ccc", fontSize: "14px", marginBottom: "20px" }}>
               {cancelMode === "slot"
-                ? // ${selectedSlot?.batchName} for
-                `Are you sure you want to cancel  ${selectedSlot?.date ? selectedSlot.date.split("T")[0] : ""}?`
-                : "Are you sure you want to cancel this entire course? This will cancel all pending bookings and notify enrolled students."}
+                ? (t("cancelSlotConfirm") || "Are you sure you want to cancel {date}?").replace("{date}", selectedSlot?.date ? selectedSlot.date.split("T")[0] : "")
+                : t("cancelCourseConfirm") || "Are you sure you want to cancel this entire course? This will cancel all pending bookings and notify enrolled students."}
             </p>
             <div className="form-group mb-4">
               <label
@@ -2441,7 +2444,7 @@ function CourseDetailsContent() {
                   marginBottom: "8px",
                   display: "block",
                 }}>
-                Reason for Cancellation <span className="text-danger">*</span>
+                {t("reasonCancellation") || "Reason for Cancellation"} <span className="text-danger">*</span>
               </label>
               <textarea
                 value={cancelReason}
@@ -2455,7 +2458,7 @@ function CourseDetailsContent() {
                   minHeight: "80px",
                   padding: "10px",
                 }}
-                placeholder="E.g., Unforeseen circumstances..."></textarea>
+                placeholder={t("enterReasonPlaceholder") || "Enter reason *"}></textarea>
             </div>
             <div className="d-flex justify-content-end gap-2">
               <button
@@ -2470,7 +2473,7 @@ function CourseDetailsContent() {
                   fontSize: "14px",
                 }}
                 disabled={isCancelling}>
-                Keep Course
+                {t("cancel") || "Cancel"}
               </button>
               <button
                 onClick={handleCancelCourse}
@@ -2484,7 +2487,7 @@ function CourseDetailsContent() {
                   fontSize: "14px",
                 }}
                 disabled={isCancelling || !cancelReason.trim()}>
-                {isCancelling ? <Spinner size="sm" /> : "Confirm Cancel"}
+                {isCancelling ? <Spinner size="sm" /> : t("confirmCancel") || "Confirm Cancel"}
               </button>
             </div>
           </div>
@@ -2528,7 +2531,7 @@ function CourseDetailsContent() {
                 marginBottom: "20px",
               }}>
               <h5 style={{ color: "#fff", fontWeight: 700, margin: 0 }}>
-                Adjust Reserved Seats
+                {t("adjustReservedSeats") || "Adjust Reserved Seats"}
               </h5>
               <button
                 onClick={() => setShowReservationModal(false)}
@@ -2601,7 +2604,7 @@ function CourseDetailsContent() {
                         <path
                           fill-rule="evenodd"
                           clip-rule="evenodd"
-                          d="M4.66671 1.16666C4.94285 1.16666 5.16671 1.39051 5.16671 1.66666V2.17514C5.60804 2.16665 6.09426 2.16665 6.62901 2.16666H9.37099C9.90575 2.16665 10.392 2.16665 10.8334 2.17514V1.66666C10.8334 1.39051 11.0572 1.16666 11.3334 1.16666C11.6095 1.16666 11.8334 1.39051 11.8334 1.66666V2.21805C12.0067 2.23126 12.1708 2.24787 12.3261 2.26875C13.1077 2.37383 13.7403 2.59524 14.2392 3.09415C14.7381 3.59306 14.9595 4.22569 15.0646 5.00731C15.1667 5.76678 15.1667 6.73719 15.1667 7.96235V9.37093C15.1667 10.5961 15.1667 11.5665 15.0646 12.326C14.9595 13.1076 14.7381 13.7403 14.2392 14.2392C13.7403 14.7381 13.1077 14.9595 12.3261 15.0646C11.5666 15.1667 10.5962 15.1667 9.37101 15.1667H6.6291C5.40394 15.1667 4.4335 15.1667 3.67403 15.0646C2.89241 14.9595 2.25978 14.7381 1.76087 14.2392C1.26196 13.7403 1.04055 13.1076 0.935464 12.326C0.833355 11.5665 0.833364 10.5961 0.833374 9.37093V7.96238C0.833364 6.73721 0.833355 5.76678 0.935464 5.00731C1.04055 4.22569 1.26196 3.59306 1.76087 3.09415C2.25978 2.59524 2.89241 2.37383 3.67403 2.26875C3.82931 2.24787 3.99341 2.23126 4.16671 2.21805V1.66666C4.16671 1.39051 4.39057 1.16666 4.66671 1.16666ZM3.80727 3.25983C3.13655 3.35001 2.75012 3.51912 2.46798 3.80126C2.18584 4.0834 2.01672 4.46983 1.92655 5.14056C1.91128 5.25415 1.89851 5.37373 1.88783 5.49999H14.1123C14.1016 5.37373 14.0888 5.25415 14.0735 5.14056C13.9834 4.46983 13.8142 4.0834 13.5321 3.80126C13.25 3.51912 12.8635 3.35001 12.1928 3.25983C11.5077 3.16772 10.6046 3.16666 9.33337 3.16666H6.66671C5.39549 3.16666 4.49238 3.16772 3.80727 3.25983ZM1.83337 7.99999C1.83337 7.43065 1.83359 6.93514 1.8421 6.49999H14.158C14.1665 6.93514 14.1667 7.43065 14.1667 7.99999V9.33332C14.1667 10.6045 14.1656 11.5076 14.0735 12.1928C13.9834 12.8635 13.8142 13.2499 13.5321 13.5321C13.25 13.8142 12.8635 13.9833 12.1928 14.0735C11.5077 14.1656 10.6046 14.1667 9.33337 14.1667H6.66671C5.39549 14.1667 4.49238 14.1656 3.80727 14.0735C3.13655 13.9833 2.75012 13.8142 2.46798 13.5321C2.18584 13.2499 2.01672 12.8635 1.92655 12.1928C1.83444 11.5076 1.83337 10.6045 1.83337 9.33332V7.99999Z"
+                          d="M4.66671 1.16666C4.94285 1.16666 5.16671 1.39051 5.16671 1.66666V2.17514C5.60804 2.16665 6.09426 2.16665 6.62901 2.16666H9.37099C9.90575 2.16665 10.392 2.16665 10.8334 2.17514V1.66666C10.8334 1.39051 11.0572 1.16666 11.3334 1.16666C11.6095 1.16666 11.8334 1.39051 11.8334 1.66666V2.21805C12.0067 2.23126 12.1708 2.24787 12.326 2.26875C13.1077 2.37383 13.7403 2.59524 14.2392 3.09415C14.7381 3.59306 14.9595 4.22569 15.0646 5.00731C15.1667 5.76678 15.1667 6.73719 15.1667 7.96235V9.37093C15.1667 10.5961 15.1667 11.5665 15.0646 12.326C14.9595 13.1076 14.7381 13.7403 14.2392 14.2392C13.7403 14.7381 13.1077 14.9595 12.3261 15.0646C11.5666 15.1667 10.5962 15.1667 9.37101 15.1667H6.6291C5.40394 15.1667 4.4335 15.1667 3.67403 15.0646C2.89241 14.9595 2.25978 14.7381 1.76087 14.2392C1.26196 13.7403 1.04055 13.1076 0.935464 12.326C0.833355 11.5665 0.833364 10.5961 0.833374 9.37093V7.96238C0.833364 6.73721 0.833355 5.76678 0.935464 5.00731C1.04055 4.22569 1.26196 3.59306 1.76087 3.09415C2.25978 2.59524 2.89241 2.37383 3.67403 2.26875C3.82931 2.24787 3.99341 2.23126 4.16671 2.21805V1.66666C4.16671 1.39051 4.39057 1.16666 4.66671 1.16666ZM3.80727 3.25983C3.13655 3.35001 2.75012 3.51912 2.46798 3.80126C2.18584 4.0834 2.01672 4.46983 1.92655 5.14056C1.91128 5.25415 1.89851 5.37373 1.88783 5.49999H14.1123C14.1016 5.37373 14.0888 5.25415 14.0735 5.14056C13.9834 4.46983 13.8142 4.0834 13.5321 3.80126C13.25 3.51912 12.8635 3.35001 12.1928 3.25983C11.5077 3.16772 10.6046 3.16666 9.33337 3.16666H6.66671C5.39549 3.16666 4.49238 3.16772 3.80727 3.25983ZM1.83337 7.99999C1.83337 7.43065 1.83359 6.93514 1.8421 6.49999H14.158C14.1665 6.93514 14.1667 7.43065 14.1667 7.99999V9.33332C14.1667 10.6045 14.1656 11.5076 14.0735 12.1928C13.9834 12.8635 13.8142 13.2499 13.5321 13.5321C13.25 13.8142 12.8635 13.9833 12.1928 14.0735C11.5077 14.1656 10.6046 14.1667 9.33337 14.1667H6.66671C5.39549 14.1667 4.49238 14.1656 3.80727 14.0735C3.13655 13.9833 2.75012 13.8142 2.46798 13.5321C2.18584 13.2499 2.01672 12.8635 1.92655 12.1928C1.83444 11.5076 1.83337 10.6045 1.83337 9.33332V7.99999Z"
                           fill="url(#paint6_linear_4557_4578)"
                         />
                         <defs>
@@ -2713,7 +2716,7 @@ function CourseDetailsContent() {
                     fontSize: "13px",
                     margin: "0 0 12px",
                   }}>
-                  Add the number of seats reserved outside of Bondy
+                  {t("addNumberReservedOutside") || "Add the number of seats reserved outside of Bondy"}
                 </p>
                 <div className="d-flex align-items-center justify-content-center gap-3">
                   <button
@@ -2788,7 +2791,7 @@ function CourseDetailsContent() {
                     textTransform: "uppercase",
                     fontWeight: 600,
                   }}>
-                  Updated capacity overview
+                  {t("updatedCapacityOverview") || "Updated capacity overview"}
                 </h6>
                 <div
                   style={{
@@ -2797,7 +2800,7 @@ function CourseDetailsContent() {
                     fontSize: "13px",
                     marginBottom: "8px",
                   }}>
-                  <span style={{ color: "#888" }}>Reserved externally</span>
+                  <span style={{ color: "#888" }}>{t("reservedExternally") || "Reserved externally"}</span>
                   <span style={{ color: "#f1c40f", fontWeight: 600 }}>
                     {tempReservedExternally}
                   </span>
@@ -2809,7 +2812,7 @@ function CourseDetailsContent() {
                     fontSize: "13px",
                     marginBottom: "8px",
                   }}>
-                  <span style={{ color: "#888" }}>Capacity</span>
+                  <span style={{ color: "#888" }}>{t("capacity") || "Capacity"}</span>
                   <span style={{ color: "#fff", fontWeight: 600 }}>
                     {selectedSlot.seats}
                   </span>
@@ -2825,7 +2828,7 @@ function CourseDetailsContent() {
                   marginTop: "16px",
                   marginBottom: "0",
                 }}>
-                * This change applies only to this specific slot date.
+                {t("changeAppliesSpecificSlot") || "* This change applies only to this specific slot date."}
               </p>
             </div>
 
@@ -2848,7 +2851,7 @@ function CourseDetailsContent() {
                   fontSize: "14px",
                 }}
                 disabled={isSavingReservation}>
-                Cancel
+                {t("cancel") || "Cancel"}
               </button>
               <button
                 onClick={handleSaveReservation}
@@ -2863,7 +2866,7 @@ function CourseDetailsContent() {
                   fontWeight: 600,
                 }}
                 disabled={isSavingReservation}>
-                {isSavingReservation ? <Spinner size="sm" /> : "Save Changes"}
+                {isSavingReservation ? <Spinner size="sm" /> : t("saveChanges") || "Save Changes"}
               </button>
             </div>
           </div>

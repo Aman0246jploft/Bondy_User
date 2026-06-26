@@ -196,7 +196,7 @@ const EventSection = ({
                           const prices = item.tickets.map(tk => tk.price).filter(p => typeof p === 'number');
                           if (prices.length === 0) return t("freeLabel");
                           const minPrice = Math.min(...prices);
-                          return `₮${minPrice}`;
+                          return minPrice === 0 ? (t("free") || "Free") : `₮${minPrice}`;
                         })()}
                       </div>
                     </div>

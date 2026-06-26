@@ -75,7 +75,7 @@ function CompleteProfileContent() {
     const fetchInitialData = async () => {
       try {
         // Fetch categories first for organizer dropdown
-        const catRes = await authApi.getCategoryList({ type: "event" });
+        const catRes = await authApi.getCategoryList();
         if (catRes?.status) {
           setCategories(catRes?.data?.categories || []);
         }

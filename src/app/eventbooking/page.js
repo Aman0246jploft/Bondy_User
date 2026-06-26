@@ -76,6 +76,7 @@ function BookingPageContent() {
               venueAddress: evt?.venueAddress,
               startDate: evt?.startDate,
               endDate: evt?.endDate,
+              bookingCutOff: evt?.bookingCutOff,
               original: evt,
             });
           }
@@ -104,6 +105,7 @@ function BookingPageContent() {
               oneMonthPassPrice: course?.oneMonthPassPrice,
               threeMonthPassEnabled: course?.threeMonthPassEnabled,
               threeMonthPassPrice: course?.threeMonthPassPrice,
+              bookingCutOff: course?.bookingCutOff,
               original: course,
             });
           }
@@ -219,6 +221,7 @@ function BookingPageContent() {
                     ? `${bookingItem.categoryName} • `
                     : ""}
                   {bookingItem.status}
+                  {bookingItem.bookingCutOff && ` • ${t("bookingCutOffReview") || t("bookingCutOff") || "Booking Cut-off:"} ${bookingItem.bookingCutOff}`}
                 </p>
                 <Button className="book_mark_icon" onClick={handleWishlistToggle} disabled={wishlistLoading}>
                   <img

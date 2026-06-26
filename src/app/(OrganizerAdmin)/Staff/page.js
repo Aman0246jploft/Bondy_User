@@ -28,6 +28,15 @@ function StaffPage() {
   const fileInputRef = useRef(null);
   const entityListRef = useRef(null);
 
+  // Edit and Delete states
+  const [editingStaffId, setEditingStaffId] = useState(null);
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState(null);
+  const [deletingStaff, setDeletingStaff] = useState(false);
+
+
+
   // Assignment Modal states
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
@@ -121,11 +130,55 @@ function StaffPage() {
     }
   };
 
-  // Handle submission of the Add Staff form
-  const handleAddStaffSubmit = async (e) => {
+  // Handle click for Add Staff button to reset edit state
+  const handleAddClick = () => {
+    setEditingStaffId(null);
+    setFormFullName("");
+    setFormEmail("");
+    setFormPassword("");
+    setFormPhoto("");
+    setShowAddStaff(true);
+  };
+
+  // Open edit view for a specific staff member
+  const handleOpenEdit = (staff) => {
+    setEditingStaffId(staff._id);
+    setFormFullName(`${staff.firstName || ""} ${staff.lastName || ""}`.trim());
+    setFormEmail(staff.email || "");
+    setFormPassword(""); // optional during edit
+    setFormPhoto(staff.profileImage || "");
+    setShowAddStaff(true);
+  };
+
+  // Handle deletion of a staff member
+  const handleDeleteStaff = async () => {
+    if (!staffToDelete) return;
+    try {
+      setDeletingStaff(true);
+      const res = await staffApi.removeStaff(staffToDelete._id);
+      if (res?.status) {
+        toast.success(t("staffDeletedSuccessfully") || "Staff member deleted successfully");
+        setShowDeleteModal(false);
+        setStaffToDelete(null);
+        fetchStaffList();
+      }
+    } catch (err) {
+      console.error("Failed to delete staff member", err);
+      toast.error(err?.response?.data?.message || t("failedToDeleteStaff") || "Failed to delete staff member");
+    } finally {
+      setDeletingStaff(false);
+    }
+  };
+
+  // Handle submission of the Add/Edit Staff form
+  const handleStaffFormSubmit = async (e) => {
     e.preventDefault();
-    if (!formFullName.trim() || !formEmail.trim() || !formPassword.trim()) {
+    if (!formFullName.trim() || !formEmail.trim()) {
       toast.error(t("fillRequiredFields") || "Please fill in all required fields.");
+      return;
+    }
+    if (!editingStaffId && !formPassword.trim()) {
+      toast.error(t("passwordRequired") || "Password is required for new staff.");
       return;
     }
 
@@ -134,25 +187,38 @@ function StaffPage() {
       const payload = {
         fullname: formFullName,
         email: formEmail,
-        password: formPassword,
-        profilePhoto: formPhoto,
+        profilePhoto: formPhoto || null,
       };
+      if (formPassword.trim()) {
+        payload.password = formPassword;
+      }
 
-      const res = await staffApi.addStaff(payload);
+      let res;
+      if (editingStaffId) {
+        res = await staffApi.editStaff(editingStaffId, payload);
+      } else {
+        res = await staffApi.addStaff(payload);
+      }
+
       if (res?.status) {
-        toast.success(t("staffAddedSuccessfully") || "Staff member added successfully");
+        toast.success(
+          editingStaffId
+            ? t("staffUpdatedSuccessfully") || "Staff member updated successfully"
+            : t("staffAddedSuccessfully") || "Staff member added successfully"
+        );
         // Reset form
         setFormFullName("");
         setFormEmail("");
         setFormPassword("");
         setFormPhoto("");
+        setEditingStaffId(null);
         setShowAddStaff(false);
         // Refresh list
         fetchStaffList();
       }
     } catch (err) {
-      console.error("Failed to add staff member", err);
-      toast.error(err?.response?.data?.message || t("failedToAddStaff") || "Failed to add staff member");
+      console.error("Failed to save staff member", err);
+      toast.error(err?.response?.data?.message || t("failedToSaveStaff") || "Failed to save staff member");
     } finally {
       setSubmittingStaff(false);
     }
@@ -400,6 +466,62 @@ function StaffPage() {
           height: 20px;
           margin-bottom: 4px;
         }
+        .staff-actions-wrapper {
+          position: relative;
+          display: inline-block;
+        }
+        .three-dots-btn {
+          background: transparent;
+          border: none;
+          color: #7c7c7c;
+          font-size: 20px;
+          cursor: pointer;
+          padding: 8px 12px;
+          border-radius: 50%;
+          transition: background-color 0.2s ease, color 0.2s ease;
+          line-height: 1;
+        }
+        .three-dots-btn:hover {
+          background: rgba(255, 255, 255, 0.05);
+          color: #fff;
+        }
+        .staff-dropdown-menu {
+          position: absolute;
+          right: 0;
+          top: 100%;
+          background: #1e1e1e;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+          z-index: 1000;
+          min-width: 120px;
+          display: flex;
+          flex-direction: column;
+          padding: 4px 0;
+          margin-top: 4px;
+        }
+        .staff-dropdown-item {
+          background: transparent;
+          border: none;
+          color: #fff;
+          text-align: left;
+          padding: 10px 16px;
+          font-size: 14px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+          width: 100%;
+        }
+        .staff-dropdown-item:hover {
+          background: rgba(35, 173, 164, 0.1);
+          color: #23ada4;
+        }
+        .staff-dropdown-item.delete {
+          color: #ff4d4d;
+        }
+        .staff-dropdown-item.delete:hover {
+          background: rgba(255, 77, 77, 0.1);
+          color: #ff4d4d;
+        }
         /* Add Staff View */
         .add-staff-header {
           display: flex;
@@ -623,10 +745,13 @@ function StaffPage() {
           <div className="add-staff-header">
             <button
               className="back-arrow-btn"
-              onClick={() => setShowAddStaff(false)}>
+              onClick={() => {
+                setShowAddStaff(false);
+                setEditingStaffId(null);
+              }}>
               &#8592;
             </button>
-            <h2>{t("addStaff") || "Add Staff"}</h2>
+            <h2>{editingStaffId ? (t("editStaff") || "Edit Staff") : (t("addStaff") || "Add Staff")}</h2>
           </div>
           <p
             style={{
@@ -634,10 +759,12 @@ function StaffPage() {
               fontSize: "14px",
               marginBottom: "30px",
             }}>
-            {t("addStaffDesc") || "Assign a new team member to your scanning pool. They will be able to access the event check-in tools immediately."}
+            {editingStaffId
+              ? (t("editStaffDesc") || "Update this team member's information.")
+              : (t("addStaffDesc") || "Assign a new team member to your scanning pool. They will be able to access the event check-in tools immediately.")}
           </p>
 
-          <form onSubmit={handleAddStaffSubmit}>
+          <form onSubmit={handleStaffFormSubmit}>
             {/* Circle Upload Photo */}
             <div
               className="photo-upload-circle"
@@ -653,9 +780,9 @@ function StaffPage() {
                 />
               ) : (
                 <div className="upload-placeholder">
-                  <svg viewBox="0 0 24 24">
+                  {/* <svg viewBox="0 0 24 24">
                     <path d="M19 12h-2v3h-3v2h3v3h2v-3h3v-2h-3zM11.5 8.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM17 9.5V6H7L4.5 9.5 3 8v11h11v-2H5.4l1.6-2.2 2.2 2.2h3.8z" />
-                  </svg>
+                  </svg> */}
                   <span>{t("addPhoto") || "Add Photo"}</span>
                 </div>
               )}
@@ -692,13 +819,13 @@ function StaffPage() {
             </div>
 
             <div className="staff-form-group">
-              <label>{t("passwordLabel") || "Password"} *</label>
+              <label>{t("passwordLabel") || "Password"}{!editingStaffId && " *"}</label>
               <input
                 type="password"
-                placeholder={t("enterPasswordPlaceholder") || "Enter password"}
+                placeholder={editingStaffId ? (t("enterNewPasswordPlaceholder") || "Enter new password (optional)") : (t("enterPasswordPlaceholder") || "Enter password")}
                 value={formPassword}
                 onChange={(e) => setFormPassword(e.target.value)}
-                required
+                required={!editingStaffId}
               />
             </div>
 
@@ -708,6 +835,8 @@ function StaffPage() {
               disabled={submittingStaff}>
               {submittingStaff ? (
                 <Spinner animation="border" size="sm" />
+              ) : editingStaffId ? (
+                t("saveChanges") || "Save Changes"
               ) : (
                 t("addStaffMember") || "Add Staff Member"
               )}
@@ -723,7 +852,7 @@ function StaffPage() {
             <h2>{t("staffHeader") || "Staff"}</h2>
             <button
               className="add-staff-btn-circle"
-              onClick={() => setShowAddStaff(true)}>
+              onClick={handleAddClick}>
               +
             </button>
           </div>
@@ -774,12 +903,62 @@ function StaffPage() {
                     </div>
                   </div>
 
-                  <button
-                    className="assign-action-btn"
-                    onClick={() => handleOpenAssign(staff)}>
-                    <img src="/img/ticket-icon.svg" alt="Assign" />
-                    <span>{t("assignEvent") || "Assign Event"}</span>
-                  </button>
+                  <div className="d-flex align-items-center gap-3">
+                    <button
+                      className="assign-action-btn"
+                      onClick={() => handleOpenAssign(staff)}>
+                      <img src="/img/ticket-icon.svg" alt="Assign" />
+                      <span>{t("assignEvent") || "Assign Event"}</span>
+                    </button>
+
+                    <div className="staff-actions-wrapper">
+                      <button
+                        type="button"
+                        className="three-dots-btn"
+                        onClick={() => {
+                          setActiveDropdownId(activeDropdownId === staff._id ? null : staff._id);
+                        }}>
+                        ⋮
+                      </button>
+                      {activeDropdownId === staff._id && (
+                        <>
+                          <div
+                            style={{
+                              position: "fixed",
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              zIndex: 999,
+                              background: "transparent",
+                            }}
+                            onClick={() => setActiveDropdownId(null)}
+                          />
+                          <div className="staff-dropdown-menu" style={{ zIndex: 1000 }}>
+                            <button
+                              type="button"
+                              className="staff-dropdown-item"
+                              onClick={() => {
+                                setActiveDropdownId(null);
+                                handleOpenEdit(staff);
+                              }}>
+                              {t("edit") || "Edit"}
+                            </button>
+                            <button
+                              type="button"
+                              className="staff-dropdown-item delete"
+                              onClick={() => {
+                                setActiveDropdownId(null);
+                                setStaffToDelete(staff);
+                                setShowDeleteModal(true);
+                              }}>
+                              {t("delete") || "Delete"}
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -932,6 +1111,43 @@ function StaffPage() {
               t("save") || "Save"
             )}
           </button>
+        </Modal.Body>
+      </Modal>
+
+      {/* --------------------------------------------------------------- */}
+      {/* DELETE CONFIRMATION MODAL */}
+      {/* --------------------------------------------------------------- */}
+      <Modal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        centered
+        className="dark-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>{t("deleteStaffTitle") || "Delete Staff Member"}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ background: "#161616", padding: "20px" }}>
+          <p style={{ color: "#fff", fontSize: "16px", marginBottom: "25px" }}>
+            {t("deleteStaffConfirmText") || "Are you sure you want to delete this staff member? This action cannot be undone."}
+          </p>
+          <div className="d-flex gap-3 justify-content-end">
+            <button
+              className="btn btn-secondary px-4 py-2"
+              style={{ borderRadius: "20px", fontSize: "14px" }}
+              onClick={() => setShowDeleteModal(false)}>
+              {t("cancel") || "Cancel"}
+            </button>
+            <button
+              className="btn btn-danger px-4 py-2"
+              style={{ borderRadius: "20px", fontSize: "14px" }}
+              onClick={handleDeleteStaff}
+              disabled={deletingStaff}>
+              {deletingStaff ? (
+                <Spinner animation="border" size="sm" />
+              ) : (
+                t("yesDelete") || "Yes, Delete"
+              )}
+            </button>
+          </div>
         </Modal.Body>
       </Modal>
     </div>

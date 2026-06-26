@@ -4,10 +4,13 @@ import CreateTicket from "../Components/CreateTicket";
 import authApi from "../../../api/authApi";
 import supportTicketApi from "../../../api/supportTicketApi";
 import { useLanguage } from "@/context/LanguageContext";
+import Modal from "react-bootstrap/Modal";
 
 function Page() {
   const { t } = useLanguage();
   const [modalShow, setModalShow] = useState(false);
+  const [detailModalShow, setDetailModalShow] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
   const [tickets, setTickets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -48,6 +51,21 @@ function Page() {
       }
     } catch (error) {
       console.error("Error fetching tickets:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewDetails = async (ticketId) => {
+    setLoading(true);
+    try {
+      const response = await supportTicketApi.getTicketDetails(ticketId);
+      if (response?.status && response?.data) {
+        setSelectedTicket(response.data.ticket);
+        setDetailModalShow(true);
+      }
+    } catch (error) {
+      console.error("Error fetching ticket details:", error);
     } finally {
       setLoading(false);
     }
@@ -167,6 +185,7 @@ function Page() {
                   <th>{t("subject")}</th>
                   <th>{t("status")}</th>
                   <th>{t("lastUpdateDate")}</th>
+                  <th>{t("actions") || "Actions"}</th>
                 </tr>
               </thead>
               <tbody>
@@ -201,11 +220,23 @@ function Page() {
                           )
                           : "-"}
                       </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn p-0 border-0 bg-transparent"
+                          onClick={() => handleViewDetails(ticket.ticketId)}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: "pointer" }}>
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                          </svg>
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center">
+                    <td colSpan="6" className="text-center">
                       {t("noTicketsFound")}
                     </td>
                   </tr>
@@ -222,6 +253,68 @@ function Page() {
         onHide={() => setModalShow(false)}
         onSuccess={fetchTickets}
       />
+
+      {/* Detail Modal */}
+      <Modal
+        show={detailModalShow}
+        onHide={() => {
+          setDetailModalShow(false);
+          setSelectedTicket(null);
+        }}
+        size="lg"
+        centered
+        scrollable
+        className="common_modal gradientsSc"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>{t("ticketDetails") || "Ticket Details"}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ color: "#fff" }}>
+          {selectedTicket && (
+            <div>
+              <div className="mb-3">
+                <strong>{t("ticketID") || "Ticket ID"}:</strong> #{selectedTicket.ticketId}
+              </div>
+              <div className="mb-3">
+                <strong>{t("category") || "Category"}:</strong> {selectedTicket.category ? selectedTicket.category.charAt(0).toUpperCase() + selectedTicket.category.slice(1) : "N/A"}
+              </div>
+              <div className="mb-3">
+                <strong>{t("status") || "Status"}:</strong>{" "}
+                <span className={`status-badge ${getStatusBadge(selectedTicket.status)}`}>
+                  {getStatusText(selectedTicket.status)}
+                </span>
+              </div>
+              <div className="mb-3" style={{ wordBreak: "break-word" }}>
+                <strong>{t("subject") || "Subject"}:</strong> {selectedTicket.subject}
+              </div>
+              <div className="mb-4">
+                <strong>{t("description") || "Description"}:</strong>
+                <p className="mt-1 p-3 rounded" style={{ background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                  {selectedTicket.description}
+                </p>
+              </div>
+
+              {selectedTicket.adminComments && selectedTicket.adminComments.length > 0 && (
+                <div>
+                  <h5 className="mb-3 text-white" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "10px" }}>
+                    {t("adminComments") || "Admin Comments"}
+                  </h5>
+                  <div style={{ maxHeight: "250px", overflowY: "auto", paddingRight: "5px" }}>
+                    {selectedTicket.adminComments.map((comment, index) => (
+                      <div key={index} className="p-3 mb-2 rounded" style={{ background: "rgba(35, 173, 164, 0.08)", border: "1px solid rgba(35, 173, 164, 0.2)", wordBreak: "break-word" }}>
+                        <p className="mb-1">{comment.comment}</p>
+                        <small className="text-secondary">
+                          {new Date(comment.createdAt).toLocaleString()}
+                        </small>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

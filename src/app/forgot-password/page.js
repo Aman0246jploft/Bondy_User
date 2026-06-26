@@ -3,20 +3,24 @@ import Link from "next/link";
 import React, { useState,useEffect } from "react";
 import { Col, Container, Form, Row } from "react-bootstrap";
 import authApi from "@/api/authApi";
-import { useRouter } from "next/navigation";
+import staffApi from "@/api/staffApi";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import GuestRoute from "@/components/GuestRoute";
 import { useLanguage } from "@/context/LanguageContext";
+import { Suspense } from "react";
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const { t } = useLanguage();
+  const role = searchParams.get("role");
 
- useEffect(() => {
-  document.title = `${t("forgotPasswordQuestion")} - Bondy`;
-}, [t]);
+  useEffect(() => {
+    document.title = `${t("forgotPasswordQuestion")} - Bondy`;
+  }, [t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,11 +32,21 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
-      const response = await authApi.forgotPasswordInit({ email });
+      let response;
+      if (role === "staff") {
+        response = await staffApi.forgotPasswordInit({ email });
+      } else {
+        response = await authApi.forgotPasswordInit({ email });
+      }
 
       if (response?.status) {
-        // Store email for the reset password page
+        // Store email and role for the reset password page
         localStorage.setItem("resetEmail", email);
+        if (role === "staff") {
+          localStorage.setItem("resetRole", "staff");
+        } else {
+          localStorage.removeItem("resetRole");
+        }
         toast.success(t("otpSentToEmail"));
         router.push("/reset-password");
       }
@@ -102,5 +116,13 @@ export default function ForgotPasswordPage() {
       </Container>
     </div>
     </GuestRoute>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ForgotPasswordContent />
+    </Suspense>
   );
 }

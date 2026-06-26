@@ -151,7 +151,12 @@ function ProgramDetailsContent() {
     galleryImages,
     totalSessions,
     batches,
+    bookingCutOff,
   } = courseDetails;
+
+  const allBatchesCutOff = batches && batches.length > 0
+    ? batches.filter(b => b.status === "Active").every(b => !!b.bookingCutOffPassed)
+    : false;
 
   const images = [
     ...(Array.isArray(posterImage) ? posterImage : [posterImage]),
@@ -221,17 +226,23 @@ function ProgramDetailsContent() {
                 <h4 className="mb-0">
                   <span className="price-text">{formatPrice(price)}</span> {t("onwards")}
                 </h4>
-                <AuthButton
-                  requiresAuth
-                  onClick={() => router.push(
-                    currentSchedule?._id
-                      ? `/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`
-                      : `/eventbooking?id=${courseDetails._id}`
-                  )}
-                  className="common_btn"
-                >
-                  {t("bookNow")}
-                </AuthButton>
+                {allBatchesCutOff ? (
+                  <Button className="common_btn bg-secondary border-0" disabled>
+                    {t("bookingClosed") || "Closed"}
+                  </Button>
+                ) : (
+                  <AuthButton
+                    requiresAuth
+                    onClick={() => router.push(
+                      currentSchedule?._id
+                        ? `/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`
+                        : `/eventbooking?id=${courseDetails._id}`
+                    )}
+                    className="common_btn"
+                  >
+                    {t("bookNow")}
+                  </AuthButton>
+                )}
                 <Button className="book_mark_icon" onClick={handleShare}>
                   <img src="/img/share_icon.svg" />
                 </Button>
@@ -317,6 +328,12 @@ function ProgramDetailsContent() {
                     <h5>{t("location")}</h5>
                     <span>{locationString || t("locationNotAvailable")}</span>
                   </div>
+                  {bookingCutOff && (
+                    <div className="event_time_mange">
+                      <h5>{t("bookingCutOff") || "Booking Cut-off"}</h5>
+                      <span>{bookingCutOff}</span>
+                    </div>
+                  )}
 
                   <Link className="view-map" href="">
                     {t("viewInMap")}
@@ -427,17 +444,23 @@ function ProgramDetailsContent() {
                     <h4 className="mb-0">
                       <span className="price-text">{formatPrice(price)}</span>
                     </h4>
-                    <AuthButton
-                      requiresAuth
-                      onClick={() => router.push(
-                        currentSchedule?._id
-                          ? `/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`
-                          : `/eventbooking?id=${courseDetails._id}`
-                      )}
-                      className="common_btn"
-                    >
-                      {t("bookNow")}
-                    </AuthButton>
+                    {allBatchesCutOff ? (
+                      <Button className="common_btn bg-secondary border-0" disabled>
+                        {t("bookingClosed") || "Closed"}
+                      </Button>
+                    ) : (
+                      <AuthButton
+                        requiresAuth
+                        onClick={() => router.push(
+                          currentSchedule?._id
+                            ? `/eventbooking?id=${courseDetails._id}&scheduleId=${currentSchedule._id}`
+                            : `/eventbooking?id=${courseDetails._id}`
+                        )}
+                        className="common_btn"
+                      >
+                        {t("bookNow")}
+                      </AuthButton>
+                    )}
                     <Button className="book_mark_icon" onClick={handleShare}>
                       <img src="/img/share_icon.svg" />
                     </Button>
@@ -445,7 +468,7 @@ function ProgramDetailsContent() {
                 </div>
               </div>
               {/* <Reviews /> */}
-              {id && <CommentsSection entityId={id} entityModel="Course" />}
+              {/* {id && <CommentsSection entityId={id} entityModel="Course" />} */}
             </Container>
           </Col>
           <Col lg={4}>
@@ -517,9 +540,11 @@ function ProgramDetailsContent() {
                             <span className="text-secondary" style={{ fontSize: "12px", display: "block" }}>
                               🕒 {formatTime(batch.startTime, true, language)} {t("to")} {formatTime(batch.endTime, true, language)}
                             </span>
-                            <span className="text-muted" style={{ fontSize: "11px", display: "block", marginTop: "2px" }}>
-                              {batch.isFull ? t("full") : `${batch.availableSeats} seats left`}
-                            </span>
+                            {!batch.bookingCutOffPassed && (
+                              <span className="text-muted" style={{ fontSize: "11px", display: "block", marginTop: "2px" }}>
+                                {batch.isFull ? t("full") : `${batch.availableSeats} seats left`}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="booking_bx">
@@ -532,6 +557,8 @@ function ProgramDetailsContent() {
                           </span>
                           {batch.isBooked ? (
                             <span className="badge bg-success">{t("booked")}</span>
+                          ) : batch.bookingCutOffPassed ? (
+                            <span className="badge bg-danger">{t("bookingClosed") || "Closed"}</span>
                           ) : batch.isFull ? (
                             <span className="badge bg-danger">{t("full")}</span>
                           ) : (

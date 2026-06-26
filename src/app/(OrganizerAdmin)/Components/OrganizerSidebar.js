@@ -112,7 +112,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="icon">
             <img src="/img/org-img/sidebar-icon-02.svg" alt="" />
           </span>
-          <span className="text">{t("programManagement")}</span>
+          <span className="text">{t("eventManagement")}</span>
         </Link>
 
         <Link
@@ -176,7 +176,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </span>
           <span className="text">{t("supportTickets")}</span>
         </Link>
-        <div className="accordion-wrapper create_dropdwon">
+        {/* <div className="accordion-wrapper create_dropdwon">
           <div
             className={`menu-item ${isDropdownOpen ? "active" : ""}`}
             onClick={() => setIsDropdownOpen(!isDropdownOpen)} // Toggle logic
@@ -204,7 +204,7 @@ export default function OrganizerSidebar({ toggleSidebar }) {
               {t("createProgram")}
             </Link>
           </div>
-        </div>
+        </div> */}
         <Link
           href="/Verifiedprofile"
           className={`menu-item ${isActive("/Verifiedprofile") ? "active" : ""}`}>

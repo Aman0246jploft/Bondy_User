@@ -4,6 +4,7 @@ import { Col, Container, Form, Row } from "react-bootstrap";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
+import staffApi from "@/api/staffApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import GuestRoute from "@/components/GuestRoute";
@@ -14,6 +15,7 @@ const STRONG_PASSWORD_REGEX =
 export default function ResetPasswordPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
+    const [resetRole, setResetRole] = useState(null);
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1); // 1: OTP, 2: Password Reset, 3: Success
     const { t } = useLanguage();
@@ -42,6 +44,7 @@ export default function ResetPasswordPage() {
             return;
         }
         setEmail(storedEmail);
+        setResetRole(localStorage.getItem("resetRole"));
     }, [router]);
 
     // Countdown timer for resend OTP
@@ -83,12 +86,20 @@ export default function ResetPasswordPage() {
 
         setLoading(true);
         try {
-            const response = await authApi.verifyForgotPasswordOtp({
-                email,
-                otp: otpValue,
-            });
+            let response;
+            if (resetRole === "staff") {
+                response = await staffApi.forgotPasswordVerify({
+                    email,
+                    otp: otpValue,
+                });
+            } else {
+                response = await authApi.verifyForgotPasswordOtp({
+                    email,
+                    otp: otpValue,
+                });
+            }
 
-                if (response?.status) {
+            if (response?.status) {
                 setResetToken(response?.data?.token);
                 setStep(2);
                 toast.success(t("otpVerifiedNowSetNewPassword"));
@@ -105,10 +116,17 @@ export default function ResetPasswordPage() {
         if (!canResend) return;
 
         try {
-            const response = await authApi.resendUniversalOtp({
-                email,
-                type: "FORGOT_PASSWORD",
-            });
+            let response;
+            if (resetRole === "staff") {
+                response = await staffApi.forgotPasswordResend({
+                    email,
+                });
+            } else {
+                response = await authApi.resendUniversalOtp({
+                    email,
+                    type: "FORGOT_PASSWORD",
+                });
+            }
 
             if (response?.status) {
                 toast.success(t("otpResentSuccessfully"));
@@ -177,18 +195,28 @@ export default function ResetPasswordPage() {
 
         setLoading(true);
         try {
-            const response = await authApi.resetPassword({
-                newPassword: formData.newPassword,
-                confirmPassword: formData.confirmPassword,
-                resetToken: resetToken,
-            });
+            let response;
+            if (resetRole === "staff") {
+                response = await staffApi.resetPassword({
+                    newPassword: formData.newPassword,
+                    confirmPassword: formData.confirmPassword,
+                    resetToken: resetToken,
+                });
+            } else {
+                response = await authApi.resetPassword({
+                    newPassword: formData.newPassword,
+                    confirmPassword: formData.confirmPassword,
+                    resetToken: resetToken,
+                });
+            }
 
-                if (response?.status) {
+            if (response?.status) {
                 setStep(3);
                 toast.success(t("passwordResetSuccessful"));
 
-                // Clear stored email
+                // Clear stored email and role
                 localStorage.removeItem("resetEmail");
+                localStorage.removeItem("resetRole");
 
                 // Redirect to login after 3 seconds
                 setTimeout(() => {

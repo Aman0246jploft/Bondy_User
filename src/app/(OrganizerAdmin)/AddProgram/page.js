@@ -37,6 +37,52 @@ const PassIcon = () => (
   </svg>
 );
 
+const LocationIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path>
+    <circle cx="12" cy="10" r="3"></circle>
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+);
+
+const PriceIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+  </svg>
+);
+
+const CapacityIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+  </svg>
+);
+
+const RefundIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+    <polyline points="9 11 11 13 15 9"></polyline>
+  </svg>
+);
+
+const ClockIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <polyline points="12 6 12 12 16 14"></polyline>
+  </svg>
+);
+
 const CourseContextDummy = {
   venueAddress: {
     latitude: 47.9188,
@@ -61,6 +107,7 @@ function Page() {
   const [step, setStep] = useState(1);
   const [courseId, setCourseId] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingPoster, setUploadingPoster] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
@@ -296,7 +343,7 @@ function Page() {
           ...prev,
           posterImage: [response.data.files[0]]
         }));
-        toast.success(t("imageUploadedSuccessfully"));
+        // toast.success(t("imageUploadedSuccessfully"));
       }
     } catch (err) {
       toast.error(t("imageUploadFailed"));
@@ -331,9 +378,9 @@ function Page() {
         ...prev,
         mediaLinks: [...(prev.mediaLinks || []), ...newLinks]
       }));
-      toast.success(t("galleryImagesUploaded") || "Gallery images uploaded successfully");
+      // toast.success(t("galleryImagesUploaded") || "Gallery images uploaded successfully");
     } catch (err) {
-      toast.error(t("failedToUploadGallery") || "Failed to upload gallery images");
+      // toast.error(t("failedToUploadGallery") || "Failed to upload gallery images");
     } finally {
       setUploadingGallery(false);
     }
@@ -356,10 +403,10 @@ function Page() {
           ...prev,
           shortTeaserVideo: [response.data.files[0]]
         }));
-        toast.success(t("teaserVideoUploaded") || "Teaser video uploaded successfully");
+        // toast.success(t("teaserVideoUploaded") || "Teaser video uploaded successfully");
       }
     } catch (err) {
-      toast.error(t("failedToUploadTeaser") || "Failed to upload teaser video");
+      // toast.error(t("failedToUploadTeaser") || "Failed to upload teaser video");
     } finally {
       setUploadingVideo(false);
     }
@@ -386,6 +433,7 @@ function Page() {
 
   const saveBatch = () => {
     let formToSave = { ...batchForm };
+    formToSave.seats = formToSave.seats === "" ? 0 : (parseInt(formToSave.seats) || 0);
     if (formData.enrollmentType === "Ongoing") {
       if (!formToSave.batchName) {
         const idx = editingBatchIndex !== null ? editingBatchIndex : (formData.batches || []).length;
@@ -417,13 +465,30 @@ function Page() {
 
     setFormData(prev => ({ ...prev, batches: updated }));
     setShowBatchModal(false);
-    toast.success(editingBatchIndex !== null ? "Schedule updated" : "Schedule added");
+    // toast.success(editingBatchIndex !== null ? "Schedule updated" : "Schedule added");
   };
 
   const removeBatch = (index) => {
     const updated = formData.batches.filter((_, i) => i !== index);
     setFormData(prev => ({ ...prev, batches: updated }));
-    toast.success("Schedule removed");
+    // toast.success("Schedule removed");
+  };
+
+  const removeDayFromBatch = (batchIndex, dayToRemove) => {
+    const updatedBatches = [...(formData.batches || [])];
+    const targetBatch = { ...updatedBatches[batchIndex] };
+
+    targetBatch.days = targetBatch.days.filter((d) => d !== dayToRemove);
+
+    if (targetBatch.days.length === 0) {
+      updatedBatches.splice(batchIndex, 1);
+      // toast.success("Schedule removed");
+    } else {
+      updatedBatches[batchIndex] = targetBatch;
+      // toast.success("Day removed from schedule");
+    }
+
+    setFormData(prev => ({ ...prev, batches: updatedBatches }));
   };
 
   // Submit / Save Actions
@@ -535,10 +600,6 @@ function Page() {
       if (formData.enrollmentType === "Ongoing") {
         if (!formData.startDate || !formData.venueName || !formData.venueAddress?.address) {
           toast.error("Please fill all location & start date fields");
-          return false;
-        }
-        if (!noEndDate && !formData.endDate) {
-          toast.error("Please select an end date or check 'No end date'");
           return false;
         }
         if (formData.endDate && formData.endDate < formData.startDate) {
@@ -793,7 +854,7 @@ function Page() {
                       : t("courseCategory") || "Course Category"} <span className="text-danger">*</span>
                   </label>
                   <div className="d-flex flex-wrap gap-2 mb-3">
-                    {categories.map((cat) => {
+                    {(showAllCategories ? categories : categories.slice(0, 8)).map((cat) => {
                       const isSelected = formData.courseCategory === cat._id;
                       return (
                         <button
@@ -819,6 +880,18 @@ function Page() {
                       );
                     })}
                   </div>
+                  {categories.length > 8 && (
+                    <div className="mb-3">
+                      <button
+                        type="button"
+                        className="btn btn-link p-0 text-decoration-none"
+                        style={{ color: "#23ada4", fontSize: "14px", fontWeight: "600" }}
+                        onClick={() => setShowAllCategories(!showAllCategories)}
+                      >
+                        {showAllCategories ? t("showLess") || "Show Less" : t("showMore") || "Show More"}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Poster Image Upload */}
@@ -923,7 +996,7 @@ function Page() {
                   {formData.enrollmentType === "Ongoing" ?
                     <Col md={6} className="mb-3 d-flex flex-column justify-content-center">
                       <div className="form-check form-switch pt-3">
-                        <input
+                        {/* <input
                           className="form-check-input"
                           type="checkbox"
                           id="no-end-date-toggle"
@@ -933,7 +1006,7 @@ function Page() {
                         />
                         <label className="form-check-label text-white ms-2" htmlFor="no-end-date-toggle" style={{ cursor: "not-allowed" }}>
                           {t("noEndDateIndefinitely") || "No end date (Ongoing indefinitely)"}
-                        </label>
+                        </label> */}
                       </div>
                     </Col>
                     :
@@ -1013,38 +1086,83 @@ function Page() {
                       ? t("weeklySchedule") || "Weekly Schedule"
                       : t("batches") || "Batches"}
                   </h5>
-                  <button type="button" onClick={openAddBatch} className="outline-btn" style={{ borderRadius: "20px", padding: "6px 16px" }}>
-                    {formData.enrollmentType === "Ongoing"
-                      ? t("addClassTime") || "+ Add Class Time"
-                      : t("addBatch") || "+ Add Batch"}
-                  </button>
+                  {formData.enrollmentType !== "Ongoing" && (
+                    <button type="button" onClick={openAddBatch} className="outline-btn" style={{ borderRadius: "20px", padding: "6px 16px" }}>
+                      {t("addBatch") || "+ Add Batch"}
+                    </button>
+                  )}
                 </div>
 
                 {/* Schedule List */}
                 <div className="mb-4">
                   {formData.batches && formData.batches.length > 0 ? (
-                    formData.batches.map((batch, index) => (
-                      <div key={index} className="p-3 mb-2 rounded d-flex justify-content-between align-items-center" style={{ background: "#1c1d1e87", border: "1px solid rgba(255,255,255,0.05)" }}>
-                        <div>
-                          <h6 className="text-white mb-1" style={{ color: "#23ada4" }}>
-                            {batch.batchName}
-                          </h6>
-                          <p className="small text-secondary mb-0">
-                            <strong>{t("timeLabel") || "Time"}:</strong> {batch.startTime} - {batch.endTime} <br />
-                            <strong>{t("daysLabel") || "Days"}:</strong> {batch.days.join(", ")} <br />
-                            <strong>{t("seatsPerSessionLabel") || "Seats per Session"}:</strong> {batch.seats}
-                          </p>
-                        </div>
-                        <div>
-                          <button type="button" onClick={() => openEditBatch(index)} className="btn p-0 border-0 bg-transparent">
-                            <EditIcon />
-                          </button>
-                          <button type="button" onClick={() => removeBatch(index)} className="btn p-0 border-0 bg-transparent">
-                            <TrashIcon />
-                          </button>
-                        </div>
-                      </div>
-                    ))
+                    formData.batches.map((batch, index) => {
+                      if (formData.enrollmentType === "Ongoing") {
+                        return (
+                          <div
+                            key={index}
+                            className="mb-3 rounded"
+                            style={{
+                              background: "#111111",
+                              border: "1px solid rgba(255,255,255,0.08)",
+                              overflow: "hidden"
+                            }}
+                          >
+                            {(() => {
+                              const DAY_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                              const sortedDays = [...batch.days].sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b));
+                              return sortedDays.map((day, dayIndex) => (
+                                <div
+                                  key={dayIndex}
+                                  className="d-flex justify-content-between align-items-center p-3"
+                                  style={{
+                                    borderBottom: dayIndex < sortedDays.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none"
+                                  }}
+                                >
+                                  <div className="d-flex gap-4 align-items-center">
+                                    <span className="text-white-50" style={{ minWidth: "40px", fontSize: "15px" }}>{day}</span>
+                                    <span className="text-white" style={{ fontSize: "15px" }}>{batch.startTime} - {batch.endTime}</span>
+                                  </div>
+                                  <div className="d-flex gap-2">
+                                    <button type="button" onClick={() => openEditBatch(index)} className="btn p-1 border-0 bg-transparent">
+                                      <EditIcon />
+                                    </button>
+                                    <button type="button" onClick={() => removeDayFromBatch(index, day)} className="btn p-1 border-0 bg-transparent">
+                                      <TrashIcon />
+                                    </button>
+                                  </div>
+                                </div>
+                              ));
+                            })()}
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div key={index} className="p-3 mb-2 rounded d-flex justify-content-between align-items-center" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.05)" }}>
+                            <div>
+                              <h6 className="text-white mb-1" style={{ color: "#23ada4" }}>
+                                {batch.batchName}
+                              </h6>
+                              <p className="small text-secondary mb-0">
+                                <strong>{t("timeLabel") || "Time"}:</strong> {batch.startTime} - {batch.endTime} <br />
+                                <strong>{t("daysLabel") || "Days"}:</strong> {batch.days.join(", ")} <br />
+                                {formData.enrollmentType === "fixedStart" && (
+                                  <span><strong>{t("seatsPerSessionLabel") || "Seats per Session"}:</strong> {batch.seats}</span>
+                                )}
+                              </p>
+                            </div>
+                            <div>
+                              <button type="button" onClick={() => openEditBatch(index)} className="btn p-0 border-0 bg-transparent">
+                                <EditIcon />
+                              </button>
+                              <button type="button" onClick={() => removeBatch(index)} className="btn p-0 border-0 bg-transparent">
+                                <TrashIcon />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+                    })
                   ) : (
                     <p className="text-muted small">
                       {formData.enrollmentType === "Ongoing"
@@ -1053,6 +1171,27 @@ function Page() {
                     </p>
                   )}
                 </div>
+
+                {formData.enrollmentType === "Ongoing" && (
+                  <div className="mb-4">
+                    <button
+                      type="button"
+                      onClick={openAddBatch}
+                      className="w-100 d-flex align-items-center justify-content-center"
+                      style={{
+                        background: "transparent",
+                        border: "2px solid #23ada4",
+                        color: "#23ada4",
+                        borderRadius: "24px",
+                        padding: "12px",
+                        fontWeight: "600",
+                        fontSize: "16px"
+                      }}
+                    >
+                      {t("addClassTimeOnly") || "Add class time"}
+                    </button>
+                  </div>
+                )}
 
                 {/* Batch / Schedule Modal Dialog Form */}
                 {showBatchModal && (
@@ -1136,7 +1275,7 @@ function Page() {
                             type="number"
                             className="form-control"
                             value={batchForm.seats}
-                            onChange={(e) => setBatchForm(prev => ({ ...prev, seats: parseInt(e.target.value) || 0 }))}
+                            onChange={(e) => setBatchForm(prev => ({ ...prev, seats: e.target.value === "" ? "" : (parseInt(e.target.value) || 0) }))}
                             min={1}
                           />
                         </div>
@@ -1387,90 +1526,329 @@ function Page() {
 
             {/* STEP 4: REVIEW & PUBLISH */}
             {step === 4 && (
-              <div className="text-white">
-                <h4 className="mb-4 pb-2 border-bottom border-secondary" style={{ color: "#23ada4" }}>
-                  {formData.enrollmentType === "Ongoing" ? t("reviewClassSummary") || "Review Class Summary" : t("reviewCourseSummary") || "Review Course Summary"}
-                </h4>
+              <div className="text-white animate-fade-in">
+                <div className="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-secondary">
+                  <div>
+                    <h4 className="m-0" style={{ color: "#23ada4", fontWeight: "700", fontSize: "22px" }}>
+                      {formData.enrollmentType === "Ongoing" ? t("reviewClassSummary") || "Review Class Summary" : t("reviewCourseSummary") || "Review Course Summary"}
+                    </h4>
+                    <p className="text-muted m-0 small mt-1">{t("previewDesc") || "This is how your program listing will appear to students. Verify details before publishing."}</p>
+                  </div>
+                  <span className="badge px-3 py-2" style={{ background: "rgba(35, 173, 164, 0.15)", color: "#23ada4", border: "1px solid rgba(35, 173, 164, 0.3)", borderRadius: "20px", fontSize: "12px", fontWeight: "600" }}>
+                    {t("previewMode") || "PREVIEW MODE"}
+                  </span>
+                </div>
 
-                <Row className="mb-3">
-                  <Col md={4} className="text-secondary font-weight-bold">
-                    {formData.enrollmentType === "Ongoing" ? t("classTitleLabel") || "Class Title:" : t("courseTitleLabel") || "Course Title:"}
-                  </Col>
-                  <Col md={8}>{formData.courseTitle}</Col>
-                </Row>
+                <Row className="gy-4">
+                  {/* Left Column: Media & Visual Assets */}
+                  <Col lg={5} md={12}>
+                    {/* Main Poster */}
+                    <div className="mb-4">
+                      <label className="form-label text-secondary mb-2" style={{ fontSize: "12px", fontWeight: "600", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                        {t("mainPoster") || "Main Poster"}
+                      </label>
+                      {formData.posterImage && formData.posterImage.length > 0 ? (
+                        <div className="position-relative rounded overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}>
+                          <img
+                            src={getFullImageUrl(formData.posterImage[0])}
+                            alt="Poster Preview"
+                            className="w-100 d-block"
+                            style={{ maxHeight: "360px", objectFit: "cover", borderRadius: "12px" }}
+                            onError={(e) => { e.target.src = "/img/sidebar-logo.svg" }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-5 rounded text-center text-muted" style={{ background: "rgba(255,255,255,0.02)", border: "2px dashed rgba(255,255,255,0.1)", borderRadius: "12px" }}>
+                          <img src="/img/sidebar-logo.svg" alt="placeholder" className="mb-3 opacity-20" style={{ width: "48px" }} />
+                          <div>No poster image uploaded</div>
+                        </div>
+                      )}
+                    </div>
 
-                <Row className="mb-3">
-                  <Col md={4} className="text-secondary font-weight-bold">{t("categoryLabel") || "Category:"}</Col>
-                  <Col md={8}>
-                    {activeCategory
-                      ? (language === "mn" && activeCategory.name_thi ? activeCategory.name_thi : activeCategory.name)
-                      : "-"}
-                  </Col>
-                </Row>
-
-                <Row className="mb-3">
-                  <Col md={4} className="text-secondary font-weight-bold">{t("durationLabel") || "Duration:"}</Col>
-                  <Col md={8}>
-                    {formData.enrollmentType === "Ongoing"
-                      ? (noEndDate ? t("startsOnIndefinite", { date: formData.startDate }) : t("durationFormat", { startDate: formData.startDate, endDate: formData.endDate }))
-                      : t("fixedStartDurationFormat", { startDate: formData.startDate, endDate: formData.endDate, sessions: formData.totalSessions })}
-                  </Col>
-                </Row>
-
-                <Row className="mb-3">
-                  <Col md={4} className="text-secondary font-weight-bold">{t("venueLocationLabel") || "Venue Location:"}</Col>
-                  <Col md={8}>{formData.venueName} - {formData.venueAddress?.address}</Col>
-                </Row>
-
-                <Row className="mb-3">
-                  <Col md={4} className="text-secondary font-weight-bold">
-                    {formData.enrollmentType === "Ongoing" ? t("priceRefundSessionLabel") || "Price & Refund (Session):" : t("priceRefundLabel") || "Price & Refund:"}
-                  </Col>
-                  <Col md={8}>
-                    {formData.enrollmentType === "Ongoing"
-                      ? `${t("pricePerSessionFormat", { price: formData.price })} (${formData.refundPolicy})`
-                      : `₮${formData.price} (${formData.refundPolicy})`}
-                  </Col>
-                </Row>
-
-                {formData.enrollmentType === "Ongoing" && formData.oneMonthPassEnabled && (
-                  <Row className="mb-3">
-                    <Col md={4} className="text-secondary font-weight-bold">{t("oneMonthPassPriceReview") || "1 Month Pass Price:"}</Col>
-                    <Col md={8}>₮{formData.oneMonthPassPrice}</Col>
-                  </Row>
-                )}
-
-                {formData.enrollmentType === "Ongoing" && formData.threeMonthPassEnabled && (
-                  <Row className="mb-3">
-                    <Col md={4} className="text-secondary font-weight-bold">{t("threeMonthPassPriceReview") || "3 Month Pass Price:"}</Col>
-                    <Col md={8}>₮{formData.threeMonthPassPrice}</Col>
-                  </Row>
-                )}
-
-                {formData.enrollmentType === "Ongoing" && (
-                  <>
-                    <Row className="mb-3">
-                      <Col md={4} className="text-secondary font-weight-bold">{t("capacityPerSessionReview") || "Capacity per Session:"}</Col>
-                      <Col md={8}>{formData.totalSeats} {t("studentsCount") || "students"}</Col>
-                    </Row>
-                    {formData.bookingCutOff && (
-                      <Row className="mb-3">
-                        <Col md={4} className="text-secondary font-weight-bold">{t("bookingCutOffReview") || "Booking Cut-off:"}</Col>
-                        <Col md={8}>{formData.bookingCutOff}</Col>
-                      </Row>
+                    {/* Image Gallery */}
+                    {formData.mediaLinks && formData.mediaLinks.length > 0 && (
+                      <div className="mb-4">
+                        <label className="form-label text-secondary mb-2" style={{ fontSize: "12px", fontWeight: "600", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                          {t("imageGallery") || "Image Gallery"}
+                        </label>
+                        <div className="d-grid gap-2" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+                          {formData.mediaLinks.map((link, idx) => (
+                            <div key={idx} className="position-relative rounded overflow-hidden" style={{ aspectRatio: "1/1", border: "1px solid rgba(255,255,255,0.08)" }}>
+                              <img
+                                src={getFullImageUrl(link)}
+                                alt={`Gallery ${idx + 1}`}
+                                className="w-100 h-100"
+                                style={{ objectFit: "cover" }}
+                                onError={(e) => { e.target.src = "/img/sidebar-logo.svg" }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                  </>
-                )}
 
-                <h5 className="text-white mb-2 mt-4" style={{ color: "#23ada4" }}>
+                    {/* Teaser Video */}
+                    {formData.shortTeaserVideo && formData.shortTeaserVideo.length > 0 && (
+                      <div className="mb-4">
+                        <label className="form-label text-secondary mb-2" style={{ fontSize: "12px", fontWeight: "600", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                          {t("teaserVideo") || "Teaser Video"}
+                        </label>
+                        <div className="rounded overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "#000" }}>
+                          <video
+                            src={getFullImageUrl(formData.shortTeaserVideo[0])}
+                            controls
+                            className="w-100 d-block"
+                            style={{ maxHeight: "250px" }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </Col>
+
+                  {/* Right Column: Spec Specifications & Info */}
+                  <Col lg={7} md={12} className="ps-lg-4">
+                    <div className="p-4 rounded mb-4" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
+                      <div className="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                        <span className="badge" style={{ backgroundColor: "#23ada4", fontSize: "11px", textTransform: "uppercase", padding: "6px 12px", borderRadius: "20px", fontWeight: "600" }}>
+                          {activeCategory
+                            ? (language === "mn" && activeCategory.name_thi ? activeCategory.name_thi : activeCategory.name)
+                            : "General"}
+                        </span>
+                        <span className="badge" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#aaa", fontSize: "11px", textTransform: "uppercase", padding: "6px 12px", borderRadius: "20px", fontWeight: "600" }}>
+                          {formData.enrollmentType === "Ongoing" ? t("ongoingClass") || "Ongoing Class" : t("fixedStartCourse") || "Fixed Start Course"}
+                        </span>
+                      </div>
+
+                      <h3 className="text-white mb-4" style={{ fontWeight: "800", fontSize: "26px", lineHeight: "1.3" }}>
+                        {formData.courseTitle || "Untitled Program"}
+                      </h3>
+
+                      {/* Details Grid */}
+                      <Row className="gy-4 mb-4">
+                        <Col sm={6}>
+                          <div className="d-flex align-items-start gap-2">
+                            <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                              <LocationIcon />
+                            </div>
+                            <div>
+                              <small className="text-muted d-block" style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase" }}>{t("venueLocationLabel") || "Venue Location"}</small>
+                              <span className="text-white" style={{ fontSize: "14px", fontWeight: "500" }}>
+                                {formData.venueName || "No Venue Name"}
+                                <span className="d-block text-muted small mt-1">{formData.venueAddress?.address || "No Address Selected"}</span>
+                              </span>
+                            </div>
+                          </div>
+                        </Col>
+
+                        <Col sm={6}>
+                          <div className="d-flex align-items-start gap-2">
+                            <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                              <CalendarIcon />
+                            </div>
+                            <div>
+                              <small className="text-muted d-block" style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase" }}>{t("durationLabel") || "Duration"}</small>
+                              <span className="text-white" style={{ fontSize: "14px", fontWeight: "500" }}>
+                                {formData.enrollmentType === "Ongoing"
+                                  ? ((noEndDate || !formData.endDate || formData.endDate === "2099-12-31") ? t("startsOnIndefinite", { date: formData.startDate }) || `Starts on ${formData.startDate} (Ongoing)` : t("durationFormat", { startDate: formData.startDate, endDate: formData.endDate }) || `${formData.startDate} to ${formData.endDate}`)
+                                  : t("fixedStartDurationFormat", { startDate: formData.startDate, endDate: formData.endDate, sessions: formData.totalSessions }) || `${formData.startDate} to ${formData.endDate} (${formData.totalSessions} sessions)`}
+                              </span>
+                            </div>
+                          </div>
+                        </Col>
+
+                        <Col sm={6}>
+                          <div className="d-flex align-items-start gap-2">
+                            <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                              <PriceIcon />
+                            </div>
+                            <div>
+                              <small className="text-muted d-block" style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase" }}>
+                                {formData.enrollmentType === "Ongoing" ? t("pricePerSession") || "Price per session" : t("price") || "Price"}
+                              </small>
+                              <span className="text-white" style={{ fontSize: "16px", fontWeight: "700", color: "#23ada4" }}>
+                                ₮{(Number(formData.price) || 0).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </Col>
+
+                        <Col sm={6}>
+                          <div className="d-flex align-items-start gap-2">
+                            <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                              <CapacityIcon />
+                            </div>
+                            <div>
+                              <small className="text-muted d-block" style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase" }}>{t("capacityPerSessionReview") || "Capacity per Session"}</small>
+                              <span className="text-white" style={{ fontSize: "14px", fontWeight: "500" }}>
+                                {formData.totalSeats || 0} {t("studentsCount") || "students"}
+                              </span>
+                            </div>
+                          </div>
+                        </Col>
+
+                        <Col sm={6}>
+                          <div className="d-flex align-items-start gap-2">
+                            <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                              <RefundIcon />
+                            </div>
+                            <div>
+                              <small className="text-muted d-block" style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase" }}>{t("refundPolicyLabel") || "Refund Policy"}</small>
+                              <span className="text-white" style={{ fontSize: "14px", fontWeight: "500" }}>
+                                {formData.refundPolicy || "No Policy Configured"}
+                              </span>
+                            </div>
+                          </div>
+                        </Col>
+
+                        {formData.enrollmentType === "Ongoing" && formData.bookingCutOff && (
+                          <Col sm={6}>
+                            <div className="d-flex align-items-start gap-2">
+                              <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                                <ClockIcon />
+                              </div>
+                              <div>
+                                <small className="text-muted d-block" style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase" }}>{t("bookingCutOffReview") || "Booking Cut-off"}</small>
+                                <span className="text-white" style={{ fontSize: "14px", fontWeight: "500" }}>
+                                  {bookingCutOffOptions.find(o => o.key === formData.bookingCutOff)?.label || formData.bookingCutOff}
+                                </span>
+                              </div>
+                            </div>
+                          </Col>
+                        )}
+                      </Row>
+
+                      {/* Passes Info if Ongoing */}
+                      {formData.enrollmentType === "Ongoing" && (formData.oneMonthPassEnabled || formData.threeMonthPassEnabled) && (
+                        <div className="border-top border-secondary pt-3 mt-3">
+                          <h6 className="text-white mb-3" style={{ fontSize: "14px", fontWeight: "600", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: "6px" }}>
+                            <PassIcon />
+                            {t("prepaidAccessPasses") || "Prepaid Access Passes"}
+                          </h6>
+                          <div className="row g-3">
+                            {formData.oneMonthPassEnabled && (
+                              <div className="col-6">
+                                <div className="p-3 rounded" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                                  <small className="text-muted d-block mb-1" style={{ fontSize: "11px" }}>1 Month Pass</small>
+                                  <span className="text-white" style={{ fontSize: "16px", fontWeight: "700" }}>₮{(Number(formData.oneMonthPassPrice) || 0).toLocaleString()}</span>
+                                </div>
+                              </div>
+                            )}
+                            {formData.threeMonthPassEnabled && (
+                              <div className="col-6">
+                                <div className="p-3 rounded" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                                  <small className="text-muted d-block mb-1" style={{ fontSize: "11px" }}>3 Month Pass</small>
+                                  <span className="text-white" style={{ fontSize: "16px", fontWeight: "700" }}>₮{(Number(formData.threeMonthPassPrice) || 0).toLocaleString()}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Col>
+                </Row>
+
+                {/* Description sections */}
+                <div className="mt-4 p-4 rounded mb-4" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
+                  <div className="mb-4">
+                    <h5 className="text-white mb-2 pb-2" style={{ fontSize: "16px", fontWeight: "700", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                      {t("shortSummary") || "Short Summary"}
+                    </h5>
+                    <p className="text-light-50 m-0" style={{ fontSize: "14px", lineHeight: "1.6" }}>{formData.shortdesc}</p>
+                  </div>
+
+                  <div className="mb-4">
+                    <h5 className="text-white mb-2 pb-2" style={{ fontSize: "16px", fontWeight: "700", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                      {t("fullDescription") || "Full Description"}
+                    </h5>
+                    <p className="text-light-50 m-0" style={{ fontSize: "14px", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>{formData.longdesc}</p>
+                  </div>
+
+                  {formData.enrollmentType !== "Ongoing" && formData.whatYouWillLearn && (
+                    <div className="mb-2">
+                      <h5 className="text-white mb-2 pb-2" style={{ fontSize: "16px", fontWeight: "700", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                        {t("whatYouWillLearn") || "What You'll Learn"}
+                      </h5>
+                      <p className="text-light-50 m-0" style={{ fontSize: "14px", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>{formData.whatYouWillLearn}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Schedule Header & Display */}
+                <h5 className="text-white mb-3 mt-4" style={{ color: "#23ada4", fontWeight: "700", fontSize: "18px" }}>
                   {formData.enrollmentType === "Ongoing" ? t("weeklyClassTimesHeader") || "Weekly Class Times" : t("configuredBatchesHeader") || "Configured Batches"}
                 </h5>
                 <div className="mb-4">
-                  {formData.batches && formData.batches.map((batch, index) => (
-                    <div key={index} className="p-2 mb-2 rounded border border-secondary" style={{ fontSize: "14px" }}>
-                      <strong>{batch.batchName}</strong> • {batch.startTime} - {batch.endTime} • {t("daysLabel") || "Days"}: {batch.days.join(", ")} • {t("seatsLabel") || "Seats"}: {batch.seats}
+                  {formData.batches && formData.batches.length > 0 ? (
+                    formData.batches.map((batch, index) => {
+                      if (formData.enrollmentType === "Ongoing") {
+                        const DAY_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                        const sortedDays = [...batch.days].sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b));
+                        return (
+                          <div
+                            key={index}
+                            className="mb-3 rounded overflow-hidden"
+                            style={{
+                              background: "#111111",
+                              border: "1px solid rgba(255,255,255,0.08)"
+                            }}
+                          >
+                            {sortedDays.map((day, dayIndex) => (
+                              <div
+                                key={dayIndex}
+                                className="d-flex justify-content-between align-items-center p-3"
+                                style={{
+                                  borderBottom: dayIndex < sortedDays.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none"
+                                }}
+                              >
+                                <div className="d-flex gap-4 align-items-center">
+                                  <span className="badge bg-success text-white px-3 py-2" style={{ minWidth: "60px", fontSize: "13px", fontWeight: "600", textTransform: "uppercase" }}>{day}</span>
+                                  <span className="text-white" style={{ fontSize: "15px", fontWeight: "500", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                                    <ClockIcon />
+                                    {batch.startTime} - {batch.endTime}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div
+                            key={index}
+                            className="p-3 mb-3 rounded"
+                            style={{
+                              background: "#111",
+                              border: "1px solid rgba(255,255,255,0.08)"
+                            }}
+                          >
+                            <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                              <h6 className="text-white m-0" style={{ fontWeight: "700", fontSize: "15px" }}>{batch.batchName}</h6>
+                              <span className="badge bg-success text-white" style={{ fontSize: "11px", padding: "4px 8px" }}>
+                                {batch.seats} {t("seatsLabel") || "seats"}
+                              </span>
+                            </div>
+                            <div className="d-flex gap-4 text-muted small mt-2">
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                <ClockIcon />
+                                {batch.startTime} - {batch.endTime}
+                              </span>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                <CalendarIcon />
+                                {batch.days.join(", ")}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+                    })
+                  ) : (
+                    <div className="p-3 rounded text-center text-muted small" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                      {formData.enrollmentType === "Ongoing"
+                        ? t("noClassTimesConfigured") || "No class times configured."
+                        : t("noBatchesConfigured") || "No batches configured."}
                     </div>
-                  ))}
+                  )}
                 </div>
 
                 <div className="d-flex gap-2 justify-content-end mt-5">
