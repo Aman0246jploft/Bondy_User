@@ -5976,6 +5976,24 @@ a.view-map {
   background-color: #2d7575;
 }
 
+.MUiltiSelect .show-more-btn {
+  display: inline-block;
+  border: 1px var(--primary-teal);
+  background: transparent;
+  color: var(--primary-teal);
+  border-radius: 50px;
+  padding: 6px 14px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.3s;
+  vertical-align: middle;
+  margin-top: 4px;
+}
+
+.MUiltiSelect .show-more-btn:hover {
+  background: rgba(61, 181, 180, 0.15);
+}
+
 .Explore_sec .nav-tabs-container {
   display: flex;
   gap: 12px;

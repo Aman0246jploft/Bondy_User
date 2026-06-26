@@ -18,6 +18,9 @@ function ExploreContent() {
   const [activeFilter, setActiveFilter] = useState("upcoming");
   const [loading, setLoading] = useState(false);
   const [searchParams, setSearchParams] = useState({});
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
+  const CATEGORIES_LIMIT = 20;
 
   useEffect(() => {
     document.title = `${t("explorePageTitle")} | Bondy`;
@@ -119,20 +122,32 @@ function ExploreContent() {
             {loading ? (
               <div>{t("loadingCategories")}</div>
             ) : categories.length > 0 ? (
-              categories.map((cat) => (
-                <div key={cat._id} className="d-inline-block me-2">
-                  <input
-                    type="checkbox"
-                    id={`chk-${cat._id}`}
-                    className="category-checkbox"
-                    checked={selected.includes(cat._id)}
-                    onChange={() => handleToggle(cat._id)}
-                  />
-                  <label htmlFor={`chk-${cat._id}`} className="category-label">
-                    {language === "mn" && cat.name_thi ? cat.name_thi : cat.name}
-                  </label>
-                </div>
-              ))
+              <>
+                {(showAllCategories ? categories : categories.slice(0, CATEGORIES_LIMIT)).map((cat) => (
+                  <div key={cat._id} className="d-inline-block me-2">
+                    <input
+                      type="checkbox"
+                      id={`chk-${cat._id}`}
+                      className="category-checkbox"
+                      checked={selected.includes(cat._id)}
+                      onChange={() => handleToggle(cat._id)}
+                    />
+                    <label htmlFor={`chk-${cat._id}`} className="category-label">
+                      {language === "mn" && cat.name_thi ? cat.name_thi : cat.name}
+                    </label>
+                  </div>
+                ))}
+                {categories.length > CATEGORIES_LIMIT && (
+                  <button
+                    className="show-more-btn"
+                    onClick={() => setShowAllCategories((prev) => !prev)}
+                  >
+                    {showAllCategories ? t("showLess") : `${t("showMore")}`}
+
+                    {/* {showAllCategories ? t("showLess") : `${t("showMore")} (${categories.length - CATEGORIES_LIMIT}+)`} */}
+                  </button>
+                )}
+              </>
             ) : (
               <div>{t("noCategoriesFound")}</div>
             )}

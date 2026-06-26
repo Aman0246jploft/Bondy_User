@@ -44,7 +44,8 @@ const EventSection = ({
           limit,
           page: 1,
           filter,
-          // status: "Upcoming,Live",
+          status: "Upcoming,Live",
+          excludemyevents: true,
           ...extraParams,
         };
 
@@ -79,7 +80,9 @@ const EventSection = ({
             const fallbackParams = {
               ...params,
               limit: neededCount,
-              filter: "all"
+              filter: "all",
+              status: "Upcoming,Live",
+              excludemyevents: true,
             };
             const fallbackResponse = await eventApi.getEvents(fallbackParams);
             if (fallbackResponse?.data?.events?.length > 0) {
