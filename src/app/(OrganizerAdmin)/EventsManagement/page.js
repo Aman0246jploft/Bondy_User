@@ -299,6 +299,32 @@ function page() {
                             event.status ||
                             t("upcoming")}
                         </span>
+                        {event.visibility === "PRIVATE" && (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              background: "rgba(99, 99, 99, 0.15)",
+                              color: "#aaaaaa",
+                              border: "1px solid rgba(150,150,150,0.3)",
+                              borderRadius: "6px",
+                              padding: "3px 8px",
+                              fontSize: "12px",
+                              fontWeight: 500,
+                              marginLeft: "6px",
+                            }}>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="currentColor">
+                              <path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-6 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3.1-9H8.9V6a3.1 3.1 0 0 1 6.2 0v2z" />
+                            </svg>
+                            Private
+                          </span>
+                        )}
                         <p
                           className="text-truncate-1"
                           style={{ maxWidth: "200px" }}>
@@ -364,7 +390,7 @@ function page() {
                           <img src="/img/Arrow-Right.svg" alt="arrow" />
                         </Link>
                       )}
-                      {event.status?.toLowerCase() === "upcoming" && !event.isDraft &&
+                      {event.status?.toLowerCase() === "upcoming" && !event.isDraft && event.visibility !== "PRIVATE" &&
                         (isFeaturedActive(event) ? (
                           <span
                             style={{
