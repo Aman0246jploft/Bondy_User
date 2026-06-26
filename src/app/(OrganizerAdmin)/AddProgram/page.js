@@ -1103,8 +1103,8 @@ function Page() {
                             key={index}
                             className="mb-3 rounded"
                             style={{
-                              background: "#111111",
-                              border: "1px solid rgba(255,255,255,0.08)",
+                              background: "#383838",
+                              border: "1px solid rgba(35,173,164,0.15)",
                               overflow: "hidden"
                             }}
                           >
@@ -1120,7 +1120,7 @@ function Page() {
                                   }}
                                 >
                                   <div className="d-flex gap-4 align-items-center">
-                                    <span className="text-white-50" style={{ minWidth: "40px", fontSize: "15px" }}>{day}</span>
+                                    <span style={{ minWidth: "40px", fontSize: "14px", fontWeight: "600", color: "#23ada4" }}>{day}</span>
                                     <span className="text-white" style={{ fontSize: "15px" }}>{batch.startTime} - {batch.endTime}</span>
                                   </div>
                                   <div className="d-flex gap-2">
@@ -1138,9 +1138,9 @@ function Page() {
                         );
                       } else {
                         return (
-                          <div key={index} className="p-3 mb-2 rounded d-flex justify-content-between align-items-center" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.05)" }}>
+                          <div key={index} className="p-3 mb-2 rounded d-flex justify-content-between align-items-center" style={{ background: "#1a1a1a", border: "1px solid rgba(35,173,164,0.15)" }}>
                             <div>
-                              <h6 className="text-white mb-1" style={{ color: "#23ada4" }}>
+                              <h6 className="mb-1" style={{ color: "#23ada4", fontWeight: "600" }}>
                                 {batch.batchName}
                               </h6>
                               <p className="small text-secondary mb-0">
@@ -1196,7 +1196,7 @@ function Page() {
                 {/* Batch / Schedule Modal Dialog Form */}
                 {showBatchModal && (
                   <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1050 }}>
-                    <div className="event-form-card" style={{ width: "95%", maxWidth: "500px", padding: "24px", background: "#1a1a1a", borderRadius: "16px", border: "1px solid rgba(35, 173, 164, 0.3)" }}>
+                    <div className="event-form-card" style={{ width: "95%", maxWidth: "500px", padding: "24px", borderRadius: "16px", border: "1px solid rgba(35, 173, 164, 0.3)" }}>
                       <h4 className="text-white mb-3">
                         {editingBatchIndex !== null
                           ? (formData.enrollmentType === "Ongoing" ? t("editClassTime") || "Edit Class Time" : t("editBatch") || "Edit Batch")
@@ -1250,7 +1250,7 @@ function Page() {
                               <button
                                 type="button"
                                 key={day}
-                                className={`btn btn-sm ${isSelected ? "btn-success" : "btn-outline-secondary"}`}
+                                className={isSelected ? "custom-btn" : "outline-btn"}
                                 onClick={() => {
                                   setBatchForm(prev => {
                                     const newDays = prev.days.includes(day)
@@ -1259,7 +1259,7 @@ function Page() {
                                     return { ...prev, days: newDays };
                                   });
                                 }}
-                                style={{ minWidth: "52px" }}
+                                style={{ minWidth: "52px", padding: "8px 12px", fontSize: "13px" }}
                               >
                                 {day}
                               </button>
@@ -1330,7 +1330,7 @@ function Page() {
                       <p className="text-muted mb-3" style={{ fontSize: "12px", marginTop: "-5px" }}>{t("accessPassesDesc") || "Offer prepaid passes for regular students. You manage attendance at the door."}</p>
 
                       {/* 1 Month Pass */}
-                      <div className="p-3 mb-3 rounded" style={{ background: "#1c1d1e87", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
+                      <div className="p-3 mb-3 rounded" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(35,173,164,0.15)", borderRadius: "16px" }}>
                         <div className="d-flex justify-content-between align-items-center">
                           <div>
                             <h5 className="text-white mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>{t("oneMonthPass") || "1-month pass"}</h5>
@@ -1381,7 +1381,7 @@ function Page() {
                       </div>
 
                       {/* 3 Month Pass */}
-                      <div className="p-3 mb-3 rounded" style={{ background: "#1c1d1e87", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
+                      <div className="p-3 mb-3 rounded" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(35,173,164,0.15)", borderRadius: "16px" }}>
                         <div className="d-flex justify-content-between align-items-center">
                           <div>
                             <h5 className="text-white mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>{t("threeMonthPass") || "3-month pass"}</h5>
@@ -1607,7 +1607,7 @@ function Page() {
 
                   {/* Right Column: Spec Specifications & Info */}
                   <Col lg={7} md={12} className="ps-lg-4">
-                    <div className="p-4 rounded mb-4" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
+                    <div className="p-4 rounded mb-4" style={{ background: "#1a1a1a", border: "1px solid rgba(35,173,164,0.2)", borderRadius: "16px" }}>
                       <div className="d-flex align-items-center gap-2 mb-3 flex-wrap">
                         <span className="badge" style={{ backgroundColor: "#23ada4", fontSize: "11px", textTransform: "uppercase", padding: "6px 12px", borderRadius: "20px", fontWeight: "600" }}>
                           {activeCategory
@@ -1749,7 +1749,7 @@ function Page() {
                 </Row>
 
                 {/* Description sections */}
-                <div className="mt-4 p-4 rounded mb-4" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px" }}>
+                <div className="mt-4 p-4 rounded mb-4" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px" }}>
                   <div className="mb-4">
                     <h5 className="text-white mb-2 pb-2" style={{ fontSize: "16px", fontWeight: "700", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                       {t("shortSummary") || "Short Summary"}
@@ -1789,8 +1789,8 @@ function Page() {
                             key={index}
                             className="mb-3 rounded overflow-hidden"
                             style={{
-                              background: "#111111",
-                              border: "1px solid rgba(255,255,255,0.08)"
+                              background: "#1a1a1a",
+                              border: "1px solid rgba(35,173,164,0.15)"
                             }}
                           >
                             {sortedDays.map((day, dayIndex) => (
@@ -1802,7 +1802,7 @@ function Page() {
                                 }}
                               >
                                 <div className="d-flex gap-4 align-items-center">
-                                  <span className="badge bg-success text-white px-3 py-2" style={{ minWidth: "60px", fontSize: "13px", fontWeight: "600", textTransform: "uppercase" }}>{day}</span>
+                                  <span className="px-3 py-1" style={{ minWidth: "60px", fontSize: "13px", fontWeight: "600", textTransform: "uppercase", color: "#23ada4", background: "rgba(35,173,164,0.1)", borderRadius: "20px", display: "inline-block", textAlign: "center" }}>{day}</span>
                                   <span className="text-white" style={{ fontSize: "15px", fontWeight: "500", display: "inline-flex", alignItems: "center", gap: "6px" }}>
                                     <ClockIcon />
                                     {batch.startTime} - {batch.endTime}
@@ -1818,13 +1818,13 @@ function Page() {
                             key={index}
                             className="p-3 mb-3 rounded"
                             style={{
-                              background: "#111",
-                              border: "1px solid rgba(255,255,255,0.08)"
+                              background: "#1a1a1a",
+                              border: "1px solid rgba(35,173,164,0.15)"
                             }}
                           >
                             <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                              <h6 className="text-white m-0" style={{ fontWeight: "700", fontSize: "15px" }}>{batch.batchName}</h6>
-                              <span className="badge bg-success text-white" style={{ fontSize: "11px", padding: "4px 8px" }}>
+                              <h6 className="m-0" style={{ fontWeight: "700", fontSize: "15px", color: "#23ada4" }}>{batch.batchName}</h6>
+                              <span style={{ fontSize: "11px", padding: "4px 10px", background: "rgba(35,173,164,0.15)", color: "#23ada4", borderRadius: "20px", fontWeight: "600" }}>
                                 {batch.seats} {t("seatsLabel") || "seats"}
                               </span>
                             </div>
