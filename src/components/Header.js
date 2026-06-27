@@ -69,16 +69,22 @@ export default function BondyHeader() {
     return () => clearTimeout(timer);
   }, [pathname]);
 
+  const handleSignUpClick = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userProfile");
+    setUserProfile(null);
+  };
+
   return (
     <>
       <nav className="bondy-nav">
         {/* LOGO INTRO ANIMATION */}
         <motion.div
-           className="logo-box"
-          // initial={{ scale: 2.5, x: "45vw", y: "45vh" }}
-          // animate={!isAnimating ? { scale: 1, x: 0, y: 0 } : {}}
-          // transition={{ duration: 1.2, ease: [0.6, 0.01, -0.05, 0.9] }}
-          >
+          className="logo-box"
+        // initial={{ scale: 2.5, x: "45vw", y: "45vh" }}
+        // animate={!isAnimating ? { scale: 1, x: 0, y: 0 } : {}}
+        // transition={{ duration: 1.2, ease: [0.6, 0.01, -0.05, 0.9] }}
+        >
           <div className="logo_box">
             <Link href="/">
               <img src="/img/logo.svg" alt="logo" />
@@ -156,7 +162,10 @@ export default function BondyHeader() {
                     />
                   </Link>
                 ) : (
-                  <Link href="/login" className="signup-btn">
+                  <Link
+                    href="/login"
+                    className="signup-btn"
+                    onClick={handleSignUpClick}>
                     {t("signUp")}
                   </Link>
                 )}
@@ -278,7 +287,10 @@ export default function BondyHeader() {
                   <Link
                     href="/login"
                     className="signup-btn d-inline-block"
-                    onClick={() => setIsMenuOpen(false)}>
+                    onClick={() => {
+                      handleSignUpClick();
+                      setIsMenuOpen(false);
+                    }}>
                     {t("signUp")}
                   </Link>
                 )}

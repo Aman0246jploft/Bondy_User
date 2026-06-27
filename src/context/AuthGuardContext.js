@@ -86,6 +86,14 @@ export function AuthGuardProvider({ children }) {
           const profile = response?.data?.user;
           localStorage.setItem("userProfile", JSON.stringify(profile));
 
+          // Update timezone on backend
+          try {
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            await authApi.updateTimezone({ timeZone });
+          } catch (tzErr) {
+            console.error("Failed to update timezone:", tzErr);
+          }
+
           const isApproved = profile?.hasBeenApproved === true || profile?.isVerified === true;
           const isOrganizer = profile?.roleId === 2 || profile?.organizerVerificationStatus;
           const hasBusinessDetails = !!(

@@ -36,6 +36,8 @@ const authApi = {
     getFollowing: (params) => apiClient.get("/follow/following", { params, skipToast: true }),
 
     submitVerification: (data) => apiClient.post("/verification/submit", data),
+    updateTimezone: (data) => apiClient.post("/user/update-timezone", data, { skipToast: true }),
+    changePassword: (data) => apiClient.post("/user/change-password", data),
 };
 
 export default authApi;

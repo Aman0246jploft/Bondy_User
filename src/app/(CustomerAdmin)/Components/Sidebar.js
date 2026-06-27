@@ -144,6 +144,16 @@ export default function Sidebar({ toggleSidebar }) {
           <span className="text">{t("settings")}</span>
         </Link>
 
+        <Link
+          href="/ChangePassword"
+          className={`menu-item ${isActive("/ChangePassword") ? "active" : ""}`}
+        >
+          <span className="icon">
+            <img src="/img/user-icon.svg" alt="" />
+          </span>
+          <span className="text">{t("changePassword")}</span>
+        </Link>
+
         <Link href="#" className="menu-item" onClick={handleLogout}>
           <span className="icon">
             <img src="/img/logout-icon.svg" alt="" />

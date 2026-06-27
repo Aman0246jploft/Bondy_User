@@ -223,6 +223,15 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           </span>
           <span className="text">{t("settings")}</span>
         </Link>
+        <Link
+          href="/OrganizerChangePassword"
+          className={`menu-item ${isActive("/OrganizerChangePassword") ? "active" : ""}`}
+        >
+          <span className="icon">
+            <img src="/img/user-icon.svg" alt="" />
+          </span>
+          <span className="text">{t("changePassword")}</span>
+        </Link>
         <Link href="#" className="menu-item" onClick={handleLogout}>
           <span className="icon">
             <img src="/img/logout-icon.svg" alt="" />

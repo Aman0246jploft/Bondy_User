@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 :root {
   --primary-teal: #23ada4;
   --dark-bg: #242424;
@@ -6,7 +7,7 @@
   --white: #fff;
 }
 
-body { 
+body {
   font-weight: normal;
   background: var(--dark-bg) !important;
   color: var(--white);
@@ -39,6 +40,7 @@ body {
   border-radius: 16px;
   border: 1px solid var(--primary-30, rgba(35, 173, 164, 0.3));
 }
+
 .notification-cards p {
   margin-bottom: 0px;
   opacity: 0.6;
@@ -51,6 +53,7 @@ body {
   font-weight: 700;
   line-height: normal;
 }
+
 .mb-20 {
   margin-bottom: 20px;
 }
@@ -91,11 +94,19 @@ input[type="number"]::-webkit-outer-spin-button {
   background-size: cover;
 }
 
+.main-content {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+}
+
 .cards {
   padding: 40px;
   border-radius: 24px;
   background: #1a1a1a;
-  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-header {
@@ -290,9 +301,11 @@ input[type="number"]::-webkit-outer-spin-button {
   background: #323232;
   margin-top: 40px;
 }
+
 .custom-table-cards .form-control {
-    font-size: 14px !important;
+  font-size: 14px !important;
 }
+
 .custom-table-cards .table-title {
   color: var(--white);
   font-size: 20px;
@@ -1439,11 +1452,11 @@ input[type="number"]::-webkit-outer-spin-button {
   border-radius: 50%;
 }
 
-.gender-toggle input:checked + .slider {
+.gender-toggle input:checked+.slider {
   background-color: #23ada4;
 }
 
-.gender-toggle input:checked + .slider:before {
+.gender-toggle input:checked+.slider:before {
   transform: translateX(30px);
 }
 
@@ -1457,6 +1470,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 @media (max-width: 1024px) {
+
   .ticket-bottom,
   .ticket-inner {
     flex-wrap: wrap;
@@ -1651,6 +1665,91 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .language-item:hover {
   background: rgba(255, 255, 255, 0.05);
+}
+
+.change-password-wrapper {
+  max-width: 360px;
+  color: #fff;
+  margin: 0 auto;
+}
+
+.change-password-wrapper .title {
+  font-size: 14px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.change-password-form .form-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 6px;
+}
+
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-container .password-input {
+  background: linear-gradient(180deg, #1f1f1f, #181818);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+  padding: 14px 18px;
+  color: #fff;
+  width: 100%;
+  padding-right: 70px;
+  font-size: 14px;
+  height: auto;
+}
+
+.password-input-container .password-input:focus {
+  background: #1f1f1f;
+  border-color: var(--primary-teal);
+  box-shadow: 0 0 0 2px rgba(0, 168, 150, 0.2);
+  outline: none;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 18px;
+  background: none;
+  border: none;
+  color: var(--primary-teal);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  opacity: 0.8;
+}
+
+.change-password-btn {
+  background-color: var(--primary-teal) !important;
+  color: #fff !important;
+  border-radius: 30px !important;
+  padding: 12px 24px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  border: none !important;
+  transition: all 0.2s ease !important;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.change-password-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.change-password-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 991.98px) {
@@ -1939,7 +2038,7 @@ input[type="number"]::-webkit-outer-spin-button {
   gap: 20px;
 }
 
-.payment-dtl-innr li > div {
+.payment-dtl-innr li>div {
   flex: 1;
   min-width: 150px;
 }
@@ -2130,6 +2229,7 @@ input[type="number"]::-webkit-outer-spin-button {
   padding-left: 20px;
   height: auto;
 }
+
 .profile-cms-inpt .react-tel-input .form-control {
   text-transform: capitalize;
   padding: 0.7rem 1rem 0.625rem 2.8rem !important;
@@ -2140,6 +2240,7 @@ input[type="number"]::-webkit-outer-spin-button {
   box-shadow: none !important;
   border: 1px solid #737373 !important;
 }
+
 /* DOB Calendar Icon visibility */
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(0.8) sepia(100%) hue-rotate(130deg) brightness(1);
@@ -2154,7 +2255,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: opacity 0.3s ease;
 }
 
-.custom-floting .form-control:focus ~ .form-icon img {
+.custom-floting .form-control:focus~.form-icon img {
   opacity: 1;
   filter: drop-shadow(0 0 5px var(--primary-teal));
 }
@@ -2286,6 +2387,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin-bottom: 30px;
   }
 }
+
 .custom-table-wrapper {
-    max-width: 100%;
-  }
+  max-width: 100%;
+}
