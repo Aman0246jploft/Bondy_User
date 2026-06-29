@@ -8,16 +8,33 @@ import { Container } from "react-bootstrap";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function TermsConditions() {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [content, setContent] = useState("");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchTerms = async () => {
+            setLoading(true);
             try {
-                const response = await globalSettingApi.getTermsConditions();
-                if (response?.status) {
-                   setContent(response?.data?.value.replace(/&nbsp;/g, " "));
+                let response;
+                if (language === "mn") {
+                    try {
+                        response = await globalSettingApi.getTermsConditionsMn();
+                    } catch (e) {
+                        response = await globalSettingApi.getTermsConditions();
+                    }
+                } else {
+                    response = await globalSettingApi.getTermsConditions();
+                }
+
+                if (response?.status && response?.data?.value) {
+                    setContent(response.data.value.replace(/&nbsp;/g, " "));
+                } else {
+                    // Fallback to English if Mongolian is empty
+                    const fallbackRes = await globalSettingApi.getTermsConditions();
+                    if (fallbackRes?.status) {
+                        setContent(fallbackRes?.data?.value.replace(/&nbsp;/g, " "));
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching terms & conditions:", error);
@@ -26,8 +43,8 @@ export default function TermsConditions() {
             }
         };
         fetchTerms();
-        document.title =  (t("termsConditions") || "Terms & Conditions") + " | Bondy";
-    }, []);
+        document.title = (t("termsConditions") || "Terms & Conditions") + " | Bondy";
+    }, [language]);
 
     return (
         <>

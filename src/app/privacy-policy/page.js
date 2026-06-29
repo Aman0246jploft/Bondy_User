@@ -8,16 +8,33 @@ import { Container } from "react-bootstrap";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function PrivacyPolicy() {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [content, setContent] = useState("");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchPolicy = async () => {
+            setLoading(true);
             try {
-                const response = await globalSettingApi.getPrivacyPolicy();
-                if (response?.status) {
-                    setContent(response?.data?.value.replace(/&nbsp;/g, " "));
+                let response;
+                if (language === "mn") {
+                    try {
+                        response = await globalSettingApi.getPrivacyPolicyMn();
+                    } catch (e) {
+                        response = await globalSettingApi.getPrivacyPolicy();
+                    }
+                } else {
+                    response = await globalSettingApi.getPrivacyPolicy();
+                }
+
+                if (response?.status && response?.data?.value) {
+                    setContent(response.data.value.replace(/&nbsp;/g, " "));
+                } else {
+                    // Fallback to English if Mongolian is empty
+                    const fallbackRes = await globalSettingApi.getPrivacyPolicy();
+                    if (fallbackRes?.status) {
+                        setContent(fallbackRes?.data?.value.replace(/&nbsp;/g, " "));
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching privacy policy:", error);
@@ -27,7 +44,7 @@ export default function PrivacyPolicy() {
         };
         fetchPolicy();
         document.title = "Privacy Policy | Bondy";
-    }, []);
+    }, [language]);
 
     return (
         <>

@@ -5,7 +5,7 @@ import authApi from "@/api/authApi";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function FAQ() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -66,7 +66,7 @@ export default function FAQ() {
                 >
                   <div className="faq-q-text">
                     <CircleHelp size={20} className="faq-icon-left" />
-                    <span>{item.question}</span>
+                    <span>{language === "mn" ? (item.question_mn || item.question) : item.question}</span>
                   </div>
                   {activeIndex === index ? (
                     <ChevronUp size={18} />
@@ -76,7 +76,9 @@ export default function FAQ() {
                 </button>
 
                 <div className="faq-content">
-                  <div className="faq-answer-text">{item.answer}</div>
+                  <div className="faq-answer-text">
+                    {language === "mn" ? (item.answer_mn || item.answer) : item.answer}
+                  </div>
                 </div>
               </div>
             ))
