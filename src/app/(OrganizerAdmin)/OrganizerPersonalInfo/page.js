@@ -526,40 +526,44 @@ function PersonalInfoContent() {
           <Row className="profile-cms-inpt">
             {/* Row 1: Names */}
             <Col md={6}>
-              <div className="form-floating custom-floting">
-                <input
-                  type="text"
-                  className="form-control"
-                  id="firstName"
-                  placeholder={t("firstName")}
-                  value={profileData.firstName}
-                  onChange={handleChange}
-                  disabled={!isEditMode}
-                />
+              <div className="profile-input-container">
                 <label htmlFor="firstName">{t("firstName")}</label>
-                <span className="form-icon">
-                  <img src="/img/form-user.svg" alt="" />
-                </span>
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="firstName"
+                    placeholder={t("firstName")}
+                    value={profileData.firstName}
+                    onChange={handleChange}
+                    disabled={!isEditMode}
+                  />
+                  <span className="form-icon">
+                    <img src="/img/form-user.svg" alt="" />
+                  </span>
+                </div>
                 {errors.firstName && (
                   <small className="text-danger ps-2">{errors.firstName}</small>
                 )}
               </div>
             </Col>
             <Col md={6}>
-              <div className="form-floating custom-floting">
-                <input
-                  type="text"
-                  className="form-control"
-                  id="lastName"
-                  placeholder={t("lastName")}
-                  value={profileData.lastName}
-                  onChange={handleChange}
-                  disabled={!isEditMode}
-                />
+              <div className="profile-input-container">
                 <label htmlFor="lastName">{t("lastName")}</label>
-                <span className="form-icon">
-                  <img src="/img/form-user.svg" alt="" />
-                </span>
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="lastName"
+                    placeholder={t("lastName")}
+                    value={profileData.lastName}
+                    onChange={handleChange}
+                    disabled={!isEditMode}
+                  />
+                  <span className="form-icon">
+                    <img src="/img/form-user.svg" alt="" />
+                  </span>
+                </div>
                 {errors.lastName && (
                   <small className="text-danger ps-2">{errors.lastName}</small>
                 )}
@@ -568,85 +572,93 @@ function PersonalInfoContent() {
 
             {/* Row 2: Email and DOB */}
             <Col md={6}>
-              <div className="form-floating custom-floting">
-                <input
-                  type="email"
-                  className="form-control"
-                  id="email"
-                  placeholder={t("email")}
-                  value={profileData.email}
-                  disabled
-                />
+              <div className="profile-input-container">
                 <label htmlFor="email">{t("email")}</label>
-                <span className="form-icon">
-                  <img src="/img/form-email.svg" alt="" />
-                </span>
+                <div className="input-wrapper">
+                  <input
+                    type="email"
+                    className="form-control"
+                    id="email"
+                    placeholder={t("email")}
+                    value={profileData.email}
+                    disabled
+                  />
+                  <span className="form-icon">
+                    <img src="/img/form-email.svg" alt="" />
+                  </span>
+                </div>
               </div>
             </Col>
             <Col md={6}>
-              <div className="form-floating custom-floting">
-                <input
-                  type="date"
-                  className="form-control"
-                  id="dob"
-                  value={profileData.dob}
-                  onChange={handleChange}
-                  max={new Date().toISOString().split("T")[0]}
-                  disabled={!isEditMode}
-                />
+              <div className="profile-input-container">
                 <label htmlFor="dob">{t("dob")}</label>
-                <span className="form-icon">
-                  <img src="/img/form-calendar.svg" alt="" />
-                </span>
+                <div className="input-wrapper">
+                  <input
+                    type="date"
+                    className="form-control"
+                    id="dob"
+                    value={profileData.dob}
+                    onChange={handleChange}
+                    max={new Date().toISOString().split("T")[0]}
+                    disabled={!isEditMode}
+                  />
+                  <span className="form-icon">
+                    <img src="/img/form-calendar.svg" alt="" />
+                  </span>
+                </div>
               </div>
             </Col>
 
             {/* Row 3: Country and State */}
             <Col md={6}>
-              <div className="form-floating custom-floting">
-                <select
-                  className="form-select"
-                  id="country"
-                  value={profileData.country}
-                  onChange={handleCountryChange}
-                  disabled={!isEditMode}>
-                  <option value="">
-                    {t("selectCountry") || "Select Country"}
-                  </option>
-                  {countries.map((c) => (
-                    <option key={c.isoCode} value={c.name}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="profile-input-container">
                 <label htmlFor="country">{t("country")}</label>
-                <span className="form-icon">
-                  <img src="/img/form-globe.svg" alt="" />
-                </span>
+                <div className="input-wrapper">
+                  <select
+                    className="form-select"
+                    id="country"
+                    value={profileData.country}
+                    onChange={handleCountryChange}
+                    disabled={!isEditMode}>
+                    <option value="">
+                      {t("selectCountry") || "Select Country"}
+                    </option>
+                    {countries.map((c) => (
+                      <option key={c.isoCode} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="form-icon">
+                    <img src="/img/form-globe.svg" alt="" />
+                  </span>
+                </div>
                 {errors.country && (
                   <small className="text-danger ps-2">{errors.country}</small>
                 )}
               </div>
             </Col>
             <Col md={6}>
-              <div className="form-floating custom-floting">
-                <select
-                  className="form-select"
-                  id="state"
-                  value={profileData.state}
-                  onChange={handleStateChange}
-                  disabled={!isEditMode || !profileData.country}>
-                  <option value="">{t("selectState") || "Select State"}</option>
-                  {states.map((s) => (
-                    <option key={s.isoCode} value={s.name}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="profile-input-container">
                 <label htmlFor="state">{t("state")}</label>
-                <span className="form-icon">
-                  <img src="/img/form-globe.svg" alt="" />
-                </span>
+                <div className="input-wrapper">
+                  <select
+                    className="form-select"
+                    id="state"
+                    value={profileData.state}
+                    onChange={handleStateChange}
+                    disabled={!isEditMode || !profileData.country}>
+                    <option value="">{t("selectState") || "Select State"}</option>
+                    {states.map((s) => (
+                      <option key={s.isoCode} value={s.name}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="form-icon">
+                    <img src="/img/form-globe.svg" alt="" />
+                  </span>
+                </div>
                 {errors.state && (
                   <small className="text-danger ps-2">{errors.state}</small>
                 )}
@@ -655,24 +667,26 @@ function PersonalInfoContent() {
 
             {/* Row 4: City and Zipcode */}
             <Col md={6}>
-              <div className="form-floating custom-floting">
-                <select
-                  className="form-select"
-                  id="city"
-                  value={profileData.city}
-                  onChange={handleCityChange}
-                  disabled={!isEditMode || !profileData.state}>
-                  <option value="">{t("selectCity") || "Select City"}</option>
-                  {cities.map((city) => (
-                    <option key={city.name} value={city.name}>
-                      {city.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="profile-input-container">
                 <label htmlFor="city">{t("city")}</label>
-                <span className="form-icon">
-                  <img src="/img/form-mark.svg" alt="" />
-                </span>
+                <div className="input-wrapper">
+                  <select
+                    className="form-select"
+                    id="city"
+                    value={profileData.city}
+                    onChange={handleCityChange}
+                    disabled={!isEditMode || !profileData.state}>
+                    <option value="">{t("selectCity") || "Select City"}</option>
+                    {cities.map((city) => (
+                      <option key={city.name} value={city.name}>
+                        {city.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="form-icon">
+                    <img src="/img/form-mark.svg" alt="" />
+                  </span>
+                </div>
                 {errors.city && (
                   <small className="text-danger ps-2">{errors.city}</small>
                 )}
@@ -681,21 +695,21 @@ function PersonalInfoContent() {
 
             {/* Row 5: Contact Number */}
             <Col md={6}>
-              <div
-                className={`phone_input_wrapper custom-floting ${profileData.contactNumber ? "has-value" : ""} ${!isEditMode ? "disabled" : ""}`}>
-                <PhoneInput
-                  country={"us"}
-                  value={profileData.contactNumber}
-                  onChange={(phone) => handlePhoneChange("+" + phone)}
-                  inputClass="form-control"
-                  containerClass="phone_input"
-                  dropdownClass="phone_input_dropdown"
-                  buttonClass="phone_input_button"
-                  disabled={!isEditMode}
-                />
-                <label className="phone-field-label">
-                  {t("contactNumber") || "Contact Number"}
-                </label>
+              <div className="profile-input-container">
+                <label>{t("contactNumber") || "Contact Number"}</label>
+                <div
+                  className={`phone_input_wrapper ${!isEditMode ? "disabled" : ""}`}>
+                  <PhoneInput
+                    country={"us"}
+                    value={profileData.contactNumber}
+                    onChange={(phone) => handlePhoneChange("+" + phone)}
+                    inputClass="form-control"
+                    containerClass="phone_input"
+                    dropdownClass="phone_input_dropdown"
+                    buttonClass="phone_input_button"
+                    disabled={!isEditMode}
+                  />
+                </div>
               </div>
             </Col>
 
@@ -831,6 +845,55 @@ function PersonalInfoContent() {
         .phone_input_wrapper.disabled {
           opacity: 0.8;
           pointer-events: none;
+        }
+        .profile-input-container {
+          position: relative;
+          margin-bottom: 24px;
+        }
+        .profile-input-container label {
+          display: block;
+          color: #999;
+          font-size: 14px;
+          margin-bottom: 8px;
+          padding-left: 10px;
+          font-weight: 500;
+        }
+        .profile-input-container .input-wrapper {
+          position: relative;
+        }
+        .profile-input-container .form-control,
+        .profile-input-container .form-select {
+          text-transform: capitalize;
+          padding: 0.7rem 1rem 0.7rem 2.8rem !important;
+          height: 56px;
+          background-color: #323232 !important;
+          border-radius: 50px !important;
+          color: #fff !important;
+          box-shadow: none;
+          border: 1px solid #737373 !important;
+        }
+        .profile-input-container .form-control[type="email"] {
+          text-transform: none;
+        }
+        .profile-input-container .form-control:disabled,
+        .profile-input-container .form-select:disabled {
+          background-color: #242424 !important;
+          border-color: #444 !important;
+          color: #888 !important;
+        }
+        .profile-input-container .form-icon {
+          position: absolute;
+          top: 50%;
+          left: 15px;
+          transform: translateY(-50%);
+          pointer-events: none;
+          display: flex;
+          align-items: center;
+        }
+        .profile-input-container .form-icon img {
+          opacity: 0.8;
+          width: 18px;
+          height: 18px;
         }
       `}</style>
     </div>
