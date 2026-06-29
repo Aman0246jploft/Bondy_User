@@ -101,7 +101,7 @@ function MessageContent() {
 
     // Check if current user has blocked the other user
     const isBlockedByMe = activeChat?.blockedBy?._id === getMyId() || activeChat?.blockedBy === getMyId();
-    
+
     // Check if current user is blocked by the other user
     const isBlockedByOther = activeChat?.isBlocked && !isBlockedByMe;
 
@@ -109,9 +109,9 @@ function MessageContent() {
     // 1. Initial chat list fetch (page 1) + real-time listeners
     // ══════════════════════════════════════════════════════════
 
-    useEffect (() => {
+    useEffect(() => {
         document.title = "Message - Bondy";
-    },[])
+    }, [])
 
     useEffect(() => {
         if (!socket) return;
@@ -121,7 +121,7 @@ function MessageContent() {
             setChatListLoading(false);
             if (response.status === "ok") {
                 setChats(response.data);
-                console.log(response.data ,"dattttttttt");
+                console.log(response.data, "dattttttttt");
                 // Join all rooms in the chat list to listen for updates (like typing)
                 response.data.forEach((chat) => {
                     socket.emit("join_chat", { chatId: chat._id });
@@ -746,7 +746,7 @@ function MessageContent() {
                                                     </Link>
                                                     <a href="#" className="clear-chat" onClick={(e) => { e.preventDefault(); handleClearChatClick(); }}>
                                                         <img src="/img/clear_chat.svg" className="me-2" style={{ filter: "invert(40%) sepia(91%) saturate(3452%) hue-rotate(346deg) brightness(103%) contrast(106%)" }} alt="" />
-                                                    {t("clearChat")}
+                                                        {t("clearChat")}
                                                     </a>
                                                     {isBlockedByMe ? (
                                                         <a href="#" className="unblock-action" onClick={(e) => { e.preventDefault(); setShowDropdown(false); setShowUnblockModal(true); }}>
@@ -911,8 +911,8 @@ function MessageContent() {
                                                     border: '1px solid rgba(231, 76, 60, 0.3)'
                                                 }}>
                                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <circle cx="12" cy="12" r="10" stroke="#e74c3c" strokeWidth="2"/>
-                                                        <path d="M7 7L17 17" stroke="#e74c3c" strokeWidth="2" strokeLinecap="round"/>
+                                                        <circle cx="12" cy="12" r="10" stroke="#e74c3c" strokeWidth="2" />
+                                                        <path d="M7 7L17 17" stroke="#e74c3c" strokeWidth="2" strokeLinecap="round" />
                                                     </svg>
                                                     <span style={{ color: '#e74c3c', fontSize: '14px', fontWeight: 500 }}>
                                                         {t("youAreBlockedByThisUser")}
@@ -1009,8 +1009,8 @@ function MessageContent() {
                 <Modal.Body className="text-center p-4">
                     <div className="modal-icon mb-3">
                         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)"/>
-                            <path d="M9 9L15 15M15 9L9 15" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round"/>
+                            <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)" />
+                            <path d="M9 9L15 15M15 9L9 15" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round" />
                         </svg>
                     </div>
                     <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("clearChat")}?</h4>
@@ -1018,7 +1018,7 @@ function MessageContent() {
                         {t("clearChatConfirmMessage")}
                     </p>
                     <div className="d-flex gap-3 justify-content-center">
-                        <button 
+                        <button
                             onClick={() => setShowClearChatModal(false)}
                             style={{
                                 padding: '10px 24px',
@@ -1033,7 +1033,7 @@ function MessageContent() {
                         >
                             {t("cancel")}
                         </button>
-                        <button 
+                        <button
                             onClick={confirmClearChat}
                             style={{
                                 padding: '10px 24px',
@@ -1057,9 +1057,9 @@ function MessageContent() {
                 <Modal.Body className="text-center p-4">
                     <div className="modal-icon mb-3">
                         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)"/>
-                            <circle cx="12" cy="12" r="5" stroke="#ff4d4f" strokeWidth="2"/>
-                            <path d="M8.5 8.5L15.5 15.5" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round"/>
+                            <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)" />
+                            <circle cx="12" cy="12" r="5" stroke="#ff4d4f" strokeWidth="2" />
+                            <path d="M8.5 8.5L15.5 15.5" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round" />
                         </svg>
                     </div>
                     <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("blockUser")}?</h4>
@@ -1067,7 +1067,7 @@ function MessageContent() {
                         {t("blockUserConfirmMessage")}
                     </p>
                     <div className="d-flex gap-3 justify-content-center">
-                        <button 
+                        <button
                             onClick={() => setShowBlockModal(false)}
                             style={{
                                 padding: '10px 24px',
@@ -1082,7 +1082,7 @@ function MessageContent() {
                         >
                             {t("cancel")}
                         </button>
-                        <button 
+                        <button
                             onClick={async () => {
                                 try {
                                     const otherUserId = getOtherUser(activeChat)?._id;
@@ -1122,8 +1122,8 @@ function MessageContent() {
                 <Modal.Body className="text-center p-4">
                     <div className="modal-icon mb-3">
                         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)"/>
-                            <path d="M8 12l3 3 5-6" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)" />
+                            <path d="M8 12l3 3 5-6" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                     </div>
                     <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("unblockUser")}?</h4>
@@ -1131,7 +1131,7 @@ function MessageContent() {
                         {t("unblockUserConfirmMessage")}
                     </p>
                     <div className="d-flex gap-3 justify-content-center">
-                        <button 
+                        <button
                             onClick={() => setShowUnblockModal(false)}
                             style={{
                                 padding: '10px 24px',
@@ -1146,7 +1146,7 @@ function MessageContent() {
                         >
                             {t("cancel")}
                         </button>
-                        <button 
+                        <button
                             onClick={async () => {
                                 try {
                                     const otherUserId = getOtherUser(activeChat)?._id;
@@ -1187,8 +1187,8 @@ function MessageContent() {
                     <div className="text-center mb-3">
                         <div className="modal-icon mb-3">
                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)"/>
-                                <path d="M12 8V12M12 16H12.01" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round"/>
+                                <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)" />
+                                <path d="M12 8V12M12 16H12.01" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round" />
                             </svg>
                         </div>
                         <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("reportUser")}</h4>
@@ -1196,7 +1196,7 @@ function MessageContent() {
                             {t("reportUserDescription")}
                         </p>
                     </div>
-                    
+
                     <div style={{ marginBottom: '16px' }}>
                         <input
                             type="text"
@@ -1220,7 +1220,7 @@ function MessageContent() {
                             </p>
                         )}
                     </div>
-                    
+
                     <div style={{ marginBottom: '24px' }}>
                         <textarea
                             placeholder={t("descriptionOptional")}
@@ -1240,9 +1240,9 @@ function MessageContent() {
                             }}
                         />
                     </div>
-                    
+
                     <div className="d-flex gap-3 justify-content-center">
-                        <button 
+                        <button
                             onClick={() => { setShowReportModal(false); setReportReason(""); setReportDescription(""); setReportError(""); }}
                             style={{
                                 padding: '10px 24px',
@@ -1257,7 +1257,7 @@ function MessageContent() {
                         >
                             {t("cancel")}
                         </button>
-                        <button 
+                        <button
                             onClick={async () => {
                                 const reason = reportReason.trim();
                                 if (!reason) {

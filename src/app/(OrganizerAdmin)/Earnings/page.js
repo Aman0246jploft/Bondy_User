@@ -197,7 +197,7 @@ function Page() {
     <div>
       <div className="cards">
         {/* Header */}
-        <div className="card-header">
+        <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
           <div>
             <h2 className="card-title">{t("earnings")}</h2>
             <p className="card-desc">{t("trackIncome")}</p>
@@ -248,14 +248,14 @@ function Page() {
 
         {/* Transaction History Table */}
         <div className="custom-table-cards transaction-history mt-4">
-          <div className="card-header">
+          <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
             <div>
               <h5 className="table-title">{t("transactionHistory")}</h5>
             </div>
-            <div className="d-flex gap-2 align-items-center">
+            <div className="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-start justify-content-md-end">
               {/* Type filter */}
               <select
-                className="form-control"
+                className="form-control filter-select"
                 style={{ maxWidth: 180 }}
                 value={typeFilter}
                 onChange={(e) => handleTypeFilter(e.target.value)}>
@@ -267,7 +267,7 @@ function Page() {
                 ))}
               </select>
               {/* Search */}
-              <div className="table-search">
+              <div className="table-search filter-search position-relative">
                 <input
                   type="text"
                   className="form-control"
@@ -275,7 +275,7 @@ function Page() {
                   value={search}
                   onChange={(e) => handleSearch(e.target.value)}
                 />
-                <button type="button">
+                <button type="button" className="position-absolute end-0 top-50 translate-middle-y border-0 bg-transparent pe-2">
                   <img
                     src="/img/org-img/search-white.svg"
                     width={16}
@@ -286,7 +286,7 @@ function Page() {
             </div>
           </div>
 
-          <div className="table table-responsive custom-table-wrapper">
+          <div className="table-responsive custom-table-wrapper">
             <table className="table">
               <thead>
                 <tr>
@@ -533,6 +533,17 @@ function Page() {
           </Modal.Footer>
         </Form>
       </Modal>
+      <style jsx>{`
+        @media (max-width: 767px) {
+          .filter-select {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          .filter-search {
+            width: 100% !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

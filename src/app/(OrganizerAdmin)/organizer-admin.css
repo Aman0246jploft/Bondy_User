@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 :root {
   --primary-teal: #23ada4;
   --dark-bg: #242424;
@@ -41,6 +42,7 @@ body {
   border-radius: 16px;
   border: 1px solid var(--primary-30, rgba(35, 173, 164, 0.3));
 }
+
 .notification-cards p {
   margin-bottom: 0px;
   opacity: 0.6;
@@ -53,6 +55,7 @@ body {
   font-weight: 700;
   line-height: normal;
 }
+
 .mb-20 {
   margin-bottom: 20px;
 }
@@ -840,20 +843,16 @@ input[type="number"]::-webkit-outer-spin-button {
 .event-preview-title-marquee {
   display: flex;
   gap: 2rem;
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 8%,
-    #000 92%,
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 8%,
-    #000 92%,
-    transparent 100%
-  );
+  mask-image: linear-gradient(to right,
+      transparent 0,
+      #000 8%,
+      #000 92%,
+      transparent 100%);
+  -webkit-mask-image: linear-gradient(to right,
+      transparent 0,
+      #000 8%,
+      #000 92%,
+      transparent 100%);
 }
 
 .event-preview-title-marquee span {
@@ -1387,7 +1386,7 @@ input[type="number"]::-webkit-outer-spin-button {
 /* Mobile (≤576px) */
 @media (max-width: 576px) {
   .dashbord-card-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     margin-bottom: 20px;
   }
 }
@@ -1497,11 +1496,11 @@ input[type="number"]::-webkit-outer-spin-button {
   border-radius: 50%;
 }
 
-.gender-toggle input:checked + .slider {
+.gender-toggle input:checked+.slider {
   background-color: #23ada4;
 }
 
-.gender-toggle input:checked + .slider:before {
+.gender-toggle input:checked+.slider:before {
   transform: translateX(30px);
 }
 
@@ -1515,6 +1514,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 @media (max-width: 1024px) {
+
   .ticket-bottom,
   .ticket-inner {
     flex-wrap: wrap;
@@ -1583,8 +1583,9 @@ input[type="number"]::-webkit-outer-spin-button {
 
   .card-header {
     margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
   }
 
   .card-header .card-title {
@@ -1593,6 +1594,29 @@ input[type="number"]::-webkit-outer-spin-button {
 
   .event-cards h3 {
     font-size: 20px;
+  }
+
+  .ticket-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .ticket-rgt {
+    text-align: left;
+    margin-top: 5px;
+    width: 100%;
+  }
+
+  .ticket-lft {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ticket-lft h5,
+  .ticket-lft p {
+    max-width: 100%;
+    white-space: normal;
   }
 }
 
@@ -2082,7 +2106,7 @@ input[type="number"]::-webkit-outer-spin-button {
   gap: 20px;
 }
 
-.payment-dtl-innr li > div {
+.payment-dtl-innr li>div {
   flex: 1;
   min-width: 150px;
 }
@@ -2226,6 +2250,7 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 16px !important;
   box-shadow: none !important;
 }
+
 .profile-cms-inpt .react-tel-input .form-control {
   text-transform: capitalize;
   padding: 0.7rem 1rem 0.625rem 2.8rem !important;
@@ -2236,6 +2261,7 @@ input[type="number"]::-webkit-outer-spin-button {
   box-shadow: none !important;
   border: 1px solid #737373 !important;
 }
+
 .phone_input.react-tel-input .flag-dropdown {
   background-color: transparent !important;
   border: none !important;
@@ -2297,7 +2323,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: opacity 0.3s ease;
 }
 
-.custom-floting .form-control:focus ~ .form-icon img {
+.custom-floting .form-control:focus~.form-icon img {
   opacity: 1;
   filter: drop-shadow(0 0 5px var(--primary-teal));
 }
@@ -2430,6 +2456,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
- .custom-table-wrapper {
-    max-width: 100%;
-  }
+.custom-table-wrapper {
+  max-width: 100%;
+}

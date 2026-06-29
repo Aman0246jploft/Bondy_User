@@ -735,6 +735,54 @@ function StaffPage() {
         .save-assignment-btn:hover {
           background: #1d9088;
         }
+
+        @media (max-width: 767px) {
+          .staff-header {
+            flex-direction: row;
+            gap: 10px;
+          }
+          .staff-header h2 {
+            font-size: 22px;
+          }
+          .add-staff-btn-circle {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+          }
+          .search-wrapper-staff input {
+            height: 45px;
+            font-size: 14px;
+          }
+          .staff-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+          }
+          .staff-info-box {
+            width: 100%;
+          }
+          .staff-card > div.d-flex {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .entity-item-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+          }
+          .entity-text-details {
+            margin-left: 0;
+            margin-right: 0;
+            width: 100%;
+          }
+          .entity-text-details h6 {
+            width: 100%;
+            white-space: normal;
+          }
+          .toggle-assign-btn {
+            align-self: flex-end;
+          }
+        }
       `}</style>
 
       {/* --------------------------------------------------------------- */}

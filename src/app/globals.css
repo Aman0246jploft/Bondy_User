@@ -6594,7 +6594,8 @@ ul.pagination {
 }
 
 .back-arrow-btn {
-  /* color:white */
+  color: white;
+  background: black
 }
 
 .ticket-card {

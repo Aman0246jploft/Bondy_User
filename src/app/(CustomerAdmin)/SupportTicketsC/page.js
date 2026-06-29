@@ -116,13 +116,13 @@ function Page() {
         </div>
 
         <div className="custom-table-cards billing-history">
-          <div className="card-header">
+          <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
             <div>
               <h5 className="table-title">{t("supportTicketList")}</h5>
             </div>
-            <div className="dashboard-filter d-flex gap-2">
+            <div className="dashboard-filter d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-start justify-content-md-end">
               <select
-                className="form-select w-auto"
+                className="form-select filter-select w-auto"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}>
                 <option value="">{t("allCategories")}</option>
@@ -133,7 +133,7 @@ function Page() {
                 ))}
               </select>
               <select
-                className="form-select w-auto"
+                className="form-select filter-select w-auto"
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}>
                 {STATUS_OPTIONS.map((opt) => (
@@ -142,7 +142,7 @@ function Page() {
                   </option>
                 ))}
               </select>
-              <div className="position-relative">
+              <div className="position-relative filter-search">
                 <input
                   type="text"
                   className="form-control"
@@ -158,7 +158,7 @@ function Page() {
               </div>
             </div>
           </div>
-          <div className="table table-responsive custom-table-wrapper">
+          <div className="table-responsive custom-table-wrapper">
             <table className="table">
               <thead>
                 <tr>
@@ -222,6 +222,17 @@ function Page() {
         onHide={() => setModalShow(false)}
         onSuccess={fetchTickets}
       />
+
+      <style jsx>{`
+        @media (max-width: 767px) {
+          .filter-select {
+            width: 100% !important;
+          }
+          .filter-search {
+            width: 100% !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
