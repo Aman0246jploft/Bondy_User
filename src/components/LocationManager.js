@@ -89,5 +89,21 @@ export default function LocationManager() {
         handleLocationUpdate();
     }, []);
 
+    useEffect(() => {
+        const handleWheel = (e) => {
+            if (
+                document.activeElement &&
+                document.activeElement.tagName === "INPUT" &&
+                document.activeElement.type === "number"
+            ) {
+                document.activeElement.blur();
+            }
+        };
+        window.addEventListener("wheel", handleWheel, { passive: true });
+        return () => {
+            window.removeEventListener("wheel", handleWheel);
+        };
+    }, []);
+
     return null;
 }

@@ -237,197 +237,197 @@ export default function ResetPasswordPage() {
 
     return (
         <GuestRoute>
-        <div className="login_sec otp_sec">
-            <Container fluid>
-                <Row className="justify-content-between align-items-center gy-4 m-0">
-                    <Col xl={5} lg={7}>
-                        <div className="login_img">
-                            <img src="/img/login_side_img.png" alt="login side" />
-                            <div className="content_img_box">
-                                <h4>{t("exploreEventsEffortlessly")}</h4>
-                                <p>{t("exploreEventsEffortlesslyDesc")}</p>
+            <div className="login_sec otp_sec">
+                <Container fluid>
+                    <Row className="justify-content-between align-items-center gy-4 m-0">
+                        <Col xl={5} lg={7}>
+                            <div className="login_img">
+                                <img src="/img/login_side_img.png" alt="login side" />
+                                <div className="content_img_box">
+                                    <h4>{t("exploreEventsEffortlessly")}</h4>
+                                    <p>{t("exploreEventsEffortlesslyDesc")}</p>
+                                </div>
                             </div>
-                        </div>
-                    </Col>
+                        </Col>
 
-                    <Col xl={6} lg={5}>
-                        <Row className="justify-content-center">
-                            <Col xl={7} lg={9} md={10}>
-                                <div className="common_field">
-                                    {step === 1 && (
-                                        <>
-                                            <div className="fz_32">
-                                                <h2>{t("enterVerificationCode")}</h2>
-                                                <p>
-                                                    {t("weSentCode")}
-                                                    <br />
-                                                    <span>{email}</span>
-                                                </p>
-                                            </div>
-
-                                            <Form onSubmit={handleVerifyOtp}>
-                                                <div className="otp-container">
-                                                    {otp.map((data, index) => (
-                                                        <input
-                                                            key={index}
-                                                            type="text"
-                                                            maxLength="1"
-                                                            placeholder="—"
-                                                            ref={(el) => (inputRefs.current[index] = el)}
-                                                            value={data}
-                                                            onChange={(e) => handleOtpChange(e.target, index)}
-                                                            onKeyDown={(e) => handleKeyDown(e, index)}
-                                                            className="otp-input"
-                                                        />
-                                                    ))}
+                        <Col xl={6} lg={5}>
+                            <Row className="justify-content-center">
+                                <Col xl={7} lg={9} md={10}>
+                                    <div className="common_field">
+                                        {step === 1 && (
+                                            <>
+                                                <div className="fz_32">
+                                                    <h2>{t("enterVerificationCode")}</h2>
+                                                    <p>
+                                                        {t("weSentCode")}
+                                                        <br />
+                                                        <span>{email}</span>
+                                                    </p>
                                                 </div>
 
-                                                <div className="other_signup mb-4">
-                                                    <span>
-                                                        {t("didntReceiveCode")} {" "}
-                                                        {canResend ? (
-                                                            <Link href="#" onClick={handleResendOtp}>
-                                                                {t("resend")}
-                                                            </Link>
-                                                        ) : (
-                                                            <span style={{ color: "#999" }}>
-                                                                {t("resendIn")} {resendTimer}s
-                                                            </span>
+                                                <Form onSubmit={handleVerifyOtp}>
+                                                    <div className="otp-container">
+                                                        {otp.map((data, index) => (
+                                                            <input
+                                                                key={index}
+                                                                type="text"
+                                                                maxLength="1"
+                                                                placeholder="—"
+                                                                ref={(el) => (inputRefs.current[index] = el)}
+                                                                value={data}
+                                                                onChange={(e) => handleOtpChange(e.target, index)}
+                                                                onKeyDown={(e) => handleKeyDown(e, index)}
+                                                                className="otp-input"
+                                                            />
+                                                        ))}
+                                                    </div>
+
+                                                    <div className="other_signup mb-4">
+                                                        <span>
+                                                            {t("didntReceiveCode")} {" "}
+                                                            {canResend ? (
+                                                                <Link href="#" onClick={handleResendOtp}>
+                                                                    {t("resend")}
+                                                                </Link>
+                                                            ) : (
+                                                                <span style={{ color: "#999" }}>
+                                                                    {t("resendIn")} {resendTimer}s
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                    </div>
+
+                                                    <button
+                                                        type="submit"
+                                                        className="common_btn w-100 border-0"
+                                                        disabled={loading}
+                                                    >
+                                                        {loading ? t("verifying") : t("verifyAndContinue")}
+                                                    </button>
+                                                </Form>
+                                            </>
+                                        )}
+
+                                        {step === 2 && (
+                                            <>
+                                                <div className="fz_32">
+                                                    <h2>{t("setNewPassword")}</h2>
+                                                    <p>{t("createStrongPassword")}</p>
+                                                </div>
+
+                                                <Form className="login_field" onSubmit={handleResetPassword}>
+                                                    <Form.Group className="mb-3" controlId="newPassword">
+                                                        <div className="d-flex gap-2 position-relative">
+                                                            <Form.Control
+                                                                type={show ? "text" : "password"}
+                                                                name="newPassword"
+                                                                placeholder={t("newPassword")}
+                                                                value={formData.newPassword}
+                                                                onChange={handlePasswordChange}
+                                                                aria-required="true"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShow(!show)}
+                                                                className="password-eye-btn"
+                                                            >
+                                                                <img
+                                                                    src={show ? "/img/lock.svg" : "/img/unlock.svg"}
+                                                                    alt="toggle password"
+                                                                />
+                                                            </button>
+                                                        </div>
+                                                        {passwordErrors.newPassword && (
+                                                            <div className="text-danger small mt-1">{passwordErrors.newPassword}</div>
                                                         )}
+                                                        {/* <small className="text-muted">
+                                                            {t("passwordComplexity")}
+                                                        </small> */}
+                                                    </Form.Group>
+
+                                                    <Form.Group className="mb-3" controlId="confirmPassword">
+                                                        <div className="d-flex gap-2 position-relative">
+                                                            <Form.Control
+                                                                type={showConfirm ? "text" : "password"}
+                                                                name="confirmPassword"
+                                                                placeholder={t("confirmNewPassword")}
+                                                                value={formData.confirmPassword}
+                                                                onChange={handlePasswordChange}
+                                                                aria-required="true"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowConfirm(!showConfirm)}
+                                                                className="password-eye-btn"
+                                                            >
+                                                                <img
+                                                                    src={
+                                                                        showConfirm ? "/img/lock.svg" : "/img/unlock.svg"
+                                                                    }
+                                                                    alt="toggle password"
+                                                                />
+                                                            </button>
+                                                        </div>
+                                                        {passwordErrors.confirmPassword && (
+                                                            <div className="text-danger small mt-1">{passwordErrors.confirmPassword}</div>
+                                                        )}
+                                                    </Form.Group>
+
+                                                    <button
+                                                        type="submit"
+                                                        disabled={loading}
+                                                        className="common_btn w-100 d-block text-center text-decoration-none border-0"
+                                                    >
+                                                        {loading ? t("sending") : t("resetPassword")}
+                                                    </button>
+                                                </Form>
+                                            </>
+                                        )}
+
+                                        {step === 3 && (
+                                            <>
+                                                <div className="fz_32 text-center">
+                                                    <div className="mb-4">
+                                                        <svg
+                                                            width="80"
+                                                            height="80"
+                                                            viewBox="0 0 80 80"
+                                                            fill="none"
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            className="mx-auto"
+                                                        >
+                                                            <circle cx="40" cy="40" r="40" fill="#10B981" />
+                                                            <path
+                                                                d="M25 40L35 50L55 30"
+                                                                stroke="white"
+                                                                strokeWidth="4"
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                            />
+                                                        </svg>
+                                                    </div>
+                                                    <h2>{t("passwordResetSuccessful")}</h2>
+                                                    <p>
+                                                        {t("passwordResetSuccessful")}
+                                                        <br />
+                                                        {t("backToLogin")}
+                                                    </p>
+                                                </div>
+
+                                                <div className="other_signup mt-4">
+                                                    <span>
+                                                        <Link href="/login">{t("backToLogin")}</Link>
                                                     </span>
                                                 </div>
-
-                                                <button
-                                                    type="submit"
-                                                    className="common_btn w-100 border-0"
-                                                    disabled={loading}
-                                                >
-                                                    {loading ? t("verifying") : t("verifyAndContinue")}
-                                                </button>
-                                            </Form>
-                                        </>
-                                    )}
-
-                                    {step === 2 && (
-                                        <>
-                                            <div className="fz_32">
-                                                <h2>{t("setNewPassword")}</h2>
-                                                <p>{t("createStrongPassword")}</p>
-                                            </div>
-
-                                            <Form className="login_field" onSubmit={handleResetPassword}>
-                                                <Form.Group className="mb-3" controlId="newPassword">
-                                                    <div className="d-flex gap-2 position-relative">
-                                                        <Form.Control
-                                                            type={show ? "text" : "password"}
-                                                            name="newPassword"
-                                                            placeholder={t("newPassword")}
-                                                            value={formData.newPassword}
-                                                            onChange={handlePasswordChange}
-                                                            aria-required="true"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShow(!show)}
-                                                            className="password-eye-btn"
-                                                        >
-                                                            <img
-                                                                src={show ? "/img/lock.svg" : "/img/unlock.svg"}
-                                                                alt="toggle password"
-                                                            />
-                                                        </button>
-                                                    </div>
-                                                    {passwordErrors.newPassword && (
-                                                        <div className="text-danger small mt-1">{passwordErrors.newPassword}</div>
-                                                    )}
-                                                        <small className="text-muted">
-                                                        {t("passwordComplexity")}
-                                                    </small>
-                                                </Form.Group>
-
-                                                <Form.Group className="mb-3" controlId="confirmPassword">
-                                                    <div className="d-flex gap-2 position-relative">
-                                                        <Form.Control
-                                                            type={showConfirm ? "text" : "password"}
-                                                            name="confirmPassword"
-                                                            placeholder={t("confirmNewPassword")}
-                                                            value={formData.confirmPassword}
-                                                            onChange={handlePasswordChange}
-                                                            aria-required="true"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowConfirm(!showConfirm)}
-                                                            className="password-eye-btn"
-                                                        >
-                                                            <img
-                                                                src={
-                                                                    showConfirm ? "/img/lock.svg" : "/img/unlock.svg"
-                                                                }
-                                                                alt="toggle password"
-                                                            />
-                                                        </button>
-                                                    </div>
-                                                    {passwordErrors.confirmPassword && (
-                                                        <div className="text-danger small mt-1">{passwordErrors.confirmPassword}</div>
-                                                    )}
-                                                </Form.Group>
-
-                                                <button
-                                                    type="submit"
-                                                    disabled={loading}
-                                                    className="common_btn w-100 d-block text-center text-decoration-none border-0"
-                                                >
-                                                    {loading ? t("sending") : t("resetPassword")}
-                                                </button>
-                                            </Form>
-                                        </>
-                                    )}
-
-                                    {step === 3 && (
-                                        <>
-                                            <div className="fz_32 text-center">
-                                                <div className="mb-4">
-                                                    <svg
-                                                        width="80"
-                                                        height="80"
-                                                        viewBox="0 0 80 80"
-                                                        fill="none"
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="mx-auto"
-                                                    >
-                                                        <circle cx="40" cy="40" r="40" fill="#10B981" />
-                                                        <path
-                                                            d="M25 40L35 50L55 30"
-                                                            stroke="white"
-                                                            strokeWidth="4"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                        />
-                                                    </svg>
-                                                </div>
-                                                <h2>{t("passwordResetSuccessful")}</h2>
-                                                <p>
-                                                    {t("passwordResetSuccessful")}
-                                                    <br />
-                                                    {t("backToLogin")}
-                                                </p>
-                                            </div>
-
-                                            <div className="other_signup mt-4">
-                                                <span>
-                                                    <Link href="/login">{t("backToLogin")}</Link>
-                                                </span>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </Col>
-                        </Row>
-                    </Col>
-                </Row>
-            </Container>
-        </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </Col>
+                            </Row>
+                        </Col>
+                    </Row>
+                </Container>
+            </div>
         </GuestRoute>
     );
 }
