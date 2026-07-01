@@ -3138,10 +3138,15 @@ function CourseDetailsContent() {
           font-weight: 700;
           transition: all 0.2s;
           border: 1px solid rgba(35, 173, 164, 0.3);
+          width: 50px;
+          display: inline-block;
+          text-align: center;
         }
         .day-date {
           font-size: 13px;
           color: #ccc;
+          width: 80px;
+          display: inline-block;
         }
         .slot-row {
           background: #1a1a1a;
