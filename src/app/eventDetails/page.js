@@ -398,12 +398,12 @@ function EventDetailsContent() {
                         <span className="event-info-value">{refundPolicy || event?.refundPolicy}</span>
                       </div>
                     )}
-                    {event?.addOns && (
+                    {/* {event?.addOns && (
                       <div className="event-info-item">
                         <span className="event-info-label">{t("addons")}</span>
                         <span className="event-info-value">{event.addOns}</span>
                       </div>
-                    )}
+                    )} */}
                     {event?.notes && (
                       <div className="event-info-item">
                         <span className="event-info-label">{t("notes")}</span>

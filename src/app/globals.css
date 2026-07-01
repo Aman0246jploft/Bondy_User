@@ -6706,3 +6706,8 @@ h4.ticket-text-wrap {
 .invite_friends_fr .form-control {
   border: none !important;
 }
+
+
+.custom-table-cards .table-title {
+  width: 100px
+}

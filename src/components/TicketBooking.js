@@ -117,7 +117,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
         try {
             const locale = language === "mn" ? "mn-MN" : "en-US";
             const formatted = new Intl.NumberFormat(locale, {
-                minimumFractionDigits: 0,
+                minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             }).format(amount);
             return `₮${formatted}`;

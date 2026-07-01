@@ -63,7 +63,7 @@ const SessionCart = ({ type, title, events, isPast, isMyProfile }) => {
               if (amount == null || amount === undefined) return t("priceNotAvailable");
               try {
                 const locale = language === "mn" ? "mn-MN" : "en-US";
-                const formatted = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(amount);
+                const formatted = new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
                 return `₮${formatted}`;
               } catch (e) {
                 return `₮${amount}`;

@@ -126,15 +126,6 @@ export function AuthGuardProvider({ children }) {
     checkTokenAndStatus();
   }, [pathname, router]);
 
-  /**
-   * checkAuth(callback?)
-   * If logged in → runs callback (if provided).
-   * If NOT logged in → opens the "Account Required" modal.
-   *
-   * Usage:
-   *   const { checkAuth } = useAuthGuard();
-   *   <button onClick={() => checkAuth(handleBook)}>Book Tickets</button>
-   */
   const checkAuth = useCallback((callback) => {
     const token = localStorage.getItem("token");
     if (token) {

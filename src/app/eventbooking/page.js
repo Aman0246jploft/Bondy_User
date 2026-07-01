@@ -38,7 +38,7 @@ function BookingPageContent() {
     if (amount == null || amount === undefined) return t("priceNotAvailable") || "N/A";
     try {
       const locale = language === "mn" ? "mn-MN" : "en-US";
-      return new Intl.NumberFormat(locale, { style: "currency", currency: "MNT", maximumFractionDigits: 0 }).format(amount);
+      return new Intl.NumberFormat(locale, { style: "currency", currency: "MNT", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
     } catch (e) {
       return `₮${amount}`;
     }
