@@ -84,6 +84,7 @@ function MessageeContent() {
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
   const [reportError, setReportError] = useState("");
+  const [myBlockedUsers, setMyBlockedUsers] = useState([]);
 
   // ─── Helper ────────────────────────────────────────────────
   const getMyId = useCallback(() => {
@@ -102,17 +103,36 @@ function MessageeContent() {
     [getMyId],
   );
 
+  const otherUserId = getOtherUser(activeChat)?._id;
+
   // Check if current user has blocked the other user
-  const isBlockedByMe = activeChat?.blockedBy?._id === getMyId() || activeChat?.blockedBy === getMyId();
+  const isBlockedByMe = myBlockedUsers.includes(otherUserId) || activeChat?.blockedBy?._id === getMyId() || activeChat?.blockedBy === getMyId();
   
   // Check if current user is blocked by the other user
-  const isBlockedByOther = activeChat?.isBlocked && !isBlockedByMe;
+  const isBlockedByOther = activeChat?.isBlocked && (
+    activeChat?.blockedBy?._id === otherUserId || 
+    activeChat?.blockedBy === otherUserId || 
+    (!isBlockedByMe)
+  );
 
   // ══════════════════════════════════════════════════════════
   // 1. Initial chat list fetch (page 1) + real-time listeners
   // ══════════════════════════════════════════════════════════
  
-useEffect(() => {document.title = "Message - Bondy";}, []);
+  useEffect(() => {
+    document.title = "Message - Bondy";
+    const fetchBlocked = async () => {
+      try {
+        const res = await blockUserApi.getBlockedUsers({ pageNo: 1, size: 1000 });
+        if (res.status && res.data?.blockedUsers) {
+          setMyBlockedUsers(res.data.blockedUsers.map(b => b.toUser?._id || b.toUser));
+        }
+      } catch (err) {
+        console.error("Failed to fetch blocked users", err);
+      }
+    };
+    fetchBlocked();
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -420,16 +440,16 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
       );
     };
 
-    const handleChatUnblocked = ({ chatId }) => {
-      // Re-enable input by clearing blocked fields
+    const handleChatUnblocked = ({ chatId, isBlocked, blockedBy }) => {
+      // Re-enable input by clearing blocked fields (or keeping them if still blocked by the other user)
       setActiveChat((prev) => {
         if (!prev || prev._id !== chatId) return prev;
-        return { ...prev, isBlocked: false, blockedBy: null };
+        return { ...prev, isBlocked, blockedBy };
       });
       // Refresh sidebar entry
       setChats((prev) =>
         prev.map((c) =>
-          c._id === chatId ? { ...c, isBlocked: false, blockedBy: null } : c,
+          c._id === chatId ? { ...c, isBlocked, blockedBy } : c,
         ),
       );
     };
@@ -912,7 +932,39 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
                     </div>
 
                     {/* MESSAGE INPUT */}
-                    {isBlockedByOther ? (
+                    {isBlockedByMe && isBlockedByOther ? (
+                      <div className="message-input" style={{ padding: '16px' }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          padding: '14px 20px',
+                          background: 'rgba(231, 76, 60, 0.1)',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(231, 76, 60, 0.3)'
+                        }}>
+                          <span style={{ color: '#e74c3c', fontSize: '14px', fontWeight: 500 }}>
+                            {t("youBothBlockedEachOther") || "You both have blocked each other."}
+                          </span>
+                          <button 
+                            onClick={() => setShowUnblockModal(true)}
+                            style={{
+                              background: '#e74c3c',
+                              color: 'white',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 600
+                            }}
+                          >
+                            {t("unblockUser") || "Unblock user"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : isBlockedByOther ? (
                       <div className="message-input" style={{ padding: '16px' }}>
                         <div style={{
                           display: 'flex',
@@ -931,6 +983,38 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
                           <span style={{ color: '#e74c3c', fontSize: '14px', fontWeight: 500 }}>
                             {t("youAreBlockedByThisUser") || "You are blocked by this user"}
                           </span>
+                        </div>
+                      </div>
+                    ) : isBlockedByMe ? (
+                      <div className="message-input" style={{ padding: '16px' }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          padding: '14px 20px',
+                          background: 'rgba(231, 76, 60, 0.1)',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(231, 76, 60, 0.3)'
+                        }}>
+                          <span style={{ color: '#e74c3c', fontSize: '14px', fontWeight: 500 }}>
+                            {t("youHaveBlockedThisUser") || "You have blocked this user."}
+                          </span>
+                          <button 
+                            onClick={() => setShowUnblockModal(true)}
+                            style={{
+                              background: '#e74c3c',
+                              color: 'white',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 600
+                            }}
+                          >
+                            {t("unblockUser") || "Unblock user"}
+                          </button>
                         </div>
                       </div>
                     ) : (
@@ -1104,6 +1188,7 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
                   const res = await blockUserApi.blockUser({ toUser: otherUserId });
                   setShowBlockModal(false);
                   if (res.status === true) {
+                    setMyBlockedUsers(prev => [...prev, otherUserId]);
                     // Update local state to reflect block
                     const myId = getMyId();
                     setActiveChat(prev => ({ ...prev, blockedBy: { _id: myId }, isBlocked: true }));
@@ -1169,9 +1254,15 @@ useEffect(() => {document.title = "Message - Bondy";}, []);
                   const res = await blockUserApi.unblockUser({ toUser: otherUserId });
                   setShowUnblockModal(false);
                   if (res.status === true) {
+                    setMyBlockedUsers(prev => prev.filter(id => id !== otherUserId));
+
+                    const updatedChat = res.data?.chat;
+                    const nextIsBlocked = updatedChat ? updatedChat.isBlocked : false;
+                    const nextBlockedBy = updatedChat ? updatedChat.blockedBy : null;
+
                     // Update local state to reflect unblock
-                    setActiveChat(prev => ({ ...prev, blockedBy: null, isBlocked: false }));
-                    setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, blockedBy: null, isBlocked: false } : c));
+                    setActiveChat(prev => ({ ...prev, blockedBy: nextBlockedBy, isBlocked: nextIsBlocked }));
+                    setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, blockedBy: nextBlockedBy, isBlocked: nextIsBlocked } : c));
                     toast.success(res.message || t("userUnblockedSuccessfully") || "User unblocked successfully");
                   }
                 } catch (error) {
