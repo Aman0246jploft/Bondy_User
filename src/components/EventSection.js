@@ -2,6 +2,7 @@
 import Link from "next/link";
 /* 🔹 DATA */
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import eventApi from "../api/eventApi";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -15,9 +16,35 @@ const EventSection = ({
   extraParams = null,
 }) => {
   const { t } = useLanguage();
+  const router = useRouter();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState(customTitle);
+
+  const handleAddInterestClick = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    const profileStr = localStorage.getItem("userProfile");
+    if (profileStr) {
+      try {
+        const profile = JSON.parse(profileStr);
+        if (profile.role === "ORGANIZER") {
+          router.push("/OrganizerPersonalInfo");
+        } else if (profile.role === "CUSTOMER") {
+          router.push("/Personalinfo");
+        } else {
+          router.push("/login");
+        }
+      } catch (err) {
+        router.push("/login");
+      }
+    } else {
+      router.push("/login");
+    }
+  };
 
   // Map prop type to backend filter and display title
   const getFilterAndTitle = () => {
@@ -74,8 +101,8 @@ const EventSection = ({
         const response = await eventApi.getEvents(params);
         if (response.data && response.data.events) {
           let fetchedEvents = response.data.events || [];
-          // Fallback if list is not fully filled (especially for recommended filter)
-          if (fetchedEvents.length < limit) {
+          // Fallback if list is not fully filled (except for recommended filter)
+          if (type !== "recommended" && fetchedEvents.length < limit) {
             const neededCount = limit - fetchedEvents.length;
             const fallbackParams = {
               ...params,
@@ -115,7 +142,54 @@ const EventSection = ({
   }
 
   // If no events and not loading, don't render the section (or render empty state)
-  if (!events || events.length === 0) return null;
+  if (!events || events.length === 0) {
+    if (type === "recommended") {
+      return (
+        <section className="recommended-section" style={{ position: "relative", zIndex: 2 }}>
+          <div className="container" style={{ position: "relative", zIndex: 2 }}>
+            {!hideHeader && (
+              <div className="main_title align_title position-relative z-2 border-bottm">
+                <h2>{title}</h2>
+              </div>
+            )}
+            <div style={{ textAlign: "center", padding: "50px 20px", position: "relative", zIndex: 3 }}>
+              <p style={{ color: "#888", marginBottom: "20px", fontSize: "16px" }}>
+                {t("noRecommendedEvents")}
+              </p>
+              <button
+                onClick={handleAddInterestClick}
+                style={{
+                  background: "#23ADA4",
+                  color: "#fff",
+                  border: "none",
+                  padding: "12px 30px",
+                  borderRadius: "50px",
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 15px rgba(35, 173, 164, 0.3)",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  position: "relative",
+                  zIndex: 10
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(35, 173, 164, 0.5)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 15px rgba(35, 173, 164, 0.3)";
+                }}
+              >
+                {t("addInterest")}
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+    }
+    return null;
+  }
 
   return (
     <section className="recommended-section">
