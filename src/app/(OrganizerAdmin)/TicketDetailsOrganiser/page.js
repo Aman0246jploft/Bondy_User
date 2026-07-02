@@ -273,10 +273,10 @@ function TicketDetailsContent() {
                       {isEvent
                         ? (ticketInfo?.ticketName || "General Ticket")
                         : isFixedStart
-                        ? (ticketInfo?.ticketName || `${t("fixedStart") || "Fixed Start"} Course`)
-                        : isOngoingPass
-                        ? (ticketInfo?.passType === "3_month" ? `3 ${t("monthPass") || "Month Pass"}` : `1 ${t("monthPass") || "Month Pass"}`)
-                        : (ticketInfo?.ticketName || `${t("ongoing") || "Ongoing"} (Session)`)}
+                          ? (ticketInfo?.ticketName || `${t("fixedStart") || "Fixed Start"} Course`)
+                          : isOngoingPass
+                            ? (ticketInfo?.passType === "3_month" ? `3 ${t("monthPass") || "Month Pass"}` : `1 ${t("monthPass") || "Month Pass"}`)
+                            : (ticketInfo?.ticketName || `${t("ongoing") || "Ongoing"} (Session)`)}
                     </p>
                   </div>
                   <div className="ticket-summary-item">
@@ -316,8 +316,8 @@ function TicketDetailsContent() {
                     {isEvent
                       ? (t("eventTime") || "Event Time")
                       : isOngoingPass
-                      ? (t("passValidity") || "Pass Validity")
-                      : (t("timeSlots") || "Time Slots")}
+                        ? (t("passValidity") || "Pass Validity")
+                        : (t("timeSlots") || "Time Slots")}
                   </h6>
                   {isEvent ? (
                     <p>
@@ -378,14 +378,14 @@ function TicketDetailsContent() {
                       </div>
                     </Col>
                   )}
-                  {item?.addOns && (
+                  {/* {item?.addOns && (
                     <Col md={12}>
                       <div className="info-box ticket-panel-box">
                         <h6>{t("addOns") || "Add-ons"}</h6>
                         <ExpandableText text={item.addOns} limit={150} forceExpanded={isSharingImage} hideToggle={isSharingImage} />
                       </div>
                     </Col>
-                  )}
+                  )} */}
                 </>
               )}
 

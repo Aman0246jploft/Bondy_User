@@ -22,7 +22,9 @@ function ExpandableText({ text, limit = 200, className = "" }) {
     <div className={className}>
       <p
         style={{
-          whiteSpace: "pre-line",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+          overflowWrap: "anywhere",
           margin: 0,
           color: "rgba(255,255,255,0.8)",
           fontSize: "14px",
@@ -1016,10 +1018,10 @@ function EventDetailsContent() {
                   </h6>
                   <p
                     className="text-white mb-0 font-weight-bold"
-                    style={{ fontSize: "14px" }}>
+                    style={{ fontSize: "14px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
                     {event.venueName}
                   </p>
-                  <p className="small text-secondary mb-0">
+                  <p className="small text-secondary mb-0" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
                     {event.venueAddress?.address}
                   </p>
                   <p className="small text-secondary mb-0">

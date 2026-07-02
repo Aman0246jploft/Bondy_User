@@ -21,18 +21,18 @@ const SECTION_META = {
   },
   recommended: {
     filter: "recommended",
-    titleKey: "recommended",
-    subtitleKey: "recommendedSubtitle",
+    titleKey: "recommendedForYou",
+    subtitleKey: "recommendedCoursesSubtitle",
   },
   nearYou: {
     filter: "nearYou",
-    titleKey: "nearYou",
-    subtitleKey: "nearYouSubtitle",
+    titleKey: "coursesNearYou",
+    subtitleKey: "nearYouCoursesSubtitle",
   },
   all: {
     filter: "all",
     titleKey: "allCourses",
-    subtitleKey: "allSubtitle",
+    subtitleKey: "allCoursesSubtitle",
   },
 };
 

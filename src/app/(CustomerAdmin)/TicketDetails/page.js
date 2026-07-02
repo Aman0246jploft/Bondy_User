@@ -431,7 +431,7 @@ function TicketDetailsContent() {
                       </div>
                     </Col>
                   )}
-                  {item?.addOns && (
+                  {/* {item?.addOns && (
                     <Col md={12}>
                       <div className="info-box ticket-panel-box">
                         <h6>{t("addOns") || "Add-ons"}</h6>
@@ -443,7 +443,7 @@ function TicketDetailsContent() {
                         />
                       </div>
                     </Col>
-                  )}
+                  )} */}
                 </>
               )}
 

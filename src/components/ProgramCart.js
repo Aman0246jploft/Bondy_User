@@ -89,11 +89,11 @@ const ProgramCart = ({ programsArray, pagination }) => {
                 <div
                   className="card-overlay"
                   style={{
-                    width: "300px",
-                    height: "200px",
+                    width: "100%",
+                    minHeight: "200px",
                   }}
                 >
-                  <div className="overlay-content program_cart">
+                  <div className="overlay-content program_cart" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
                     <div className="program_cart_inner">
                       <Link href={`/programDetails?id=${program?._id}`}>
                         <div className="program_cart_cntent">
@@ -106,7 +106,6 @@ const ProgramCart = ({ programsArray, pagination }) => {
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               wordBreak: "break-word",
-                              minHeight: "2.8em", // Optional: maintain consistent height
                             }}
                           >
                             {trimTo30CharsNoSpaceCount(program?.courseTitle)}
@@ -155,7 +154,7 @@ const ProgramCart = ({ programsArray, pagination }) => {
                         marginBottom: "15px",
                       }}
                     >
-                      <div
+                      {/* <div
                         title={
                           language === "mn"
                             ? program?.durationTranslation || program?.duration
@@ -176,11 +175,11 @@ const ProgramCart = ({ programsArray, pagination }) => {
                           style={{ width: "16px", height: "16px" }}
                         />{" "}
                         {language === "mn"
-                          ? program?.durationTranslation || program?.duration
-                          : program?.duration}
-                      </div>
-                      <div
-                        title={`${program?.schedules?.length} sessions`}
+                          ? program?.durationTranslation || program?.duration || "-"
+                          : program?.duration || "-"}
+                      </div> */}
+                      {/* <div
+                        title={`${program?.schedules?.length || 0} sessions`}
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -195,11 +194,15 @@ const ProgramCart = ({ programsArray, pagination }) => {
                           src="/img/time_icon.svg"
                           style={{ width: "16px", height: "16px" }}
                         />
-                        {program?.schedules?.length} {t("sessions")}
-                      </div>
+                        {program?.schedules?.length || 0} {t("sessions")}
+                      </div> */}
 
                       <div
-                        title={`${formatDate(program?.currentSchedule?.startDate)} – ${formatDate(program?.currentSchedule?.endDate)}`}
+                        title={
+                          formatDate(program?.currentSchedule?.startDate) && formatDate(program?.currentSchedule?.endDate)
+                            ? `${formatDate(program?.currentSchedule?.startDate)} – ${formatDate(program?.currentSchedule?.endDate)}`
+                            : formatDate(program?.currentSchedule?.startDate) || formatDate(program?.currentSchedule?.endDate) || ""
+                        }
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -215,8 +218,9 @@ const ProgramCart = ({ programsArray, pagination }) => {
                           src="/img/0date_icon.svg"
                           style={{ width: "16px", height: "16px" }}
                         />{" "}
-                        {formatDate(program?.currentSchedule?.startDate)} –{" "}
-                        {formatDate(program?.currentSchedule?.endDate)}
+                        {formatDate(program?.currentSchedule?.startDate) && formatDate(program?.currentSchedule?.endDate)
+                          ? `${formatDate(program?.currentSchedule?.startDate)} – ${formatDate(program?.currentSchedule?.endDate)}`
+                          : formatDate(program?.currentSchedule?.startDate) || formatDate(program?.currentSchedule?.endDate) || ""}
                       </div>
                     </div>
                     <div className="price_align" style={{ marginTop: "auto" }}>
