@@ -11,12 +11,25 @@ export default function Footer() {
   const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [socialLinks, setSocialLinks] = useState({
     facebook: "#",
     linkedin: "#",
     instagram: "#",
     youtube: "#"
   });
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("token"));
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userProfile");
+    setIsLoggedIn(false);
+    toast.success(t("loggedOutSuccessfully"));
+    window.location.reload();
+  };
 
   useEffect(() => {
     const fetchSocialLinks = async () => {
@@ -83,7 +96,28 @@ export default function Footer() {
                 <div>
                   {/* <Link href="#">Agenda</Link> */}
                   {/* <Link href="#">Speakers</Link> */}
-                  <Link href="/register">{t("register")}</Link>
+                  {isLoggedIn ? (
+                    <button
+                      onClick={handleLogout}
+                      style={{
+                        color: "#fff",
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        textAlign: "left",
+                        textDecoration: "none",
+                        fontSize: "14px",
+                        marginBottom: "10px",
+                        display: "block",
+                        cursor: "pointer",
+                        fontFamily: "inherit"
+                      }}
+                    >
+                      {t("logout")}
+                    </button>
+                  ) : (
+                    <Link href="/register">{t("register")}</Link>
+                  )}
                   {/* <Link href="#">Venue</Link> */}
                   {/* <Link href="#">FAQ</Link> */}
                 </div>
