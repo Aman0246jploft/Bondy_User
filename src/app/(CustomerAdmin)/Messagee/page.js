@@ -107,18 +107,18 @@ function MessageeContent() {
 
   // Check if current user has blocked the other user
   const isBlockedByMe = myBlockedUsers.includes(otherUserId) || activeChat?.blockedBy?._id === getMyId() || activeChat?.blockedBy === getMyId();
-  
+
   // Check if current user is blocked by the other user
   const isBlockedByOther = activeChat?.isBlocked && (
-    activeChat?.blockedBy?._id === otherUserId || 
-    activeChat?.blockedBy === otherUserId || 
+    activeChat?.blockedBy?._id === otherUserId ||
+    activeChat?.blockedBy === otherUserId ||
     (!isBlockedByMe)
   );
 
   // ══════════════════════════════════════════════════════════
   // 1. Initial chat list fetch (page 1) + real-time listeners
   // ══════════════════════════════════════════════════════════
- 
+
   useEffect(() => {
     document.title = "Message - Bondy";
     const fetchBlocked = async () => {
@@ -947,7 +947,7 @@ function MessageeContent() {
                           <span style={{ color: '#e74c3c', fontSize: '14px', fontWeight: 500 }}>
                             {t("youBothBlockedEachOther") || "You both have blocked each other."}
                           </span>
-                          <button 
+                          <button
                             onClick={() => setShowUnblockModal(true)}
                             style={{
                               background: '#e74c3c',
@@ -977,8 +977,8 @@ function MessageeContent() {
                           border: '1px solid rgba(231, 76, 60, 0.3)'
                         }}>
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="10" stroke="#e74c3c" strokeWidth="2"/>
-                            <path d="M7 7L17 17" stroke="#e74c3c" strokeWidth="2" strokeLinecap="round"/>
+                            <circle cx="12" cy="12" r="10" stroke="#e74c3c" strokeWidth="2" />
+                            <path d="M7 7L17 17" stroke="#e74c3c" strokeWidth="2" strokeLinecap="round" />
                           </svg>
                           <span style={{ color: '#e74c3c', fontSize: '14px', fontWeight: 500 }}>
                             {t("youAreBlockedByThisUser") || "You are blocked by this user"}
@@ -1000,7 +1000,7 @@ function MessageeContent() {
                           <span style={{ color: '#e74c3c', fontSize: '14px', fontWeight: 500 }}>
                             {t("youHaveBlockedThisUser") || "You have blocked this user."}
                           </span>
-                          <button 
+                          <button
                             onClick={() => setShowUnblockModal(true)}
                             style={{
                               background: '#e74c3c',
@@ -1019,74 +1019,74 @@ function MessageeContent() {
                       </div>
                     ) : (
                       <div className="message-input">
-                      {/* Staged file preview */}
-                      {stagedFile && (
-                        <div style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
-                          padding: "10px 16px",
-                          background: "rgba(255, 255, 255, 0.05)",
-                          borderRadius: "16px",
-                          marginBottom: "12px",
-                          border: "1px solid var(--border-color)",
-                        }}>
-                          {stagedFile.fileType === "image" ? (
-                            <img
-                              src={stagedFile.localUrl}
-                              alt="preview"
-                              style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "8px" }}
-                            />
-                          ) : (
-                            <span style={{ fontSize: "20px" }}>📄</span>
-                          )}
-                          <span style={{ flex: 1, fontSize: "13px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {stagedFile.name}
-                          </span>
+                        {/* Staged file preview */}
+                        {stagedFile && (
+                          <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            padding: "10px 16px",
+                            background: "rgba(255, 255, 255, 0.05)",
+                            borderRadius: "16px",
+                            marginBottom: "12px",
+                            border: "1px solid var(--border-color)",
+                          }}>
+                            {stagedFile.fileType === "image" ? (
+                              <img
+                                src={stagedFile.localUrl}
+                                alt="preview"
+                                style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "8px" }}
+                              />
+                            ) : (
+                              <span style={{ fontSize: "20px" }}>📄</span>
+                            )}
+                            <span style={{ flex: 1, fontSize: "13px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {stagedFile.name}
+                            </span>
+                            <button
+                              onClick={() => setStagedFile(null)}
+                              style={{ background: "none", border: "none", color: "#ff5555", fontSize: "16px", cursor: "pointer", padding: "4px" }}
+                              title={t("removeAttachment") || "Remove attachment"}
+                            >✕</button>
+                          </div>
+                        )}
+
+                        <div className="input-container">
+                          {/* Hidden file input */}
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                            style={{ display: "none" }}
+                            onChange={handleFileSelect}
+                          />
+
                           <button
-                            onClick={() => setStagedFile(null)}
-                            style={{ background: "none", border: "none", color: "#ff5555", fontSize: "16px", cursor: "pointer", padding: "4px" }}
-                            title={t("removeAttachment") || "Remove attachment"}
-                          >✕</button>
+                            className="clip-btn"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            title={t("attachFile") || "Attach file"}
+                          >
+                            {isUploading ? "⏳" : "📎"}
+                          </button>
+
+                          <input
+                            type="text"
+                            placeholder={stagedFile ? (t("addCaption") || "Add a caption...") : (t("yourMessagePlaceholder") || "Your message...")}
+                            value={message}
+                            onChange={handleInputChange}
+                            onKeyPress={handleKeyPress}
+                          />
+
+                          <button
+                            onClick={sendMessage}
+                            className="send-btn"
+                            disabled={isUploading || (!message.trim() && !stagedFile)}
+                          >
+                            <img src="/img/send_chat.svg" alt="Send" />
+                          </button>
                         </div>
-                      )}
-
-                      <div className="input-container">
-                        {/* Hidden file input */}
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
-                          style={{ display: "none" }}
-                          onChange={handleFileSelect}
-                        />
-
-                        <button
-                          className="clip-btn"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isUploading}
-                          title={t("attachFile") || "Attach file"}
-                        >
-                          {isUploading ? "⏳" : "📎"}
-                        </button>
-
-                        <input
-                          type="text"
-                          placeholder={stagedFile ? (t("addCaption") || "Add a caption...") : (t("yourMessagePlaceholder") || "Your message...")}
-                          value={message}
-                          onChange={handleInputChange}
-                          onKeyPress={handleKeyPress}
-                        />
-
-                        <button
-                          onClick={sendMessage}
-                          className="send-btn"
-                          disabled={isUploading || (!message.trim() && !stagedFile)}
-                        >
-                          <img src="/img/send_chat.svg" alt="Send" />
-                        </button>
                       </div>
-                    </div>
                     )}
                   </div>
                 ) : (
@@ -1107,8 +1107,8 @@ function MessageeContent() {
         <Modal.Body className="text-center p-4">
           <div className="modal-icon mb-3">
             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)"/>
-              <path d="M9 9L15 15M15 9L9 15" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round"/>
+              <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)" />
+              <path d="M9 9L15 15M15 9L9 15" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
           <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("clearChat") || "Clear Chat"}?</h4>
@@ -1116,7 +1116,7 @@ function MessageeContent() {
             {t("clearChatConfirmMessage") || "Are you sure you want to clear all messages in this chat? This action cannot be undone."}
           </p>
           <div className="d-flex gap-3 justify-content-center">
-            <button 
+            <button
               onClick={() => setShowClearChatModal(false)}
               style={{
                 padding: '10px 24px',
@@ -1131,7 +1131,7 @@ function MessageeContent() {
             >
               {t("cancel") || "Cancel"}
             </button>
-            <button 
+            <button
               onClick={confirmClearChat}
               style={{
                 padding: '10px 24px',
@@ -1155,9 +1155,9 @@ function MessageeContent() {
         <Modal.Body className="text-center p-4">
           <div className="modal-icon mb-3">
             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)"/>
-              <circle cx="12" cy="12" r="5" stroke="#ff4d4f" strokeWidth="2"/>
-              <path d="M8.5 8.5L15.5 15.5" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round"/>
+              <circle cx="12" cy="12" r="11" stroke="#ff4d4f" strokeWidth="2" fill="rgba(255, 77, 79, 0.1)" />
+              <circle cx="12" cy="12" r="5" stroke="#ff4d4f" strokeWidth="2" />
+              <path d="M8.5 8.5L15.5 15.5" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
           <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("blockUser") || "Block User"}?</h4>
@@ -1165,7 +1165,7 @@ function MessageeContent() {
             {t("blockUserConfirmMessage") || `Are you sure you want to block ${getOtherUser(activeChat)?.firstName} ${getOtherUser(activeChat)?.lastName}? They won't be able to message you.`}
           </p>
           <div className="d-flex gap-3 justify-content-center">
-            <button 
+            <button
               onClick={() => setShowBlockModal(false)}
               style={{
                 padding: '10px 24px',
@@ -1180,7 +1180,7 @@ function MessageeContent() {
             >
               {t("cancel") || "Cancel"}
             </button>
-            <button 
+            <button
               onClick={async () => {
                 try {
                   const otherUserId = getOtherUser(activeChat)?._id;
@@ -1222,8 +1222,8 @@ function MessageeContent() {
         <Modal.Body className="text-center p-4">
           <div className="modal-icon mb-3">
             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)"/>
-              <path d="M8 12l3 3 5-6" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)" />
+              <path d="M8 12l3 3 5-6" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
           <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("unblockUser") || "Unblock User"}?</h4>
@@ -1231,7 +1231,7 @@ function MessageeContent() {
             {t("unblockUserConfirmMessage") || `Are you sure you want to unblock ${getOtherUser(activeChat)?.firstName} ${getOtherUser(activeChat)?.lastName}? They will be able to message you again.`}
           </p>
           <div className="d-flex gap-3 justify-content-center">
-            <button 
+            <button
               onClick={() => setShowUnblockModal(false)}
               style={{
                 padding: '10px 24px',
@@ -1246,7 +1246,7 @@ function MessageeContent() {
             >
               {t("cancel") || "Cancel"}
             </button>
-            <button 
+            <button
               onClick={async () => {
                 try {
                   const otherUserId = getOtherUser(activeChat)?._id;
@@ -1293,8 +1293,8 @@ function MessageeContent() {
           <div className="text-center mb-3">
             <div className="modal-icon mb-3">
               <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)"/>
-                <path d="M12 8V12M12 16H12.01" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="12" cy="12" r="11" stroke="#1abc9c" strokeWidth="2" fill="rgba(26, 188, 156, 0.1)" />
+                <path d="M12 8V12M12 16H12.01" stroke="#1abc9c" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
             <h4 style={{ color: '#fff', fontWeight: 600, marginBottom: '12px' }}>{t("reportUser") || "Report User"}</h4>
@@ -1302,7 +1302,7 @@ function MessageeContent() {
               {t("reportUserDescription") || `Report ${getOtherUser(activeChat)?.firstName} ${getOtherUser(activeChat)?.lastName} for inappropriate behavior`}
             </p>
           </div>
-          
+
           <div style={{ marginBottom: '16px' }}>
             <input
               type="text"
@@ -1326,7 +1326,7 @@ function MessageeContent() {
               </p>
             )}
           </div>
-          
+
           <div style={{ marginBottom: '24px' }}>
             <textarea
               placeholder={t("descriptionOptional") || "Description (optional)"}
@@ -1346,9 +1346,9 @@ function MessageeContent() {
               }}
             />
           </div>
-          
+
           <div className="d-flex gap-3 justify-content-center">
-            <button 
+            <button
               onClick={() => { setShowReportModal(false); setReportReason(""); setReportDescription(""); setReportError(""); }}
               style={{
                 padding: '10px 24px',
@@ -1363,7 +1363,7 @@ function MessageeContent() {
             >
               {t("cancel") || "Cancel"}
             </button>
-            <button 
+            <button
               onClick={async () => {
                 const reason = reportReason.trim();
                 if (!reason) {
