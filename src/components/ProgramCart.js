@@ -111,15 +111,18 @@ const ProgramCart = ({ programsArray, pagination }) => {
                             {trimTo30CharsNoSpaceCount(program?.courseTitle)}
                           </h4>
                           <span
-                            title={program?.courseCategory?.categoryName}
+                            title={`${program?.courseCategory?.categoryName || ""} • ${program.enrollmentType === "fixedStart" ? t("fixedStartCourse") || "Fixed Start" : t("ongoingClass") || "Ongoing"}`}
                             style={{
                               display: "block",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
+                              paddingBottom: "6px",
+                              paddingTop: "6px",
+
                             }}
                           >
-                            {program?.courseCategory?.categoryName}
+                            {program?.courseCategory?.categoryName} • {program.enrollmentType === "fixedStart" ? t("fixedStartCourse") || "Fixed Start" : t("ongoingClass") || "Ongoing"}
                           </span>
                         </div>
                       </Link>

@@ -32,9 +32,11 @@ export default function LanguageSelector() {
   const handleSelect = (langCode) => {
     changeLanguage(langCode);
     setOpen(false);
-    const langName = availableLanguages.find((l) => l.code === langCode).name;
-    toast.success(t("languageChanged", { language: langName }));
-
+    if (langCode === "mn") {
+      toast.success("Хэлийг Монгол болгож өөрчиллөө");
+    } else {
+      toast.success("Language changed to English (US)");
+    }
   };
 
   // 👇 Outside click close logic

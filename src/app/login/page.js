@@ -287,7 +287,7 @@ export default function Page() {
                                   className="border-0 bg-transparent text-decoration-underline"
                                   style={{ color: "#23ada4", fontSize: "14px", fontWeight: "500" }}
                                 >
-                                  Login as Staff
+                                  {t("loginAsStaff")}
                                 </button>
                               </div>
                             </Tab.Pane>
@@ -337,7 +337,7 @@ export default function Page() {
                                   className="border-0 bg-transparent text-decoration-underline"
                                   style={{ color: "#23ada4", fontSize: "14px", fontWeight: "500" }}
                                 >
-                                  Login as Staff
+                                  {t("loginAsStaff")}
                                 </button>
                               </div>
                             </Tab.Pane>
@@ -378,7 +378,7 @@ export default function Page() {
                                   className="border-0 bg-transparent text-decoration-underline"
                                   style={{ color: "#23ada4", fontSize: "14px", fontWeight: "500" }}
                                 >
-                                  Back to User Login
+                                  {t("backToUserLogin")}
                                 </button>
                               </div>
                             </Tab.Pane>

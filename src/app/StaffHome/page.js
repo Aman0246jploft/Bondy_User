@@ -1037,6 +1037,7 @@ function StaffHome() {
                     src={getFullImageUrl(imageUrl)}
                     alt="profile"
                     onClick={() => setShowProfileOverlay(true)}
+                    onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }}
                     style={{ width: "36px", height: "36px", borderRadius: "50%", cursor: "pointer", objectFit: "cover", border: "2px solid #23ada4" }}
                   />
                 );
@@ -1105,6 +1106,7 @@ function StaffHome() {
                       ? getFullImageUrl(activeEntity.posterImage[0])
                       : "/img/sidebar-logo.svg"
                   }
+                  onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }}
                   className="event-card-img"
                   alt="cover"
                 />
@@ -1311,7 +1313,7 @@ function StaffHome() {
                     <div className="attendee-item-info">
                       <div className="attendee-item-avatar">
                         {a.user?.profileImage ? (
-                          <img src={a.user.profileImage} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <img src={a.user.profileImage} alt="avatar" onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         ) : (
                           <svg width="20" height="20" fill="#7c7c7c" viewBox="0 0 16 16">
                             <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
@@ -1512,6 +1514,7 @@ function StaffHome() {
                             ? getFullImageUrl(event.posterImage[0])
                             : "/img/sidebar-logo.svg"
                         }
+                        onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }}
                         className="event-card-img"
                         alt="cover"
                       />
@@ -1570,6 +1573,7 @@ function StaffHome() {
                             ? getFullImageUrl(course.posterImage[0])
                             : "/img/sidebar-logo.svg"
                         }
+                        onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }}
                         className="event-card-img"
                         alt="cover"
                       />
@@ -1628,6 +1632,7 @@ function StaffHome() {
                     ? getFullImageUrl(detailEntity.posterImage[0])
                     : "/img/sidebar-logo.svg"
                 }
+                onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 alt="cover"
               />
@@ -1964,6 +1969,7 @@ function StaffHome() {
                       <img
                         src={getFullImageUrl(imageUrl)}
                         alt="profile"
+                        onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }}
                         style={{ width: "56px", height: "56px", borderRadius: "50%", objectFit: "cover" }}
                       />
                     );

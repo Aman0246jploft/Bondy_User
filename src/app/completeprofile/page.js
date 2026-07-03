@@ -270,7 +270,7 @@ function CompleteProfileContent() {
               <Row className="justify-content-center align-items-center">
                 <Col xl={7} lg={9} md={12}>
                   <div className="profile_setup_container">
-                    <div className="text-center mb-4">
+                    <div style={{ color: "white" }} className="text-center mb-4">
                       <img src="/img/business_store.svg" alt="business" style={{ width: "80px", marginBottom: "20px" }} onError={(e) => { e.target.src = "/img/Success.svg"; }} />
                       <h2 className="fz_32">Tell us about your organization</h2>
                       <p>Help us review your organizer account.</p>

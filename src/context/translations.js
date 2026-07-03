@@ -1531,7 +1531,9 @@ export const translations = {
     scan: "Scan",
     history: "History",
     ticketNumber: "Ticket Number",
-    update: "Update"
+    update: "Update",
+    loginAsStaff: "Login as Staff",
+    backToUserLogin: "Back to User Login"
   },
   mn: {
     Info: "Мэдээлэл",
@@ -3068,6 +3070,8 @@ export const translations = {
     selectEventCourse: "Арга хэмжээ / курс сонгох",
     scan: "Уншуулах",
     history: "Түүх",
-    update: "Шинэчлэх"
+    update: "Шинэчлэх",
+    loginAsStaff: "Ажилтнаар нэвтрэх",
+    backToUserLogin: "Хэрэглэгчээр нэвтрэх рүү буцах"
   },
 };
