@@ -335,9 +335,21 @@ function RegisterForm() {
       const profileRes = await authApi.getSelfProfile();
       if (profileRes?.status) {
         const profile = profileRes?.data?.user;
-        if (!profile.firstName || !profile.lastName) return router.push("/completeprofile");
-        if (!profile.categories || profile.categories.length === 0) return router.push("/insterest");
-        router.push("/");
+        const isOrganizer = profile?.roleId === 2 || profile?.organizerVerificationStatus;
+
+        if (isOrganizer) {
+          if (!profile?.businessName || !profile?.businessCategory) {
+            return router.push("/completeprofile");
+          }
+          if (!profile?.isVerified) {
+            return router.push("/completeprofile");
+          }
+          router.push("/");
+        } else {
+          if (!profile?.firstName || !profile?.lastName) return router.push("/completeprofile");
+          if (!profile?.categories || profile?.categories.length === 0) return router.push("/insterest");
+          router.push("/");
+        }
       } else {
         router.push("/completeprofile");
       }
