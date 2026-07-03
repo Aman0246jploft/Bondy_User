@@ -4,10 +4,8 @@ import "swiper/css";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import { Autoplay } from "swiper/modules";
 import Map from "@/components/Map";
-import Reviews from "@/components/Reviews";
 import Header from "@/components/Header";
 import FAQ from "@/components/FAQ";
-import CommentsSection from "@/components/CommentsSection";
 import ExpandableText from "@/components/ExpandableText";
 import Footer from "@/components/Footer";
 import Link from "next/link";
@@ -143,7 +141,6 @@ function ProgramDetailsContent() {
     duration,
     durationTranslation,
     currentSchedule,
-    schedules,
     venueAddress,
     createdBy,
     enrollmentType,

@@ -48,6 +48,19 @@ const localizeMessage = (message) => {
 
 apiClient.interceptors.response.use(
     (response) => {
+        if (response.data?.status === false && response.data?.message) {
+            if (
+                response.data.message === "Invalid or expired token" ||
+                response.data.message === "Your account has been disabled. Please contact support."
+            ) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("userProfile");
+                localStorage.removeItem("registerEmail");
+                window.location.href = "/";
+                return;
+            }
+        }
+
         const skipToast = response.config?.skipToast;
         if (!skipToast) {
             if (response.data?.status && response.data?.message) {
@@ -55,12 +68,6 @@ apiClient.interceptors.response.use(
                     // toast.success(response.data.message);
                 }
             } else if (response.data?.status === false && response.data?.message) {
-                if (response.data.message === "Invalid or expired token") {
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("registerEmail");
-                    window.location.href = "/";
-                    return;
-                }
                 toast.error(localizeMessage(response.data.message));
             }
         }
@@ -69,6 +76,16 @@ apiClient.interceptors.response.use(
     (error) => {
         const skipToast = error.config?.skipToast;
         const message = error.response?.data?.message || "Something went wrong";
+        if (
+            error.response?.status === 401 ||
+            error.response?.status === 403 ||
+            message === "Your account has been disabled. Please contact support."
+        ) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("userProfile");
+            localStorage.removeItem("registerEmail");
+            window.location.href = "/";
+        }
         if (!skipToast) {
             toast.error(localizeMessage(message));
         }
