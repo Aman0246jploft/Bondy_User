@@ -9,6 +9,7 @@ import authApi from "@/api/authApi";
 import { Modal } from "react-bootstrap";
 import blockUserApi from "@/api/blockUser";
 import reportUserApi from "@/api/reportUser";
+import { FileIcon, PlayCircle, Play, Music } from "lucide-react";
 
 const CHAT_LIMIT = 20;
 const MSG_LIMIT = 50;
@@ -32,6 +33,70 @@ function parseJwt(token) {
     return null;
   }
 }
+
+const VideoPlayer = ({ url }) => {
+  const videoRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const togglePlay = (e) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  return (
+    <div 
+      className="chat-video-container"
+      style={{
+        position: "relative",
+        maxWidth: "250px",
+        marginBottom: "6px",
+        cursor: "pointer",
+      }}
+      onClick={togglePlay}
+    >
+      <video
+        ref={videoRef}
+        src={url}
+        className="chat-video"
+        style={{
+          width: "100%",
+          borderRadius: "8px",
+          display: "block",
+          backgroundColor: "#000",
+        }}
+        onEnded={() => setIsPlaying(false)}
+        onPause={() => setIsPlaying(false)}
+        onPlay={() => setIsPlaying(true)}
+      />
+      {!isPlaying && (
+        <div style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          backgroundColor: "var(--primary-color, #3db5b4)",
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "48px",
+          height: "48px",
+          color: "#fff",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+        }}>
+          <Play size={20} fill="currentColor" style={{ marginLeft: "3px" }} />
+        </div>
+      )}
+    </div>
+  );
+};
 
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -880,6 +945,28 @@ function MessageeContent() {
                                   const isImage =
                                     m.fileType === "image" ||
                                     (!m.fileType && m.fileUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(m.fileUrl));
+                                  const isVideo =
+                                    m.fileType === "video" ||
+                                    (!m.fileType && m.fileUrl && /\.(mp4|webm|ogg|mov)$/i.test(m.fileUrl));
+                                  const isAudio =
+                                    m.fileType === "audio" ||
+                                    (!m.fileType && m.fileUrl && /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(m.fileUrl));
+                                  const isFile = !isImage && !isVideo && !isAudio && !!m.fileUrl;
+
+                                  const getFileName = (url) => {
+                                    try {
+                                      const decodedUrl = decodeURIComponent(url);
+                                      const parts = decodedUrl.split('/');
+                                      let name = parts.pop();
+                                      if (name.includes('?')) {
+                                        name = name.split('?')[0];
+                                      }
+                                      return name.length > 20 ? name.substring(0, 20) + '...' : name;
+                                    } catch (e) {
+                                      return t("downloadFile");
+                                    }
+                                  };
+
                                   return (
                                     <>
                                       {m.fileUrl && isImage && (
@@ -898,18 +985,47 @@ function MessageeContent() {
                                           onError={(e) => (e.target.style.display = "none")}
                                         />
                                       )}
-                                      {m.fileUrl && !isImage && (
+                                      {m.fileUrl && isVideo && (
+                                        <VideoPlayer url={m.fileUrl} />
+                                      )}
+                                      {m.fileUrl && (isFile || isAudio) && (
                                         <a
                                           href={m.fileUrl}
                                           target="_blank"
                                           rel="noreferrer"
                                           className="chat-file-link"
-                                          style={{ display: "block", marginBottom: m.content ? "4px" : 0 }}
+                                          style={{ 
+                                            display: "inline-flex", 
+                                            alignItems: "center",
+                                            gap: "8px",
+                                            marginBottom: m.content ? "6px" : 0,
+                                            background: "rgba(0, 0, 0, 0.05)",
+                                            padding: "8px 12px",
+                                            borderRadius: "8px",
+                                            textDecoration: "none",
+                                            color: "inherit",
+                                            border: "1px solid rgba(0,0,0,0.1)",
+                                            maxWidth: "100%",
+                                            overflow: "hidden"
+                                          }}
                                         >
-                                          📎 {t("downloadFile") || "Download file"}
+                                          {isAudio ? (
+                                            <Music size={18} style={{ flexShrink: 0 }} />
+                                          ) : (
+                                            <FileIcon size={18} style={{ flexShrink: 0 }} />
+                                          )}
+                                          <span style={{ 
+                                            whiteSpace: "nowrap", 
+                                            overflow: "hidden", 
+                                            textOverflow: "ellipsis",
+                                            fontSize: "13px",
+                                            fontWeight: 500
+                                          }}>
+                                            {getFileName(m.fileUrl)}
+                                          </span>
                                         </a>
                                       )}
-                                      {m.content}
+                                      {m.content && <div>{m.content}</div>}
                                     </>
                                   );
                                 })()}
@@ -1037,8 +1153,15 @@ function MessageeContent() {
                                 alt="preview"
                                 style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "8px" }}
                               />
+                            ) : stagedFile.fileType === "video" ? (
+                              <video
+                                src={stagedFile.localUrl}
+                                style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "8px", backgroundColor: "#000" }}
+                              />
+                            ) : stagedFile.fileType === "audio" ? (
+                              <Music size={24} style={{ color: "var(--text-muted)" }} />
                             ) : (
-                              <span style={{ fontSize: "20px" }}>📄</span>
+                              <FileIcon size={24} style={{ color: "var(--text-muted)" }} />
                             )}
                             <span style={{ flex: 1, fontSize: "13px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {stagedFile.name}

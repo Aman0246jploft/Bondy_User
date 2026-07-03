@@ -10,7 +10,7 @@ import { Modal } from "react-bootstrap";
 import blockUserApi from "@/api/blockUser";
 import reportUserApi from "@/api/reportUser";
 import { useLanguage } from "@/context/LanguageContext";
-import { FileIcon, PlayCircle } from "lucide-react";
+import { FileIcon, PlayCircle, Play, Music } from "lucide-react";
 
 const CHAT_LIMIT = 20;
 const MSG_LIMIT = 50;
@@ -34,6 +34,70 @@ function parseJwt(token) {
         return null;
     }
 }
+
+const VideoPlayer = ({ url }) => {
+    const videoRef = useRef(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    const togglePlay = (e) => {
+        e.stopPropagation();
+        if (videoRef.current) {
+            if (isPlaying) {
+                videoRef.current.pause();
+            } else {
+                videoRef.current.play();
+            }
+            setIsPlaying(!isPlaying);
+        }
+    };
+
+    return (
+        <div
+            className="chat-video-container"
+            style={{
+                position: "relative",
+                maxWidth: "250px",
+                marginBottom: "6px",
+                cursor: "pointer",
+            }}
+            onClick={togglePlay}
+        >
+            <video
+                ref={videoRef}
+                src={url}
+                className="chat-video"
+                style={{
+                    width: "100%",
+                    borderRadius: "8px",
+                    display: "block",
+                    backgroundColor: "#000",
+                }}
+                onEnded={() => setIsPlaying(false)}
+                onPause={() => setIsPlaying(false)}
+                onPlay={() => setIsPlaying(true)}
+            />
+            {!isPlaying && (
+                <div style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    backgroundColor: "var(--primary-color, #3db5b4)",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "48px",
+                    height: "48px",
+                    color: "#fff",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+                }}>
+                    <Play size={20} fill="currentColor" style={{ marginLeft: "3px" }} />
+                </div>
+            )}
+        </div>
+    );
+};
 
 function MessageContent() {
     const { t, language } = useLanguage();
@@ -874,7 +938,10 @@ function MessageContent() {
                                                                     const isVideo =
                                                                         m.fileType === "video" ||
                                                                         (!m.fileType && m.fileUrl && /\.(mp4|webm|ogg|mov)$/i.test(m.fileUrl));
-                                                                    const isFile = !isImage && !isVideo && !!m.fileUrl;
+                                                                    const isAudio =
+                                                                        m.fileType === "audio" ||
+                                                                        (!m.fileType && m.fileUrl && /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(m.fileUrl));
+                                                                    const isFile = !isImage && !isVideo && !isAudio && !!m.fileUrl;
 
                                                                     const getFileName = (url) => {
                                                                         try {
@@ -909,20 +976,9 @@ function MessageContent() {
                                                                                 />
                                                                             )}
                                                                             {m.fileUrl && isVideo && (
-                                                                                <video
-                                                                                    src={m.fileUrl}
-                                                                                    controls
-                                                                                    className="chat-video"
-                                                                                    style={{
-                                                                                        maxWidth: "250px",
-                                                                                        borderRadius: "8px",
-                                                                                        display: "block",
-                                                                                        marginBottom: m.content ? "6px" : 0,
-                                                                                        backgroundColor: "#000",
-                                                                                    }}
-                                                                                />
+                                                                                <VideoPlayer url={m.fileUrl} />
                                                                             )}
-                                                                            {m.fileUrl && isFile && (
+                                                                            {m.fileUrl && (isFile || isAudio) && (
                                                                                 <a
                                                                                     href={m.fileUrl}
                                                                                     target="_blank"
@@ -943,7 +999,11 @@ function MessageContent() {
                                                                                         overflow: "hidden"
                                                                                     }}
                                                                                 >
-                                                                                    <FileIcon size={18} style={{ flexShrink: 0 }} />
+                                                                                    {isAudio ? (
+                                                                                        <Music size={18} style={{ flexShrink: 0 }} />
+                                                                                    ) : (
+                                                                                        <FileIcon size={18} style={{ flexShrink: 0 }} />
+                                                                                    )}
                                                                                     <span style={{
                                                                                         whiteSpace: "nowrap",
                                                                                         overflow: "hidden",
@@ -1088,6 +1148,8 @@ function MessageContent() {
                                                                 src={stagedFile.localUrl}
                                                                 style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "8px", backgroundColor: "#000" }}
                                                             />
+                                                        ) : stagedFile.fileType === "audio" ? (
+                                                            <Music size={24} style={{ color: "var(--text-muted)" }} />
                                                         ) : (
                                                             <FileIcon size={24} style={{ color: "var(--text-muted)" }} />
                                                         )}
