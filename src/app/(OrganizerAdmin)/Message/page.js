@@ -10,6 +10,7 @@ import { Modal } from "react-bootstrap";
 import blockUserApi from "@/api/blockUser";
 import reportUserApi from "@/api/reportUser";
 import { useLanguage } from "@/context/LanguageContext";
+import { FileIcon, PlayCircle } from "lucide-react";
 
 const CHAT_LIMIT = 20;
 const MSG_LIMIT = 50;
@@ -113,8 +114,8 @@ function MessageContent() {
     // Let's assume if activeChat.isBlocked is true, and activeChat.blockedBy is the other user, then they definitely blocked us.
     // If activeChat.blockedBy is us, they might have also blocked us but we don't know from backend.
     const isBlockedByOther = activeChat?.isBlocked && (
-        activeChat?.blockedBy?._id === otherUserId || 
-        activeChat?.blockedBy === otherUserId || 
+        activeChat?.blockedBy?._id === otherUserId ||
+        activeChat?.blockedBy === otherUserId ||
         (!isBlockedByMe)
     );
 
@@ -870,6 +871,25 @@ function MessageContent() {
                                                                     const isImage =
                                                                         m.fileType === "image" ||
                                                                         (!m.fileType && m.fileUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(m.fileUrl));
+                                                                    const isVideo =
+                                                                        m.fileType === "video" ||
+                                                                        (!m.fileType && m.fileUrl && /\.(mp4|webm|ogg|mov)$/i.test(m.fileUrl));
+                                                                    const isFile = !isImage && !isVideo && !!m.fileUrl;
+
+                                                                    const getFileName = (url) => {
+                                                                        try {
+                                                                            const decodedUrl = decodeURIComponent(url);
+                                                                            const parts = decodedUrl.split('/');
+                                                                            let name = parts.pop();
+                                                                            if (name.includes('?')) {
+                                                                                name = name.split('?')[0];
+                                                                            }
+                                                                            return name.length > 20 ? name.substring(0, 20) + '...' : name;
+                                                                        } catch (e) {
+                                                                            return t("downloadFile");
+                                                                        }
+                                                                    };
+
                                                                     return (
                                                                         <>
                                                                             {m.fileUrl && isImage && (
@@ -888,18 +908,54 @@ function MessageContent() {
                                                                                     onError={(e) => (e.target.style.display = "none")}
                                                                                 />
                                                                             )}
-                                                                            {m.fileUrl && !isImage && (
+                                                                            {m.fileUrl && isVideo && (
+                                                                                <video
+                                                                                    src={m.fileUrl}
+                                                                                    controls
+                                                                                    className="chat-video"
+                                                                                    style={{
+                                                                                        maxWidth: "250px",
+                                                                                        borderRadius: "8px",
+                                                                                        display: "block",
+                                                                                        marginBottom: m.content ? "6px" : 0,
+                                                                                        backgroundColor: "#000",
+                                                                                    }}
+                                                                                />
+                                                                            )}
+                                                                            {m.fileUrl && isFile && (
                                                                                 <a
                                                                                     href={m.fileUrl}
                                                                                     target="_blank"
                                                                                     rel="noreferrer"
                                                                                     className="chat-file-link"
-                                                                                    style={{ display: "block", marginBottom: m.content ? "4px" : 0 }}
+                                                                                    style={{
+                                                                                        display: "inline-flex",
+                                                                                        alignItems: "center",
+                                                                                        gap: "8px",
+                                                                                        marginBottom: m.content ? "6px" : 0,
+                                                                                        background: "rgba(0, 0, 0, 0.05)",
+                                                                                        padding: "8px 12px",
+                                                                                        borderRadius: "8px",
+                                                                                        textDecoration: "none",
+                                                                                        color: "inherit",
+                                                                                        border: "1px solid rgba(0,0,0,0.1)",
+                                                                                        maxWidth: "100%",
+                                                                                        overflow: "hidden"
+                                                                                    }}
                                                                                 >
-                                                                                    📎 {t("downloadFile")}
+                                                                                    <FileIcon size={18} style={{ flexShrink: 0 }} />
+                                                                                    <span style={{
+                                                                                        whiteSpace: "nowrap",
+                                                                                        overflow: "hidden",
+                                                                                        textOverflow: "ellipsis",
+                                                                                        fontSize: "13px",
+                                                                                        fontWeight: 500
+                                                                                    }}>
+                                                                                        {getFileName(m.fileUrl)}
+                                                                                    </span>
                                                                                 </a>
                                                                             )}
-                                                                            {m.content}
+                                                                            {m.content && <div>{m.content}</div>}
                                                                         </>
                                                                     );
                                                                 })()}
@@ -937,7 +993,7 @@ function MessageContent() {
                                                     <span style={{ color: '#e74c3c', fontSize: '14px', fontWeight: 500 }}>
                                                         {t("youBothBlockedEachOther") || "You both have blocked each other."}
                                                     </span>
-                                                    <button 
+                                                    <button
                                                         onClick={() => setShowUnblockModal(true)}
                                                         style={{
                                                             background: '#e74c3c',
@@ -990,7 +1046,7 @@ function MessageContent() {
                                                     <span style={{ color: '#e74c3c', fontSize: '14px', fontWeight: 500 }}>
                                                         {t("youHaveBlockedThisUser") || "You have blocked this user."}
                                                     </span>
-                                                    <button 
+                                                    <button
                                                         onClick={() => setShowUnblockModal(true)}
                                                         style={{
                                                             background: '#e74c3c',
@@ -1027,8 +1083,13 @@ function MessageContent() {
                                                                 alt="preview"
                                                                 style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "8px" }}
                                                             />
+                                                        ) : stagedFile.fileType === "video" ? (
+                                                            <video
+                                                                src={stagedFile.localUrl}
+                                                                style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "8px", backgroundColor: "#000" }}
+                                                            />
                                                         ) : (
-                                                            <span style={{ fontSize: "20px" }}>📄</span>
+                                                            <FileIcon size={24} style={{ color: "var(--text-muted)" }} />
                                                         )}
                                                         <span style={{ flex: 1, fontSize: "13px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                             {stagedFile.name}
@@ -1244,7 +1305,7 @@ function MessageContent() {
                                     setShowUnblockModal(false);
                                     if (res.status === true) {
                                         setMyBlockedUsers(prev => prev.filter(id => id !== otherUserId));
-                                        
+
                                         const updatedChat = res.data?.chat;
                                         const nextIsBlocked = updatedChat ? updatedChat.isBlocked : false;
                                         const nextBlockedBy = updatedChat ? updatedChat.blockedBy : null;
