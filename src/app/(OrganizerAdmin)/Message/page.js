@@ -167,21 +167,11 @@ function MessageContent() {
 
     const otherUserId = getOtherUser(activeChat)?._id;
 
-    // Check if current user has blocked the other user
-    const isBlockedByMe = myBlockedUsers.includes(otherUserId) || activeChat?.blockedBy?._id === getMyId() || activeChat?.blockedBy === getMyId();
+    // Check if current user has blocked the other user (local list OR backend flag)
+    const isBlockedByMe = myBlockedUsers.includes(otherUserId) || activeChat?.isBlockedByMe === true;
 
-    // Check if current user is blocked by the other user
-    // If chat is blocked, and we know we didn't block them (or the backend specifically says they blocked us), then they blocked us.
-    // If BOTH blocked, isBlocked is true, isBlockedByMe is true, and the other person blocked us too (which we assume if isBlocked is true and they are the blockedBy, OR if we both did it).
-    // Actually, if we blocked them, backend blockedBy will be either us or them. 
-    // To be safe, if activeChat.isBlocked is true and we can't definitively say ONLY we blocked them, we might just rely on activeChat.isBlocked.
-    // Let's assume if activeChat.isBlocked is true, and activeChat.blockedBy is the other user, then they definitely blocked us.
-    // If activeChat.blockedBy is us, they might have also blocked us but we don't know from backend.
-    const isBlockedByOther = activeChat?.isBlocked && (
-        activeChat?.blockedBy?._id === otherUserId ||
-        activeChat?.blockedBy === otherUserId ||
-        (!isBlockedByMe)
-    );
+    // Check if current user is blocked by the other user (backend flag only)
+    const isBlockedByOther = activeChat?.isBlockedByOther === true;
 
     // ══════════════════════════════════════════════════════════
     // 1. Initial chat list fetch (page 1) + real-time listeners
@@ -240,12 +230,45 @@ function MessageContent() {
             });
         };
 
+        // Real-time: user blocked/unblocked — update active chat & chat list
+        const handleUserBlocked = (data) => {
+            if (data.chat) {
+                setChats((prev) => {
+                    const others = prev.filter((c) => c._id !== data.chat._id);
+                    return [data.chat, ...others];
+                });
+                // Update activeChat if it matches
+                setActiveChat((prev) => {
+                    if (prev && prev._id === data.chat._id) return data.chat;
+                    return prev;
+                });
+            }
+        };
+
+        const handleUserUnblocked = (data) => {
+            if (data.chat) {
+                setChats((prev) => {
+                    const others = prev.filter((c) => c._id !== data.chat._id);
+                    return [data.chat, ...others];
+                });
+                // Update activeChat if it matches
+                setActiveChat((prev) => {
+                    if (prev && prev._id === data.chat._id) return data.chat;
+                    return prev;
+                });
+            }
+        };
+
         socket.on("update_chat_list", handleUpdateChatList);
         socket.on("new_chat", handleNewChat);
+        socket.on("user_blocked", handleUserBlocked);
+        socket.on("user_unblocked", handleUserUnblocked);
 
         return () => {
             socket.off("update_chat_list", handleUpdateChatList);
             socket.off("new_chat", handleNewChat);
+            socket.off("user_blocked", handleUserBlocked);
+            socket.off("user_unblocked", handleUserUnblocked);
         };
     }, [socket]);
 
@@ -1302,9 +1325,8 @@ function MessageContent() {
                                     setShowBlockModal(false);
                                     if (res.status === true) {
                                         setMyBlockedUsers(prev => [...prev, otherUserId]);
-                                        const myId = getMyId();
-                                        setActiveChat(prev => ({ ...prev, blockedBy: { _id: myId }, isBlocked: true }));
-                                        setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, blockedBy: { _id: myId }, isBlocked: true } : c));
+                                        setActiveChat(prev => ({ ...prev, isBlockedByMe: true, isBlocked: true }));
+                                        setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, isBlockedByMe: true, isBlocked: true } : c));
                                         toast.success(res.message || t("userBlockedSuccessfully"));
                                     }
                                 } catch (error) {
@@ -1369,12 +1391,20 @@ function MessageContent() {
                                         setMyBlockedUsers(prev => prev.filter(id => id !== otherUserId));
 
                                         const updatedChat = res.data?.chat;
-                                        const nextIsBlocked = updatedChat ? updatedChat.isBlocked : false;
-                                        const nextBlockedBy = updatedChat ? updatedChat.blockedBy : null;
 
                                         // Update local state to reflect unblock
-                                        setActiveChat(prev => ({ ...prev, blockedBy: nextBlockedBy, isBlocked: nextIsBlocked }));
-                                        setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, blockedBy: nextBlockedBy, isBlocked: nextIsBlocked } : c));
+                                        setActiveChat(prev => ({
+                                            ...prev,
+                                            isBlockedByMe: false,
+                                            isBlockedByOther: updatedChat?.isBlockedByOther ?? false,
+                                            isBlocked: updatedChat?.isBlocked ?? false,
+                                        }));
+                                        setChats(prev => prev.map(c => c._id === activeChat._id ? {
+                                            ...c,
+                                            isBlockedByMe: false,
+                                            isBlockedByOther: updatedChat?.isBlockedByOther ?? false,
+                                            isBlocked: updatedChat?.isBlocked ?? false,
+                                        } : c));
                                         toast.success(res.message || t("userUnblockedSuccessfully"));
                                     }
                                 } catch (error) {

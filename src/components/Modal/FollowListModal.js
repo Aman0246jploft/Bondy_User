@@ -101,8 +101,8 @@ const FollowListModal = ({ show, onHide, userId, type }) => {
             >
                 {list.length === 0 && !loading ? (
                     <div className="p-4 text-center text-muted">
-                        {type === "followers" 
-                            ? t("noFollowersFound") || "No followers found." 
+                        {type === "followers"
+                            ? t("noFollowersFound") || "No followers found."
                             : t("noFollowingFound") || "No following found."}
                     </div>
                 ) : (
