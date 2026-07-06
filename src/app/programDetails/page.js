@@ -487,7 +487,7 @@ function ProgramDetailsContent() {
                           <h6 style={{ color: "#23ada4", fontWeight: 700, fontSize: "14px", textTransform: "uppercase" }}>{day} ({dayData.date})</h6>
                           {slots.map((slot, idx) => (
                             <div className="upcming_session_item mb-2" key={idx}>
-                              <div className="content">
+                              <div className="content" style={{ flex: 1, minWidth: 0 }}>
                                 <div className="upcming_session_content ps-0">
                                   <h6>
                                     {formatTime(slot.startTime, true, language)} {t("to")} {formatTime(slot.endTime, true, language)}
@@ -526,7 +526,7 @@ function ProgramDetailsContent() {
                   batches.map((batch, idx) => {
                     return (
                       <div className="upcming_session_item mb-3" key={batch._id || idx}>
-                        <div className="content">
+                        <div className="content" style={{ flex: 1, minWidth: 0 }}>
                           <div className="upcming_session_content ps-0">
                             <h6 style={{ color: "#fff", fontWeight: 600 }}>
                               {batch.batchName}

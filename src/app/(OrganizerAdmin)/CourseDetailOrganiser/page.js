@@ -86,6 +86,7 @@ function CourseDetailsContent() {
     try {
       const params = { limit: 50 };
       if (slot.batchId) params.batchId = slot.batchId;
+      if (slot.date) params.date = slot.date.split("T")[0];
       const res = await bookingApi.getCourseAttendees(courseId, params);
       if (res?.status && res?.data) {
         setSlotAttendees(res.data.attendees || []);
