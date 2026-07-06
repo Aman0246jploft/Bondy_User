@@ -88,6 +88,7 @@ function ListingContent() {
           longitude: filterParams.longitude,
           startDate: filterParams.startDate || undefined,
           endDate: filterParams.endDate || undefined,
+          excludeMyCourses: true,
         };
 
         // geolocation for "nearYou" ONLY if no manual location is provided
