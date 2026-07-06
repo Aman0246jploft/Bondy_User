@@ -764,12 +764,14 @@ export default function TicketBooking({ item, type, scheduleId }) {
                     {slots.map((slot, slotIdx) => {
                         const slotKey = `${currentActiveKey}_${slot.batchId}`;
                         const isSelected = !!selectedSlots[slotKey];
-                        const isFull = slot.isFull || slot.availableSeats <= 0;
+                        const isCancelled = slot.isCancelled;
+                        const isFull = !isCancelled && (slot.isFull || slot.availableSeats <= 0);
                         return (
                             <div
                                 key={`${currentActiveKey}-${slot.batchId}-${slotIdx}`}
                                 className="p-3 d-flex justify-content-between align-items-center"
                                 onClick={() => {
+                                    if (isCancelled) return;
                                     if (!isFull) {
                                         const slotBatchId = slot.batchId?.toString();
                                         setSelectedSlots(prev => {
@@ -789,8 +791,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                     }
                                 }}
                                 style={{
-                                    cursor: isFull ? "not-allowed" : "pointer",
-                                    opacity: isFull ? 0.6 : 1,
+                                    cursor: isCancelled ? "not-allowed" : isFull ? "not-allowed" : "pointer",
+                                    opacity: isCancelled || isFull ? 0.6 : 1,
                                     borderBottom: slotIdx < slots.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none",
                                     backgroundColor: isSelected ? "rgba(35,173,164,0.08)" : "transparent",
                                     transition: "background-color 0.2s ease"
@@ -801,13 +803,19 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                         {slot.startTime} – {slot.endTime}
                                     </span>
                                     <span className="text-muted" style={{ fontSize: "12px" }}>
-                                        {isFull
-                                            ? t("full") || "Full"
-                                            : `${slot.availableSeats} ${t("seatsLeft") || "seats left"}`}
+                                        {isCancelled ? (
+                                            <span className="text-danger fw-bold">{t("cancelled") || "Cancelled"}</span>
+                                        ) : isFull ? (
+                                            t("full") || "Full"
+                                        ) : (
+                                            `${slot.availableSeats} ${t("seatsLeft") || "seats left"}`
+                                        )}
                                     </span>
                                 </div>
                                 <div>
-                                    {isSelected ? (
+                                    {isCancelled ? (
+                                        <span className="text-danger fw-bold" style={{ fontSize: "12px" }}>❌</span>
+                                    ) : isSelected ? (
                                         <div
                                             className="d-flex align-items-center justify-content-center"
                                             style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: "#23ada4" }}
