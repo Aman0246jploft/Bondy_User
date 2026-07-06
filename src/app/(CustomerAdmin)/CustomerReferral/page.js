@@ -178,7 +178,7 @@ export default function OrganizerReferralPage() {
         <p className="text-secondary mb-3" style={{ fontSize: "13px" }}>
           {t("referralPageBenefitDesc") || "Get ₮75,000 coupon credit for every organizer who joins and hosts their first event or friend who books their first experience."}
         </p>
-        <div className="d-flex align-items-center bg-black p-2 rounded-2" style={{ border: "1px solid rgba(255,255,255,0.06)", Background:" #242424 !important;" }}>
+        <div className="d-flex align-items-center bg-black p-2 rounded-2" style={{ border: "1px solid rgba(255,255,255,0.06)", Background: " #242424 !important;" }}>
           {loadingCode ? (
             <Spinner animation="border" size="sm" className="text-info mx-auto" />
           ) : (
@@ -187,7 +187,7 @@ export default function OrganizerReferralPage() {
               <input
                 type="text"
                 className="form-control  text-white border-0 p-0 shadow-none"
-                style={{ fontSize: "13px",  border:"0px !important" }}
+                style={{ fontSize: "13px", border: "0px !important" }}
                 value={referralLink}
                 readOnly
               />

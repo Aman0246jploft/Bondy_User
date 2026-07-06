@@ -134,6 +134,26 @@ function MessageeContent() {
   const activeChatRef = useRef(activeChat);
   useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
 
+  const dropdownRef = useRef(null);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   // ─── File Upload State ─────────────────────────────────────
   const [isUploading, setIsUploading] = useState(false);
   const [stagedFile, setStagedFile] = useState(null); // { fileUrl, fileType, localUrl, name }
@@ -525,29 +545,63 @@ function MessageeContent() {
     };
 
     const handleChatBlocked = ({ chatId, blockedBy, isBlocked }) => {
+      const myId = getMyId();
+      const blockerId = typeof blockedBy === "object" ? (blockedBy._id || blockedBy) : blockedBy;
+      const isBlockedByMe = blockerId === myId;
+      const isBlockedByOther = blockerId !== myId;
+
       // Update active chat immediately so input disables
       setActiveChat((prev) => {
         if (!prev || prev._id !== chatId) return prev;
-        return { ...prev, isBlocked, blockedBy };
+        return {
+          ...prev,
+          isBlocked,
+          isBlockedByMe: isBlockedByMe ? true : prev.isBlockedByMe,
+          isBlockedByOther: isBlockedByOther ? true : prev.isBlockedByOther
+        };
       });
       // Refresh sidebar entry so blocked icon appears
       setChats((prev) =>
         prev.map((c) =>
-          c._id === chatId ? { ...c, isBlocked, blockedBy } : c,
+          c._id === chatId
+            ? {
+                ...c,
+                isBlocked,
+                isBlockedByMe: isBlockedByMe ? true : c.isBlockedByMe,
+                isBlockedByOther: isBlockedByOther ? true : c.isBlockedByOther
+              }
+            : c,
         ),
       );
     };
 
-    const handleChatUnblocked = ({ chatId, isBlocked, blockedBy }) => {
+    const handleChatUnblocked = ({ chatId, unblockedBy, isBlocked }) => {
+      const myId = getMyId();
+      const unblockerId = typeof unblockedBy === "object" ? (unblockedBy._id || unblockedBy) : unblockedBy;
+      const wasUnblockedByMe = unblockerId === myId;
+      const wasUnblockedByOther = unblockerId !== myId;
+
       // Re-enable input by clearing blocked fields (or keeping them if still blocked by the other user)
       setActiveChat((prev) => {
         if (!prev || prev._id !== chatId) return prev;
-        return { ...prev, isBlocked, blockedBy };
+        return {
+          ...prev,
+          isBlocked,
+          isBlockedByMe: wasUnblockedByMe ? false : prev.isBlockedByMe,
+          isBlockedByOther: wasUnblockedByOther ? false : prev.isBlockedByOther
+        };
       });
       // Refresh sidebar entry
       setChats((prev) =>
         prev.map((c) =>
-          c._id === chatId ? { ...c, isBlocked, blockedBy } : c,
+          c._id === chatId
+            ? {
+                ...c,
+                isBlocked,
+                isBlockedByMe: wasUnblockedByMe ? false : c.isBlockedByMe,
+                isBlockedByOther: wasUnblockedByOther ? false : c.isBlockedByOther
+              }
+            : c,
         ),
       );
     };
@@ -873,10 +927,10 @@ function MessageeContent() {
                         </small>
                       </div>
 
-                      <div className="menu" onClick={() => setShowDropdown(!showDropdown)}>⋮</div>
+                      <div className="menu" ref={menuRef} onClick={() => setShowDropdown(!showDropdown)}>⋮</div>
 
                       {showDropdown && (
-                        <div className="options-dropdown">
+                        <div className="options-dropdown" ref={dropdownRef}>
                           <Link href={`/profile?id=${getOtherUser(activeChat)._id}`}>
                             <img src="/img/user-white.svg" className="me-2" alt="" />
                             {t("userProfile") || "User Profile"}
