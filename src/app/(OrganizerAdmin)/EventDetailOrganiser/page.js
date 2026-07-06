@@ -2089,7 +2089,7 @@ function EventDetailsContent() {
           border-radius: 14px;
           padding: 20px;
           display: flex;
-          align-items: center;
+          align-items: self-start;
           gap: 16px;
           height: 100%;
         }

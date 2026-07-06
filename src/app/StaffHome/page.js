@@ -498,7 +498,11 @@ function StaffHome() {
           display: flex;
           flex-direction: column;
         }
-
+          .back-arrow-btn {
+              color: white;
+              background: transparent;
+              border: none;
+          }
         /* Bottom Nav Bar */
         .bottom-nav-bar {
           position: fixed;
@@ -571,7 +575,7 @@ function StaffHome() {
           padding: 16px;
           margin-bottom: 25px;
           display: flex;
-          align-items: center;
+          align-items: self-start;
           gap: 15px;
           cursor: pointer;
           transition: border-color 0.2s ease;
@@ -1762,7 +1766,7 @@ function StaffHome() {
         <Modal.Header closeButton closeVariant="white" className="border-0 pb-0">
           <Modal.Title style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>{t("ticketVerification") || "Ticket Verification"}</Modal.Title>
         </Modal.Header>
-        <Modal.Body className="pt-3">
+        <Modal.Body className="pt-3 px-0">
           {loadingVerify ? (
             <div className="text-center py-4">
               <Spinner animation="border" variant="teal" className="mb-2" />
