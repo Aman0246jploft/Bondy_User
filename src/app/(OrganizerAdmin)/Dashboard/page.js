@@ -226,8 +226,8 @@ function page() {
                         <circle cx="2" cy="2" r="2" fill="#999999" />
                       </svg>
                     </span>{" "}
-                    <span>{event.startTime}</span>
-                                      <span>{formatTime(event.startTime, true, language)}</span>
+                    {/* <span>{event.startTime}</span> */}
+                    <span>{formatTime(event.startTime, true, language)}</span>
                   </p>
                   <p>
                     {t("totalBookingRevenue")} <span>₮{event.totalRevenue || 0}</span>
