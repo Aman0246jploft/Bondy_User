@@ -146,6 +146,7 @@ export default function Field({ onSearch, label = "Search", placeholder = "Searc
                     onPlaceSelected={handleVenueSelected}
                     placeholder={t("locationPlaceholder")}
                     className="border-0 shadow-none p-0 bg-transparent w-100 text-white"
+                    hideClearButton={true}
                   />
                 </div>
               </div>
