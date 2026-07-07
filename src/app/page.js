@@ -56,7 +56,16 @@ export default function HomePage() {
       <div className="event_bg">
         <EventSection type="recommended" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
         <EventSection type="nearYou" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
+        <EventSection type="today" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
+        {/* <EventSection type="tomorrow" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} /> */}
         <EventSection type="week" extraParams={{ ...searchParams, placement: "homePage", page: 2, limit: 4 }} />
+        <EventSection type="thisWeekend" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
+        <EventSection type="nextWeek" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
+        <EventSection type="thisMonth" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
+        {/* <EventSection type="thisYear" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} /> */}
+        <EventSection type="upcoming" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
+        {/* <EventSection type="past" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} /> */}
+        <EventSection type="happeningSoon" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
         <CourseSection type="featured" extraParams={{ ...searchParams, placement: "homePage" }} />
       </div>
 

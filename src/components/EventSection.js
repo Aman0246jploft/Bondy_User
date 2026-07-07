@@ -55,7 +55,27 @@ const EventSection = ({
       case "nearYou":
         return { filter: "nearYou", defaultTitle: t("nearYou") };
       case "week":
-        return { filter: "thisWeek", defaultTitle: t("happeningSoon") };
+      case "thisWeek":
+        return { filter: "thisWeek", defaultTitle: type === "week" ? t("happeningSoon") : t("thisWeek") };
+      case "thisWeekend":
+      case "weekend":
+        return { filter: "thisWeekend", defaultTitle: t("thisWeekend") };
+      case "today":
+        return { filter: "today", defaultTitle: t("today") };
+      case "tomorrow":
+        return { filter: "tomorrow", defaultTitle: t("tomorrow") };
+      case "nextWeek":
+        return { filter: "nextWeek", defaultTitle: t("nextWeek") };
+      case "thisMonth":
+        return { filter: "thisMonth", defaultTitle: t("thisMonth") };
+      case "thisYear":
+        return { filter: "thisYear", defaultTitle: t("thisYear") };
+      case "upcoming":
+        return { filter: "upcoming", defaultTitle: t("upcoming") };
+      case "past":
+        return { filter: "past", defaultTitle: t("past") };
+      case "happeningSoon":
+        return { filter: "happeningSoon", defaultTitle: t("happeningSoon") };
       default:
         return { filter: "all", defaultTitle: t("events") };
     }
