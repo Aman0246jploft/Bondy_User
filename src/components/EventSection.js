@@ -162,52 +162,8 @@ const EventSection = ({
   }
 
   // If no events and not loading, don't render the section (or render empty state)
+  // If no events and not loading, don't render the section
   if (!events || events.length === 0) {
-    if (type === "recommended") {
-      return (
-        <section className="recommended-section" style={{ position: "relative", zIndex: 2 }}>
-          <div className="container" style={{ position: "relative", zIndex: 2 }}>
-            {!hideHeader && (
-              <div className="main_title align_title position-relative z-2 border-bottm">
-                <h2>{title}</h2>
-              </div>
-            )}
-            <div style={{ textAlign: "center", padding: "50px 20px", position: "relative", zIndex: 3 }}>
-              <p style={{ color: "#888", marginBottom: "20px", fontSize: "16px" }}>
-                {t("noRecommendedEvents")}
-              </p>
-              <button
-                onClick={handleAddInterestClick}
-                style={{
-                  background: "#23ADA4",
-                  color: "#fff",
-                  border: "none",
-                  padding: "12px 30px",
-                  borderRadius: "50px",
-                  fontSize: "15px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  boxShadow: "0 4px 15px rgba(35, 173, 164, 0.3)",
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                  position: "relative",
-                  zIndex: 10
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(35, 173, 164, 0.5)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 15px rgba(35, 173, 164, 0.3)";
-                }}
-              >
-                {t("addInterest")}
-              </button>
-            </div>
-          </div>
-        </section>
-      );
-    }
     return null;
   }
 
