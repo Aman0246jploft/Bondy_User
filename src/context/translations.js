@@ -1536,6 +1536,9 @@ export const translations = {
     ticketNumber: "Ticket Number",
     update: "Update",
     loginAsStaff: "Login as Staff",
+    availablePasses: "Available Passes",
+    thirtyDaysUnlimitedAccess: "30 days unlimited access",
+    ninetyDaysUnlimitedAccess: "90 days unlimited access",
     backToUserLogin: "Back to User Login"
   },
   mn: {
@@ -3078,6 +3081,9 @@ export const translations = {
     history: "Түүх",
     update: "Шинэчлэх",
     loginAsStaff: "Ажилтнаар нэвтрэх",
+    availablePasses: "Боломжтой пассууд",
+    thirtyDaysUnlimitedAccess: "30 хоног хязгааргүй нэвтрэх эрх",
+    ninetyDaysUnlimitedAccess: "90 хоног хязгааргүй нэвтрэх эрх",
     backToUserLogin: "Хэрэглэгчээр нэвтрэх рүү буцах"
   },
 };

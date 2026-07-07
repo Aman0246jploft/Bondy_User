@@ -228,7 +228,7 @@ export default function Map({
         : "";
 
     const infoContent = `
-      <div style="font-family:sans-serif;min-width:220px;max-width:260px;background:#1a1a2e;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.6);">
+      <div style="font-family:sans-serif;min-width:220px;max-width:260px;background:#242424;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.6);">
         ${imgHtml}
         <div style="padding:12px 14px 14px;">
           <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.3;">${title || "Event"}</div>

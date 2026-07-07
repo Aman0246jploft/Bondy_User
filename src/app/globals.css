@@ -6756,3 +6756,63 @@ h4.ticket-text-wrap {
 .pac-icon {
   filter: invert(1) brightness(0.8);
 }
+
+/* Style Google Maps InfoWindow to match the dark theme */
+.gm-style-iw {
+  background-color: transparent !important;
+}
+
+.gm-style-iw-c {
+  background-color: #242424 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+  padding: 0 !important;
+}
+
+.gm-style-iw-d {
+  background-color: #242424 !important;
+  color: #fff !important;
+  overflow: auto !important;
+}
+
+/* Hide or restyle the default scrollbar area to prevent white scrollbars */
+.gm-style-iw-d::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.gm-style-iw-d::-webkit-scrollbar-track {
+  background: #242424 !important;
+}
+
+.gm-style-iw-d::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 3px !important;
+}
+
+/* Style the bottom triangle/pointer */
+.gm-style-iw-t::after,
+.gm-style-iw-tc::after {
+  background: #242424 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+
+/* Style close button */
+.gm-style-iw button.gm-ui-hover-effect {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 50% !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.gm-style-iw button.gm-ui-hover-effect span {
+  background-color: #ffffff !important;
+  margin: 0 !important;
+}

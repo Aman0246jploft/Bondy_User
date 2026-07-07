@@ -577,23 +577,23 @@ function ProgramDetailsContent() {
               </div>
 
               {enrollmentType === "Ongoing" && (courseDetails.oneMonthPassEnabled || courseDetails.threeMonthPassEnabled) && (
-                <div className="mt-4 p-3 rounded" style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                  <h5 className="text-white mb-3" style={{ fontSize: "15px", fontWeight: 700 }}>🎫 {t("availablePasses") || "Available Passes"}</h5>
+                <div className="mt-4 p-3 rounded" style={{ backgroundColor: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <h5 className="text-white mb-3" style={{ fontSize: "15px", fontWeight: 700 }}>{t("availablePasses") || "Available Passes"}</h5>
                   <div className="d-flex flex-column gap-2">
                     {courseDetails.oneMonthPassEnabled && (
-                      <div className="d-flex justify-content-between align-items-center p-2 rounded" style={{ backgroundColor: "#111" }}>
+                      <div className="d-flex justify-content-between align-items-center p-3 rounded" style={{ backgroundColor: "#242424", border: "1px solid rgba(255,255,255,0.05)" }}>
                         <div>
                           <p className="mb-0 text-white" style={{ fontSize: "13px", fontWeight: 600 }}>{t("oneMonthPass") || "1 Month Pass"}</p>
-                          <span className="text-muted" style={{ fontSize: "11px" }}>30 days unlimited access</span>
+                          <span className="text-muted" style={{ fontSize: "11px" }}>{t("thirtyDaysUnlimitedAccess") || "30 days unlimited access"}</span>
                         </div>
                         <span style={{ color: "#23ada4", fontWeight: 700 }}>{formatPrice(courseDetails.oneMonthPassPrice)}</span>
                       </div>
                     )}
                     {courseDetails.threeMonthPassEnabled && (
-                      <div className="d-flex justify-content-between align-items-center p-2 rounded" style={{ backgroundColor: "#111" }}>
+                      <div className="d-flex justify-content-between align-items-center p-3 rounded" style={{ backgroundColor: "#242424", border: "1px solid rgba(255,255,255,0.05)" }}>
                         <div>
                           <p className="mb-0 text-white" style={{ fontSize: "13px", fontWeight: 600 }}>{t("threeMonthPass") || "3 Month Pass"}</p>
-                          <span className="text-muted" style={{ fontSize: "11px" }}>90 days unlimited access</span>
+                          <span className="text-muted" style={{ fontSize: "11px" }}>{t("ninetyDaysUnlimitedAccess") || "90 days unlimited access"}</span>
                         </div>
                         <span style={{ color: "#23ada4", fontWeight: 700 }}>{formatPrice(courseDetails.threeMonthPassPrice)}</span>
                       </div>
