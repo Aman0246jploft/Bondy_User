@@ -180,6 +180,22 @@ export default function ExploreItem({
                               Featured {isEvent ? "Event" : "Course"}
                             </span>
                           )}
+                          {/* Blurred background image */}
+                          <img
+                            src={
+                              getFullImageUrl(
+                                isEvent
+                                  ? item.posterImage?.[0]
+                                  : item.posterImage?.[0],
+                              ) || "/img/sidebar-logo.svg"
+                            }
+                            alt=""
+                            className="blur-bg-img"
+                            onError={(e) => {
+                              e.target.src = "/img/sidebar-logo.svg";
+                            }}
+                          />
+                          {/* Main fitted image */}
                           <img
                             src={
                               getFullImageUrl(

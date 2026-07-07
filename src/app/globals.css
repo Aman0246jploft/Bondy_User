@@ -6028,14 +6028,30 @@ a.view-map {
   height: 200px;
   min-height: 100%;
   position: relative;
+  overflow: hidden;
+  border-radius: 16px 0 0 16px;
+  background-color: #000;
 }
 
 .Explore_sec .featured-img {
-  object-fit: cover;
-  object-position: center;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
   width: 100%;
   height: 100%;
-  border-radius: 0 30px 30px 0px;
+}
+
+.Explore_sec .blur-bg-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(12px);
+  opacity: 0.45;
+  transform: scale(1.1);
+  z-index: 1;
 }
 
 .event-badge {
@@ -6118,8 +6134,8 @@ a.view-map {
 }
 
 @media (max-width: 768px) {
-  .Explore_sec .featured-img {
-    border-radius: 0 0px 30px 30px;
+  .Explore_sec .img-box {
+    border-radius: 16px 16px 0 0;
   }
 
   .Explore_sec .content-box {

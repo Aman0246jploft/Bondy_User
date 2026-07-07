@@ -121,8 +121,8 @@ const EventSection = ({
         const response = await eventApi.getEvents(params);
         if (response.data && response.data.events) {
           let fetchedEvents = response.data.events || [];
-          // Fallback if list is not fully filled (except for recommended filter)
-          if (type !== "recommended" && fetchedEvents.length < limit) {
+          // Fallback if list is not fully filled (only for near/nearYou filters)
+          if ((type === "near" || type === "nearYou") && fetchedEvents.length < limit) {
             const neededCount = limit - fetchedEvents.length;
             const fallbackParams = {
               ...params,
