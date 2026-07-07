@@ -102,7 +102,11 @@ function EventAttendeesContent() {
               {host && (
                 <div
                   className="d-flex align-items-center p-3 mb-4 rounded-3"
-                  style={{ backgroundColor: "#1a1a2e", border: "1px solid #333", cursor: "pointer" }}
+                  style={{
+                    backgroundColor: "#141414",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    cursor: "pointer"
+                  }}
                   onClick={() => router.push(`/profile?id=${host._id}`)}
                 >
                   <img
@@ -113,7 +117,7 @@ function EventAttendeesContent() {
                       width: 50,
                       height: 50,
                       objectFit: "cover",
-                      border: "2px solid #e94560",
+                      border: "2px solid var(--primary-teal, #00b4b4)",
                     }}
                     onError={(e) => {
                       e.target.src = "/img/sidebar-logo.svg";
@@ -126,7 +130,16 @@ function EventAttendeesContent() {
                     <small className="text-secondary">{t("hostOrganizer")}</small>
                   </div>
                   {host.isVerified && (
-                    <span className="badge bg-success">{t("verified")}</span>
+                    <span
+                      className="badge"
+                      style={{
+                        backgroundColor: "rgba(0, 180, 180, 0.15)",
+                        color: "var(--primary-teal, #00b4b4)",
+                        border: "1px solid rgba(0, 180, 180, 0.3)",
+                      }}
+                    >
+                      {t("verified")}
+                    </span>
                   )}
                 </div>
               )}
@@ -139,7 +152,10 @@ function EventAttendeesContent() {
               {attendees.length === 0 ? (
                 <div
                   className="text-center py-5 rounded-3"
-                  style={{ backgroundColor: "#1a1a2e" }}
+                  style={{
+                    backgroundColor: "#141414",
+                    border: "1px solid rgba(255, 255, 255, 0.05)"
+                  }}
                 >
                   <p className="text-secondary mb-0">{t("noAttendeesFound")}</p>
                 </div>
@@ -151,16 +167,16 @@ function EventAttendeesContent() {
                       className="d-flex align-items-center p-3 rounded-3"
                       onClick={() => router.push(`/profile?id=${attendee._id}`)}
                       style={{
-                        backgroundColor: "#1a1a2e",
-                        border: "1px solid #262640",
+                        backgroundColor: "#141414",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
                         transition: "background-color 0.2s",
                         cursor: "pointer",
                       }}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#222244")
+                        (e.currentTarget.style.backgroundColor = "#1e1e1e")
                       }
                       onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#1a1a2e")
+                        (e.currentTarget.style.backgroundColor = "#141414")
                       }
                     >
                       <img
@@ -171,7 +187,7 @@ function EventAttendeesContent() {
                           width: 45,
                           height: 45,
                           objectFit: "cover",
-                          border: "2px solid #444",
+                          border: "2px solid rgba(255, 255, 255, 0.1)",
                         }}
                         onError={(e) => {
                           e.target.src = "/img/sidebar-logo.svg";
@@ -186,7 +202,8 @@ function EventAttendeesContent() {
                         <span
                           className="badge rounded-pill"
                           style={{
-                            backgroundColor: "#e94560",
+                            backgroundColor: "var(--primary-teal, #00b4b4)",
+                            color: "#fff",
                             fontSize: "0.8rem",
                             padding: "6px 12px",
                           }}

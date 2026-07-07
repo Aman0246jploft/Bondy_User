@@ -76,6 +76,7 @@ export default function GridSystem({ setView, searchParams, onSearch }) {
                     <VenueAutocomplete
                       onPlaceSelected={(place) => setLocation(place)}
                       placeholder="Location"
+                      hideClearButton={true}
                     />
                   </div>
                 </div>
