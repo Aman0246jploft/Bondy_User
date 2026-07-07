@@ -489,8 +489,8 @@ function EventDetailsContent() {
                       <small className="text-secondary">{t("attendees")}</small>
                     </div>
 
-                    <div className="">
-                      <div className="avatar-stack me-3">
+                    <div className="text-center">
+                      <div className="avatar-stack mb-3">
                         {attendees?.recent?.length > 0 ? (
                           <>
                             {attendees.recent.slice(0, 4).map((user, index) => (
@@ -518,9 +518,8 @@ function EventDetailsContent() {
                           <span className="small text-muted">
                             {t("beFirstToJoin")}
                           </span>
-                        )}
+                        )} 
                       </div>
-                    </div>
                     {canShowViewAll && (
                       <AuthButton
                         requiresAuth
@@ -531,6 +530,7 @@ function EventDetailsContent() {
                         {t("viewAll")}
                       </AuthButton>
                     )}
+                    </div>
                   </div>
 
                   <hr className="border-secondary opacity-25 my-4" />

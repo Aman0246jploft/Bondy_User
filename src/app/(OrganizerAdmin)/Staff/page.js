@@ -346,7 +346,7 @@ function StaffPage() {
   );
 
   return (
-    <div className="staff-container">
+    <div className="staff-container  col-5 mx-auto">
       <style jsx global>{`
         .staff-header {
           display: flex;
@@ -526,8 +526,7 @@ function StaffPage() {
         .add-staff-header {
           display: flex;
           align-items: center;
-          gap: 15px;
-          margin-bottom: 25px;
+          gap: 15px; 
         }
        .overlay-header .back-arrow-btn{
           outline: none;       
@@ -536,6 +535,12 @@ function StaffPage() {
           color: #fff;
           border-radius: 12px;
       }
+          .back-arrow-btn {
+           color: white;
+    background: transparent;
+    padding: 0px;
+    font-size: 26px;
+        }
         .photo-upload-circle {
           width: 110px;
           height: 110px;
@@ -792,7 +797,7 @@ function StaffPage() {
         <div className="cards">
           <div className="add-staff-header">
             <button
-              className="back-arrow-btn"
+              className="back-arrow-btn "
               onClick={() => {
                 setShowAddStaff(false);
                 setEditingStaffId(null);
