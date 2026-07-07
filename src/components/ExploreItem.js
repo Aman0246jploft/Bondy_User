@@ -222,8 +222,7 @@ export default function ExploreItem({
                               WebkitBoxOrient: "vertical",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
-                              wordBreak: "break-word",
-                              minHeight: "3em",
+                              wordBreak: "break-word", 
                             }}
                           >
                             {description}

@@ -1281,7 +1281,7 @@ function Page() {
                         </div>
                       )}
 
-                      <div className="d-flex gap-2 justify-content-end">
+                      <div className="d-flex gap-2 justify-content-end mt-4">
                         <button type="button" className="outline-btn" onClick={() => setShowBatchModal(false)}>{t("cancel") || "Cancel"}</button>
                         <button type="button" className="custom-btn" onClick={saveBatch}>{t("save") || "Save"}</button>
                       </div>
@@ -1607,7 +1607,7 @@ function Page() {
 
                   {/* Right Column: Spec Specifications & Info */}
                   <Col lg={7} md={12} className="ps-lg-4">
-                    <div className="p-4 rounded mb-4" style={{ background: "#1a1a1a", border: "1px solid rgba(35,173,164,0.2)", borderRadius: "16px" }}>
+                    <div className="p-4 rounded mb-4" style={{ background: "rgb(56, 56, 56)", border: "1px solid rgba(35, 173, 164, 0.15)", borderRadius: "16px" }}>
                       <div className="d-flex align-items-center gap-2 mb-3 flex-wrap">
                         <span className="badge" style={{ backgroundColor: "#23ada4", fontSize: "11px", textTransform: "uppercase", padding: "6px 12px", borderRadius: "20px", fontWeight: "600" }}>
                           {activeCategory
@@ -1627,7 +1627,7 @@ function Page() {
                       <Row className="gy-4 mb-4">
                         <Col sm={6}>
                           <div className="d-flex align-items-start gap-2">
-                            <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                            <div className="p-2 rounded  border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                               <LocationIcon />
                             </div>
                             <div>
@@ -1642,7 +1642,7 @@ function Page() {
 
                         <Col sm={6}>
                           <div className="d-flex align-items-start gap-2">
-                            <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                            <div className="p-2 rounded  border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                               <CalendarIcon />
                             </div>
                             <div>
@@ -1658,7 +1658,7 @@ function Page() {
 
                         <Col sm={6}>
                           <div className="d-flex align-items-start gap-2">
-                            <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                            <div className="p-2 rounded  border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                               <PriceIcon />
                             </div>
                             <div>
@@ -1674,7 +1674,7 @@ function Page() {
 
                         <Col sm={6}>
                           <div className="d-flex align-items-start gap-2">
-                            <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                            <div className="p-2 rounded  border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                               <CapacityIcon />
                             </div>
                             <div>
@@ -1688,7 +1688,7 @@ function Page() {
 
                         <Col sm={6}>
                           <div className="d-flex align-items-start gap-2">
-                            <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                            <div className="p-2 rounded  border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                               <RefundIcon />
                             </div>
                             <div>
@@ -1703,7 +1703,7 @@ function Page() {
                         {formData.enrollmentType === "Ongoing" && formData.bookingCutOff && (
                           <Col sm={6}>
                             <div className="d-flex align-items-start gap-2">
-                              <div className="p-2 rounded bg-dark border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                              <div className="p-2 rounded border border-secondary text-success" style={{ minWidth: "36px", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                                 <ClockIcon />
                               </div>
                               <div>
@@ -1749,7 +1749,7 @@ function Page() {
                 </Row>
 
                 {/* Description sections */}
-                <div className="mt-4 p-4 rounded mb-4" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px" }}>
+                <div className="mt-4 p-4 rounded mb-4" style={{ background: "rgb(56, 56, 56)", border: "1px solid rgba(35, 173, 164, 0.15)", borderRadius: "16px" }}>
                   <div className="mb-4">
                     <h5 className="text-white mb-2 pb-2" style={{ fontSize: "16px", fontWeight: "700", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                       {t("shortSummary") || "Short Summary"}
@@ -1789,8 +1789,8 @@ function Page() {
                             key={index}
                             className="mb-3 rounded overflow-hidden"
                             style={{
-                              background: "#1a1a1a",
-                              border: "1px solid rgba(35,173,164,0.15)"
+                              background: "rgb(56, 56, 56)",
+                              border: "1px solid rgba(35, 173, 164, 0.15)"
                             }}
                           >
                             {sortedDays.map((day, dayIndex) => (
@@ -1843,7 +1843,7 @@ function Page() {
                       }
                     })
                   ) : (
-                    <div className="p-3 rounded text-center text-muted small" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div className="p-3 rounded text-center text-muted small" style={{ background: "#1e1e1e", border: "1px solid #2d2d2d" }}>
                       {formData.enrollmentType === "Ongoing"
                         ? t("noClassTimesConfigured") || "No class times configured."
                         : t("noBatchesConfigured") || "No batches configured."}
