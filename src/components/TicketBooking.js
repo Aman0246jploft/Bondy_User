@@ -753,9 +753,9 @@ export default function TicketBooking({ item, type, scheduleId }) {
                     })}
                 </div>
 
-                <h6 className="fw-bold mb-2 text-start text-white" style={{ fontSize: "13px", opacity: 0.8 }}>
+                <h5 className="fw-bold mb-2 text-start text-white" style={{ fontSize: "16px", letterSpacing: "0.5px" }}>
                     {t("availableTimes") || "Available times"}
-                </h6>
+                </h5>
 
                 <div
                     className="rounded-3 overflow-hidden"
@@ -1191,7 +1191,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                             </>
                         )}
 
-                        <h5 className="text-start">{t("discountCode")}</h5>
+                        <h5 className="text-start" style={{ marginTop: "2px" }}>{t("discountCode")}</h5>
                         <div className="promo-group mb-2">
                             <input
                                 type="text"

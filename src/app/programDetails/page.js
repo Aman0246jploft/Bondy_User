@@ -495,13 +495,11 @@ function ProgramDetailsContent() {
                                 </div>
                               </div>
                               <div className="booking_bx">
-                                <span className="text_pr">
-                                  {slot.isBooked
-                                    ? t("booked")
-                                    : slot.isFull
-                                      ? t("full")
-                                      : formatPrice(price)}
-                                </span>
+                                {!slot.isBooked && !slot.isFull && (
+                                  <span className="text_pr">
+                                    {formatPrice(price)}
+                                  </span>
+                                )}
                                 {slot.isBooked ? (
                                   <span className="badge bg-success">{t("booked")}</span>
                                 ) : slot.isFull ? (
