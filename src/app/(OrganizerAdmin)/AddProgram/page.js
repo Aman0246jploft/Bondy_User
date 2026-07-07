@@ -503,8 +503,8 @@ function Page() {
         totalSessions: formData.enrollmentType === "Ongoing" ? 9999 : (formData.totalSessions ? Number(formData.totalSessions) : 0),
         endDate: formData.enrollmentType === "Ongoing" && noEndDate ? "2099-12-31" : formData.endDate,
         venueAddress: formatLocationForApi(formData.venueAddress) || formData.venueAddress,
-        oneMonthPassPrice: formData.oneMonthPassEnabled && formData.oneMonthPassPrice ? Number(formData.oneMonthPassPrice) : 0,
-        threeMonthPassPrice: formData.threeMonthPassEnabled && formData.threeMonthPassPrice ? Number(formData.threeMonthPassPrice) : 0,
+        oneMonthPassPrice: formData.oneMonthPassEnabled && formData.oneMonthPassPrice ? Number(formData.oneMonthPassPrice) : undefined,
+        threeMonthPassPrice: formData.threeMonthPassEnabled && formData.threeMonthPassPrice ? Number(formData.threeMonthPassPrice) : undefined,
       };
 
       if (payload.courseCategory && typeof payload.courseCategory === "object") {
@@ -544,8 +544,8 @@ function Page() {
         totalSessions: formData.enrollmentType === "Ongoing" ? 9999 : Number(formData.totalSessions),
         endDate: formData.enrollmentType === "Ongoing" && noEndDate ? "2099-12-31" : formData.endDate,
         venueAddress: formatLocationForApi(formData.venueAddress) || formData.venueAddress,
-        oneMonthPassPrice: formData.oneMonthPassEnabled && formData.oneMonthPassPrice ? Number(formData.oneMonthPassPrice) : 0,
-        threeMonthPassPrice: formData.threeMonthPassEnabled && formData.threeMonthPassPrice ? Number(formData.threeMonthPassPrice) : 0,
+        oneMonthPassPrice: formData.oneMonthPassEnabled && formData.oneMonthPassPrice ? Number(formData.oneMonthPassPrice) : undefined,
+        threeMonthPassPrice: formData.threeMonthPassEnabled && formData.threeMonthPassPrice ? Number(formData.threeMonthPassPrice) : undefined,
       };
 
       if (payload.courseCategory && typeof payload.courseCategory === "object") {
