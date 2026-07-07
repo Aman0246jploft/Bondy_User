@@ -58,7 +58,7 @@ export default function HomePage() {
         <EventSection type="nearYou" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
         {/* <EventSection type="today" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} /> */}
         {/* <EventSection type="tomorrow" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} /> */}
-        <EventSection type="week" extraParams={{ ...searchParams, placement: "homePage", page: 2, limit: 4 }} />
+        {/* <EventSection type="week" extraParams={{ ...searchParams, placement: "homePage", page: 2, limit: 4 }} /> */}
         <EventSection type="thisWeekend" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
         <EventSection type="nextWeek" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
         {/* <EventSection type="thisMonth" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} /> */}
