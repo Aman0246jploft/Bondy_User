@@ -99,7 +99,7 @@ export default function Mapview({ searchParams }) {
           northEast.lng(),
         );
         // Keep radius practical and avoid zero.
-        params.radius = Math.max(1, Math.min(500, Math.ceil(radiusFromCenterToEdge)));
+        params.radius = Math.max(1, Math.min(20000, Math.ceil(radiusFromCenterToEdge)));
       }
     } else {
       const effectiveCenter = getEffectiveCenter();
