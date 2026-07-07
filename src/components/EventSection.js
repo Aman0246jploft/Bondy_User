@@ -70,10 +70,10 @@ const EventSection = ({
         let params = {
           limit,
           page: 1,
-          filter,
           status: "Upcoming,Live",
           excludemyevents: true,
           ...extraParams,
+          filter,
         };
 
         // Handle Geolocation for 'near' type

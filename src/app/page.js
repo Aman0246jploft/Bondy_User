@@ -54,10 +54,10 @@ export default function HomePage() {
       <TopEvents />
 
       <div className="event_bg">
-        <EventSection type="recommended" extraParams={{ placement: "homePage", page: 1, limit: 4 }} />
+        <EventSection type="recommended" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
         <EventSection type="nearYou" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
-        <EventSection type="week" extraParams={{ placement: "homePage", page: 2, limit: 4 }} />
-        <CourseSection type="featured" extraParams={{ placement: "homePage" }} />
+        <EventSection type="week" extraParams={{ ...searchParams, placement: "homePage", page: 2, limit: 4 }} />
+        <CourseSection type="featured" extraParams={{ ...searchParams, placement: "homePage" }} />
       </div>
 
       <Categories />

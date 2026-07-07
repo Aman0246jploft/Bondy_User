@@ -16,6 +16,7 @@ const VenueAutocomplete = ({
   disabled = false,
   minLength = 3,
   apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
+  hideClearButton = false,
 }) => {
   const inputRef = useRef(null);
   const autocompleteRef = useRef(null);
@@ -316,9 +317,9 @@ const VenueAutocomplete = ({
         placeholder={effectivePlaceholder}
         className={className}
         disabled={disabled || !isLoaded}
-        style={{ paddingRight: inputValue ? "40px" : "12px" }}
+        style={{ paddingRight: (inputValue && !hideClearButton) ? "40px" : "12px" }}
       />
-      {inputValue && (
+      {inputValue && !hideClearButton && (
         <button
           type="button"
           onClick={() => {

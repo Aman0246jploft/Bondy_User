@@ -43,8 +43,8 @@ const CourseSection = ({
         let params = {
           limit,
           page: 1,
-          filter,
           ...extraParams,
+          filter,
         };
 
         const response = await courseApi.getCourses(params);

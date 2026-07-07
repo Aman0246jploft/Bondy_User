@@ -296,6 +296,7 @@ const HeroSlider = ({ setView, onSearch }) => {
                         onPlaceSelected={handleVenueSelected}
                         placeholder={t("locationPlaceholder")}
                         className="border-0 shadow-none p-0 bg-transparent w-100 text-white"
+                        hideClearButton={true}
                       />
                     </div>
                   </div>
@@ -420,11 +421,10 @@ const HeroSlider = ({ setView, onSearch }) => {
 
                 {(keyword || location || dateRange[0].startDate) && (
                   <button
-                    className="icon-btn bg-danger text-white border-0"
+                    className="icon-btn teal border-0"
                     onClick={handleReset}
                     title="Reset Filters"
                     style={{
-                      backgroundColor: "#dc3545",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",

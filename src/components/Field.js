@@ -228,10 +228,10 @@ export default function Field({ onSearch, label = "Search", placeholder = "Searc
             </button>
             {(keyword || location || dateRange[0].startDate) && (
               <button
-                className="icon-btn bg-danger text-white border-0"
+                className="icon-btn teal border-0"
                 onClick={handleReset}
                 title="Reset Filters"
-                style={{ backgroundColor: '#dc3545', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <span style={{ fontSize: '18px', fontWeight: 'bold' }}>×</span>
               </button>
