@@ -134,8 +134,7 @@ export default function Map({
             stylers: [{ color: "#3d3d3d" }],
           },
         ],
-        mapTypeControl: false,
-        streetViewControl: false,
+        disableDefaultUI: true,
       });
     } else {
       googleMapRef.current.setCenter(position);

@@ -38,6 +38,7 @@ function ProfileContent() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [actionType, setActionType] = useState(null);
 
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (userId) {
@@ -243,7 +244,7 @@ function ProfileContent() {
                   <div
                     style={{
                       position: "absolute",
-                      right: "-20px", 
+                      right: "-20px",
                     }}
                   >
                     {!userProfile?.isMyProfile && (
@@ -460,7 +461,7 @@ function ProfileContent() {
               </button>
 
               <button
-              className="cnr_btn_user"
+                className="cnr_btn_user"
                 onClick={handleConfirm}
                 style={{
                   background: actionType === "block" ? "#e74c3c" : "#1abc9c",

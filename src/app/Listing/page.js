@@ -203,6 +203,7 @@ function ListingContent() {
           categoryId: categoryId || "",
           status: "Upcoming,Live",
           excludemyevents: true,
+          placement: "homePage",
         };
 
         // fetch geolocation if no manual location is provided
@@ -289,6 +290,9 @@ function ListingContent() {
                   <Link href={`/eventDetails?id=${item._id}`}>
                     <div className="event_main_cart">
                       <div className="recommended-card">
+                        {(item.isFeatured || item.fetcherEvent) && (
+                          <span className="event-badge">{t("featured")}</span>
+                        )}
                         <img
                           src={
                             item.posterImage && item.posterImage[0]

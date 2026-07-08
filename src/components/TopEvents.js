@@ -50,7 +50,12 @@ const TopEvents = () => {
   }, [events]);
 
   const doubleData = useMemo(() => {
-    return [...displayEvents, ...displayEvents];
+    if (!displayEvents.length) return [];
+    let repeated = [...displayEvents];
+    while (repeated.length < 2) {
+      repeated = [...repeated, ...displayEvents];
+    }
+    return [...repeated, ...repeated];
   }, [displayEvents]);
 
   if (!displayEvents.length) {

@@ -1268,12 +1268,12 @@ select:-webkit-autofill {
 
 /* Row 1: Left Animation */
 .animate-left {
-  animation: scrollLeft 15s linear infinite;
+  animation: scrollLeft 40s linear infinite;
 }
 
 /* Row 2: Right Animation */
 .animate-right {
-  animation: scrollRight 15s linear infinite;
+  animation: scrollRight 40s linear infinite;
 }
 
 @keyframes scrollLeft {
@@ -3062,25 +3062,34 @@ footer .social_icon img {
 
 .details_Event_time {
   display: flex;
+  flex-direction: column;
   gap: 20px;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 30px;
+}
+
+.details_Event_box .event_time_mange {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
 }
 
 .details_Event_box .event_time_mange h5 {
   color: var(--primary-teal);
-  font-size: 20px;
-  font-style: normal;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   font-weight: 700;
   line-height: normal;
+  margin: 0;
 }
 
 .details_Event_box .event_time_mange span {
   color: #dedede;
-  font-size: 14px;
-  font-style: normal;
+  font-size: 15px;
   font-weight: 400;
-  line-height: normal;
+  line-height: 1.5;
   overflow-wrap: anywhere;
   word-break: break-word;
 }

@@ -13,6 +13,7 @@ const CourseSection = ({
   hideHeader = false,
   customTitle = "",
   extraParams = null,
+  placement = "homePage",
 }) => {
   const { t } = useLanguage();
   const [courses, setCourses] = useState([]);
@@ -43,6 +44,7 @@ const CourseSection = ({
         let params = {
           limit,
           page: 1,
+          placement,
           ...extraParams,
           filter,
         };

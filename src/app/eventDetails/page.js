@@ -593,8 +593,11 @@ function EventDetailsContent() {
                     className="sponsor-img img-placeholder"
                     alt="Sponsor"
                   />
-                  <h5 className="mb-0 fw-semibold">
+                  <h5 className="mb-0 fw-semibold d-flex align-items-center gap-1">
                     {event?.createdBy?.firstName} {event?.createdBy?.lastName}
+                    {event?.createdBy?.isVerified && (
+                      <img src="/img/veriy_icon.svg" alt="Verified" style={{ width: "16px", height: "16px" }} />
+                    )}
                   </h5>
                 </div>
                 <AuthButton

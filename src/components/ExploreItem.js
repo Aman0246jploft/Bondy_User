@@ -86,6 +86,7 @@ export default function ExploreItem({
             longitude: longitude,
             startDate: startDate,
             endDate: endDate,
+            placement: placement,
             excludeMyCourses: excludeMyCourses,
           });
           const courseData = response?.data?.data || response?.data || response;

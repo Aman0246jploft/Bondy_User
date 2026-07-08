@@ -14,11 +14,12 @@ export default function Mapview({ searchParams }) {
   const [browserCoords, setBrowserCoords] = useState(null);
   const mapRef = useRef(null);
   const googleMapRef = useRef(null);
-  const markersRef = useRef([]);
+  const markersRef = useRef({});
   const infoWindowRef = useRef(null);
   const idleListenerRef = useRef(null);
   const debounceRef = useRef(null);
   const latestFetchIdRef = useRef(0);
+  const suppressIdleUntilRef = useRef(0);
   const router = useRouter();
 
   const getDistanceInKm = (lat1, lng1, lat2, lng2) => {
@@ -117,11 +118,11 @@ export default function Mapview({ searchParams }) {
     setLoading(true);
     try {
       const params = buildMapDrivenParams({ ...searchParams, ...overrideParams });
-      const response = await eventApi.getEvents(params);
-      const fetchedEvents = response?.data?.events || response?.data?.data?.events || [];
+      const response = await eventApi.getExploreList(params);
+      const fetchedItems = response?.data?.list || response?.data?.data?.list || [];
 
       if (fetchId === latestFetchIdRef.current) {
-        setEvents(Array.isArray(fetchedEvents) ? fetchedEvents : []);
+        setEvents(Array.isArray(fetchedItems) ? fetchedItems : []);
       }
     } catch (error) {
       if (fetchId === latestFetchIdRef.current) {
@@ -132,6 +133,36 @@ export default function Mapview({ searchParams }) {
       if (fetchId === latestFetchIdRef.current) {
         setLoading(false);
       }
+    }
+  };
+
+  const openInfoWindowForId = (eventId) => {
+    const markerData = markersRef.current[eventId];
+    if (markerData && googleMapRef.current && infoWindowRef.current) {
+      const { marker, event, detailsUrl, markerColor, dateString, title } = markerData;
+      const content = `
+        <div style="width: 200px; padding: 0; background: #fff; overflow: hidden;">
+          <img src="${event.posterImage?.[0] || "/img/sidebar-logo.svg"}" onerror="this.onerror=null;this.src='/img/sidebar-logo.svg'" style="width:100%; height:110px; object-fit:cover; border-radius: 8px 8px 0 0;" />
+          <div style="padding: 10px;">
+            <h6 style="margin: 0 0 5px; font-weight: 700; color: #333; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${title}</h6>
+            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+              <img src="/img/loc_icon.svg" style="width: 10px; opacity: 0.7;" />
+              <span style="font-size: 11px; color: #666;">${event.venueAddress?.city || "Location"}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 10px;">
+              <img src="/img/date_icon.svg" style="width: 10px; opacity: 0.7;" />
+              <span style="font-size: 11px; color: #666;">${dateString}</span>
+            </div>
+            <a href="${detailsUrl}" style="display:block; text-align:center; background:${markerColor}; color:white; padding:7px; border-radius:6px; text-decoration:none; font-size:12px; font-weight: 600;">
+              View Details
+            </a>
+          </div>
+        </div>
+      `;
+      infoWindowRef.current.setContent(content);
+      infoWindowRef.current.open(googleMapRef.current, marker);
+      suppressIdleUntilRef.current = Date.now() + 500;
+      googleMapRef.current.panTo(marker.getPosition());
     }
   };
 
@@ -237,12 +268,14 @@ export default function Mapview({ searchParams }) {
           { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#000000" }] },
           { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#3d3d3d" }] }
         ],
-        mapTypeControl: false,
-        streetViewControl: false,
+        disableDefaultUI: true,
       });
 
       // Fetch fresh events whenever map stops moving (zoom/pan complete).
       idleListenerRef.current = googleMapRef.current.addListener("idle", () => {
+        if (Date.now() < suppressIdleUntilRef.current) {
+          return;
+        }
         if (debounceRef.current) {
           clearTimeout(debounceRef.current);
         }
@@ -264,24 +297,34 @@ export default function Mapview({ searchParams }) {
     }
 
     // Clear old markers
-    markersRef.current.forEach(m => m.setMap(null));
-    markersRef.current = [];
+    Object.values(markersRef.current || {}).forEach(item => {
+      if (item?.marker) item.marker.setMap(null);
+    });
+    markersRef.current = {};
 
     // Add new markers
     if (!infoWindowRef.current) {
-      infoWindowRef.current = new window.google.maps.InfoWindow();
+      infoWindowRef.current = new window.google.maps.InfoWindow({
+        disableAutoPan: true
+      });
     }
 
     events.forEach((event) => {
       const coords = event.venueAddress?.coordinates;
       if (!coords || coords.length < 2) return;
 
+      const isCourse = event.exploreType === "course";
+      const title = event.eventTitle || event.courseTitle || "Untitled";
+      const detailsUrl = isCourse ? `/programDetails?id=${event._id}` : `/eventDetails?id=${event._id}`;
+      const markerColor = isCourse ? "#f39c12" : "#18a0a0";
+      const dateString = event.startDate ? new Date(event.startDate).toLocaleDateString() : "Flexible";
+
       const marker = new window.google.maps.Marker({
         position: { lat: coords[1], lng: coords[0] },
         map: googleMapRef.current,
-        title: event.eventTitle,
+        title: title,
         icon: {
-          url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.25 8.51464C4.25 4.45264 7.77146 1.25 12 1.25C16.2285 1.25 19.75 4.45264 19.75 8.51464C19.75 12.3258 17.3871 16.8 13.5748 18.4292C12.574 18.8569 11.426 18.8569 10.4252 18.4292C6.61289 16.8 4.25 12.3258 4.25 8.51464ZM12 2.75C8.49655 2.75 5.75 5.38076 5.75 8.51464C5.75 11.843 7.85543 15.6998 11.0147 17.0499C11.639 17.3167 12.361 17.3167 12.9853 17.0499C16.1446 15.6998 18.25 11.843 18.25 8.51464C18.25 5.38076 15.5034 2.75 12 2.75ZM12 7.75C11.3096 7.75 10.75 8.30964 10.75 9C10.75 9.69036 11.3096 10.25 12 10.25C12.6904 10.25 13.25 9.69036 13.25 9C13.25 8.30964 12.6904 7.75 12 7.75ZM9.25 9C9.25 7.48122 10.4812 6.25 12 6.25C13.5188 6.25 14.75 7.48122 14.75 9C14.75 10.5188 13.5188 11.75 12 11.75C10.4812 11.75 9.25 10.5188 9.25 9ZM3.59541 14.9966C3.87344 15.3036 3.84992 15.7779 3.54288 16.0559C2.97519 16.57 2.75 17.0621 2.75 17.5C2.75 18.2637 3.47401 19.2048 5.23671 19.998C6.929 20.7596 9.31952 21.25 12 21.25C14.6805 21.25 17.071 20.7596 18.7633 19.998C20.526 19.2048 21.25 18.2637 21.25 17.5C21.25 17.0621 21.0248 16.57 20.4571 16.0559C20.1501 15.7779 20.1266 15.3036 20.4046 14.9966C20.6826 14.6895 21.1569 14.666 21.4639 14.9441C22.227 15.635 22.75 16.5011 22.75 17.5C22.75 19.2216 21.2354 20.5305 19.3788 21.3659C17.4518 22.2331 14.8424 22.75 12 22.75C9.15764 22.75 6.54815 22.2331 4.62116 21.3659C2.76457 20.5305 1.25 19.2216 1.25 17.5C1.25 16.5011 1.77305 15.635 2.53605 14.9441C2.84309 14.666 3.31738 14.6895 3.59541 14.9966Z" fill="#18a0a0"/></svg>`),
+          url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.25 8.51464C4.25 4.45264 7.77146 1.25 12 1.25C16.2285 1.25 19.75 4.45264 19.75 8.51464C19.75 12.3258 17.3871 16.8 13.5748 18.4292C12.574 18.8569 11.426 18.8569 10.4252 18.4292C6.61289 16.8 4.25 12.3258 4.25 8.51464ZM12 2.75C8.49655 2.75 5.75 5.38076 5.75 8.51464C5.75 11.843 7.85543 15.6998 11.0147 17.0499C11.639 17.3167 12.361 17.3167 12.9853 17.0499C16.1446 15.6998 18.25 11.843 18.25 8.51464C18.25 5.38076 15.5034 2.75 12 2.75ZM12 7.75C11.3096 7.75 10.75 8.30964 10.75 9C10.75 9.69036 11.3096 10.25 12 10.25C12.6904 10.25 13.25 9.69036 13.25 9C13.25 8.30964 12.6904 7.75 12 7.75ZM9.25 9C9.25 7.48122 10.4812 6.25 12 6.25C13.5188 6.25 14.75 7.48122 14.75 9C14.75 10.5188 13.5188 11.75 12 11.75C10.4812 11.75 9.25 10.5188 9.25 9ZM3.59541 14.9966C3.87344 15.3036 3.84992 15.7779 3.54288 16.0559C2.97519 16.57 2.75 17.0621 2.75 17.5C2.75 18.2637 3.47401 19.2048 5.23671 19.998C6.929 20.7596 9.31952 21.25 12 21.25C14.6805 21.25 17.071 20.7596 18.7633 19.998C20.526 19.2048 21.25 18.2637 21.25 17.5C21.25 17.0621 21.0248 16.57 20.4571 16.0559C20.1501 15.7779 20.1266 15.3036 20.4046 14.9966C20.6826 14.6895 21.1569 14.666 21.4639 14.9441C22.227 15.635 22.75 16.5011 22.75 17.5C22.75 19.2216 21.2354 20.5305 19.3788 21.3659C17.4518 22.2331 14.8424 22.75 12 22.75C9.15764 22.75 6.54815 22.2331 4.62116 21.3659C2.76457 20.5305 1.25 19.2216 1.25 17.5C1.25 16.5011 1.77305 15.635 2.53605 14.9441C2.84309 14.666 3.31738 14.6895 3.59541 14.9966Z" fill="${markerColor}"/></svg>`),
           scaledSize: new window.google.maps.Size(36, 36),
           anchor: new window.google.maps.Point(18, 36),
         },
@@ -292,16 +335,16 @@ export default function Mapview({ searchParams }) {
           <div style="width: 200px; padding: 0; background: #fff; overflow: hidden;">
             <img src="${event.posterImage?.[0] || "/img/sidebar-logo.svg"}" onerror="this.onerror=null;this.src='/img/sidebar-logo.svg'" style="width:100%; height:110px; object-fit:cover; border-radius: 8px 8px 0 0;" />
             <div style="padding: 10px;">
-              <h6 style="margin: 0 0 5px; font-weight: 700; color: #333; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${event.eventTitle}</h6>
+              <h6 style="margin: 0 0 5px; font-weight: 700; color: #333; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${title}</h6>
               <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
                 <img src="/img/loc_icon.svg" style="width: 10px; opacity: 0.7;" />
                 <span style="font-size: 11px; color: #666;">${event.venueAddress?.city || "Location"}</span>
               </div>
               <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 10px;">
                 <img src="/img/date_icon.svg" style="width: 10px; opacity: 0.7;" />
-                <span style="font-size: 11px; color: #666;">${new Date(event.startDate).toLocaleDateString()}</span>
+                <span style="font-size: 11px; color: #666;">${dateString}</span>
               </div>
-              <a href="/eventDetails?id=${event._id}" style="display:block; text-align:center; background:#18a0a0; color:white; padding:7px; border-radius:6px; text-decoration:none; font-size:12px; font-weight: 600;">
+              <a href="${detailsUrl}" style="display:block; text-align:center; background:${markerColor}; color:white; padding:7px; border-radius:6px; text-decoration:none; font-size:12px; font-weight: 600;">
                 View Details
               </a>
             </div>
@@ -312,10 +355,10 @@ export default function Mapview({ searchParams }) {
       });
 
       marker.addListener("click", () => {
-        window.location.href = `/eventDetails?id=${event._id}`;
+        window.location.href = detailsUrl;
       });
 
-      markersRef.current.push(marker);
+      markersRef.current[event._id] = { marker, event, detailsUrl, markerColor, dateString, title };
     });
 
     // If no user location is known, pan map to where the data is (first event with coords).
@@ -332,8 +375,10 @@ export default function Mapview({ searchParams }) {
     }
 
     return () => {
-      markersRef.current.forEach((m) => m.setMap(null));
-      markersRef.current = [];
+      Object.values(markersRef.current || {}).forEach(item => {
+        if (item?.marker) item.marker.setMap(null);
+      });
+      markersRef.current = {};
     };
   }, [isLoaded, events, searchParams]);
 
@@ -355,44 +400,60 @@ export default function Mapview({ searchParams }) {
           <Col lg={7} xl={6} xxl={5}>
             <div className="card_map_view">
               {loading ? (
-                <div className="text-center py-5"><p>Loading events...</p></div>
+                <div className="text-center py-5"><p>Loading events & courses...</p></div>
               ) : events.length === 0 ? (
-                <div className="text-center py-5"><p>No events found.</p></div>
+                <div className="text-center py-5"><p>No items found.</p></div>
               ) : (
-                events.map((event, i) => (
-                  <motion.div
-                    key={event._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="event-card shadow"
-                    onClick={() => router.push(`/eventDetails?id=${event._id}`)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div className="img-container">
-                      <img
-                        src={event.posterImage?.[0] || "/img/sidebar-logo.svg"}
-                        alt={event.eventTitle}
-                        onError={(e) => { e.target.onerror = null; e.target.src = "/img/sidebar-logo.svg"; }}
-                      />
-                    </div>
-                    <div className="card-content flex-grow-1">
-                      <div>
-                        <h6>{event.eventTitle}</h6>
-                        <div className="text-muted-custom mb-2">
-                          <span><img src="/img/date_icon.svg" alt="date" /> {new Date(event.startDate).toLocaleDateString()}</span>
-                          <span><img src="/img/loc_icon.svg" alt="loc" /> {event.venueAddress?.city || "Location"}</span>
+                events.map((event, i) => {
+                  const isCourse = event.exploreType === "course";
+                  const title = event.eventTitle || event.courseTitle || "Untitled";
+                  const detailsUrl = isCourse ? `/programDetails?id=${event._id}` : `/eventDetails?id=${event._id}`;
+                  const dateString = event.startDate ? new Date(event.startDate).toLocaleDateString() : "Flexible";
+                  const priceString = isCourse
+                    ? (event.price ? `₮${event.price}` : "Free")
+                    : (event.ticketPrice ? `₮${event.ticketPrice}` : "Free");
+
+                  return (
+                    <motion.div
+                      key={event._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      className="event-card shadow"
+                      onClick={() => router.push(detailsUrl)}
+                      onMouseEnter={() => openInfoWindowForId(event._id)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <div className="img-container">
+                        <img
+                          src={event.posterImage?.[0] || "/img/sidebar-logo.svg"}
+                          alt={title}
+                          onError={(e) => { e.target.onerror = null; e.target.src = "/img/sidebar-logo.svg"; }}
+                        />
+                      </div>
+                      <div className="card-content flex-grow-1">
+                        <div>
+                          <div className="d-flex align-items-center justify-content-between">
+                            <h6 className="m-0">{title}</h6>
+                            <span className="badge" style={{ background: isCourse ? "rgba(243, 156, 18, 0.15)" : "rgba(24, 160, 160, 0.15)", color: isCourse ? "#f39c12" : "#18a0a0", fontSize: "11px", fontWeight: "600", padding: "4px 8px", borderRadius: "8px" }}>
+                              {isCourse ? "Course" : "Event"}
+                            </span>
+                          </div>
+                          <div className="text-muted-custom mb-2 mt-1">
+                            <span><img src="/img/date_icon.svg" alt="date" /> {dateString}</span>
+                            <span><img src="/img/loc_icon.svg" alt="loc" /> {event.venueAddress?.city || "Location"}</span>
+                          </div>
+                        </div>
+                        <div className="price-section">
+                          <div><h5 className="m-0 fw-bold">{priceString}</h5></div>
+                          <Link href={detailsUrl} className="common_btn text-decoration-none text-white text-center">
+                            View Details
+                          </Link>
                         </div>
                       </div>
-                      <div className="price-section">
-                        <div><h5 className="m-0 fw-bold">{event.ticketPrice ? `₮${event.ticketPrice}` : "Free"}</h5></div>
-                        <Link href={`/eventDetails?id=${event._id}`} className="common_btn text-decoration-none text-white text-center">
-                          View Details
-                        </Link>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
+                    </motion.div>
+                  );
+                })
               )}
             </div>
           </Col>

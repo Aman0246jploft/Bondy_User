@@ -117,6 +117,7 @@ const HeroSlider = ({ setView, onSearch }) => {
     "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070",
     "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=2070",
   ]);
+  const [swiperInstance, setSwiperInstance] = useState(null);
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -195,6 +196,7 @@ const HeroSlider = ({ setView, onSearch }) => {
         speed={1500}
         autoplay={{ delay: 5000 }}
         navigation={{ prevEl: ".prev-el", nextEl: ".next-el" }}
+        onSwiper={setSwiperInstance}
         loop
         className="h-100"
       >
@@ -233,10 +235,10 @@ const HeroSlider = ({ setView, onSearch }) => {
       </div> */}
 
       {/* ---------- NAV BUTTONS ---------- */}
-      <button className="nav-btn prev-el">
+      <button className="nav-btn prev-el" onClick={() => swiperInstance?.slidePrev()}>
         <ChevronLeft size={24} />
       </button>
-      <button className="nav-btn next-el">
+      <button className="nav-btn next-el" onClick={() => swiperInstance?.slideNext()}>
         <ChevronRight size={24} />
       </button>
 

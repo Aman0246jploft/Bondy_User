@@ -50,6 +50,7 @@ function PersonalInfoContent() {
     averageRating: 0,
     reviewCount: 0,
     role: "",
+    isVerified: false,
   });
 
   const [countries] = useState(Country.getAllCountries());
@@ -136,6 +137,7 @@ function PersonalInfoContent() {
             averageRating: profile.averageRating || 0,
             reviewCount: profile.reviewCount || 0,
             role: profile.role || "",
+            isVerified: profile.isVerified || false,
           };
 
           setSelfUserId(profile._id);
@@ -338,7 +340,7 @@ function PersonalInfoContent() {
         const finalProfile = response.data.user;
         const location = finalProfile.location || {};
 
-         const updatedFetchedData = {
+        const updatedFetchedData = {
           firstName: finalProfile.firstName || "",
           lastName: finalProfile.lastName || "",
           email: finalProfile.email || "",
@@ -365,6 +367,7 @@ function PersonalInfoContent() {
           averageRating: finalProfile.averageRating || 0,
           reviewCount: finalProfile.reviewCount || 0,
           role: finalProfile.role || "",
+          isVerified: finalProfile.isVerified || false,
         };
 
         setProfileData(updatedFetchedData);
@@ -450,13 +453,22 @@ function PersonalInfoContent() {
               <div className="personal-profile-info">
                 <h4 className="d-flex align-items-center gap-2">
                   {t("heyUser")}, {profileData.firstName || "User"}!
-                  {profileData.organizerVerificationStatus === "approved" && (
+                  {profileData.isVerified && (
                     <VerifyDropdwons
                       fullName={`${profileData.firstName || ""} ${profileData.lastName || ""}`}
                     />
                   )}
                 </h4>
-                <p className="mb-2">{profileData.email}</p>
+                <div className="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                  <p className="m-0">{profileData.email}</p>
+                  <span className="bg-teal-soft">
+                    {console.log("444555551", profileData.isVerified)}
+                    {profileData.isVerified && (
+                      <img src="/img/veriy_icon.svg" alt="Verified" style={{ width: "14px", height: "14px", marginRight: "5px" }} />
+                    )}
+                    {t("eventOrganizer") || "Event Organizer"}
+                  </span>
+                </div>
                 <div className="stats-row mt-2 d-flex align-items-center gap-3" style={{ fontSize: "14px", color: "#aaa" }}>
                   {profileData.role !== "CUSTOMER" && (
                     <span

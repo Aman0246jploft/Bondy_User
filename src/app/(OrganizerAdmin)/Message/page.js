@@ -829,7 +829,12 @@ function MessageContent() {
                                                 </div>
 
                                                 <div className="user-info">
-                                                    <h5>{other.firstName} {other.lastName}</h5>
+                                                    <h5>
+                                                        {other.firstName} {other.lastName}
+                                                        {other.roleId === 2 && other.isVerified && (
+                                                            <img src="/img/veriy_icon.svg" alt="Verified" style={{ width: "14px", height: "14px", marginLeft: "5px", verticalAlign: "middle" }} />
+                                                        )}
+                                                    </h5>
                                                     <p className="text-truncate" style={{ maxWidth: "150px" }}>
                                                         {sidebarTyping[chat._id] && Object.keys(sidebarTyping[chat._id]).length > 0 ? (
                                                             <span style={{ color: "var(--primary-color)", fontWeight: "500" }}>{t("typing")}</span>
@@ -893,9 +898,12 @@ function MessageContent() {
                                             />
 
                                             <div className="info">
-                                                <h5>
+                                                <h5 className="d-flex align-items-center">
                                                     {getOtherUser(activeChat).firstName}{" "}
                                                     {getOtherUser(activeChat).lastName}
+                                                    {getOtherUser(activeChat).roleId === 2 && getOtherUser(activeChat).isVerified && (
+                                                        <img src="/img/veriy_icon.svg" alt="Verified" style={{ width: "16px", height: "16px", marginLeft: "5px" }} />
+                                                    )}
                                                 </h5>
                                                 <small className={onlineUsers.has(getOtherUser(activeChat)._id) ? "online" : "offline"}>
                                                     {onlineUsers.has(getOtherUser(activeChat)._id) ? t("online") : t("offline")}
