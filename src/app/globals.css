@@ -1268,12 +1268,12 @@ select:-webkit-autofill {
 
 /* Row 1: Left Animation */
 .animate-left {
-  animation: scrollLeft 30s linear infinite;
+  animation: scrollLeft 15s linear infinite;
 }
 
 /* Row 2: Right Animation */
 .animate-right {
-  animation: scrollRight 30s linear infinite;
+  animation: scrollRight 15s linear infinite;
 }
 
 @keyframes scrollLeft {

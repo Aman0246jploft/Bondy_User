@@ -10,7 +10,7 @@ const TopEvents = () => {
   useEffect(() => {
     const fetchTopEvents = async () => {
       try {
-        const response = await eventApi.getTopEvents({ limit: 10 });
+        const response = await eventApi.getEvents({ placement: "homePage", addToSlider: true, limit: 30 });
         const payload = response?.data?.events || response?.data?.data?.events || [];
         setEvents(Array.isArray(payload) ? payload : []);
       } catch (error) {
@@ -27,9 +27,9 @@ const TopEvents = () => {
       const startDate = event?.startDate ? new Date(event.startDate) : null;
       const dateText = startDate
         ? startDate.toLocaleDateString(undefined, {
-            day: "numeric",
-            month: "long",
-          })
+          day: "numeric",
+          month: "long",
+        })
         : "Date TBA";
       const city = event?.venueAddress?.city || "Location TBA";
       const info = `${dateText}, ${city}`;
