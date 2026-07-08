@@ -200,11 +200,13 @@ function ListingContent() {
           longitude: filterParams.longitude,
           startDate: filterParams.startDate || undefined,
           endDate: filterParams.endDate || undefined,
-          categoryId: categoryId || ""
+          categoryId: categoryId || "",
+          status: "Upcoming,Live",
+          excludemyevents: true,
         };
 
-        // geolocation for "nearYou" ONLY if no manual location is provided
-        if (meta.filter === "nearYou" && !params.latitude) {
+        // fetch geolocation if no manual location is provided
+        if (!params.latitude) {
           try {
             const pos = await new Promise((resolve, reject) =>
               navigator.geolocation.getCurrentPosition(resolve, reject),

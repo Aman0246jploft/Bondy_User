@@ -1,5 +1,6 @@
 export const translations = {
   en: {
+    almostSoldOut: "Almost sold out",
     home: "Home",
     explore: "Explore",
     course: "Course",
@@ -1549,11 +1550,10 @@ export const translations = {
     update: "Update",
     loginAsStaff: "Login as Staff",
     availablePasses: "Available Passes",
-    thirtyDaysUnlimitedAccess: "30 days unlimited access",
-    ninetyDaysUnlimitedAccess: "90 days unlimited access",
     backToUserLogin: "Back to User Login"
   },
   mn: {
+    almostSoldOut: "Бараг зарагдаж дууссан",
     Info: "Мэдээлэл",
     home: "Нүүр",
     explore: "Судлах",

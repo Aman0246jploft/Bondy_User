@@ -5,6 +5,7 @@ import eventApi from "@/api/eventApi";
 import wishlistApi from "@/api/wishlistApi";
 import { useAuthGuard } from "@/context/AuthGuardContext";
 import AuthButton from "@/components/AuthButton";
+import { Flame } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import { Container, Row, Col, Button } from "react-bootstrap";
@@ -165,8 +166,13 @@ function EventDetailsContent() {
           <Row className="align-items-start mb-5">
             <Col lg={7} className="mb-4">
               <div className="header-box">
-                <h1 className="event-title">
+                <h1 className="event-title" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                   {event?.eventTitle}
+                  {event?.showHurryBadge && (
+                    <span style={{ color: "#F59E0B", fontSize: "16px", fontWeight: 500, display: "flex", alignItems: "center", gap: "4px" }}>
+                      <Flame size={20} color="#F59E0B" /> {t("almostSoldOut")}
+                    </span>
+                  )}
                   <br />
                 </h1>
                 <p className="event-meta">
@@ -211,7 +217,7 @@ function EventDetailsContent() {
                 modules={[Autoplay]}
                 spaceBetween={20}
                 slidesPerView={hasSingleMedia ? 1 : 1.5}
-                centeredSlides={!hasSingleMedia}
+                centeredSlides={true}
                 loop={!hasSingleMedia}
                 autoplay={
                   hasSingleMedia

@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthGuard } from "@/context/AuthGuardContext";
 import AuthButton from "@/components/AuthButton";
+import { Flame } from "lucide-react";
 
 function ProgramDetailsContent() {
   const router = useRouter();
@@ -255,7 +256,7 @@ function ProgramDetailsContent() {
                 modules={[Autoplay]}
                 spaceBetween={20}
                 slidesPerView={1}
-                centeredSlides={!hasSingleMedia}
+                centeredSlides={true}
                 loop={!hasSingleMedia}
                 speed={800}
                 autoplay={
@@ -526,8 +527,13 @@ function ProgramDetailsContent() {
                       <div className="upcming_session_item mb-3" key={batch._id || idx}>
                         <div className="content" style={{ flex: 1, minWidth: 0 }}>
                           <div className="upcming_session_content ps-0">
-                            <h6 style={{ color: "#fff", fontWeight: 600 }}>
+                            <h6 style={{ color: "#fff", fontWeight: 600, display: "flex", alignItems: "center", gap: "8px" }}>
                               {batch.batchName}
+                              {batch.showHurryBadge && (
+                                <span style={{ color: "#F59E0B", fontSize: "13px", fontWeight: 500, display: "flex", alignItems: "center", gap: "4px" }}>
+                                  <Flame size={16} color="#F59E0B" /> {t("almostSoldOut")}
+                                </span>
+                              )}
                             </h6>
                             <span className="text-secondary" style={{ fontSize: "12px", display: "block", marginTop: "4px" }}>
                               📅 {batch.days?.join(", ")}
