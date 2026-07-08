@@ -2,10 +2,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import eventApi from "@/api/eventApi";
+import { useRouter } from "next/navigation";
 
 const TopEvents = () => {
   const { t } = useLanguage();
   const [events, setEvents] = useState([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchTopEvents = async () => {
@@ -55,6 +57,12 @@ const TopEvents = () => {
     return null;
   }
 
+  const handleCardClick = (id) => {
+    if (id && !id.startsWith("top-event-")) {
+      router.push(`/eventDetails?id=${id}`);
+    }
+  };
+
   return (
     <div className="events-section">
       <div className="container">
@@ -71,7 +79,11 @@ const TopEvents = () => {
 
       <div className="slider-wrapper animate-left ">
         {doubleData.map((item, index) => (
-          <div className="event-card" key={`${item.id}-left-${index}`}>
+          <div
+            className="event-card"
+            key={`${item.id}-left-${index}`}
+            onClick={() => handleCardClick(item.id)}
+          >
             <img
               src={item.img}
               alt={item.name}
@@ -90,7 +102,11 @@ const TopEvents = () => {
 
       <div className="slider-wrapper animate-right">
         {doubleData.map((item, index) => (
-          <div className="event-card" key={`${item.id}-right-${index}`}>
+          <div
+            className="event-card"
+            key={`${item.id}-right-${index}`}
+            onClick={() => handleCardClick(item.id)}
+          >
             <img
               src={item.img}
               alt={item.name}

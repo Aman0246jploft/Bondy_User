@@ -1306,6 +1306,7 @@ select:-webkit-autofill {
   min-width: 320px;
   border: 1px solid #333;
   transition: transform 0.3s ease;
+  cursor: pointer;
 }
 
 .event-card:hover {
