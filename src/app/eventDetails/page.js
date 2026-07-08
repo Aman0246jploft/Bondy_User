@@ -537,42 +537,99 @@ function EventDetailsContent() {
                   <hr className="border-secondary opacity-25 my-4" />
 
                   <div className="mt-3">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <span>{t("eventSeats")}</span>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <span>{t("ticketAvailability") || "Ticket Availability"}</span>
                       {event?.showHurryBadge && (
                         <span style={{ color: "#F59E0B", fontSize: "12px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap", textTransform: "none" }}>
                           <Flame size={14} color="#F59E0B" /> {t("almostSoldOut")}
                         </span>
                       )}
                     </div>
-                    {(() => {
-                      const totalTickets = event?.totalTickets || 0;
-                      const availableTickets = event?.ticketQtyAvailable || 0;
-                      const bookedSeats = totalTickets - availableTickets;
-                      const progress =
-                        totalTickets > 0
-                          ? (bookedSeats / totalTickets) * 100
-                          : 0;
+                    {event?.tickets && event.tickets.length > 0 ? (
+                      <div className="d-flex flex-column gap-3">
+                        {event.tickets.map((ticket) => {
+                          const total = ticket.qty || 0;
+                          const available = ticket.availableQty !== undefined ? ticket.availableQty : total;
+                          const booked = total - available;
+                          const progress = total > 0 ? (booked / total) * 100 : 0;
+                          const isSoldOut = available <= 0;
+                          const isLowStock = available <= 10 && available > 0;
 
-                      return (
-                        <>
-                          <p className="small mb-2">
-                            {t("seatsBooked")} - {bookedSeats}
-                          </p>
-                          <div className="custom-progress-bg mb-2">
-                            <div
-                              className="custom-progress-bar"
-                              style={{ width: `${progress}%` }}
-                            ></div>
-                          </div>
-                          <div className="text-end">
-                            <small className="small">
-                              {t("seatsLeft")} - {availableTickets}
-                            </small>
-                          </div>
-                        </>
-                      );
-                    })()}
+                          return (
+                            <div key={ticket._id} className="ticket-availability-item p-3 rounded-3" style={{ background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                              <div className="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                  <h6 className="mb-1 fw-semibold text-white" style={{ fontSize: "15px" }}>{ticket.ticketName}</h6>
+                                  {ticket.ticketShortDesc && (
+                                    <p className="mb-0 text-muted" style={{ fontSize: "12px" }}>{ticket.ticketShortDesc}</p>
+                                  )}
+                                </div>
+                                <span className="fw-bold" style={{ color: "#23ada4", fontSize: "15px" }}>
+                                  {ticket.price === 0 ? t("free") || "Free" : `₮${ticket.price}`}
+                                </span>
+                              </div>
+
+                              <div className="mt-2">
+                                <div className="d-flex justify-content-between align-items-center mb-1" style={{ fontSize: "12px" }}>
+                                  <span className="text-muted">
+                                    {isSoldOut ? (
+                                      <span className="text-danger fw-medium">{t("soldOut") || "Sold Out"}</span>
+                                    ) : isLowStock ? (
+                                      <span className="text-warning fw-medium">{t("onlyLeft") || "Only"} {available} {t("left") || "left"}</span>
+                                    ) : (
+                                      <span className="text-success fw-medium">{t("available") || "Available"}</span>
+                                    )}
+                                  </span>
+                                  <span className="text-muted">
+                                    {booked}/{total} {t("booked") || "booked"}
+                                  </span>
+                                </div>
+                                <div className="custom-progress-bg" style={{ height: "6px", backgroundColor: "rgba(255, 255, 255, 0.1)" }}>
+                                  <div
+                                    className="custom-progress-bar"
+                                    style={{
+                                      width: `${progress}%`,
+                                      backgroundColor: isSoldOut ? "#dc3545" : isLowStock ? "#ffc107" : "#23ada4",
+                                      height: "100%",
+                                      borderRadius: "10px"
+                                    }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      (() => {
+                        const totalTickets = event?.totalTickets || 0;
+                        const availableTickets = event?.ticketQtyAvailable || 0;
+                        const bookedSeats = totalTickets - availableTickets;
+                        const progress =
+                          totalTickets > 0
+                            ? (bookedSeats / totalTickets) * 100
+                            : 0;
+
+                        return (
+                          <>
+                            <p className="small mb-2">
+                              {t("seatsBooked")} - {bookedSeats}
+                            </p>
+                            <div className="custom-progress-bg mb-2">
+                              <div
+                                className="custom-progress-bar"
+                                style={{ width: `${progress}%` }}
+                              ></div>
+                            </div>
+                            <div className="text-end">
+                              <small className="small">
+                                {t("seatsLeft")} - {availableTickets}
+                              </small>
+                            </div>
+                          </>
+                        );
+                      })()
+                    )}
                   </div>
                 </div>
               </div>

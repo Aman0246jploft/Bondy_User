@@ -190,7 +190,7 @@ function LocationMap() {
         center: { lat, lng },
         zoom: 14,
         styles: darkMapStyle,
-        disableDefaultUI: false,
+        disableDefaultUI: true,
       });
 
       googleMarker = new window.google.maps.Marker({

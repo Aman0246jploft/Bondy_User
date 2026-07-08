@@ -734,7 +734,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                     height: "60px",
                                     backgroundColor: isActive ? "#23ada4" : "#1a1a1a",
                                     border: isActive ? "1px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
-                                    transition: "all 0.2s ease"
+                                    transition: "all 0.2s ease",
+                                    marginTop: "5px"
                                 }}
                             >
                                 <span style={{ fontSize: "12px", fontWeight: "600", opacity: isActive ? 1 : 0.8 }}>

@@ -134,19 +134,23 @@ function page() {
         return false;
       }
 
-      // Validate against event start date
+      // Validate against event dates
       if (eventData.startDate) {
         const eventStartOnlyDate = formatDateVal(eventData.startDate);
         const ticketStartOnlyDate = formatDateVal(tck.salesStart);
-        const ticketEndOnlyDate = formatDateVal(tck.salesEnd);
 
         if (ticketStartOnlyDate > eventStartOnlyDate) {
           toast.error(`${tPrefix}${t("salesStartDateMustBeBeforeEventStart") || "Ticket sales start date must be on or before the event start date"}`);
           return false;
         }
+      }
+      
+      if (eventData.endDate) {
+        const eventEndOnlyDate = formatDateVal(eventData.endDate);
+        const ticketEndOnlyDate = formatDateVal(tck.salesEnd);
 
-        if (ticketEndOnlyDate > eventStartOnlyDate) {
-          toast.error(`${tPrefix}${t("salesEndDateMustBeBeforeEventStart") || "Ticket sales end date must be on or before the event start date"}`);
+        if (ticketEndOnlyDate > eventEndOnlyDate) {
+          toast.error(`${tPrefix}${t("salesEndDateMustBeBeforeEventEnd") || "Ticket sales end date must be on or before the event end date"}`);
           return false;
         }
       }
@@ -458,7 +462,7 @@ function page() {
                                   )
                                 }
                                 min={eventData._id ? undefined : today}
-                                max={formatDateVal(eventData.startDate)}
+                                max={formatDateVal(eventData.endDate)}
                               />
                               <span
                                 className="calendar-icon"
@@ -489,7 +493,7 @@ function page() {
                                   )
                                 }
                                 min={eventData._id ? undefined : (formatDateVal(ticket.salesStart) || today)}
-                                max={formatDateVal(eventData.startDate)}
+                                max={formatDateVal(eventData.endDate)}
                               />
                               <span
                                 className="calendar-icon"
