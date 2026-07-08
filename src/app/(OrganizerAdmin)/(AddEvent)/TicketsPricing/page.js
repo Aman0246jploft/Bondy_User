@@ -144,7 +144,7 @@ function page() {
           return false;
         }
       }
-      
+
       if (eventData.endDate) {
         const eventEndOnlyDate = formatDateVal(eventData.endDate);
         const ticketEndOnlyDate = formatDateVal(tck.salesEnd);

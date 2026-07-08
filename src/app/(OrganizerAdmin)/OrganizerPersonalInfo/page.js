@@ -461,13 +461,18 @@ function PersonalInfoContent() {
                 </h4>
                 <div className="d-flex align-items-center gap-2 mb-2 flex-wrap">
                   <p className="m-0">{profileData.email}</p>
-                  <span className="bg-teal-soft">
-                    {console.log("444555551", profileData.isVerified)}
+                  {/* <span className="bg-teal-soft">
                     {profileData.isVerified && (
                       <img src="/img/veriy_icon.svg" alt="Verified" style={{ width: "14px", height: "14px", marginRight: "5px" }} />
                     )}
                     {t("eventOrganizer") || "Event Organizer"}
-                  </span>
+                  </span> */}
+                  {profileData.isVerified && (
+                    <span className="bg-teal-soft">
+                      <img src="/img/veriy_icon.svg" alt="Verified" style={{ width: "14px", height: "14px", marginRight: "5px" }} />
+                      {t("verified") || "Verified"}
+                    </span>
+                  )}
                 </div>
                 <div className="stats-row mt-2 d-flex align-items-center gap-3" style={{ fontSize: "14px", color: "#aaa" }}>
                   {profileData.role !== "CUSTOMER" && (
