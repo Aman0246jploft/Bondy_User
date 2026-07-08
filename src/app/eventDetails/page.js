@@ -166,13 +166,8 @@ function EventDetailsContent() {
           <Row className="align-items-start mb-5">
             <Col lg={7} className="mb-4">
               <div className="header-box">
-                <h1 className="event-title" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <h1 className="event-title">
                   {event?.eventTitle}
-                  {event?.showHurryBadge && (
-                    <span style={{ color: "#F59E0B", fontSize: "16px", fontWeight: 500, display: "flex", alignItems: "center", gap: "4px" }}>
-                      <Flame size={20} color="#F59E0B" /> {t("almostSoldOut")}
-                    </span>
-                  )}
                   <br />
                 </h1>
                 <p className="event-meta">
@@ -524,25 +519,32 @@ function EventDetailsContent() {
                           <span className="small text-muted">
                             {t("beFirstToJoin")}
                           </span>
-                        )} 
+                        )}
                       </div>
-                    {canShowViewAll && (
-                      <AuthButton
-                        requiresAuth
-                        onClick={() => router.push(`/eventAttendees?id=${event?._id}`)}
-                        className="text-teal text-decoration-none small"
-                        style={{ color: "#26a69a", background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                      >
-                        {t("viewAll")}
-                      </AuthButton>
-                    )}
+                      {canShowViewAll && (
+                        <AuthButton
+                          requiresAuth
+                          onClick={() => router.push(`/eventAttendees?id=${event?._id}`)}
+                          className="text-teal text-decoration-none small"
+                          style={{ color: "#26a69a", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                        >
+                          {t("viewAll")}
+                        </AuthButton>
+                      )}
                     </div>
                   </div>
 
                   <hr className="border-secondary opacity-25 my-4" />
 
                   <div className="mt-3">
-                    <span>{t("eventSeats")}</span>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span>{t("eventSeats")}</span>
+                      {event?.showHurryBadge && (
+                        <span style={{ color: "#F59E0B", fontSize: "12px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap", textTransform: "none" }}>
+                          <Flame size={14} color="#F59E0B" /> {t("almostSoldOut")}
+                        </span>
+                      )}
+                    </div>
                     {(() => {
                       const totalTickets = event?.totalTickets || 0;
                       const availableTickets = event?.ticketQtyAvailable || 0;

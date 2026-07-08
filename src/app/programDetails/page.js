@@ -490,8 +490,13 @@ function ProgramDetailsContent() {
                             <div className="upcming_session_item mb-2" key={idx}>
                               <div className="content" style={{ flex: 1, minWidth: 0 }}>
                                 <div className="upcming_session_content ps-0">
-                                  <h6>
-                                    {formatTime(slot.startTime, true, language)} {t("to")} {formatTime(slot.endTime, true, language)}
+                                  <h6 style={{ color: "#fff", fontWeight: 600, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                                    <span style={{ textTransform: "none" }}>{formatTime(slot.startTime, true, language)} {t("to")} {formatTime(slot.endTime, true, language)}</span>
+                                    {slot.showHurryBadge && (
+                                      <span style={{ color: "#F59E0B", fontSize: "12px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap", textTransform: "none" }}>
+                                        <Flame size={14} color="#F59E0B" /> {t("almostSoldOut")}
+                                      </span>
+                                    )}
                                   </h6>
                                 </div>
                               </div>
@@ -527,11 +532,11 @@ function ProgramDetailsContent() {
                       <div className="upcming_session_item mb-3" key={batch._id || idx}>
                         <div className="content" style={{ flex: 1, minWidth: 0 }}>
                           <div className="upcming_session_content ps-0">
-                            <h6 style={{ color: "#fff", fontWeight: 600, display: "flex", alignItems: "center", gap: "8px" }}>
-                              {batch.batchName}
+                            <h6 style={{ color: "#fff", fontWeight: 600, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                              <span style={{ textTransform: "none" }}>{batch.batchName}</span>
                               {batch.showHurryBadge && (
-                                <span style={{ color: "#F59E0B", fontSize: "13px", fontWeight: 500, display: "flex", alignItems: "center", gap: "4px" }}>
-                                  <Flame size={16} color="#F59E0B" /> {t("almostSoldOut")}
+                                <span style={{ color: "#F59E0B", fontSize: "12px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap", textTransform: "none" }}>
+                                  <Flame size={14} color="#F59E0B" /> {t("almostSoldOut")}
                                 </span>
                               )}
                             </h6>
