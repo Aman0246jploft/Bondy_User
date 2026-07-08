@@ -211,12 +211,13 @@ function Page() {
       totalSessions: 4,
     };
 
-    if (limits[name] && value.toString().length > limits[name]) {
-      return;
+    let finalValue = value;
+    if (limits[name] && finalValue.toString().length > limits[name]) {
+      finalValue = finalValue.toString().substring(0, limits[name]);
     }
 
     setFormData((prev) => {
-      const updated = { ...prev, [name]: value };
+      const updated = { ...prev, [name]: finalValue };
       localStorage.setItem("courseCreationData", JSON.stringify(updated));
       return updated;
     });

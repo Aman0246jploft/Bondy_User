@@ -46,12 +46,13 @@ export default function CreateTicket(props) {
       subject: 100,
       description: 1000,
     };
-    if (limits[name] && value.length > limits[name]) {
-      return;
+    let finalValue = value;
+    if (limits[name] && finalValue.length > limits[name]) {
+      finalValue = finalValue.substring(0, limits[name]);
     }
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: finalValue,
     }));
   };
 

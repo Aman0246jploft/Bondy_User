@@ -69,10 +69,11 @@ function BasicInfoContent() {
       longdesc: 2000,
     };
 
-    if (limits[name] && value.length > limits[name]) {
-      return;
+    let finalValue = value;
+    if (limits[name] && finalValue.length > limits[name]) {
+      finalValue = finalValue.substring(0, limits[name]);
     }
-    updateEventData({ [name]: value });
+    updateEventData({ [name]: finalValue });
   };
 
   const handleTagsChange = (e) => {
