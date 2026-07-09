@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import userSettingApi from "@/api/userSettingApi";
-
 import { useLanguage } from "@/context/LanguageContext";
 import toast from "react-hot-toast";
+import { Bell, Calendar, User, MessageSquare } from "lucide-react";
 
 function page() {
   const { t, changeLanguage } = useLanguage();
@@ -12,35 +12,25 @@ function page() {
   const [loading, setLoading] = useState(true);
 
   const languages = [
-    {
-      code: "en",
-      dbLabel: "English",
-      label: "English",
-      flag: "/img/usflag.svg",
-    },
-    {
-      code: "mn",
-      dbLabel: "Mongolian",
-      label: "Mongolian",
-      flag: "/img/Flag_of_Mongolia.svg.png",
-    },
+    { code: "en", dbLabel: "English", label: "English", flag: "/img/usflag.svg" },
+    { code: "mn", dbLabel: "Mongolian", label: "Mongolian", flag: "/img/Flag_of_Mongolia.svg.png" },
   ];
 
   const [settings, setSettings] = useState({
-    emailNotification: true,
-    inAppNotification: true,
     pushNotification: true,
-    smsNotification: true,
-    whatsappNotification: true,
+    bookingNotification: true,
+    reminderNotification: true,
+    organizerUpdateNotification: true,
+    messageNotification: true,
     appTheme: "dark",
-    language: "English",
+    language: "English"
   });
 
   const [currentLang, setCurrentLang] = useState(languages[0]);
 
   useEffect(() => {
     fetchSettings();
-    document.title = `Setting - Bondy`;
+    document.title = "Setting - Bondy";
   }, []);
 
   const fetchSettings = async () => {
@@ -51,9 +41,7 @@ function page() {
         setSettings(res.data);
 
         // Find matching language from choices
-        const matchedLang = languages.find(
-          (l) => l.dbLabel === res.data.language,
-        );
+        const matchedLang = languages.find(l => l.dbLabel === res.data.language);
         if (matchedLang) {
           setCurrentLang(matchedLang);
           if (changeLanguage) changeLanguage(matchedLang.code);
@@ -70,7 +58,28 @@ function page() {
     const newValue = !settings[field];
 
     // Optimistic update
-    setSettings((prev) => ({ ...prev, [field]: newValue }));
+    setSettings(prev => {
+      const updated = { ...prev, [field]: newValue };
+
+      // Handle backend-like cascading logic in frontend state for instant UI update
+      if (field === "pushNotification") {
+        updated.bookingNotification = newValue;
+        updated.reminderNotification = newValue;
+        updated.organizerUpdateNotification = newValue;
+        updated.messageNotification = newValue;
+      } else {
+        const anyActiveSub = updated.bookingNotification ||
+          updated.reminderNotification ||
+          updated.organizerUpdateNotification ||
+          updated.messageNotification;
+        if (anyActiveSub && !prev.pushNotification) {
+          updated.pushNotification = true;
+        } else if (!anyActiveSub && prev.pushNotification) {
+          updated.pushNotification = false;
+        }
+      }
+      return updated;
+    });
 
     try {
       await userSettingApi.updateUserSetting({ [field]: newValue });
@@ -78,8 +87,8 @@ function page() {
     } catch (error) {
       console.error("Failed to update setting:", error);
       toast.error(t("failedToUpdateSettings") || "Failed to update settings");
-      // Revert on failure
-      setSettings((prev) => ({ ...prev, [field]: !newValue }));
+      // Revert on failure by fetching settings again
+      fetchSettings();
     }
   };
 
@@ -108,114 +117,140 @@ function page() {
           <h3>{t("setting") || "Setting"}</h3>
         </div>
 
-        {/* In-App Notifications */}
-        <div className="setting-info">
-          <div className="setting-info-lft">
-            <h5>{t("inAppNotifications") || "In-App Notifications"}</h5>
-            <p>{t("inAppNotificationsDesc") || "Receive notifications within the app while you are using it."}</p>
-          </div>
-          <div className="setting-info-rgt">
-            <div className="form-check form-switch">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                role="switch"
-                id="inAppNotification"
-                checked={settings.inAppNotification}
-                onChange={() => handleToggle("inAppNotification")}
-              />
+        {/* General Section */}
+        <h4 className="settings-section-title">{t("general")}</h4>
+        <div className="settings-card">
+          <div className="settings-row">
+            <div className="settings-row-lft">
+              <div className="settings-icon-wrapper">
+                <Bell size={24} />
+              </div>
+              <div className="settings-text-container">
+                <h5>{t("pushNotifications")}</h5>
+                <p>{t("pushNotificationsDesc")}</p>
+              </div>
+            </div>
+            <div className="settings-row-rgt">
+              <div className="form-check form-switch">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="pushNotification"
+                  checked={settings.pushNotification}
+                  onChange={() => handleToggle("pushNotification")}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Push Notifications */}
-        <div className="setting-info">
-          <div className="setting-info-lft">
-            <h5>{t("pushNotifications") || "Push Notifications"}</h5>
-            <p>
-              {t("pushNotificationsDesc") || "Receive push-notifications on your device for important events and offers."}
-            </p>
-          </div>
-          <div className="setting-info-rgt">
-            <div className="form-check form-switch">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                role="switch"
-                id="pushNotification"
-                checked={settings.pushNotification}
-                onChange={() => handleToggle("pushNotification")}
-              />
+        {/* Notification Preferences Section */}
+        <h4 className="settings-section-title">{t("notificationPreferences")}</h4>
+        <div className="settings-card">
+          {/* Bookings */}
+          <div className="settings-row">
+            <div className="settings-row-lft">
+              <div className="settings-icon-wrapper">
+                <Calendar size={24} />
+              </div>
+              <div className="settings-text-container">
+                <h5>{t("bookings")}</h5>
+                <p>{t("bookingsDesc")}</p>
+              </div>
+            </div>
+            <div className="settings-row-rgt">
+              <div className="form-check form-switch">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="bookingNotification"
+                  checked={settings.bookingNotification}
+                  onChange={() => handleToggle("bookingNotification")}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Email Notifications */}
-        <div className="setting-info">
-          <div className="setting-info-lft">
-            <h5>{t("emailNotifications") || "Email Notifications"}</h5>
-            <p>
-              {t("emailNotificationsDesc") || "Stay updated with event news and updates directly to your email."}
-            </p>
-          </div>
-          <div className="setting-info-rgt">
-            <div className="form-check form-switch">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                role="switch"
-                id="emailNotification"
-                checked={settings.emailNotification}
-                onChange={() => handleToggle("emailNotification")}
-              />
+          {/* Reminders */}
+          <div className="settings-row">
+            <div className="settings-row-lft">
+              <div className="settings-icon-wrapper">
+                <Bell size={24} />
+              </div>
+              <div className="settings-text-container">
+                <h5>{t("reminders")}</h5>
+                <p>{t("remindersDesc")}</p>
+              </div>
+            </div>
+            <div className="settings-row-rgt">
+              <div className="form-check form-switch">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="reminderNotification"
+                  checked={settings.reminderNotification}
+                  onChange={() => handleToggle("reminderNotification")}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* WhatsApp Notifications */}
-        <div className="setting-info">
-          <div className="setting-info-lft">
-            <h5>{t("whatsappNotifications") || "WhatsApp Notifications"}</h5>
-            <p>{t("whatsappNotificationsDesc") || "Receive instant updates and alerts directly on WhatsApp."}</p>
-          </div>
-          <div className="setting-info-rgt">
-            <div className="form-check form-switch">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                role="switch"
-                id="whatsappNotification"
-                checked={settings.whatsappNotification}
-                onChange={() => handleToggle("whatsappNotification")}
-              />
+          {/* Organizer Updates */}
+          <div className="settings-row">
+            <div className="settings-row-lft">
+              <div className="settings-icon-wrapper">
+                <User size={24} />
+              </div>
+              <div className="settings-text-container">
+                <h5>{t("organizerUpdates")}</h5>
+                <p>{t("organizerUpdatesDesc")}</p>
+              </div>
+            </div>
+            <div className="settings-row-rgt">
+              <div className="form-check form-switch">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="organizerUpdateNotification"
+                  checked={settings.organizerUpdateNotification}
+                  onChange={() => handleToggle("organizerUpdateNotification")}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* SMS Notifications */}
-        <div className="setting-info">
-          <div className="setting-info-lft">
-            <h5>{t("smsNotifications") || "SMS Notifications"}</h5>
-            <p>
-              {t("smsNotificationsDesc") || "Get text messages for ticket availability and critical alerts."}
-            </p>
-          </div>
-          <div className="setting-info-rgt">
-            <div className="form-check form-switch">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                role="switch"
-                id="smsNotification"
-                checked={settings.smsNotification}
-                onChange={() => handleToggle("smsNotification")}
-              />
+          {/* Messages */}
+          <div className="settings-row">
+            <div className="settings-row-lft">
+              <div className="settings-icon-wrapper">
+                <MessageSquare size={24} />
+              </div>
+              <div className="settings-text-container">
+                <h5>{t("messages")}</h5>
+                <p>{t("messagesDesc")}</p>
+              </div>
+            </div>
+            <div className="settings-row-rgt">
+              <div className="form-check form-switch">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="messageNotification"
+                  checked={settings.messageNotification}
+                  onChange={() => handleToggle("messageNotification")}
+                />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Language Selection */}
-        <div className="language-wrapper">
+        <div className="language-wrapper mt-4">
           <p className="title">{t("preferredLanguage") || "Select your preferred language"}</p>
 
           <div className="language-select" onClick={() => setOpen(!open)}>

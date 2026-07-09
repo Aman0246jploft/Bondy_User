@@ -167,7 +167,7 @@ function ProfileContent() {
         const res = await blockUserApi.blockUser({ toUser: userId });
         setShowConfirm(false);
         if (res?.status === true) {
-          toast.success(res?.message);
+          toast.success(t("userBlockedSuccessfully") || res?.message);
           setUserProfile((prev) => ({
             ...prev,
             isBlocked: true,
@@ -177,7 +177,7 @@ function ProfileContent() {
         const res = await blockUserApi.unblockUser({ toUser: userId });
         setShowConfirm(false);
         if (res?.status === true) {
-          toast.success(res?.message);
+          toast.success(t("userUnblockedSuccessfully") || res?.message);
           setUserProfile((prev) => ({
             ...prev,
             isBlocked: false,
@@ -209,7 +209,7 @@ function ProfileContent() {
       setReportReason("");
       setReportDescription("");
       if (res.status === true) {
-        toast.success(res.message);
+        toast.success(t("userReportedSuccessfully") || res.message);
       } else {
       }
     } catch (error) {
@@ -398,7 +398,7 @@ function ProfileContent() {
 
                 <div className="about-section mt-4">
                   <h4 className="about-title">{t("aboutMe")}</h4>
-                  <p className="about-text">
+                  <p className="about-text" style={{ whiteSpace: "pre-line" }}>
                     {userProfile?.bio || t("noBioAvailable")}
                   </p>
                 </div>

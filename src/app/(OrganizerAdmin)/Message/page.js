@@ -1389,7 +1389,7 @@ function MessageContent() {
                                         setMyBlockedUsers(prev => [...prev, otherUserId]);
                                         setActiveChat(prev => ({ ...prev, isBlockedByMe: true, isBlocked: true }));
                                         setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, isBlockedByMe: true, isBlocked: true } : c));
-                                        toast.success(res.message || t("userBlockedSuccessfully"));
+                                        toast.success(t("userBlockedSuccessfully") || res.message);
                                     }
                                 } catch (error) {
                                     console.error(error);
@@ -1467,7 +1467,7 @@ function MessageContent() {
                                             isBlockedByOther: updatedChat?.isBlockedByOther ?? false,
                                             isBlocked: updatedChat?.isBlocked ?? false,
                                         } : c));
-                                        toast.success(res.message || t("userUnblockedSuccessfully"));
+                                        toast.success(t("userUnblockedSuccessfully") || res.message);
                                     }
                                 } catch (error) {
                                     console.error(error);
@@ -1587,7 +1587,7 @@ function MessageContent() {
                                     setReportDescription("");
                                     setReportError("");
                                     if (res.status === true) {
-                                        toast.success(res.message || t("userReportedSuccessfully"));
+                                        toast.success(t("userReportedSuccessfully") || res.message);
                                     }
                                 } catch (error) {
                                     console.error(error);

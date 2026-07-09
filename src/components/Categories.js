@@ -4,7 +4,7 @@ import categoryApi from "../api/categoryApi";
 import { useLanguage } from "@/context/LanguageContext";
 
 const Categories = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [stats, setStats] = useState(null);
   const featuredCardBackgrounds = [
     "bg-movies",
@@ -55,7 +55,7 @@ const Categories = () => {
 
   const featuredCategoryCards = (stats?.categoryStats || []).map((cat, index) => ({
     _id: cat._id,
-    title: cat.name,
+    title: language === "mn" && cat.name_thi ? cat.name_thi : cat.name,
     count: `${cat.eventCount || 0} ${(cat.eventCount || 0) === 1 ? t("event") : t("events")}`,
     bg: featuredCardBackgrounds[index % featuredCardBackgrounds.length],
     img: cat.posterImage || featuredCardImages[index % featuredCardImages.length],

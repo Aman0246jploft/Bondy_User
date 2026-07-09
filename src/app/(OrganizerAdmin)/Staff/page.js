@@ -25,6 +25,8 @@ function StaffPage() {
   const [formPhoto, setFormPhoto] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [submittingStaff, setSubmittingStaff] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
   const fileInputRef = useRef(null);
   const entityListRef = useRef(null);
 
@@ -138,6 +140,8 @@ function StaffPage() {
     setFormPassword("");
     setFormPhoto("");
     setShowAddStaff(true);
+    setShowPassword(false);
+    setPasswordError("");
   };
 
   // Open edit view for a specific staff member
@@ -148,6 +152,28 @@ function StaffPage() {
     setFormPassword(""); // optional during edit
     setFormPhoto(staff.profileImage || "");
     setShowAddStaff(true);
+    setShowPassword(false);
+    setPasswordError("");
+  };
+
+  // Handle password change with real-time validation
+  const handlePasswordChange = (val) => {
+    setFormPassword(val);
+    const password = val.trim();
+    if (!password) {
+      if (!editingStaffId) {
+        setPasswordError(t("passwordRequired") || "Password is required for new staff.");
+      } else {
+        setPasswordError("");
+      }
+    } else {
+      const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
+      if (!passwordRegex.test(password)) {
+        setPasswordError(t("passwordComplexity") || "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.");
+      } else {
+        setPasswordError("");
+      }
+    }
   };
 
   // Handle deletion of a staff member
@@ -178,8 +204,18 @@ function StaffPage() {
       return;
     }
     if (!editingStaffId && !formPassword.trim()) {
+      setPasswordError(t("passwordRequired") || "Password is required for new staff.");
       toast.error(t("passwordRequired") || "Password is required for new staff.");
       return;
+    }
+    const password = formPassword.trim();
+    if (password) {
+      const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
+      if (!passwordRegex.test(password)) {
+        setPasswordError(t("passwordComplexity") || "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.");
+        toast.error(t("passwordComplexity") || "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.");
+        return;
+      }
     }
 
     try {
@@ -850,7 +886,7 @@ function StaffPage() {
 
             {/* Inputs */}
             <div className="staff-form-group">
-              <label>{t("fullNameLabel") || "Full Name"} *</label>
+              <label>{t("fullNameLabel") || "Full Name"} <span style={{ color: "#e74c3c" }}>*</span></label>
               <input
                 type="text"
                 placeholder={t("enterFullNamePlaceholder") || "Enter full name"}
@@ -861,7 +897,7 @@ function StaffPage() {
             </div>
 
             <div className="staff-form-group">
-              <label>{t("staffEmailLabel") || "Staff Email"} *</label>
+              <label>{t("staffEmailLabel") || "Staff Email"} <span style={{ color: "#e74c3c" }}>*</span></label>
               <input
                 type="email"
                 placeholder={t("enterStaffEmailPlaceholder") || "Enter staff email"}
@@ -872,14 +908,50 @@ function StaffPage() {
             </div>
 
             <div className="staff-form-group">
-              <label>{t("passwordLabel") || "Password"}{!editingStaffId && " *"}</label>
-              <input
-                type="password"
-                placeholder={editingStaffId ? (t("enterNewPasswordPlaceholder") || "Enter new password (optional)") : (t("enterPasswordPlaceholder") || "Enter password")}
-                value={formPassword}
-                onChange={(e) => setFormPassword(e.target.value)}
-                required={!editingStaffId}
-              />
+              <label>{t("passwordLabel") || "Password"}{!editingStaffId && <span style={{ color: "#e74c3c" }}> *</span>}</label>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder={editingStaffId ? (t("enterNewPasswordPlaceholder") || "Enter new password (optional)") : (t("enterPasswordPlaceholder") || "Enter password")}
+                  value={formPassword}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  required={!editingStaffId}
+                  style={{ paddingRight: "40px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 10
+                  }}
+                >
+                  {showPassword ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "rgba(255,255,255,0.6)" }}>
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "rgba(255,255,255,0.6)" }}>
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              <span style={{ color: passwordError ? "#e74c3c" : "#888888", fontSize: "11px", marginTop: "4px", display: "block", lineHeight: "1.4" }}>
+                {passwordError || t("passwordComplexity") || "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters."}
+              </span>
             </div>
 
             <button

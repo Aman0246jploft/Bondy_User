@@ -114,11 +114,44 @@ function TicketDetailsContent() {
   };
 
   const handleDownloadTicket = async () => {
-    await downloadTicketImage();
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/booking/public/ticket/download/${id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+        }
+      });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Ticket-${ticketInfo?.bookingId || id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading ticket:", error);
+      toast.error(t("shareLinkCopyFailed") || "Could not download ticket");
+    }
   };
 
   const handleShare = async () => {
-    await downloadTicketImage();
+    try {
+      const res = await bookingApi.getShareAndDownloadUrls(id);
+      if (res?.status && res?.data) {
+        const shareUrl = res?.data?.shareUrl || res?.data?.downloadUrl;
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success(t("shareLinkCopied") || "Link copied to clipboard");
+      } else {
+        toast.error(t("shareLinkCopyFailed") || "Could not copy link");
+      }
+    } catch (error) {
+      console.error("Error sharing ticket:", error);
+      toast.error(t("shareLinkCopyFailed") || "Could not copy link");
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -251,7 +284,7 @@ function TicketDetailsContent() {
                         />
                         {t("downloadTicket") || "Download PDF"}
                       </button>
-                      <button
+                      {/* <button
                         className="common_btn d-flex align-items-center justify-content-center"
                         type="button"
                         onClick={handleShare}>
@@ -261,7 +294,7 @@ function TicketDetailsContent() {
                           alt=""
                         />
                         {t("share") || "Share"}
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 </div>
@@ -270,7 +303,7 @@ function TicketDetailsContent() {
                   <div className="ticket-summary-item">
                     <h6>{t("orderTrackingCode") || "Booking ID"}</h6>
                     <p
-                      className="ticket-text-wrap"
+                      className="ticket-code"
                       title={ticketInfo?.bookingId}>
                       {ticketInfo?.bookingId}
                     </p>
@@ -649,8 +682,12 @@ function TicketDetailsContent() {
 
         .ticket-summary-grid {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
           gap: 1rem;
+        }
+
+        .ticket-code {
+          white-space: nowrap;
         }
 
         .ticket-summary-item,
@@ -697,12 +734,6 @@ function TicketDetailsContent() {
           min-width: 0;
         }
 
-        @media (max-width: 1199px) {
-          .ticket-summary-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-
         @media (max-width: 991px) {
           .ticket-hero-grid {
             grid-template-columns: 1fr;
@@ -731,20 +762,15 @@ function TicketDetailsContent() {
             min-width: 0;
           }
         }
-
-        @media (max-width: 575px) {
-          .ticket-summary-grid {
-            grid-template-columns: 1fr;
-          }
-        }
       `}</style>
     </div>
   );
 }
 
 export default function Page() {
+  const { t } = useLanguage();
   return (
-    <Suspense fallback={<div className="p-5 text-center">Loading...</div>}>
+    <Suspense fallback={<div className="p-5 text-center">{t("loading") || "Loading..."}</div>}>
       <TicketDetailsContent />
     </Suspense>
   );
