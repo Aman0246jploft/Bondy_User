@@ -346,7 +346,7 @@ function StaffPage() {
   );
 
   return (
-    <div className="staff-container  col-5 mx-auto">
+    <div className="staff-container col-12">
       <style jsx global>{`
         .staff-header {
           display: flex;

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { Col, Row, Form, Modal, Spinner } from "react-bootstrap";
+import { Col, Row, Form, Modal, Spinner, Tab, Tabs } from "react-bootstrap";
 import courseApi from "@/api/courseApi";
 import authApi from "@/api/authApi";
 import categoryApi from "@/api/categoryApi";
@@ -19,9 +19,9 @@ function CoursesManagement() {
   const [filters, setFilters] = useState({
     search: "",
     categoryId: "",
-    isDraft: "", // "" (All), "false" (Published), "true" (Drafts)
     enrollmentType: "", // "" (All), "Ongoing", "fixedStart"
   });
+  const [activeTab, setActiveTab] = useState("all");
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -58,9 +58,24 @@ function CoursesManagement() {
         limit: pagination.limit,
         search: filters.search,
         categoryId: filters.categoryId,
-        isDraft: filters.isDraft,
         enrollmentType: filters.enrollmentType,
       };
+
+      if (activeTab === "drafts") {
+        params.isDraft = "true";
+      } else {
+        params.isDraft = "false";
+        params.status =
+          activeTab === "all"
+            ? ""
+            : activeTab === "live"
+              ? "Live"
+              : activeTab === "upcoming"
+                ? "Upcoming"
+                : activeTab === "past"
+                  ? "Past"
+                  : "";
+      }
 
       const response = await courseApi.getOrganizerCourses(params);
       if (response?.data) {
@@ -88,7 +103,7 @@ function CoursesManagement() {
   }, [
     pagination.page,
     filters.categoryId,
-    filters.isDraft,
+    activeTab,
     filters.enrollmentType,
   ]);
 
@@ -359,73 +374,8 @@ function CoursesManagement() {
                   ))}
                 </Form.Select>
               </Col> */}
-
-              {/* Draft status toggles */}
-              <Col lg={3} md={6} xs={12}>
-                <div
-                  className="d-flex rounded"
-                  style={{
-                    border: "1px solid rgba(35, 173, 164, 0.3)",
-                    overflow: "hidden",
-                    height: "45px",
-                  }}>
-                  <button
-                    type="button"
-                    className="flex-grow-1 border-0"
-                    style={{
-                      backgroundColor:
-                        filters.isDraft === "" ? "#23ada4" : "#111",
-                      color: filters.isDraft === "" ? "black" : "white",
-                      fontSize: "13px",
-                      fontWeight: filters.isDraft === "" ? "500" : "normal",
-                      transition: "all 0.2s",
-                    }}
-                    onClick={() =>
-                      setFilters((prev) => ({ ...prev, isDraft: "" }))
-                    }>
-                    All Status
-                  </button>
-                  <button
-                    type="button"
-                    className="flex-grow-1 border-0"
-                    style={{
-                      backgroundColor:
-                        filters.isDraft === "false" ? "#23ada4" : "#111",
-                      color: filters.isDraft === "false" ? "black" : "white",
-                      fontSize: "13px",
-                      fontWeight:
-                        filters.isDraft === "false" ? "500" : "normal",
-                      borderLeft: "1px solid rgba(35, 173, 164, 0.2)",
-                      transition: "all 0.2s",
-                    }}
-                    onClick={() =>
-                      setFilters((prev) => ({ ...prev, isDraft: "false" }))
-                    }>
-                    Published
-                  </button>
-                  <button
-                    type="button"
-                    className="flex-grow-1 border-0"
-                    style={{
-                      backgroundColor:
-                        filters.isDraft === "true" ? "#23ada4" : "#111",
-                      color: filters.isDraft === "true" ? "black" : "white",
-                      fontSize: "13px",
-                      fontWeight:
-                        filters.isDraft === "true" ? "500" : "normal",
-                      borderLeft: "1px solid rgba(35, 173, 164, 0.2)",
-                      transition: "all 0.2s",
-                    }}
-                    onClick={() =>
-                      setFilters((prev) => ({ ...prev, isDraft: "true" }))
-                    }>
-                    Drafts
-                  </button>
-                </div>
-              </Col>
-
               {/* Enrollment type toggles */}
-              <Col lg={2} md={6} xs={12}>
+              <Col lg={3} md={6} xs={12}>
                 <Form.Select
                   value={filters.enrollmentType}
                   onChange={(e) =>
@@ -451,6 +401,15 @@ function CoursesManagement() {
 
         {/* Course Listing */}
         <div className="ticket-tabs">
+          <div className="d-flex mb-3 justify-content-between align-items-center flex-wrap">
+            <Tabs activeKey={activeTab} onSelect={(k) => { setActiveTab(k); setPagination((prev) => ({ ...prev, page: 1 })); }} className="">
+              <Tab eventKey="all" title={t("all")} />
+              <Tab eventKey="upcoming" title={t("upcoming")} />
+              <Tab eventKey="live" title={t("ongoing") || "Ongoing"} />
+              <Tab eventKey="past" title={t("past")} />
+              <Tab eventKey="drafts" title={t("draftCourses") || "Draft Courses"} />
+            </Tabs>
+          </div>
           <div className="ticket-listing">
             {loading ? (
               <p className="text-center py-5">{t("loadingCourses")}</p>
@@ -513,6 +472,7 @@ function CoursesManagement() {
                                 maxWidth: "300px",
                                 fontSize: "14px",
                                 color: "#888",
+                                textTransform: "capitalize",
                               }}>
                               {course.courseCategory?.name || ""}
                             </p>

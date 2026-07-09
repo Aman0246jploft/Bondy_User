@@ -267,7 +267,7 @@ function page() {
                             </h5>
                             <p
                               className="ref text-truncate-1"
-                              style={{ maxWidth: "300px" }}>
+                              style={{ maxWidth: "300px", textTransform: "capitalize" }}>
                               {event.eventCategory?.name || "General"}
                             </p>
                             {isFeaturedActive(event) && (
@@ -326,8 +326,7 @@ function page() {
                           </span>
                         )}
                         <p
-                          className="text-truncate-1"
-                          style={{ maxWidth: "200px" }}>
+                          style={{ maxWidth: "100%", wordBreak: "break-word" }}>
                           {t("venue")} <span>{event.venueName || "TBD"}</span>
                         </p>
                       </div>
