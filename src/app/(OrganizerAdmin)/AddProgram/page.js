@@ -100,6 +100,19 @@ function Page() {
   const router = useRouter();
   const { t, language } = useLanguage();
 
+  const formatDateString = (dateStr) => {
+    if (!dateStr) return "";
+    const cleanDateStr = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+    if (cleanDateStr === "2099-12-31") return dateStr;
+    const dateObj = new Date(cleanDateStr);
+    if (isNaN(dateObj.getTime())) return dateStr;
+    return dateObj.toLocaleDateString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric"
+    });
+  };
+
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const nextDay = tomorrow.toISOString().split("T")[0];
@@ -956,7 +969,20 @@ function Page() {
                 </div>
                 {formData.shortTeaserVideo && formData.shortTeaserVideo.length > 0 && (
                   <div className="mb-4">
-                    <video src={getFullImageUrl(formData.shortTeaserVideo[0])} controls style={{ width: "100%", maxWidth: "320px", borderRadius: "12px" }} />
+                    <video
+                      src={getFullImageUrl(formData.shortTeaserVideo[0])}
+                      controls
+                      controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+                      style={{ width: "100%", maxWidth: "320px", borderRadius: "12px" }}
+                    />
+                    <style dangerouslySetInnerHTML={{
+                      __html: `
+                      video::-webkit-media-controls-volume-control-container { display: none !important; }
+                      video::-webkit-media-controls-timeline { display: none !important; }
+                      video::-webkit-media-controls-current-time-display { display: none !important; }
+                      video::-webkit-media-controls-time-remaining-display { display: none !important; }
+                      video::-webkit-media-controls-mute-button { display: none !important; }
+                    `}} />
                   </div>
                 )}
 
@@ -1139,7 +1165,7 @@ function Page() {
                         );
                       } else {
                         return (
-                          <div key={index} className="p-3 mb-2 rounded d-flex justify-content-between align-items-center" style={{ background: "#1a1a1a", border: "1px solid rgba(35,173,164,0.15)" }}>
+                          <div key={index} className="p-3 mb-2 rounded d-flex justify-content-between align-items-center" style={{ background: "rgb(56, 56, 56)", border: "1px solid rgba(35,173,164,0.15)" }}>
                             <div>
                               <h6 className="mb-1" style={{ color: "#23ada4", fontWeight: "600" }}>
                                 {batch.batchName}
@@ -1598,6 +1624,7 @@ function Page() {
                           <video
                             src={getFullImageUrl(formData.shortTeaserVideo[0])}
                             controls
+                            controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
                             className="w-100 d-block"
                             style={{ maxHeight: "250px" }}
                           />
@@ -1650,8 +1677,8 @@ function Page() {
                               <small className="text-muted d-block" style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase" }}>{t("durationLabel") || "Duration"}</small>
                               <span className="text-white" style={{ fontSize: "14px", fontWeight: "500" }}>
                                 {formData.enrollmentType === "Ongoing"
-                                  ? ((noEndDate || !formData.endDate || formData.endDate === "2099-12-31") ? t("startsOnIndefinite", { date: formData.startDate }) || `Starts on ${formData.startDate} (Ongoing)` : t("durationFormat", { startDate: formData.startDate, endDate: formData.endDate }) || `${formData.startDate} to ${formData.endDate}`)
-                                  : t("fixedStartDurationFormat", { startDate: formData.startDate, endDate: formData.endDate, sessions: formData.totalSessions }) || `${formData.startDate} to ${formData.endDate} (${formData.totalSessions} sessions)`}
+                                  ? ((noEndDate || !formData.endDate || formData.endDate === "2099-12-31") ? t("startsOnIndefinite", { date: formatDateString(formData.startDate) }) || `Starts on ${formatDateString(formData.startDate)} (Ongoing)` : t("durationFormat", { startDate: formatDateString(formData.startDate), endDate: formatDateString(formData.endDate) }) || `${formatDateString(formData.startDate)} to ${formatDateString(formData.endDate)}`)
+                                  : t("fixedStartDurationFormat", { startDate: formatDateString(formData.startDate), endDate: formatDateString(formData.endDate), sessions: formData.totalSessions }) || `${formatDateString(formData.startDate)} to ${formatDateString(formData.endDate)} (${formData.totalSessions} sessions)`}
                               </span>
                             </div>
                           </div>
@@ -1755,14 +1782,14 @@ function Page() {
                     <h5 className="text-white mb-2 pb-2" style={{ fontSize: "16px", fontWeight: "700", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                       {t("shortSummary") || "Short Summary"}
                     </h5>
-                    <p className="text-light-50 m-0" style={{ fontSize: "14px", lineHeight: "1.6" }}>{formData.shortdesc}</p>
+                    <p className="text-light-50 m-0" style={{ fontSize: "14px", lineHeight: "1.6", wordBreak: "break-all" }}>{formData.shortdesc}</p>
                   </div>
 
                   <div className="mb-4">
                     <h5 className="text-white mb-2 pb-2" style={{ fontSize: "16px", fontWeight: "700", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                       {t("fullDescription") || "Full Description"}
                     </h5>
-                    <p className="text-light-50 m-0" style={{ fontSize: "14px", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>{formData.longdesc}</p>
+                    <p className="text-light-50 m-0" style={{ fontSize: "14px", lineHeight: "1.6", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{formData.longdesc}</p>
                   </div>
 
                   {formData.enrollmentType !== "Ongoing" && formData.whatYouWillLearn && (
@@ -1770,7 +1797,7 @@ function Page() {
                       <h5 className="text-white mb-2 pb-2" style={{ fontSize: "16px", fontWeight: "700", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                         {t("whatYouWillLearn") || "What You'll Learn"}
                       </h5>
-                      <p className="text-light-50 m-0" style={{ fontSize: "14px", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>{formData.whatYouWillLearn}</p>
+                      <p className="text-light-50 m-0" style={{ fontSize: "14px", lineHeight: "1.6", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{formData.whatYouWillLearn}</p>
                     </div>
                   )}
                 </div>
@@ -1819,8 +1846,8 @@ function Page() {
                             key={index}
                             className="p-3 mb-3 rounded"
                             style={{
-                              background: "#1a1a1a",
-                              border: "1px solid rgba(35,173,164,0.15)"
+                              background: "rgb(56, 56, 56)",
+                              border: "1px solid rgba(35, 173, 164, 0.15)"
                             }}
                           >
                             <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">

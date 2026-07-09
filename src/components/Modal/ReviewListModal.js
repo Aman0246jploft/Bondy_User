@@ -68,13 +68,13 @@ const ReviewListModal = ({ show, onHide, entityId, entityModel }) => {
 
     return (
         <Modal show={show} onHide={onHide} centered scrollable className="review-modal">
-            <Modal.Header closeButton className="bg-dark text-white border-secondary py-3">
+            <Modal.Header closeButton className="bg-dark text-white border-secondary px-4 py-3">
                 <Modal.Title className="fw-bold h5 mb-0">{t("reviewsAndRatings") || "Reviews & Ratings"}</Modal.Title>
             </Modal.Header>
             <Modal.Body
                 onScroll={handleScroll}
                 ref={scrollRef}
-                className="bg-dark p-3 custom-scrollbar"
+                className="bg-dark p-4 custom-scrollbar"
                 style={{ height: "500px", overflowY: "auto" }}
             >
                 {reviews.length === 0 && !loading ? (
@@ -107,8 +107,13 @@ const ReviewListModal = ({ show, onHide, entityId, entityModel }) => {
                                         <div className="flex-grow-1">
                                             <div className="d-flex justify-content-between align-items-start text-dark">
                                                 <div>
-                                                    <h6 className="mb-0 fw-bold text-white">
+                                                    <h6 className="mb-0 fw-bold text-white d-flex align-items-center gap-1">
                                                         {user.firstName} {user.lastName}
+                                                        {(user.role === "ORGANIZER" || user.userRole === "ORGANIZER") && user.isVerified && (
+                                                            <VerifyDropdwons
+                                                                fullName={`${user.firstName || ""} ${user.lastName || ""}`}
+                                                            />
+                                                        )}
                                                     </h6>
                                                     <div className="review-timestamp text-muted">
                                                         {new Date(review.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}

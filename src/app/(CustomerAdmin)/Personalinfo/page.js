@@ -810,6 +810,34 @@ function PersonalInfoContent() {
           width: 18px;
           height: 18px;
         }
+        @media (max-width: 768px) {
+          .personal-profile {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            padding: 20px !important;
+            gap: 20px !important;
+          }
+          .personal-profile-lft {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 15px !important;
+            text-align: center !important;
+          }
+          .personal-profile-rgt {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+          }
+          .personal-profile-rgt .d-flex {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .personal-profile-rgt button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+        }
       `}</style>
     </div>
   );

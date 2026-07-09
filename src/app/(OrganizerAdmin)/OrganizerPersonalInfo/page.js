@@ -474,10 +474,10 @@ function PersonalInfoContent() {
                     </span>
                   )}
                 </div>
-                <div className="stats-row mt-2 d-flex align-items-center gap-3" style={{ fontSize: "14px", color: "#aaa" }}>
+                <div className="stats-row mt-2 d-flex align-items-center gap-3 flex-wrap" style={{ fontSize: "14px", color: "#aaa" }}>
                   {profileData.role !== "CUSTOMER" && (
                     <span
-                      style={{ cursor: "pointer" }}
+                      style={{ cursor: "pointer", whiteSpace: "nowrap" }}
                       onClick={() => {
                         setFollowModalType("followers");
                         setShowFollowModal(true);
@@ -488,7 +488,7 @@ function PersonalInfoContent() {
                     </span>
                   )}
                   <span
-                    style={{ cursor: "pointer" }}
+                    style={{ cursor: "pointer", whiteSpace: "nowrap" }}
                     onClick={() => {
                       setFollowModalType("following");
                       setShowFollowModal(true);
@@ -499,7 +499,7 @@ function PersonalInfoContent() {
                   </span>
                   {profileData.role === "ORGANIZER" && (
                     <span
-                      style={{ cursor: "pointer" }}
+                      style={{ cursor: "pointer", whiteSpace: "nowrap" }}
                       onClick={() => setShowReviewModal(true)}
                     >
                       <img src="/img/star-icon.svg" alt="star" style={{ marginRight: "5px" }} />
@@ -911,6 +911,34 @@ function PersonalInfoContent() {
           opacity: 0.8;
           width: 18px;
           height: 18px;
+        }
+        @media (max-width: 768px) {
+          .personal-profile {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            padding: 20px !important;
+            gap: 20px !important;
+          }
+          .personal-profile-lft {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 15px !important;
+            text-align: center !important;
+          }
+          .personal-profile-rgt {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+          }
+          .personal-profile-rgt .d-flex {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .personal-profile-rgt button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
         }
       `}</style>
     </div>

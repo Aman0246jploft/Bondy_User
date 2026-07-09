@@ -128,6 +128,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
 
     // For breakdown rows (taxes, discount, total) — shows ₮0 instead of "Free"
     const formatAmount = (amount) => {
+        const isFree = type === "EVENT" ? item?.original?.isFreeEvent : (item?.price === 0);
+        if (isFree) return t("free") || "Free";
         if (amount == null || amount === undefined || amount === 0) return "₮0";
         try {
             const locale = language === "mn" ? "mn-MN" : "en-US";
@@ -735,7 +737,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                     backgroundColor: isActive ? "#23ada4" : "#1a1a1a",
                                     border: isActive ? "1px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
                                     transition: "all 0.2s ease",
-                                    marginTop: "5px"
+                                    marginTop: "10px"
                                 }}
                             >
                                 <span style={{ fontSize: "12px", fontWeight: "600", opacity: isActive ? 1 : 0.8 }}>
@@ -1222,7 +1224,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
 
                             <div className="d-flex justify-content-between  price_text">
                                 <span>{t("discount")}</span>
-                                <span className="text-info">-{formatAmount(priceBreakdown.discount)}</span>
+                                <span className="text-info">{(type === "EVENT" ? item?.original?.isFreeEvent : item?.price === 0) ? "" : "-"}{formatAmount(priceBreakdown.discount)}</span>
                             </div>
                             <div className="d-flex justify-content-between align-items-center price_text">
                                 <span>{t("total")}</span>
@@ -1260,7 +1262,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                 {renderServiceChargeRow()}
                                 <div className="d-flex justify-content-between  price_text">
                                     <span className="">{t("discount")}</span>
-                                    <span className="">-{formatAmount(priceBreakdown.discount)}</span>
+                                    <span className="">{(type === "EVENT" ? item?.original?.isFreeEvent : item?.price === 0) ? "" : "-"}{formatAmount(priceBreakdown.discount)}</span>
                                 </div>
                                 <div className="d-flex justify-content-between price_text">
                                     <span className="">{t("total")}</span>
@@ -1361,7 +1363,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                 {renderServiceChargeRow()}
                                 <div className="d-flex justify-content-between  price_text">
                                     <span className="">{t("discount")}</span>
-                                    <span className="">-{formatAmount(priceBreakdown.discount)}</span>
+                                    <span className="">{(type === "EVENT" ? item?.original?.isFreeEvent : item?.price === 0) ? "" : "-"}{formatAmount(priceBreakdown.discount)}</span>
                                 </div>
                                 <div className="d-flex justify-content-between price_text">
                                     <span className="">{t("total")}</span>

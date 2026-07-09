@@ -16,6 +16,9 @@ const courseApi = {
     updateCourse: (courseId, data) => {
         return apiClient.post(`/course/edit/${courseId}`, data);
     },
+    getCourseAnalytics: (courseId, params) => {
+        return apiClient.get(`/course/analytics/${courseId}`, { params, skipToast: true });
+    },
 };
 
 export default courseApi;

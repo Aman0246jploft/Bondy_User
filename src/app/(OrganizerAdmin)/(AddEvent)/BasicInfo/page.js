@@ -223,6 +223,63 @@ function BasicInfoContent() {
     updateEventData({ shortTeaserVideo: updatedLinks });
   };
 
+  const handleStepClick = (e, targetPath) => {
+    const isBasicInfoValid = () => {
+      return (
+        eventData.eventTitle &&
+        eventData.eventTitle.length >= 5 &&
+        eventData.eventCategory &&
+        eventData.posterImage &&
+        eventData.posterImage.length > 0 &&
+        eventData.shortdesc &&
+        eventData.shortdesc.trim() !== "" &&
+        eventData.shortdesc.length >= 10 &&
+        eventData.longdesc &&
+        eventData.longdesc.trim() !== "" &&
+        eventData.longdesc.length >= 50
+      );
+    };
+
+    const isDateTimeValid = () => {
+      if (!isBasicInfoValid()) return false;
+      return (
+        eventData.startDate &&
+        eventData.endDate &&
+        eventData.startTime &&
+        eventData.endTime &&
+        eventData.venueName &&
+        eventData.venueAddress &&
+        eventData.venueAddress.address &&
+        eventData.venueAddress.latitude &&
+        eventData.venueAddress.longitude
+      );
+    };
+
+    const isTicketsPricingValid = () => {
+      if (!isDateTimeValid()) return false;
+      const tickets = eventData.tickets || [];
+      if (tickets.length === 0) {
+        return (
+          eventData.ticketName &&
+          eventData.ticketQtyAvailable > 0 &&
+          eventData.refundPolicy
+        );
+      }
+      return tickets.every(tck => tck.ticketName && tck.qty > 0 && tck.salesStart && tck.salesEnd);
+    };
+
+    if (targetPath === "/DateTime" && !isBasicInfoValid()) {
+      e.preventDefault();
+      toast.error(t("pleaseCompleteBasicInfoFirst") || "Please complete the Basic Info step first");
+    } else if (targetPath === "/TicketsPricing" && !isDateTimeValid()) {
+      e.preventDefault();
+      toast.error(t("pleaseCompleteDateTimeFirst") || "Please complete the Date & Time step first");
+    } else if (targetPath === "/Agerestraction" && !isTicketsPricingValid()) {
+      e.preventDefault();
+      toast.error(t("pleaseCompleteTicketsPricingFirst") || "Please complete the Tickets & Pricing step first");
+    }
+  };
+
   const handleNext = (e) => {
     e.preventDefault();
     if (!eventData.eventTitle) {
@@ -320,7 +377,7 @@ function BasicInfoContent() {
           </div>
           <ul className="event-steps">
             <li className="steps-item">
-              <Link href="/BasicInfo" className="steps-link active">
+              <Link href="/BasicInfo" className="steps-link active" onClick={(e) => handleStepClick(e, "/BasicInfo")}>
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-01.svg" className="me-2" />
                   {t("eventBasicInfoStep")}
@@ -331,7 +388,7 @@ function BasicInfoContent() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="/DateTime" className="steps-link">
+              <Link href="/DateTime" className="steps-link" onClick={(e) => handleStepClick(e, "/DateTime")}>
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-02.svg" className="me-2" />
                   {t("dateTimeStep")}
@@ -342,7 +399,7 @@ function BasicInfoContent() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="/TicketsPricing" className="steps-link">
+              <Link href="/TicketsPricing" className="steps-link" onClick={(e) => handleStepClick(e, "/TicketsPricing")}>
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-03.svg" className="me-2" />
                   {t("ticketsPricingStep")}
@@ -353,7 +410,7 @@ function BasicInfoContent() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="/Agerestraction" className="steps-link">
+              <Link href="/Agerestraction" className="steps-link" onClick={(e) => handleStepClick(e, "/Agerestraction")}>
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-04.svg" className="me-2" />
                   {t("ageRestrictionStep")}
@@ -603,7 +660,15 @@ function BasicInfoContent() {
                         borderRadius: "10px",
                       }}
                       controls
+                      controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
                     />
+                    <style dangerouslySetInnerHTML={{__html: `
+                      video::-webkit-media-controls-volume-control-container { display: none !important; }
+                      video::-webkit-media-controls-timeline { display: none !important; }
+                      video::-webkit-media-controls-current-time-display { display: none !important; }
+                      video::-webkit-media-controls-time-remaining-display { display: none !important; }
+                      video::-webkit-media-controls-mute-button { display: none !important; }
+                    `}} />
                     <button
                       type="button"
                       className="close-btn"

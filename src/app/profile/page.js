@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Col from "react-bootstrap/Col";
@@ -37,6 +37,20 @@ function ProfileContent() {
   const [showMenu, setShowMenu] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [actionType, setActionType] = useState(null);
+  const [showAllInterests, setShowAllInterests] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
 
   useEffect(() => {
@@ -59,7 +73,7 @@ function ProfileContent() {
     fetchUserProfile();
   }, [userId]);
 
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Fetch logged-in user's role
   useEffect(() => {
@@ -242,6 +256,7 @@ function ProfileContent() {
               <div className="col">
                 <div className="user_profile_content">
                   <div
+                    ref={menuRef}
                     style={{
                       position: "absolute",
                       right: "-20px",
@@ -276,13 +291,19 @@ function ProfileContent() {
                   <div className="user-info">
                     <h2 className="user-name">
                       {userProfile?.firstName} {userProfile?.lastName}
-                      <span className="verified-badge">
-                        {userProfile?.organizerVerificationStatus ===
-                          "approved" && (
+                      <span className="verified-badge ms-2" style={{ verticalAlign: "middle" }}>
+                        {userProfile?.role === "ORGANIZER" && (userProfile?.organizerVerificationStatus === "approved" || userProfile?.isVerified) && (
+                          <span className="d-inline-flex align-items-center gap-2">
                             <VerifyDropdwons
                               fullName={`${userProfile?.firstName || ""} ${userProfile?.lastName || ""}`}
+                              variant="icon"
                             />
-                          )}
+                            <VerifyDropdwons
+                              fullName={`${userProfile?.firstName || ""} ${userProfile?.lastName || ""}`}
+                              variant="pill"
+                            />
+                          </span>
+                        )}
                       </span>
                     </h2>
                     <p className="designation">
@@ -338,16 +359,14 @@ function ProfileContent() {
                   </div>
 
                   <div className="action-buttons">
-                    {userProfile?.role === "ORGANIZER" &&
-                      !userProfile?.isFollowed &&
+                    {!userProfile?.isFollowed &&
                       !userProfile?.isMyProfile && (
                         <button className="btn-follow" onClick={handleFollow}>
                           <img src="/img/User_plus.svg" /> {t("follow")}
                         </button>
                       )}
 
-                    {userProfile?.role === "ORGANIZER" &&
-                      userProfile?.isFollowed &&
+                    {userProfile?.isFollowed &&
                       !userProfile?.isMyProfile && (
                         <button className="btn-follow" onClick={handleUnfollow}>
                           <img src="/img/User_plus.svg" /> {t("followed")}
@@ -377,12 +396,64 @@ function ProfileContent() {
 
                 {/* Statistics */}
 
-                {/* <div className="about-section mt-4">
+                <div className="about-section mt-4">
                   <h4 className="about-title">{t("aboutMe")}</h4>
                   <p className="about-text">
                     {userProfile?.bio || t("noBioAvailable")}
                   </p>
-                </div> */}
+                </div>
+
+                {userProfile?.categories && userProfile.categories.length > 0 && (
+                  <div className="about-section mt-4">
+                    <h4 className="about-title">{t("interest") || "Interest"} ({userProfile.categories.length})</h4>
+                    <div className="interest-container mt-3" style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "flex-start" }}>
+                      {(showAllInterests ? userProfile.categories : userProfile.categories.slice(0, 10)).map((item) => {
+                        const localizedName = language === "mn" ? (item?.name_thi || item?.name) : item?.name;
+                        const categoryName = localizedName?.charAt(0).toUpperCase() + localizedName?.slice(1);
+                        return (
+                          <div key={item._id} className="chip">
+                            <span className="icon">
+                              {item.image ? (
+                                <img
+                                  src={item.image}
+                                  alt={categoryName}
+                                  style={{
+                                    width: "18px",
+                                    height: "18px",
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                  }}
+                                  onError={(e) => {
+                                    e.target.src = "/img/sidebar-logo.svg";
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: "18px",
+                                    height: "18px",
+                                    background: "#eee",
+                                    borderRadius: "50%",
+                                  }}
+                                />
+                              )}
+                            </span>
+                            <span>{categoryName}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {userProfile.categories.length > 10 && (
+                      <button
+                        onClick={() => setShowAllInterests(!showAllInterests)}
+                        className="mt-3 text-info border-0 bg-transparent p-0"
+                        style={{ fontSize: "14px", fontWeight: "600", cursor: "pointer" }}
+                      >
+                        {showAllInterests ? t("viewLess") || "Show Less" : t("viewMore") || "Show More"}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -88,7 +88,7 @@ const FollowListModal = ({ show, onHide, userId, type }) => {
 
     return (
         <Modal show={show} onHide={onHide} centered scrollable className="follow-modal">
-            <Modal.Header closeButton className="bg-dark text-white border-secondary">
+            <Modal.Header closeButton className="bg-dark text-white border-secondary px-4 py-3">
                 <Modal.Title className="text-capitalize">
                     {type === "followers" ? t("followers") || "Followers" : t("following") || "Following"}
                 </Modal.Title>
@@ -113,7 +113,7 @@ const FollowListModal = ({ show, onHide, userId, type }) => {
                             return (
                                 <ListGroup.Item
                                     key={user._id + idx}
-                                    className="bg-dark text-white border-secondary d-flex align-items-center p-3"
+                                    className="bg-dark text-white border-secondary d-flex align-items-center px-4 py-3"
                                     action
                                     style={{ borderBottom: "1px solid #333" }}
                                     onClick={() => handleUserClick(user._id)}
@@ -129,7 +129,11 @@ const FollowListModal = ({ show, onHide, userId, type }) => {
                                     <div className="flex-grow-1">
                                         <h6 className="mb-0 fw-semibold">
                                             {user.firstName} {user.lastName}
-                                            {user.isVerified && <VerifyDropdwons />}
+                                            {(user.role === "ORGANIZER" || user.userRole === "ORGANIZER") && user.isVerified && (
+                                                <VerifyDropdwons
+                                                    fullName={`${user.firstName || ""} ${user.lastName || ""}`}
+                                                />
+                                            )}
                                         </h6>
                                     </div>
                                     <div>

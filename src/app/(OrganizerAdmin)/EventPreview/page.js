@@ -15,6 +15,7 @@ function page() {
   const { t, language } = useLanguage();
   const { eventData } = useEventContext();
   const [publishing, setPublishing] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [categories, setCategories] = useState([]);
   const router = useRouter();
   const getAgeString = () => {
@@ -29,6 +30,18 @@ function page() {
   };
 
   const activeAge = getAgeString();
+
+  const formatDateString = (dateStr) => {
+    if (!dateStr) return "";
+    const cleanDateStr = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+    const dateObj = new Date(cleanDateStr);
+    if (isNaN(dateObj.getTime())) return dateStr;
+    return dateObj.toLocaleDateString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric"
+    });
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -96,20 +109,35 @@ function page() {
 
   return (
     <div>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        @media (max-width: 768px) {
+          .event-dtl-rgt {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+          }
+          .event-dtl-rgt li {
+            flex-basis: 100% !important;
+            width: 100% !important;
+            margin-bottom: 15px !important;
+            margin-top: 0 !important;
+          }
+        }
+      `}} />
       <div className="cards event-details">
         <Link href="/Agerestraction" className="back-btn">
           <img src="/img/arrow-left-white.svg" alt={t("back")} />
           {t("backToSettings") || "Back to Settings"}
         </Link>
         <h4 className="line-title">
-          <span>{t("eventDetails")}</span>
+          <span>{t("eventPreview") || "Event Preview"}</span>
         </h4>
         <div>
           {/* Image + Title side by side */}
           <div style={{ display: "flex", alignItems: "flex-start", gap: "16px", flexWrap: "wrap", marginBottom: "16px" }}>
             <div className="event-dtl-card-img" style={{ flexShrink: 0 }}>
               <img
-                src={getFullImageUrl(eventData.posterImage[0]) || "/img/sidebar-logo.svg"}
+                src={getFullImageUrl(eventData.posterImage?.[0]) || "/img/sidebar-logo.svg"}
                 alt="Event Poster"
                 onError={(e) => { e.target.src = "/img/sidebar-logo.svg" }}
               />
@@ -126,7 +154,7 @@ function page() {
             </li>
             <li>
               <h6>{t("startDate")}</h6>
-              <p>{eventData.startDate} {formatTime(eventData.startTime, true, language)}</p>
+              <p>{formatDateString(eventData.startDate)} {formatTime(eventData.startTime, true, language)}</p>
             </li>
             <li>
               <span className="status-badge pending">{eventData.isDraft ? t("draftLabel") : t("reviewLabel")}</span>
@@ -148,7 +176,7 @@ function page() {
                 {t("startDate")}
               </h6>
               <p>
-                <span>{eventData.startDate}</span>
+                <span>{formatDateString(eventData.startDate)}</span>
                 <span className="mx-2 text-secondary">•</span>
                 <span>{formatTime(eventData.startTime, true, language)}</span>
               </p>
@@ -159,7 +187,7 @@ function page() {
                 {t("endDate")}
               </h6>
               <p>
-                <span>{eventData.endDate}</span>
+                <span>{formatDateString(eventData.endDate)}</span>
                 <span className="mx-2 text-secondary">•</span>
                 <span>{formatTime(eventData.endTime, true, language)}</span>
               </p>
@@ -170,8 +198,8 @@ function page() {
                 {t("location")}
               </h6>
               <p style={{ wordBreak: "break-word" }}>
-                {eventData.venueAddress.address} <br />
-                {eventData.venueAddress.city}, {eventData.venueAddress.country}
+                {eventData.venueAddress?.address} <br />
+                {eventData.venueAddress?.city}, {eventData.venueAddress?.country}
               </p>
             </li>
           </ul>
@@ -265,13 +293,13 @@ function page() {
                         {ticket.salesStart && (
                           <div>
                             <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: "4px" }}>{t("salesStartDateLabel")}</p>
-                            <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#fff" }}>{ticket.salesStart.includes("T") ? ticket.salesStart.split("T")[0] : ticket.salesStart}</p>
+                            <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#fff" }}>{formatDateString(ticket.salesStart)}</p>
                           </div>
                         )}
                         {ticket.salesEnd && (
                           <div>
                             <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: "4px" }}>{t("salesEndDateLabel")}</p>
-                            <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#fff" }}>{ticket.salesEnd.includes("T") ? ticket.salesEnd.split("T")[0] : ticket.salesEnd}</p>
+                            <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#fff" }}>{formatDateString(ticket.salesEnd)}</p>
                           </div>
                         )}
                       </div>
@@ -333,15 +361,17 @@ function page() {
               <h6>{t("showAttendeesLabel")}</h6>
               <p>{eventData.showAttendees !== false ? (t("yes") || "Yes") : (t("no") || "No")}</p>
             </li>
-            <li>
-              <h6>{t("entryNotesLabel")}</h6>
-              <p style={{ wordBreak: "break-word" }}>{eventData.notes || "N/A"}</p>
-            </li>
-            <li>
-              <h6>{t("dressCodeLabel")}</h6>
-              <p style={{ wordBreak: "break-word" }}>{eventData.dressCode || "N/A"}</p>
-            </li>
           </ul>
+          <div className="mt-4">
+            <div style={{ marginBottom: "20px" }}>
+              <h6 style={{ color: "var(--white)", fontSize: "16px", fontWeight: 700, marginBottom: "6px" }}>{t("entryNotesLabel")}</h6>
+              <p style={{ color: "#737373", fontSize: "16px", fontWeight: 510, wordBreak: "break-all", whiteSpace: "pre-line", margin: 0 }}>{eventData.notes || "N/A"}</p>
+            </div>
+            <div>
+              <h6 style={{ color: "var(--white)", fontSize: "16px", fontWeight: 700, marginBottom: "6px" }}>{t("dressCodeLabel")}</h6>
+              <p style={{ color: "#737373", fontSize: "16px", fontWeight: 510, wordBreak: "break-all", whiteSpace: "pre-line", margin: 0 }}>{eventData.dressCode || "N/A"}</p>
+            </div>
+          </div>
         </div>
         <div className="short-desc">
           <h4 className="line-title">
@@ -356,9 +386,19 @@ function page() {
             <span>{t("detailedDescriptionLabel")}</span>
           </h4>
 
-          <p style={{ wordBreak: "break-word" }}>
-            {eventData.longdesc}
+          <p style={{ wordBreak: "break-word", margin: 0 }}>
+            {eventData.longdesc && eventData.longdesc.length > 200
+              ? (isExpanded ? eventData.longdesc : `${eventData.longdesc.slice(0, 200)}...`)
+              : eventData.longdesc}
           </p>
+          {eventData.longdesc && eventData.longdesc.length > 200 && (
+            <span
+              onClick={() => setIsExpanded(!isExpanded)}
+              style={{ color: "#23ada4", cursor: "pointer", fontWeight: "600", marginTop: "8px", display: "inline-block" }}
+            >
+              {isExpanded ? t("viewLess") || "View Less" : t("viewMore") || "View More"}
+            </span>
+          )}
         </div>
         {eventData.shortTeaserVideo && eventData.shortTeaserVideo.length > 0 && (
           <div className="video-section mt-20">
@@ -368,9 +408,17 @@ function page() {
             <video
               src={getFullImageUrl(eventData.shortTeaserVideo[0])}
               controls
-              width="100%"
-              style={{ borderRadius: "12px" }}
+              controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+              style={{ borderRadius: "12px", width: "100%", maxWidth: "320px", height: "auto" }}
             />
+            <style dangerouslySetInnerHTML={{
+              __html: `
+              video::-webkit-media-controls-volume-control-container { display: none !important; }
+              video::-webkit-media-controls-timeline { display: none !important; }
+              video::-webkit-media-controls-current-time-display { display: none !important; }
+              video::-webkit-media-controls-time-remaining-display { display: none !important; }
+              video::-webkit-media-controls-mute-button { display: none !important; }
+            `}} />
           </div>
         )}
         <div className="gellry-images">
@@ -378,7 +426,7 @@ function page() {
             <span>{t("gallery")}</span>
           </h4>
           <div className="gallery-grid">
-            {eventData.mediaLinks.map((link, index) => (
+            {eventData.mediaLinks?.map((link, index) => (
               <div className={`gallery-item ${index === 0 ? "large" : ""}`} key={index}>
                 <img src={getFullImageUrl(link)} alt={`Gallery ${index}`} onError={(e) => { e.target.src = "/img/sidebar-logo.svg" }} />
               </div>

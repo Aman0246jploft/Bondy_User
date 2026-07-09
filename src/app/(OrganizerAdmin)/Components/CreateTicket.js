@@ -192,7 +192,7 @@ export default function CreateTicket(props) {
                 onClick={handleSubmit}
                 disabled={loading}
               >
-                                {loading ? t("submitting") : t("submitTicket")}
+                {loading ? t("submitting") : t("submitTicket")}
               </button>
             </div>
           </Form>

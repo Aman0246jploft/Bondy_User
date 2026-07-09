@@ -21,6 +21,7 @@ const eventApi = {
     getOrganizerStats: () => apiClient.get("/event/organizer/stats", { skipToast: true }),
     updateEvent: (eventId, data) => apiClient.post(`/event/edit/${eventId}`, data),
     getRefundPolicies: () => apiClient.get("/event/refund-policies", { skipToast: true }),
+    getEventAnalytics: (eventId, params) => apiClient.get(`/event/analytics/${eventId}`, { params, skipToast: true }),
 };
 
 export default eventApi;

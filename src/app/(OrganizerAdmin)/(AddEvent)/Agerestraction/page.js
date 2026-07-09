@@ -91,6 +91,63 @@ function page() {
     }
   };
 
+  const handleStepClick = (e, targetPath) => {
+    const isBasicInfoValid = () => {
+      return (
+        eventData.eventTitle &&
+        eventData.eventTitle.length >= 5 &&
+        eventData.eventCategory &&
+        eventData.posterImage &&
+        eventData.posterImage.length > 0 &&
+        eventData.shortdesc &&
+        eventData.shortdesc.trim() !== "" &&
+        eventData.shortdesc.length >= 10 &&
+        eventData.longdesc &&
+        eventData.longdesc.trim() !== "" &&
+        eventData.longdesc.length >= 50
+      );
+    };
+
+    const isDateTimeValid = () => {
+      if (!isBasicInfoValid()) return false;
+      return (
+        eventData.startDate &&
+        eventData.endDate &&
+        eventData.startTime &&
+        eventData.endTime &&
+        eventData.venueName &&
+        eventData.venueAddress &&
+        eventData.venueAddress.address &&
+        eventData.venueAddress.latitude &&
+        eventData.venueAddress.longitude
+      );
+    };
+
+    const isTicketsPricingValid = () => {
+      if (!isDateTimeValid()) return false;
+      const tickets = eventData.tickets || [];
+      if (tickets.length === 0) {
+        return (
+          eventData.ticketName &&
+          eventData.ticketQtyAvailable > 0 &&
+          eventData.refundPolicy
+        );
+      }
+      return tickets.every(tck => tck.ticketName && tck.qty > 0 && tck.salesStart && tck.salesEnd);
+    };
+
+    if (targetPath === "/DateTime" && !isBasicInfoValid()) {
+      e.preventDefault();
+      toast.error(t("pleaseCompleteBasicInfoFirst") || "Please complete the Basic Info step first");
+    } else if (targetPath === "/TicketsPricing" && !isDateTimeValid()) {
+      e.preventDefault();
+      toast.error(t("pleaseCompleteDateTimeFirst") || "Please complete the Date & Time step first");
+    } else if (targetPath === "/Agerestraction" && !isTicketsPricingValid()) {
+      e.preventDefault();
+      toast.error(t("pleaseCompleteTicketsPricingFirst") || "Please complete the Tickets & Pricing step first");
+    }
+  };
+
   useEffect(() => {
     document.title = t("ageRestrictionPageTitle") || "Settings";
   }, []);
@@ -112,7 +169,7 @@ function page() {
           </div>
           <ul className="event-steps">
             <li className="steps-item">
-              <Link href="/BasicInfo" className="steps-link active">
+              <Link href="/BasicInfo" className="steps-link active" onClick={(e) => handleStepClick(e, "/BasicInfo")}>
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-01.svg" className="me-2" />
                   {t("eventBasicInfoStep")}
@@ -123,7 +180,7 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="/DateTime" className="steps-link active">
+              <Link href="/DateTime" className="steps-link active" onClick={(e) => handleStepClick(e, "/DateTime")}>
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-02.svg" className="me-2" />
                   {t("dateTimeStep")}
@@ -134,7 +191,7 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="/TicketsPricing" className="steps-link active">
+              <Link href="/TicketsPricing" className="steps-link active" onClick={(e) => handleStepClick(e, "/TicketsPricing")}>
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-03.svg" className="me-2" />
                   {t("ticketsPricingStep")}
@@ -145,7 +202,7 @@ function page() {
               </Link>
             </li>
             <li className="steps-item">
-              <Link href="/Agerestraction" className="steps-link active">
+              <Link href="/Agerestraction" className="steps-link active" onClick={(e) => handleStepClick(e, "/Agerestraction")}>
                 <span className="steps-text">
                   <img src="/img/org-img/step-icon-04.svg" className="me-2" />
                   {t("ageRestrictionStep")}
@@ -236,17 +293,21 @@ function page() {
                 {/* Entry Notes (Optional) */}
                 <Col md={12} className="mb-4">
                   <div className="event-frm-bx p-3" style={{ background: "#1c1d1e87", borderRadius: "12px" }}>
-                    <label className="form-label" style={{ fontSize: "16px", fontWeight: "600" }}>
-                      {t("entryNotesLabel") || "Entry Notes (Optional)"}
-                    </label>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <label className="form-label mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>
+                        {t("entryNotesLabel") || "Entry Notes (Optional)"}
+                      </label>
+                      <span className="text-secondary small">{(eventData.notes || "").length}/500</span>
+                    </div>
                     <textarea
                       className="form-control mt-2"
                       name="notes"
                       value={eventData.notes || ""}
                       onChange={handleInputChange}
+                      maxLength={500}
                       placeholder={t("entryNotesPlaceholder") || "Add any rules or information attendees should know..."}
-                      rows={3}
-                      style={{ background: "#242424", border: "1px solid rgba(255,255,255,0.1)", color: "white" }}
+                      rows={2}
+                      style={{ background: "#242424", padding: "15px", border: "1px solid rgba(255,255,255,0.1)", color: "white", height: "auto", borderRadius: "12px" }}
                     />
                   </div>
                 </Col>
@@ -254,17 +315,21 @@ function page() {
                 {/* Dress Code (Optional) */}
                 <Col md={12} className="mb-4">
                   <div className="event-frm-bx p-3" style={{ background: "#1c1d1e87", borderRadius: "12px" }}>
-                    <label className="form-label" style={{ fontSize: "16px", fontWeight: "600" }}>
-                      {t("dressCodeLabel") || "Dress Code (Optional)"}
-                    </label>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <label className="form-label mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>
+                        {t("dressCodeLabel") || "Dress Code (Optional)"}
+                      </label>
+                      <span className="text-secondary small">{(eventData.dressCode || "").length}/100</span>
+                    </div>
                     <textarea
                       className="form-control mt-2"
                       name="dressCode"
                       value={eventData.dressCode || ""}
                       onChange={handleInputChange}
+                      maxLength={100}
                       placeholder={t("dressCodePlaceholder") || "Let attendees know what to wear..."}
-                      rows={3}
-                      style={{ background: "#242424", border: "1px solid rgba(255,255,255,0.1)", color: "white" }}
+                      rows={2}
+                      style={{ background: "#242424", padding: "15px", border: "1px solid rgba(255,255,255,0.1)", color: "white", height: "auto", borderRadius: "12px" }}
                     />
                   </div>
                 </Col>

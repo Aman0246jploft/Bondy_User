@@ -30,6 +30,7 @@ const bookingApi = {
     cancelEvent: (data) => apiClient.post("/booking/cancel-event", data),
     adjustCourseReservedSeats: (data) => apiClient.post("/booking/adjust-course-reserved-seats", data),
     getCancellationReasons: () => apiClient.get("/booking/cancellation-reasons"),
+    getEventAttendees: (eventId, params) => apiClient.get(`/booking/event/${eventId}/attendees`, { params, skipToast: true }),
 };
 
 export default bookingApi;

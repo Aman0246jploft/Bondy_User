@@ -293,7 +293,15 @@ function page() {
                             borderRadius: "10px",
                           }}
                           controls
+                          controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
                         />
+                        <style dangerouslySetInnerHTML={{__html: `
+                          video::-webkit-media-controls-volume-control-container { display: none !important; }
+                          video::-webkit-media-controls-timeline { display: none !important; }
+                          video::-webkit-media-controls-current-time-display { display: none !important; }
+                          video::-webkit-media-controls-time-remaining-display { display: none !important; }
+                          video::-webkit-media-controls-mute-button { display: none !important; }
+                        `}} />
                         <button
                           type="button"
                           className="close-btn"
