@@ -133,6 +133,14 @@ export default function Sidebar({ toggleSidebar }) {
           </span>
           <span className="text">{t("supportTickets")}</span>
         </Link>
+        <Link
+          href="/Security"
+          className={`menu-item ${isActive("/Security") ? "active" : ""}`}>
+          <span className="icon">
+            <img src="/img/shield.svg" alt="" />
+          </span>
+          <span className="text">{t("security")}</span>
+        </Link>
       </nav>
 
       {/* Footer */}

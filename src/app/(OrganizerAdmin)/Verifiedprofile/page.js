@@ -19,6 +19,9 @@ import {
   Upload,
   RefreshCw
 } from "lucide-react";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { parsePhoneNumber } from "react-phone-number-input";
 import apiClient from "../../../api/apiClient";
 import authApi from "@/api/authApi";
 import { getFullImageUrl } from "../../../utils/imageHelper";
@@ -42,7 +45,6 @@ function VerificationPageContent() {
 
   // Verification states
   const [phoneVal, setPhoneVal] = useState("");
-  const [phoneCountryCode, setPhoneCountryCode] = useState("+91");
   const [phoneOtp, setPhoneOtp] = useState("");
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
 
@@ -99,10 +101,10 @@ function VerificationPageContent() {
         setProfile(u);
         setEmailVal(u.email || "");
         if (u.contactNumber) {
-          setPhoneVal(u.contactNumber);
-        }
-        if (u.countryCode) {
-          setPhoneCountryCode(u.countryCode);
+          const combined = u.countryCode ? `${u.countryCode}${u.contactNumber}` : u.contactNumber;
+          setPhoneVal(combined.startsWith("+") ? combined : `+${combined}`);
+        } else {
+          setPhoneVal("");
         }
         setIsEditingPhone(!u.verifications?.phone?.isVerified);
         setIsEditingEmail(!u.verifications?.email?.isVerified);
@@ -222,11 +224,24 @@ function VerificationPageContent() {
       toast.error(t("enterPhoneNumber") || "Please enter a valid phone number");
       return;
     }
+
+    let finalCountryCode = "+91";
+    let finalContactNumber = phoneVal;
+    try {
+      const parsed = parsePhoneNumber(phoneVal.startsWith("+") ? phoneVal : `+${phoneVal}`);
+      if (parsed) {
+        finalCountryCode = `+${parsed.countryCallingCode}`;
+        finalContactNumber = parsed.nationalNumber;
+      }
+    } catch (phoneErr) {
+      console.warn("Phone parsing failed", phoneErr);
+    }
+
     try {
       setSubmitting(true);
       const res = await apiClient.post("/verification/phone/send-otp", {
-        countryCode: phoneCountryCode,
-        contactNumber: phoneVal
+        countryCode: finalCountryCode,
+        contactNumber: finalContactNumber
       });
       if (res?.status) {
         toast.success(res.message || t("phoneOtpSent") || "OTP sent successfully to your phone number!");
@@ -489,7 +504,7 @@ function VerificationPageContent() {
                   <div className="d-flex align-items-center justify-content-between py-2">
                     <div className="d-flex align-items-center text-teal gap-2">
                       <CheckCircle size={18} />
-                      <span>{t("phoneSuccessfullyVerified", { number: `${phoneCountryCode} ${phoneVal}` })}</span>
+                      <span>{t("phoneSuccessfullyVerified", { number: phoneVal })}</span>
                     </div>
                     <button className="custom-btn" onClick={() => setIsEditingPhone(true)}>
                       {t("change") || "Change"}
@@ -499,22 +514,18 @@ function VerificationPageContent() {
                   <div className="py-2">
                     <Form.Group className="mb-3">
                       <Form.Label className="text-light">{t("phoneNumber") || "Phone Number"}</Form.Label>
-                      <div className="d-flex gap-2">
-                        <Form.Control
-                          type="text"
-                          className="custom-input-dark"
-                          style={{ maxWidth: "80px" }}
-                          value={phoneCountryCode}
-                          onChange={(e) => setPhoneCountryCode(e.target.value)}
-                          placeholder="+91"
-                        />
-                        <Form.Control
-                          type="text"
-                          className="custom-input-dark"
-                          value={phoneVal}
-                          onChange={(e) => setPhoneVal(e.target.value)}
-                          placeholder={t("phoneNumber") || "Phone Number"}
-                        />
+                      <div className="d-flex gap-2 align-items-center">
+                        <div className="phone_input_wrapper flex-grow-1">
+                          <PhoneInput
+                            country={"us"}
+                            value={phoneVal}
+                            onChange={(phone) => setPhoneVal("+" + phone)}
+                            inputClass="form-control"
+                            containerClass="security-phone-input"
+                            dropdownClass="security-phone-dropdown"
+                            buttonClass="security-phone-button"
+                          />
+                        </div>
                         <button className="custom-btn" onClick={handleSendPhoneOtp} disabled={submitting}>
                           {phoneOtpSent ? (t("resendOtp") || "Resend OTP") : (t("saveSendOtp") || "Save & Send OTP")}
                         </button>
@@ -526,8 +537,12 @@ function VerificationPageContent() {
                               setIsEditingPhone(false);
                               setPhoneOtpSent(false);
                               if (profile) {
-                                setPhoneVal(profile.contactNumber || "");
-                                setPhoneCountryCode(profile.countryCode || "+91");
+                                const combined = profile.contactNumber
+                                  ? profile.countryCode
+                                    ? `${profile.countryCode}${profile.contactNumber}`
+                                    : profile.contactNumber
+                                  : "";
+                                setPhoneVal(combined.startsWith("+") ? combined : `+${combined}`);
                               }
                             }}
                           >
@@ -1424,6 +1439,57 @@ function VerificationPageContent() {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        /* Phone Input Overrides for Security Page */
+        :global(.security-phone-input) {
+          width: 100%;
+        }
+        :global(.security-phone-input .form-control) {
+          background-color: #262626 !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          color: #fff !important;
+          border-radius: 8px !important;
+          height: 46px !important;
+          width: 100% !important;
+          padding-left: 48px !important;
+        }
+        :global(.security-phone-input .form-control:focus) {
+          border-color: #23ada4 !important;
+          box-shadow: none !important;
+        }
+        :global(.security-phone-input .flag-dropdown) {
+          background-color: transparent !important;
+          border: none !important;
+          border-radius: 8px 0 0 8px !important;
+        }
+        :global(.security-phone-input .selected-flag) {
+          background-color: transparent !important;
+          padding: 0 0 0 12px !important;
+          border-radius: 8px 0 0 8px !important;
+          width: 44px !important;
+        }
+        :global(.security-phone-input .selected-flag:hover),
+        :global(.security-phone-input .selected-flag:focus) {
+          background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+        :global(.security-phone-input .country-list) {
+          background-color: #262626 !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          color: #fff !important;
+          border-radius: 8px !important;
+          margin-top: 4px;
+        }
+        :global(.security-phone-input .country-list .country:hover) {
+          background-color: rgba(35, 173, 164, 0.1) !important;
+        }
+        :global(.security-phone-input .country-list .country.highlight) {
+          background-color: rgba(35, 173, 164, 0.2) !important;
+        }
+        :global(.security-phone-input .country-list .search-box) {
+          background-color: #1a1a1a !important;
+          color: #fff !important;
+          border-color: rgba(255, 255, 255, 0.1) !important;
         }
       `}</style>
     </div>
