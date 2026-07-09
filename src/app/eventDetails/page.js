@@ -537,7 +537,7 @@ function EventDetailsContent() {
                   <hr className="border-secondary opacity-25 my-4" />
 
                   <div className="mt-3">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div className="d-flex align-items-center gap-3 mb-3">
                       <span>{t("ticketAvailability") || "Ticket Availability"}</span>
                       {event?.showHurryBadge && (
                         <span style={{ color: "#F59E0B", fontSize: "12px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap", textTransform: "none" }}>
@@ -580,11 +580,11 @@ function EventDetailsContent() {
                                       <span className="text-success fw-medium">{t("available") || "Available"}</span>
                                     )}
                                   </span>
-                                  <span className="text-muted">
+                                  {/* <span className="text-muted">
                                     {booked}/{total} {t("booked") || "booked"}
-                                  </span>
+                                  </span> */}
                                 </div>
-                                <div className="custom-progress-bg" style={{ height: "6px", backgroundColor: "rgba(255, 255, 255, 0.1)" }}>
+                                {/* <div className="custom-progress-bg" style={{ height: "6px", backgroundColor: "rgba(255, 255, 255, 0.1)" }}>
                                   <div
                                     className="custom-progress-bar"
                                     style={{
@@ -594,7 +594,7 @@ function EventDetailsContent() {
                                       borderRadius: "10px"
                                     }}
                                   ></div>
-                                </div>
+                                </div> */}
                               </div>
                             </div>
                           );
@@ -612,7 +612,7 @@ function EventDetailsContent() {
 
                         return (
                           <>
-                            <p className="small mb-2">
+                            {/* <p className="small mb-2">
                               {t("seatsBooked")} - {bookedSeats}
                             </p>
                             <div className="custom-progress-bg mb-2">
@@ -620,7 +620,7 @@ function EventDetailsContent() {
                                 className="custom-progress-bar"
                                 style={{ width: `${progress}%` }}
                               ></div>
-                            </div>
+                            </div> */}
                             <div className="text-end">
                               <small className="small">
                                 {t("seatsLeft")} - {availableTickets}

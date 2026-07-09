@@ -146,7 +146,8 @@ function ProgramDetailsContent() {
     createdBy,
     enrollmentType,
     whatYouWillLearn,
-    galleryImages,
+    mediaLinks,
+    shortTeaserVideo,
     totalSessions,
     batches,
     bookingCutOff,
@@ -156,14 +157,15 @@ function ProgramDetailsContent() {
     ? batches.filter(b => b.status === "Active").every(b => !!b.bookingCutOffPassed)
     : false;
 
-  const images = [
-    ...(Array.isArray(posterImage) ? posterImage : [posterImage]),
-    ...(galleryImages || []),
-  ]
-    .filter(Boolean)
-    .map(getFullImageUrl);
+  const mediaItems = [
+    ...(shortTeaserVideo || []).map((url) => ({ type: "video", url })),
+    ...(Array.isArray(posterImage) ? posterImage : [posterImage]).map((url) => ({ type: "image", url })),
+    ...(mediaLinks || []).map((url) => ({ type: "image", url })),
+  ].filter(item => !!item.url);
 
-  const hasSingleMedia = images.length <= 1;
+  const hasSingleMedia = mediaItems.length <= 1;
+
+  const images = mediaItems.filter(item => item.type === "image").map(item => getFullImageUrl(item.url));
 
   const locationString = venueAddress
     ? `${venueAddress.address}, ${venueAddress.city}, ${venueAddress.state}`
@@ -283,15 +285,26 @@ function ProgramDetailsContent() {
                 }
                 className="mySwiper"
               >
-                {images.map((img, index) => (
+                {mediaItems && mediaItems.map((item, index) => (
                   <SwiperSlide key={index}>
-                    <img
-                      src={img || "/img/sidebar-logo.svg"}
-                      onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
-                      loading="lazy"
-                      className="event-card-img object-fit-cover img-placeholder"
-                      alt={`Gallery ${index}`}
-                    />
+                    {item.type === "video" ? (
+                      <video
+                        src={getFullImageUrl(item.url)}
+                        className="event-card-img object-fit-cover img-placeholder w-100 h-100"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                      />
+                    ) : (
+                      <img
+                        src={getFullImageUrl(item.url) || "/img/sidebar-logo.svg"}
+                        onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
+                        loading="lazy"
+                        className="event-card-img object-fit-cover img-placeholder"
+                        alt={`Gallery ${index}`}
+                      />
+                    )}
                   </SwiperSlide>
                 ))}
               </Swiper>
@@ -471,7 +484,14 @@ function ProgramDetailsContent() {
           </Col>
           <Col lg={4}>
             <div className="upcming_session">
-              <h4>{enrollmentType === "Ongoing" ? (t("weeklySchedule") || "Weekly Schedule") : (t("availableBatches") || "Available Batches")}</h4>
+              <div className="d-flex align-items-center gap-3 mb-3">
+                <h4 className="mb-0">{enrollmentType === "Ongoing" ? (t("weeklySchedule") || "Weekly Schedule") : (t("availableBatches") || "Available Batches")}</h4>
+                {courseDetails?.showHurryBadge && (
+                  <span style={{ color: "#F59E0B", fontSize: "12px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap", textTransform: "none" }}>
+                    <Flame size={14} color="#F59E0B" /> {t("almostSoldOut")}
+                  </span>
+                )}
+              </div>
               <div className="upcming_session_box">
                 {enrollmentType === "Ongoing" ? (
                   (() => {
@@ -492,11 +512,6 @@ function ProgramDetailsContent() {
                                 <div className="upcming_session_content ps-0">
                                   <h6 style={{ color: "#fff", fontWeight: 600, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                                     <span style={{ textTransform: "none" }}>{formatTime(slot.startTime, true, language)} {t("to")} {formatTime(slot.endTime, true, language)}</span>
-                                    {slot.showHurryBadge && (
-                                      <span style={{ color: "#F59E0B", fontSize: "12px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap", textTransform: "none" }}>
-                                        <Flame size={14} color="#F59E0B" /> {t("almostSoldOut")}
-                                      </span>
-                                    )}
                                   </h6>
                                 </div>
                               </div>
@@ -534,11 +549,6 @@ function ProgramDetailsContent() {
                           <div className="upcming_session_content ps-0">
                             <h6 style={{ color: "#fff", fontWeight: 600, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                               <span style={{ textTransform: "none" }}>{batch.batchName}</span>
-                              {batch.showHurryBadge && (
-                                <span style={{ color: "#F59E0B", fontSize: "12px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap", textTransform: "none" }}>
-                                  <Flame size={14} color="#F59E0B" /> {t("almostSoldOut")}
-                                </span>
-                              )}
                             </h6>
                             <span className="text-secondary" style={{ fontSize: "12px", display: "block", marginTop: "4px" }}>
                               📅 {batch.days?.join(", ")}

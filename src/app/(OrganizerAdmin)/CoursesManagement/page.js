@@ -912,6 +912,21 @@ function CoursesManagement() {
                           {pkg.durationInDays}{" "}
                           {pkg.durationInDays > 1 ? t("days") : t("day")}
                         </p>
+                        {pkg.placements?.length > 0 && (
+                          <ul style={{ paddingLeft: "16px", margin: 0, textTransform: "capitalize" }}>
+                            {pkg.placements.map((p, i) => (
+                              <li
+                                key={i}
+                                style={{
+                                  color: "#ccc",
+                                  fontSize: "12px",
+                                  marginBottom: "4px",
+                                }}>
+                                {p}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                         {isSelected && (
                           <div
                             style={{

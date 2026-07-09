@@ -1527,6 +1527,28 @@ function CourseDetailsContent() {
               </div>
             )}
 
+            {/* Teaser Video */}
+            {course.shortTeaserVideo && course.shortTeaserVideo.length > 0 && (
+              <div className="content-card mb-4 p-4">
+                <h4 className="card-heading-line mb-3">
+                  <span>{t("teaserVideo") || "Teaser Video"}</span>
+                </h4>
+                <div className="video-card-container">
+                  <video
+                    width="100%"
+                    controls
+                    controlsList="nodownload nofullscreen noremoteplayback"
+                    disablePictureInPicture
+                    poster={getFullImageUrl(course.posterImage?.[0])}
+                    className="rounded-3 shadow-md">
+                    <source src={getFullImageUrl(course.shortTeaserVideo[0])} />
+                    {t("videoNotSupported") ||
+                      "Your browser does not support videos."}
+                  </video>
+                </div>
+              </div>
+            )}
+
             {/* Gallery */}
             {course.mediaLinks && course.mediaLinks.length > 0 && (
               <div className="content-card p-4">

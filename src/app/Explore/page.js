@@ -15,7 +15,7 @@ function ExploreContent() {
   const [selected, setSelected] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeTab, setActiveTab] = useState("Events");
-  const [activeFilter, setActiveFilter] = useState("upcoming");
+  const [activeFilter, setActiveFilter] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchParams, setSearchParams] = useState({});
   const [showAllCategories, setShowAllCategories] = useState(false);
@@ -53,7 +53,7 @@ function ExploreContent() {
     const search = searchParams_url.get("search") || "";
     const lat = searchParams_url.get("latitude");
     const lng = searchParams_url.get("longitude");
-    const filter = searchParams_url.get("filter") || "upcoming";
+    const filter = searchParams_url.get("filter") || "";
     const startDate = searchParams_url.get("startDate");
     const endDate = searchParams_url.get("endDate");
 
@@ -94,7 +94,7 @@ function ExploreContent() {
     if (params.filter && params.filter !== "all") {
       setActiveFilter(params.filter);
     } else {
-      setActiveFilter("upcoming");
+      setActiveFilter("");
     }
   };
 

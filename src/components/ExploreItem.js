@@ -10,6 +10,7 @@ import { formatTime } from "@/utils/timeHelper";
 import { useLanguage } from "@/context/LanguageContext";
 
 const categories = [
+  { label: "All", value: "" },
   { label: "Upcoming", value: "upcoming" },
   { label: "Today", value: "today" },
   { label: "This Week", value: "thisWeek" },
@@ -18,7 +19,7 @@ const categories = [
 
 export default function ExploreItem({
   type = "Events",
-  filter = "upcoming",
+  filter = "",
   onFilterChange,
   categoryId,
   search,
