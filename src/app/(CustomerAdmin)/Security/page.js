@@ -282,7 +282,7 @@ function SecurityPageContent() {
                             value={phoneVal}
                             onChange={(phone) => setPhoneVal("+" + phone)}
                             inputClass="form-control"
-                            containerClass="security-phone-input"
+                            containerClass="security-phone-input react-tel-input"
                             dropdownClass="security-phone-dropdown"
                             buttonClass="security-phone-button"
                           />
@@ -650,6 +650,7 @@ function SecurityPageContent() {
         /* Phone Input Overrides for Security Page */
         :global(.security-phone-input) {
           width: 100%;
+          position: relative !important;
         }
         :global(.security-phone-input .form-control) {
           background-color: #262626 !important;
@@ -680,11 +681,23 @@ function SecurityPageContent() {
           background-color: rgba(255, 255, 255, 0.05) !important;
         }
         :global(.security-phone-input .country-list) {
+          position: absolute !important;
+          z-index: 1050 !important;
+          list-style: none !important;
+          padding: 0 !important;
+          margin: 4px 0 0 0 !important;
           background-color: #262626 !important;
           border: 1px solid rgba(255, 255, 255, 0.1) !important;
           color: #fff !important;
           border-radius: 8px !important;
-          margin-top: 4px;
+          max-height: 220px !important;
+          overflow-y: auto !important;
+          width: 320px !important;
+          max-width: 90vw !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+          top: 100% !important;
+          left: 0 !important;
+          text-align: left !important;
         }
         :global(.security-phone-input .country-list .country:hover) {
           background-color: rgba(35, 173, 164, 0.1) !important;

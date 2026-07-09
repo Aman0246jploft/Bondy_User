@@ -521,7 +521,7 @@ function VerificationPageContent() {
                             value={phoneVal}
                             onChange={(phone) => setPhoneVal("+" + phone)}
                             inputClass="form-control"
-                            containerClass="security-phone-input"
+                            containerClass="security-phone-input react-tel-input"
                             dropdownClass="security-phone-dropdown"
                             buttonClass="security-phone-button"
                           />
@@ -1376,6 +1376,42 @@ function VerificationPageContent() {
           border-top: 1px solid rgba(255, 255, 255, 0.03);
         }
 
+        .custom-btn {
+          border: 1px solid var(--primary-teal);
+          background-color: var(--primary-teal);
+          color: #fff;
+          font-weight: 500;
+          font-size: 14px;
+          padding: 8px 16px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          height: 46px;
+        }
+
+        .custom-btn:hover {
+          background-color: #1a9c94;
+          border-color: #1a9c94;
+        }
+
+        .custom-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .custom-btn.btn-secondary {
+          background-color: #374151;
+          border-color: #374151;
+        }
+
+        .custom-btn.btn-secondary:hover {
+          background-color: #4b5563;
+          border-color: #4b5563;
+        }
+
         .custom-input-dark {
           background-color: #262626 !important;
           border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -1444,6 +1480,7 @@ function VerificationPageContent() {
         /* Phone Input Overrides for Security Page */
         :global(.security-phone-input) {
           width: 100%;
+          position: relative !important;
         }
         :global(.security-phone-input .form-control) {
           background-color: #262626 !important;
@@ -1474,11 +1511,23 @@ function VerificationPageContent() {
           background-color: rgba(255, 255, 255, 0.05) !important;
         }
         :global(.security-phone-input .country-list) {
+          position: absolute !important;
+          z-index: 1050 !important;
+          list-style: none !important;
+          padding: 0 !important;
+          margin: 4px 0 0 0 !important;
           background-color: #262626 !important;
           border: 1px solid rgba(255, 255, 255, 0.1) !important;
           color: #fff !important;
           border-radius: 8px !important;
-          margin-top: 4px;
+          max-height: 220px !important;
+          overflow-y: auto !important;
+          width: 320px !important;
+          max-width: 90vw !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+          top: 100% !important;
+          left: 0 !important;
+          text-align: left !important;
         }
         :global(.security-phone-input .country-list .country:hover) {
           background-color: rgba(35, 173, 164, 0.1) !important;
