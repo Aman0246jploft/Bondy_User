@@ -348,7 +348,7 @@ function VerificationPageContent() {
       setSubmitting(false);
     }
   };
-
+  // honeySingh...
   const handleSubmitIdentity = async () => {
     if (!nationalIdFront || !nationalIdBack) {
       toast.error(t("uploadBothIdImages") || "Please upload both front and back images of your ID");
@@ -1295,7 +1295,6 @@ function VerificationPageContent() {
           background-color: #202020;
           border-radius: 14px;
           border: 1px solid rgba(255, 255, 255, 0.03);
-          overflow: hidden;
         }
 
         .checklist-header {
@@ -1305,6 +1304,7 @@ function VerificationPageContent() {
           padding: 16px 20px;
           cursor: pointer;
           transition: background-color 0.2s ease;
+          border-radius: 14px;
         }
 
         .checklist-header:hover {
