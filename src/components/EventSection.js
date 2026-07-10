@@ -19,7 +19,6 @@ const EventSection = ({
   const router = useRouter();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState(customTitle);
 
   const handleAddInterestClick = () => {
     const token = localStorage.getItem("token");
@@ -80,13 +79,14 @@ const EventSection = ({
         return { filter: "all", defaultTitle: t("events") };
     }
   };
+
+  const { filter, defaultTitle } = getFilterAndTitle();
+  const title = customTitle || defaultTitle;
+
   useEffect(() => {
     const fetchEvents = async () => {
       setLoading(true);
       try {
-        const { filter, defaultTitle } = getFilterAndTitle();
-        if (!customTitle) setTitle(defaultTitle);
-
         let params = {
           limit,
           page: 1,

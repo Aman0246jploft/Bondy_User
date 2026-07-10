@@ -10,6 +10,10 @@ const bookingApi = {
     // Confirm payment (mock payment gateway)
     confirmPayment: (data) => apiClient.post("/booking/confirm-payment", data),
 
+    // QPay integration
+    initiateQpay: (data) => apiClient.post("/booking/qpay/initiate", data),
+    checkQpayStatus: (data) => apiClient.post("/booking/qpay/check", data),
+
     // Calculate pricing preview (optional, if needed for dynamic price updates before booking)
     calculateBooking: (data) => apiClient.post("/booking/calculate", data),
 

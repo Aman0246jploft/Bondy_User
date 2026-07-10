@@ -65,7 +65,6 @@ export const translations = {
     views: "Views",
     bookingRate: "Booking Rate",
     revenue: "Revenue",
-    thisMonth: "This Month",
     last7Days: "Last 7 Days",
     last30Days: "Last 30 Days",
     allTime: "All Time",

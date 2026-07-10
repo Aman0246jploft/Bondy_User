@@ -39,6 +39,13 @@ export default function TicketBooking({ item, type, scheduleId }) {
     const [promoCode, setPromoCode] = useState(""); // Input value
     const [appliedPromoCode, setAppliedPromoCode] = useState(""); // Validated/Applied value
     const [transactionId, setTransactionId] = useState(null); // Store initiated transaction ID (can be array for events)
+    const [qpayData, setQpayData] = useState(null);
+    const [qpayPolling, setQpayPolling] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+    }, []);
 
     const { t, language } = useLanguage();
 
@@ -203,6 +210,32 @@ export default function TicketBooking({ item, type, scheduleId }) {
             </div>
         );
     };
+
+    // QPay Polling
+    useEffect(() => {
+        let intervalId;
+        if (qpayPolling && transactionId) {
+            intervalId = setInterval(async () => {
+                try {
+                    const res = await bookingApi.checkQpayStatus({ transactionId: Array.isArray(transactionId) ? transactionId[0] : transactionId });
+                    if (res.status) {
+                        if (res.data.status === "PAID") {
+                            setQpayPolling(false);
+                            setModalShow(true);
+                            clearInterval(intervalId);
+                        } else if (res.data.status === "REFUND_INITIATED") {
+                            setQpayPolling(false);
+                            toast.error(t("refundInitiated") || "Booking cancelled. Refund initiated.");
+                            clearInterval(intervalId);
+                        }
+                    }
+                } catch (e) {
+                    console.error("QPay polling error:", e);
+                }
+            }, 3000);
+        }
+        return () => clearInterval(intervalId);
+    }, [qpayPolling, transactionId]);
 
     // Pre-populate ticket selections when event is loaded
     useEffect(() => {
@@ -642,30 +675,40 @@ export default function TicketBooking({ item, type, scheduleId }) {
         }
         setLoading(true);
         try {
-            if (Array.isArray(transactionId)) {
-                for (const txId of transactionId) {
-                    const confirmResponse = await bookingApi.confirmPayment({
-                        transactionId: txId,
-                    });
-                    if (!confirmResponse.status) {
-                        throw new Error(confirmResponse.message || t("paymentFailed"));
-                    }
-                }
-                setModalShow(true);
-            } else {
-                const confirmResponse = await bookingApi.confirmPayment({
-                    transactionId: transactionId,
-                });
-
-                if (confirmResponse.status) {
-                    setModalShow(true); // Show success modal
+            if (selectedMethod === "qpay") {
+                const initRes = await bookingApi.initiateQpay({ transactionId: Array.isArray(transactionId) ? transactionId[0] : transactionId });
+                if (initRes.status) {
+                    setQpayData(initRes.data);
+                    setQpayPolling(true);
                 } else {
-                    toast.error(confirmResponse.message || t("paymentFailed"));
+                    toast.error(initRes.message || t("paymentFailed"));
+                }
+            } else {
+                if (Array.isArray(transactionId)) {
+                    for (const txId of transactionId) {
+                        const confirmResponse = await bookingApi.confirmPayment({
+                            transactionId: txId,
+                        });
+                        if (!confirmResponse.status) {
+                            throw new Error(confirmResponse.message || t("paymentFailed"));
+                        }
+                    }
+                    setModalShow(true);
+                } else {
+                    const confirmResponse = await bookingApi.confirmPayment({
+                        transactionId: transactionId,
+                    });
+
+                    if (confirmResponse.status) {
+                        setModalShow(true);
+                    } else {
+                        toast.error(confirmResponse.message || t("paymentFailed"));
+                    }
                 }
             }
         } catch (error) {
-            console.error("Confirm payment error:", error);
-            toast.error(error.message || t("paymentErrorGeneric"));
+            console.error("Confirm booking error:", error);
+            toast.error(error.message || t("failedToConfirmBooking"));
         } finally {
             setLoading(false);
         }
@@ -1406,13 +1449,61 @@ export default function TicketBooking({ item, type, scheduleId }) {
                             </div>
                         </div>
                         <div className="tickets_btn">
-                            <button
-                                className="common_btn  mt-4"
-                                onClick={handleConfirmBooking} // Call confirm booking
-                                disabled={loading}
-                            >
-                                {loading ? t("processing") : t("payNow")}
-                            </button>
+                            {qpayData ? (
+                                <div className="text-center mt-4 qpay-qr-container" style={{ width: "100%" }}>
+                                    <h4 className="text-white mb-3">{t("scanQpayQR") || "Scan QR to Pay with QPay"}</h4>
+                                    <div className="bg-white p-3 d-inline-block rounded mb-3">
+                                        <img src={`data:image/png;base64,${qpayData.qr_image}`} alt="QPay QR" style={{ width: "200px", height: "200px" }} />
+                                    </div>
+                                    <p className="text-info mb-4">{t("waitingForPayment") || "Waiting for payment..."}</p>
+
+                                    {isMobile && qpayData.urls && qpayData.urls.length > 0 && (
+                                        <div className="mt-4 text-start w-100">
+                                            <h5 className="text-white mb-1 text-center" style={{ fontSize: "14px" }}>{t("payViaBankApp") || "Or Pay directly via Bank App:"}</h5>
+                                            <p className="text-muted text-center mb-3" style={{ fontSize: "11px" }}>
+                                                {t("bankLinkNote") || "(Links will open banking apps on mobile devices. For desktop, please scan the QR code above.)"}
+                                            </p>
+                                            <div className="d-flex flex-wrap gap-2 justify-content-center" style={{ maxHeight: "250px", overflowY: "auto", padding: "10px" }}>
+                                                {qpayData.urls.map((bank, idx) => (
+                                                    <a
+                                                        key={idx}
+                                                        href={bank.link}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="d-flex align-items-center gap-2 p-2 rounded text-decoration-none"
+                                                        style={{
+                                                            backgroundColor: "rgba(255, 255, 255, 0.05)",
+                                                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                                                            color: "#fff",
+                                                            width: "150px",
+                                                            fontSize: "12px",
+                                                            cursor: "pointer",
+                                                            transition: "all 0.2s"
+                                                        }}
+                                                    >
+                                                        {bank.logo && (
+                                                            <img
+                                                                src={bank.logo}
+                                                                alt={bank.name}
+                                                                style={{ width: "24px", height: "24px", borderRadius: "4px" }}
+                                                            />
+                                                        )}
+                                                        <span className="text-truncate" title={bank.description}>{bank.name}</span>
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <button
+                                    className="common_btn  mt-4"
+                                    onClick={handleConfirmBooking} // Call confirm booking
+                                    disabled={loading}
+                                >
+                                    {loading ? t("processing") : t("payNow")}
+                                </button>
+                            )}
                         </div>
                     </div>
                 );

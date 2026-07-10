@@ -18,7 +18,6 @@ const CourseSection = ({
   const { t } = useLanguage();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState(customTitle);
 
   // Map prop type to backend filter and display title
   const getFilterAndTitle = () => {
@@ -34,13 +33,13 @@ const CourseSection = ({
     }
   };
 
+  const { filter, defaultTitle } = getFilterAndTitle();
+  const title = customTitle || defaultTitle;
+
   useEffect(() => {
     const fetchCourses = async () => {
       setLoading(true);
       try {
-        const { filter, defaultTitle } = getFilterAndTitle();
-        if (!customTitle) setTitle(defaultTitle);
-
         let params = {
           limit,
           page: 1,
