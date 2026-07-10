@@ -11,7 +11,7 @@ import LanguageSelector from "@/components/LanguageSelector";
 
 function StaffHome() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Authentication check
   const [authorized, setAuthorized] = useState(false);
@@ -69,6 +69,8 @@ function StaffHome() {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
   // Check authorization
   useEffect(() => {
@@ -431,12 +433,17 @@ function StaffHome() {
     }
     const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
     if (!passwordRegex.test(newPassword)) {
-      toast.error("Password must be at least 8 characters and include uppercase, lowercase, number, and special character");
+      setPasswordError(t("passwordComplexity") || "Password must be at least 8 characters and include uppercase, lowercase, number, and special character");
       return;
+    } else {
+      setPasswordError("");
     }
     if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match");
+      setPasswordError("");
+      setConfirmPasswordError(t("passwordsNotMatch") || t("passwordsDoNotMatch") || "Passwords do not match");
       return;
+    } else {
+      setConfirmPasswordError("");
     }
 
     try {
@@ -2005,7 +2012,19 @@ function StaffHome() {
                     <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
                       <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z" />
                     </svg>
-                    {t("memberSince") || "Member since"} Jan 2025
+                    {t("memberSince") || "Member since"}{" "}
+                    {(() => {
+                      if (!staffProfile?.createdAt) return "Jan 2025";
+                      try {
+                        const date = new Date(staffProfile.createdAt);
+                        return date.toLocaleDateString(language === "mn" ? "mn-MN" : "en-US", {
+                          month: "short",
+                          year: "numeric",
+                        });
+                      } catch {
+                        return "Jan 2025";
+                      }
+                    })()}
                   </span>
                 </div>
               </div>
@@ -2136,7 +2155,11 @@ function StaffHome() {
           <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
             <div className="overlay-header" style={{ borderBottom: "none" }}>
               <button
-                onClick={() => setShowChangePasswordOverlay(false)}
+                onClick={() => {
+                  setShowChangePasswordOverlay(false);
+                  setPasswordError("");
+                  setConfirmPasswordError("");
+                }}
                 style={{ background: "transparent", border: "none", color: "#fff", fontSize: "20px", padding: 0 }}
               >
                 <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
@@ -2195,7 +2218,10 @@ function StaffHome() {
                     type={showNewPassword ? "text" : "password"}
                     placeholder={t("enterNewPassword") || "Enter New Password"}
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      setPasswordError("");
+                    }}
                     style={{
                       width: "100%",
                       height: "54px",
@@ -2229,6 +2255,11 @@ function StaffHome() {
                     />
                   </button>
                 </div>
+                {passwordError && (
+                  <div style={{ color: "#ff5c5c", fontSize: "12px", padding: "0 20px", marginTop: "-10px", lineHeight: "1.4" }}>
+                    {passwordError}
+                  </div>
+                )}
 
                 {/* Confirm Password */}
                 <div style={{ position: "relative" }}>
@@ -2236,7 +2267,10 @@ function StaffHome() {
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder={t("confirmPassword") || "Confirm Password"}
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      setConfirmPasswordError("");
+                    }}
                     style={{
                       width: "100%",
                       height: "54px",
@@ -2270,6 +2304,11 @@ function StaffHome() {
                     />
                   </button>
                 </div>
+                {confirmPasswordError && (
+                  <div style={{ color: "#ff5c5c", fontSize: "12px", padding: "0 20px", marginTop: "-10px", lineHeight: "1.4" }}>
+                    {confirmPasswordError}
+                  </div>
+                )}
 
                 {/* Update Button */}
                 <button
