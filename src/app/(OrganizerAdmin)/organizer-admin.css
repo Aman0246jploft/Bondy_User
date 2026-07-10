@@ -725,6 +725,10 @@ input[type="number"]::-webkit-outer-spin-button {
   outline: none;
 }
 
+.event-frm-bx textarea.square-textarea {
+  border-radius: 6px !important;
+}
+
 .event-frm-bx input::-webkit-input-placeholder {
   color: #737373;
 }

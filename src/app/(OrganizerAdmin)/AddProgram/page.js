@@ -214,8 +214,8 @@ function Page() {
     const limits = {
       courseTitle: 100,
       shortdesc: 250,
-      longdesc: 1000,
-      whatYouWillLearn: 1000,
+      longdesc: 500,
+      whatYouWillLearn: 500,
       venueName: 100,
       price: 9,
       oneMonthPassPrice: 9,
@@ -795,7 +795,7 @@ function Page() {
                       : t("shortDescription") || "Short Description"} <span className="text-danger">*</span>
                   </label>
                   <textarea
-                    className="form-control"
+                    className="form-control square-textarea"
                     name="shortdesc"
                     value={formData.shortdesc}
                     onChange={handleChange}
@@ -804,7 +804,8 @@ function Page() {
                         ? t("briefClassSummary") || "Brief summary of the class"
                         : t("briefCourseSummary") || "Brief summary of the course"
                     }
-                    rows={2}
+                    rows={4}
+                    style={{ height: "auto", borderRadius: "6px" }}
                     maxLength={250}
                   />
                   <div className="text-end mt-1">
@@ -821,7 +822,7 @@ function Page() {
                       : t("courseDetails") || "Course Details"} <span className="text-danger">*</span>
                   </label>
                   <textarea
-                    className="form-control"
+                    className="form-control square-textarea"
                     name="longdesc"
                     value={formData.longdesc}
                     onChange={handleChange}
@@ -830,12 +831,13 @@ function Page() {
                         ? t("classDetailsPlaceholder") || "In-depth details about the class structure"
                         : t("courseDetailsPlaceholder") || "In-depth details about the program structure"
                     }
-                    rows={4}
-                    maxLength={1000}
+                    rows={6}
+                    style={{ height: "auto", borderRadius: "6px" }}
+                    maxLength={500}
                   />
                   <div className="text-end mt-1">
                     <small className="text-secondary">
-                      {(formData.longdesc?.length || 0)}/1000
+                      {(formData.longdesc?.length || 0)}/500
                     </small>
                   </div>
                 </div>
@@ -844,17 +846,18 @@ function Page() {
                   <div className="event-frm-bx">
                     <label className="form-label">{t("whatYouWillLearn") || "What You'll Learn"} <span className="text-danger">*</span></label>
                     <textarea
-                      className="form-control"
+                      className="form-control square-textarea"
                       name="whatYouWillLearn"
                       value={formData.whatYouWillLearn}
                       onChange={handleChange}
                       placeholder={t("whatYouWillLearnPlaceholder") || "Key takeaways or skills acquired"}
                       rows={3}
-                      maxLength={1000}
+                      style={{ height: "auto", borderRadius: "6px" }}
+                      maxLength={500}
                     />
                     <div className="text-end mt-1">
                       <small className="text-secondary">
-                        {(formData.whatYouWillLearn?.length || 0)}/1000
+                        {(formData.whatYouWillLearn?.length || 0)}/500
                       </small>
                     </div>
                   </div>
@@ -1232,7 +1235,7 @@ function Page() {
 
                       {formData.enrollmentType !== "Ongoing" && (
                         <div className="event-frm-bx mb-3">
-                          <label className="form-label">{t("batchNameLabel") || "Batch Name"} *</label>
+                          <label className="form-label">{t("batchNameLabel") || "Batch Name"} <span className="text-danger">*</span></label>
                           <input
                             type="text"
                             className="form-control"
@@ -1246,7 +1249,7 @@ function Page() {
                       <Row className="mb-3">
                         <Col xs={6}>
                           <div className="event-frm-bx">
-                            <label className="form-label">{t("startTimeLabel") || "Start Time"} *</label>
+                            <label className="form-label">{t("startTimeLabel") || "Start Time"} <span className="text-danger">*</span></label>
                             <input
                               type="time"
                               className="form-control"
@@ -1257,7 +1260,7 @@ function Page() {
                         </Col>
                         <Col xs={6}>
                           <div className="event-frm-bx">
-                            <label className="form-label">{t("endTimeLabel") || "End Time"} *</label>
+                            <label className="form-label">{t("endTimeLabel") || "End Time"} <span className="text-danger">*</span></label>
                             <input
                               type="time"
                               className="form-control"
@@ -1269,7 +1272,7 @@ function Page() {
                       </Row>
 
                       <div className="event-frm-bx mb-3">
-                        <label className="form-label">{t("daysTitle") || "Days"} *</label>
+                        <label className="form-label">{t("daysTitle") || "Days"} <span className="text-danger">*</span></label>
                         <div className="d-flex flex-wrap gap-2">
                           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(day => {
                             const isSelected = batchForm.days.includes(day);
@@ -1297,7 +1300,7 @@ function Page() {
 
                       {formData.enrollmentType !== "Ongoing" && (
                         <div className="event-frm-bx mb-4">
-                          <label className="form-label">{t("seatsTitle") || "Seats"} *</label>
+                          <label className="form-label">{t("seatsTitle") || "Seats"} <span className="text-danger">*</span></label>
                           <input
                             type="number"
                             className="form-control"

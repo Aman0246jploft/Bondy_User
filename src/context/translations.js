@@ -1062,6 +1062,9 @@ export const translations = {
     ticketSalesEndDateMustBeAfterStart: "Ticket sales end date must be after start date",
     refundPolicyRequired: "Refund policy is required",
     addonsRequired: "Add-ons are required (enter 'None' if not applicable)",
+    pleaseCompleteBasicInfoFirst: "Please complete the Basic Info step first",
+    pleaseCompleteDateTimeFirst: "Please complete the Date & Time step first",
+    pleaseCompleteTicketsPricingFirst: "Please complete the Tickets & Pricing step first",
     // AddEvent Gallery
     galleryPageTitle: "Gallery - Bondy",
     mediaAndGalleryTitle: "Media & Gallery",
@@ -1964,6 +1967,9 @@ export const translations = {
     ticketSalesEndDateMustBeAfterStart: "Тасалбарын худалдаа дуусах огноо эхлэхээс хойш байх ёстой",
     refundPolicyRequired: "Буцаах бодлого шаардлагатай",
     addonsRequired: "Нэмэлт үйлчилгээ шаардлагатай (хэрэв байхгүй бол 'None' гэж оруулна)",
+    pleaseCompleteBasicInfoFirst: "Эхлээд Үндсэн мэдээлэл хэсгийг бөглөнө үү",
+    pleaseCompleteDateTimeFirst: "Эхлээд Огноо, цаг ба байршил хэсгийг бөглөнө үү",
+    pleaseCompleteTicketsPricingFirst: "Эхлээд Тасалбар ба үнэ хэсгийг бөглөнө үү",
     // AddEvent Gallery (MN)
     galleryPageTitle: "Галерей - Bondy",
     mediaAndGalleryTitle: "Медиа ба Галерей",

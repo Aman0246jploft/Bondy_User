@@ -300,14 +300,14 @@ function page() {
                       <span className="text-secondary small">{(eventData.notes || "").length}/500</span>
                     </div>
                     <textarea
-                      className="form-control mt-2"
+                      className="form-control mt-2 square-textarea"
                       name="notes"
                       value={eventData.notes || ""}
                       onChange={handleInputChange}
                       maxLength={500}
                       placeholder={t("entryNotesPlaceholder") || "Add any rules or information attendees should know..."}
-                      rows={2}
-                      style={{ background: "#242424", padding: "15px", border: "1px solid rgba(255,255,255,0.1)", color: "white", height: "auto", borderRadius: "12px" }}
+                      rows={6}
+                      style={{ background: "#242424", padding: "15px", border: "1px solid rgba(255,255,255,0.1)", color: "white", height: "auto", borderRadius: "6px" }}
                     />
                   </div>
                 </Col>
@@ -322,14 +322,14 @@ function page() {
                       <span className="text-secondary small">{(eventData.dressCode || "").length}/100</span>
                     </div>
                     <textarea
-                      className="form-control mt-2"
+                      className="form-control mt-2 square-textarea"
                       name="dressCode"
                       value={eventData.dressCode || ""}
                       onChange={handleInputChange}
                       maxLength={100}
                       placeholder={t("dressCodePlaceholder") || "Let attendees know what to wear..."}
-                      rows={2}
-                      style={{ background: "#242424", padding: "15px", border: "1px solid rgba(255,255,255,0.1)", color: "white", height: "auto", borderRadius: "12px" }}
+                      rows={3}
+                      style={{ background: "#242424", padding: "15px", border: "1px solid rgba(255,255,255,0.1)", color: "white", height: "auto", borderRadius: "6px" }}
                     />
                   </div>
                 </Col>

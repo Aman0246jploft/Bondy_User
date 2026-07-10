@@ -427,8 +427,9 @@ function page() {
                                 "Short Description (Optional)"}
                             </label>
                             <textarea
-                              className="form-control"
-                              rows={2}
+                              className="form-control square-textarea"
+                              rows={4}
+                              style={{ height: "auto", borderRadius: "6px" }}
                               value={ticket.ticketShortDesc || ""}
                               onChange={(e) =>
                                 handleTicketChange(
