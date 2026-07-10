@@ -330,7 +330,7 @@ function EventDetailsContent() {
                 </div>
 
                 <div className="content-section">
-                  <h3 className="section-heading">{t("whatToExpect")}</h3>
+                  <h3 className="section-heading">{t("detailedOverview")}</h3>
                   <ExpandableText text={event?.longdesc} limit={300} />
                 </div>
 
@@ -550,18 +550,16 @@ function EventDetailsContent() {
                         {event.tickets.map((ticket) => {
                           const total = ticket.qty || 0;
                           const available = ticket.availableQty !== undefined ? ticket.availableQty : total;
-                          const booked = total - available;
-                          const progress = total > 0 ? (booked / total) * 100 : 0;
                           const isSoldOut = available <= 0;
                           const isLowStock = available <= 10 && available > 0;
 
                           return (
-                            <div key={ticket._id} className="ticket-availability-item p-3 rounded-3" style={{ background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
-                              <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div key={ticket._id} className="ticket-availability-item rounded-3" style={{ padding: "12px 16px", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                              <div className="d-flex justify-content-between align-items-start mb-1">
                                 <div>
                                   <h6 className="mb-1 fw-semibold text-white" style={{ fontSize: "15px" }}>{ticket.ticketName}</h6>
                                   {ticket.ticketShortDesc && (
-                                    <p className="mb-0 text-muted" style={{ fontSize: "12px" }}>{ticket.ticketShortDesc}</p>
+                                    <p className="mb-0 text-muted" style={{ fontSize: "12px", lineHeight: "1.4" }}>{ticket.ticketShortDesc}</p>
                                   )}
                                 </div>
                                 <span className="fw-bold" style={{ color: "#23ada4", fontSize: "15px" }}>
@@ -569,8 +567,8 @@ function EventDetailsContent() {
                                 </span>
                               </div>
 
-                              <div className="mt-2">
-                                <div className="d-flex justify-content-between align-items-center mb-1" style={{ fontSize: "12px" }}>
+                              <div className="mt-1">
+                                <div className="d-flex justify-content-between align-items-center mb-0" style={{ fontSize: "12px" }}>
                                   <span className="text-muted">
                                     {isSoldOut ? (
                                       <span className="text-danger fw-medium">{t("soldOut") || "Sold Out"}</span>
@@ -580,21 +578,7 @@ function EventDetailsContent() {
                                       <span className="text-success fw-medium">{t("available") || "Available"}</span>
                                     )}
                                   </span>
-                                  {/* <span className="text-muted">
-                                    {booked}/{total} {t("booked") || "booked"}
-                                  </span> */}
                                 </div>
-                                {/* <div className="custom-progress-bg" style={{ height: "6px", backgroundColor: "rgba(255, 255, 255, 0.1)" }}>
-                                  <div
-                                    className="custom-progress-bar"
-                                    style={{
-                                      width: `${progress}%`,
-                                      backgroundColor: isSoldOut ? "#dc3545" : isLowStock ? "#ffc107" : "#23ada4",
-                                      height: "100%",
-                                      borderRadius: "10px"
-                                    }}
-                                  ></div>
-                                </div> */}
                               </div>
                             </div>
                           );
@@ -650,10 +634,10 @@ function EventDetailsContent() {
                     className="sponsor-img img-placeholder"
                     alt="Sponsor"
                   />
-                  <h5 className="mb-0 fw-semibold d-flex align-items-center gap-1">
+                  <h5 className="mb-0 fw-semibold" style={{ minWidth: 0 }}>
                     {event?.createdBy?.firstName} {event?.createdBy?.lastName}
                     {event?.createdBy?.isVerified && (
-                      <img src="/img/veriy_icon.svg" alt="Verified" style={{ width: "16px", height: "16px" }} />
+                      <img src="/img/veriy_icon.svg" alt="Verified" style={{ width: "16px", height: "16px", marginLeft: "6px", display: "inline-block", verticalAlign: "middle", flexShrink: 0 }} />
                     )}
                   </h5>
                 </div>

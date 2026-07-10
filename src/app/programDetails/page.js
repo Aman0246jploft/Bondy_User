@@ -138,6 +138,7 @@ function ProgramDetailsContent() {
     courseTitle,
     posterImage,
     shortdesc,
+    longdesc,
     price,
     duration,
     durationTranslation,
@@ -375,6 +376,13 @@ function ProgramDetailsContent() {
                   <h2 className="section-heading">{t("whatYouWillLearn")}</h2>
                   <ExpandableText text={whatYouWillLearn} limit={300} />
                 </div>
+
+                {longdesc && (
+                  <div className="content-section">
+                    <h2 className="section-heading">{t("detailedOverview")}</h2>
+                    <ExpandableText text={longdesc} limit={300} />
+                  </div>
+                )}
 
                 <div className="organization_profile">
                   <h4>{t("organizedBy")}</h4>

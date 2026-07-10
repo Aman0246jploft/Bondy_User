@@ -1355,7 +1355,7 @@ function CourseDetailsContent() {
             {course.longdesc && (
               <div className="content-card mb-4 p-4">
                 <h4 className="card-heading-line mb-3">
-                  <span>{t("fullDescription") || "Full Description"}</span>
+                  <span>{t("detailedOverview") || "Detailed Overview"}</span>
                 </h4>
                 <ExpandableText text={course.longdesc} limit={450} />
               </div>

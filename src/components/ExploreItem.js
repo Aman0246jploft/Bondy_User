@@ -240,7 +240,7 @@ export default function ExploreItem({
                               WebkitBoxOrient: "vertical",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
-                              wordBreak: "break-word", 
+                              wordBreak: "break-word",
                             }}
                           >
                             {description}
@@ -287,7 +287,7 @@ export default function ExploreItem({
                                   ).toLocaleDateString()
                                   : "Date N/A"}
                             </div>
-                            <div
+                            {/* <div
                               className="info-item"
                               style={{
                                 overflow: "hidden",
@@ -305,7 +305,7 @@ export default function ExploreItem({
                                 ? item.totalAttendees
                                 : item.acquiredSeats || 0}{" "}
                               attendees
-                            </div>
+                            </div> */}
                             {!isEvent && (
                               <div
                                 className="info-item"

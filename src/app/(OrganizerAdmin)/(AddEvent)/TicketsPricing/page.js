@@ -102,35 +102,34 @@ function page() {
     // Validation for non-drafts
     for (let i = 0; i < ticketsList.length; i++) {
       const tck = ticketsList[i];
-      const tPrefix = `[Ticket ${i + 1}] `;
 
       if (!tck.ticketName || tck.ticketName.trim() === "") {
-        toast.error(`${tPrefix}${t("ticketNameRequired") || "Ticket name is required"}`);
+        toast.error(t("ticketNameRequired") || "Ticket name is required");
         return false;
       }
 
       if (tck.qty === undefined || tck.qty === null || tck.qty === "" || tck.qty <= 0) {
-        toast.error(`${tPrefix}${t("quantityMustBeGreaterThanZero") || "Quantity must be greater than zero"}`);
+        toast.error(t("quantityMustBeGreaterThanZero") || "Quantity must be greater than zero");
         return false;
       }
 
       if (tck.price === undefined || tck.price === null || tck.price === "" || tck.price < 0) {
-        toast.error(`${tPrefix}${t("ticketPriceRequired") || "Ticket price is required"}`);
+        toast.error(t("ticketPriceRequired") || "Ticket price is required");
         return false;
       }
 
       if (!tck.salesStart) {
-        toast.error(`${tPrefix}${t("salesStartDateRequired") || "Sales start date is required"}`);
+        toast.error(t("salesStartDateRequired") || "Sales start date is required");
         return false;
       }
 
       if (!tck.salesEnd) {
-        toast.error(`${tPrefix}${t("salesEndDateRequired") || "Sales end date is required"}`);
+        toast.error(t("salesEndDateRequired") || "Sales end date is required");
         return false;
       }
 
       if (tck.salesEnd < tck.salesStart) {
-        toast.error(`${tPrefix}${t("ticketSalesEndDateMustBeAfterStart") || "Sales end date must be after start date"}`);
+        toast.error(t("ticketSalesEndDateMustBeAfterStart") || "Sales end date must be after start date");
         return false;
       }
 
@@ -140,7 +139,7 @@ function page() {
         const ticketStartOnlyDate = formatDateVal(tck.salesStart);
 
         if (ticketStartOnlyDate > eventStartOnlyDate) {
-          toast.error(`${tPrefix}${t("salesStartDateMustBeBeforeEventStart") || "Ticket sales start date must be on or before the event start date"}`);
+          toast.error(t("salesStartDateMustBeBeforeEventStart") || "Ticket sales start date must be on or before the event start date");
           return false;
         }
       }
@@ -150,7 +149,7 @@ function page() {
         const ticketEndOnlyDate = formatDateVal(tck.salesEnd);
 
         if (ticketEndOnlyDate > eventEndOnlyDate) {
-          toast.error(`${tPrefix}${t("salesEndDateMustBeBeforeEventEnd") || "Ticket sales end date must be on or before the event end date"}`);
+          toast.error(t("salesEndDateMustBeBeforeEventEnd") || "Ticket sales end date must be on or before the event end date");
           return false;
         }
       }

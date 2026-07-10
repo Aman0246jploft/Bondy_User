@@ -3209,12 +3209,15 @@ a.view-map {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
 }
 
 .sponsor-card .sponsor-card_profile {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
 .sponsor-card h5 {
