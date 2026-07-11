@@ -254,7 +254,7 @@ export default function OrganizerReferralPage() {
 
                 {/* Right side details */}
                 <div className="flex-grow-1 p-3 d-flex flex-column justify-content-between position-relative">
-                  <div className="d-flex justify-content-between align-items-start">
+                  <div className="d-flex justify-content-between align-items-start flex-wrap">
                     <div>
                       <span className="fw-bold text-white d-block" style={{ fontSize: "15px" }}>{reward.code}</span>
                       <span className="text-secondary" style={{ fontSize: "12px" }}>
@@ -271,7 +271,7 @@ export default function OrganizerReferralPage() {
                     </span>
                   </div>
 
-                  <div className="d-flex justify-content-between align-items-center mt-2">
+                  <div className="d-flex justify-content-between align-items-center mt-2 flex-wrap">
                     <span className="text-secondary" style={{ fontSize: "11px" }}>
                       {reward.maxDiscountAmount ? `${t("maxDiscount") || "Max Discount"}: ₮${reward.maxDiscountAmount.toLocaleString()}` : ""}
                       {reward.minOrderAmount ? ` • ${t("minOrder") || "Min Order"}: ₮${reward.minOrderAmount.toLocaleString()}` : ""}
@@ -295,13 +295,13 @@ export default function OrganizerReferralPage() {
 
       {/* Referrals Stats Summary */}
       <Row className="g-3 mb-4">
-        <Col xs={6}>
+        <Col lg={6}>
           <div className="card-varticl text-center">
             <span>{t("totalReferrals") || "Total Referrals"}</span>
             <h3>{loadingStats ? "—" : stats.totalReferrals}</h3>
           </div>
         </Col>
-        <Col xs={6}>
+        <Col lg={6}>
           <div className="card-varticl text-center">
             <span>{t("pendingReferrals") || "Pending Referrals"}</span>
             <h3>{loadingStats ? "—" : (stats.pendingReferrals + stats.pendingValidation)}</h3>

@@ -727,8 +727,8 @@ function CoursesManagement() {
                       </div>
                     </div>
                     <div
-                      className="ticket-bottom d-flex flex-wrap align-items-center justify-content-between gap-3 pt-3 mt-2"
-                      style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                      className="ticket-bottom d-flex flex-wrap align-items-center justify-content-between gap-3"
+                     >
                       <div className="d-flex gap-4">
                         <p className="mb-0">
                           {t("price")}{" "}

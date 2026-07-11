@@ -255,39 +255,7 @@ function ProfileContent() {
 
               <div className="col">
                 <div className="user_profile_content">
-                  <div
-                    ref={menuRef}
-                    style={{
-                      position: "absolute",
-                      right: "-20px",
-                    }}
-                  >
-                    {!userProfile?.isMyProfile && (
-                      <>
-                        <div
-                          onClick={() => setShowMenu(!showMenu)}
-                          style={{
-                            cursor: "pointer",
-                            fontSize: "20px",
-                            color: "#fff",
-                          }}
-                        >
-                          ⋮
-                        </div>
-
-                        {showMenu && (
-                          <div className="menu_dropdown">
-                            <div onClick={() => handleAction(userProfile?.isBlocked ? "unblock" : "block")}>
-                              {userProfile?.isBlocked ? t("unblock") || "Unblock" : t("block") || "Block"}
-                            </div>
-                            <div onClick={() => handleAction("report")}>
-                              {t("report")}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
+                 
                   <div className="user-info">
                     <h2 className="user-name">
                       {userProfile?.firstName} {userProfile?.lastName}
@@ -391,6 +359,36 @@ function ProfileContent() {
                         <img src="/img/message.svg" /> {t("messages")}
                       </button>
                     )}
+                     <div
+                    ref={menuRef} 
+                    className="menu-attend-pro"
+                  >
+                    {!userProfile?.isMyProfile && (
+                      <>
+                        <div
+                          onClick={() => setShowMenu(!showMenu)}
+                          style={{
+                            cursor: "pointer",
+                            fontSize: "20px",
+                            color: "#fff",
+                          }}
+                        >
+                          ⋮
+                        </div>
+
+                        {showMenu && (
+                          <div className="menu_dropdown">
+                            <div onClick={() => handleAction(userProfile?.isBlocked ? "unblock" : "block")}>
+                              {userProfile?.isBlocked ? t("unblock") || "Unblock" : t("block") || "Block"}
+                            </div>
+                            <div onClick={() => handleAction("report")}>
+                              {t("report")}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                   </div>
                 </div>
 

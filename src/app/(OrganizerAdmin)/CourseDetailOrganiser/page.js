@@ -288,7 +288,7 @@ function CourseDetailsContent() {
   return (
     <div className="course-control-center">
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 gap-4">
         <Link href="/CoursesManagement" className="back-btn-dashboard">
           <span className="me-2">←</span> {t("backToCourses") || "Back to Courses"}
         </Link>
@@ -2359,7 +2359,7 @@ function CourseDetailsContent() {
       {/* Analytics Tab */}
       {activeTab === "analytics" && (
         <div className="analytics-tab-content">
-          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 gap-4">
             <h5 style={{ color: "#fff", fontWeight: 700, margin: 0, fontSize: "18px" }}>
               {t("analyticsTab") || "Analytics"}
             </h5>

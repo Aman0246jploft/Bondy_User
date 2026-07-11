@@ -435,7 +435,7 @@ function page() {
 
           {totalPages > 1 && (
             <div
-              className="d-flex justify-content-between align-items-center px-3 py-3"
+              className="d-flex justify-content-between align-items-center px-3 py-3 flex-wrap"
               style={{ borderTop: "1px solid #2a2a2a" }}>
               <span style={{ color: "#888", fontSize: 13 }}>
                 {t("showingTransactions", {

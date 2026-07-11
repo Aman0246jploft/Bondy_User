@@ -301,7 +301,7 @@ function EventDetailsContent() {
   return (
     <div className="event-control-center">
       {/* Action Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 gap-4">
         <Link href="/EventsManagement" className="back-btn-dashboard">
           <span className="me-2">←</span> {t("backToList") || "Back to Events"}
         </Link>
@@ -1713,7 +1713,7 @@ function EventDetailsContent() {
       {/* Analytics Tab */}
       {activeTab === "analytics" && (
         <div className="analytics-tab-content">
-          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-4">
             <h5 style={{ color: "#fff", fontWeight: 700, margin: 0, fontSize: "18px" }}>
               {t("analyticsTab") || "Analytics"}
             </h5>

@@ -604,7 +604,7 @@ function ProgramDetailsContent() {
               </div>
 
               {enrollmentType === "Ongoing" && (courseDetails.oneMonthPassEnabled || courseDetails.threeMonthPassEnabled) && (
-                <div className="mt-4 p-3 rounded" style={{ backgroundColor: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <div className="mt-4 p-3 rounded" style={{ backgroundColor: "#2b2a2a", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <h5 className="text-white mb-3" style={{ fontSize: "15px", fontWeight: 700 }}>{t("availablePasses") || "Available Passes"}</h5>
                   <div className="d-flex flex-column gap-2">
                     {courseDetails.oneMonthPassEnabled && (
