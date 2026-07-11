@@ -4892,6 +4892,12 @@ a.view-map {
   /* Fixed empty ruleset lint */
 }
 
+.login_field .phone_input .flag-dropdown { 
+    border-radius: 29px 0 0 29px !important;
+}
+.login_field input.form-control {
+    border-radius: 29px !important;
+}
 .common_field .form-control::placeholder {
   color: var(--white) !important;
 }
@@ -6844,4 +6850,28 @@ h4.ticket-text-wrap {
 .gm-style-iw button.gm-ui-hover-effect span {
   background-color: #ffffff !important;
   margin: 0 !important;
+}
+input[placeholder],
+textarea[placeholder] {
+  color: #212529 !important;
+}
+
+input[placeholder]::placeholder,
+textarea[placeholder]::placeholder {
+  color: #a0a0a0 !important;
+  -webkit-text-fill-color: #a0a0a0 !important;
+  opacity: 1 !important;
+}
+
+input[placeholder]::-webkit-input-placeholder,
+textarea[placeholder]::-webkit-input-placeholder {
+  color: #a0a0a0 !important;
+  -webkit-text-fill-color: #a0a0a0 !important;
+  opacity: 1 !important;
+}
+
+input[placeholder]::-moz-placeholder,
+textarea[placeholder]::-moz-placeholder {
+  color: #a0a0a0 !important;
+  opacity: 1 !important;
 }
