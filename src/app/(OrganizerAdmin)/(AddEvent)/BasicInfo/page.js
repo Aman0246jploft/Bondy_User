@@ -688,12 +688,12 @@ function BasicInfoContent() {
               </div>
 
               <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
-                {/* <button
+                <button
                   className="outline-btn"
                   type="button"
                   onClick={handleBackClick}>
                   {t("back")}
-                </button> */}
+                </button>
                 <button
                   className="custom-btn"
                   type="button"

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { Col, Form, Row } from "react-bootstrap";
+import { Col, Form, Row, Modal, Button } from "react-bootstrap";
 import LocationMap from "../Components/LocationMap";
 import VenueAutocomplete from "../Components/VenueAutocomplete";
 import apiClient from "../../../api/apiClient";
@@ -138,6 +138,7 @@ function Page() {
 
   // Batch Form Overlay State
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [showBackModal, setShowBackModal] = useState(false);
   const [editingBatchIndex, setEditingBatchIndex] = useState(null);
   const [batchForm, setBatchForm] = useState({
     batchName: "",
@@ -676,6 +677,15 @@ function Page() {
     setStep(step - 1);
   };
 
+  const handleBackClick = () => {
+    const hasChanges = formData.courseTitle || formData.courseCategory || formData.shortdesc;
+    if (hasChanges) {
+      setShowBackModal(true);
+    } else {
+      router.push("/CoursesManagement");
+    }
+  };
+
   if (initialLoading) {
     return <div className="text-center p-5 text-white">{t("loading")}</div>;
   }
@@ -989,7 +999,8 @@ function Page() {
                   </div>
                 )}
 
-                <div className="d-flex justify-content-end mt-4">
+                <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
+                  <button type="button" onClick={handleBackClick} className="outline-btn">{t("back") || "Back"}</button>
                   <button type="button" onClick={goNext} className="custom-btn">{t("continue") || "Continue"}</button>
                 </div>
               </div>
@@ -1894,6 +1905,34 @@ function Page() {
         </Col>
       </Row>
       <div style={{ height: 100 }}></div>
+
+      {/* Back Confirmation Modal */}
+      <Modal show={showBackModal} onHide={() => setShowBackModal(false)} centered>
+        <Modal.Body className="text-center p-5">
+          <div className="mb-4">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#f39c12" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <div className="d-flex gap-3 justify-content-center">
+            <Button variant="secondary" onClick={() => {
+              setShowBackModal(false);
+              router.push("/CoursesManagement");
+            }} style={{ borderRadius: "20px", padding: "8px 24px", background: "transparent", border: "1px solid #454545", color: "#e0e0e0" }}>
+              {t("discard") || "Discard"}
+            </Button>
+            <Button variant="primary" onClick={async () => {
+              setShowBackModal(false);
+              await handleSaveDraft();
+            }} className="custom-btn" style={{ borderRadius: "20px", padding: "8px 24px" }}>
+              {courseId && formData.isDraft === false ? (t("saveChanges") || "Save Changes") : (t("saveDraft") || "Save Draft")}
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
+
     </div>
   );
 }
