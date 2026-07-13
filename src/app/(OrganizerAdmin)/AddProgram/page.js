@@ -1322,7 +1322,7 @@ function Page() {
                         </div>
                       )}
 
-                        <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
+                      <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
                         <button type="button" className="outline-btn" onClick={() => setShowBatchModal(false)}>{t("cancel") || "Cancel"}</button>
                         <button type="button" className="custom-btn" onClick={saveBatch}>{t("save") || "Save"}</button>
                       </div>
@@ -1330,7 +1330,7 @@ function Page() {
                   </div>
                 )}
 
-                  <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
+                <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
                   <button type="button" onClick={goBack} className="outline-btn">{t("back") || "Back"}</button>
                   <button type="button" onClick={goNext} className="custom-btn">{t("continue") || "Continue"}</button>
                 </div>
@@ -1558,7 +1558,7 @@ function Page() {
                   </Col>
                 </Row>
 
-                 <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
+                <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
                   <button type="button" onClick={goBack} className="outline-btn">{t("back") || "Back"}</button>
                   <button type="button" onClick={goNext} className="custom-btn">{t("continue") || "Continue"}</button>
                 </div>
