@@ -777,7 +777,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                 style={{
                                     minWidth: "70px",
                                     height: "60px",
-                                    backgroundColor: isActive ? "#23ada4" : "#1a1a1a",
+                                    backgroundColor: isActive ? "#23ada4" : "#2b2a2a",
                                     border: isActive ? "1px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
                                     transition: "all 0.2s ease",
                                     marginTop: "10px"
@@ -805,7 +805,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
 
                 <div
                     className="rounded-3 overflow-hidden"
-                    style={{ border: "1px solid rgba(255,255,255,0.1)", backgroundColor: "#0c0c0c" }}
+                    style={{ border: "1px solid rgba(255,255,255,0.1)", backgroundColor: "#2b2a2a" }}
                 >
                     {slots.map((slot, slotIdx) => {
                         const slotKey = `${currentActiveKey}_${slot.batchId}`;
@@ -991,7 +991,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                 className="p-3 rounded-3 text-start position-relative"
                                                 onClick={() => setSelectedPassType("single")}
                                                 style={{
-                                                    backgroundColor: selectedPassType === "single" ? "rgba(35, 173, 164, 0.05)" : "#0f0f0f",
+                                                    backgroundColor: selectedPassType === "single" ? "rgba(35, 173, 164, 0.05)" : "#2b2a2a",
                                                     border: selectedPassType === "single" ? "1.5px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
                                                     cursor: "pointer",
                                                     transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -1047,7 +1047,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                         className="p-3 rounded-3 text-start position-relative"
                                                         onClick={() => setSelectedPassType("1_month")}
                                                         style={{
-                                                            backgroundColor: selectedPassType === "1_month" ? "rgba(35, 173, 164, 0.05)" : "#0f0f0f",
+                                                            backgroundColor: selectedPassType === "1_month" ? "rgba(35, 173, 164, 0.05)" : "#2b2a2a",
                                                             border: selectedPassType === "1_month" ? "1.5px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
                                                             cursor: "pointer",
                                                             transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -1098,7 +1098,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                     className="p-3 rounded-3 text-start position-relative"
                                                     onClick={() => setSelectedPassType("3_month")}
                                                     style={{
-                                                        backgroundColor: selectedPassType === "3_month" ? "rgba(35, 173, 164, 0.05)" : "#0f0f0f",
+                                                        backgroundColor: selectedPassType === "3_month" ? "rgba(35, 173, 164, 0.05)" : "#2b2a2a",
                                                         border: selectedPassType === "3_month" ? "1.5px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
                                                         cursor: "pointer",
                                                         transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",

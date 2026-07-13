@@ -121,7 +121,7 @@ function page() {
     <div>
       <Row className="justify-content-center">
         <Col lg={10} md={12} xs={12}>
-          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-4">
             <h2 className="text-white mb-0">{t("createEvent")}</h2>
             <button
               type="button"

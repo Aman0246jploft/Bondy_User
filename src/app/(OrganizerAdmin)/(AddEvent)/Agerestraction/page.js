@@ -156,7 +156,7 @@ function page() {
     <div>
       <Row className="justify-content-center">
         <Col lg={10} md={12} xs={12}>
-          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-4">
             <h2 className="text-white mb-0">{t("createEvent")}</h2>
             <button
               type="button"
@@ -240,7 +240,7 @@ function page() {
                 <Col md={12} className="mb-4">
                   <div className="event-frm-bx">
                     <label className="form-label">{t("ageRestrictionLabel") || "Age Restriction"}</label>
-                    <div className="d-flex gap-3">
+                    <div className="d-flex gap-3 flex-wrap">
                       <button
                         type="button"
                         className={`flex-grow-1 py-3 custom-btn ${activeAge === "ALL" ? "" : "outline-btn"}`}
@@ -267,7 +267,7 @@ function page() {
                 </Col>
 
                 {/* Show Attendees Toggle */}
-                <Col md={12} className="mb-4">
+                <Col md={12} className="">
                   <div className="event-frm-bx d-flex justify-content-between align-items-center p-3" style={{ background: "#1c1d1e87", borderRadius: "12px" }}>
                     <div>
                       <label className="form-label mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>
@@ -291,7 +291,7 @@ function page() {
                 </Col>
 
                 {/* Entry Notes (Optional) */}
-                <Col md={12} className="mb-4">
+                <Col md={12} className="">
                   <div className="event-frm-bx p-3" style={{ background: "#1c1d1e87", borderRadius: "12px" }}>
                     <div className="d-flex justify-content-between align-items-center">
                       <label className="form-label mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>
@@ -313,7 +313,7 @@ function page() {
                 </Col>
 
                 {/* Dress Code (Optional) */}
-                <Col md={12} className="mb-4">
+                <Col md={12} className="">
                   <div className="event-frm-bx p-3" style={{ background: "#1c1d1e87", borderRadius: "12px" }}>
                     <div className="d-flex justify-content-between align-items-center">
                       <label className="form-label mb-0" style={{ fontSize: "16px", fontWeight: "600" }}>
@@ -335,7 +335,7 @@ function page() {
                 </Col>
               </Row>
 
-              <div className="d-flex gap-2 justify-content-end mt-4">
+              <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
                 <Link href="/TicketsPricing" className="outline-btn">
                   {t("back")}
                 </Link>

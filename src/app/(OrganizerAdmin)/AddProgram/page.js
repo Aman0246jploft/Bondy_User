@@ -687,7 +687,7 @@ function Page() {
       <Row className="justify-content-center">
         <Col lg={10} md={12} xs={12}>
           {/* Header */}
-          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-4">
             <h2 className="text-white mb-0">
               {courseId
                 ? (formData.enrollmentType === "Ongoing" ? t("editClass") || "Edit Class" : t("editCourse") || "Edit Course")
@@ -1311,7 +1311,7 @@ function Page() {
                         </div>
                       )}
 
-                      <div className="d-flex gap-2 justify-content-end mt-4">
+                        <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
                         <button type="button" className="outline-btn" onClick={() => setShowBatchModal(false)}>{t("cancel") || "Cancel"}</button>
                         <button type="button" className="custom-btn" onClick={saveBatch}>{t("save") || "Save"}</button>
                       </div>
@@ -1319,7 +1319,7 @@ function Page() {
                   </div>
                 )}
 
-                <div className="d-flex gap-2 justify-content-end mt-4">
+                  <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
                   <button type="button" onClick={goBack} className="outline-btn">{t("back") || "Back"}</button>
                   <button type="button" onClick={goNext} className="custom-btn">{t("continue") || "Continue"}</button>
                 </div>
@@ -1547,7 +1547,7 @@ function Page() {
                   </Col>
                 </Row>
 
-                <div className="d-flex gap-2 justify-content-end mt-4">
+                 <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
                   <button type="button" onClick={goBack} className="outline-btn">{t("back") || "Back"}</button>
                   <button type="button" onClick={goNext} className="custom-btn">{t("continue") || "Continue"}</button>
                 </div>
