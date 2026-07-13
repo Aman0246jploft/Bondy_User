@@ -1604,7 +1604,15 @@ export const translations = {
     update: "Update",
     loginAsStaff: "Login as Staff",
     availablePasses: "Available Passes",
-    backToUserLogin: "Back to User Login"
+    backToUserLogin: "Back to User Login",
+    topPerformingListings: "Top Performing Listings",
+    net: "Net",
+    revenueOverview: "Revenue Overview",
+    last6Months: "Last 6 Months",
+    last1Year: "Last 1 Year",
+    last14Days: "Last 14 Days",
+    title: "Title",
+    analyticsSubtitle: "Track your performance at a glance"
   },
   mn: {
     almostSoldOut: "Бараг зарагдаж дууссан",
@@ -3217,6 +3225,14 @@ export const translations = {
     availablePasses: "Боломжтой пассууд",
     thirtyDaysUnlimitedAccess: "30 хоног хязгааргүй нэвтрэх эрх",
     ninetyDaysUnlimitedAccess: "90 хоног хязгааргүй нэвтрэх эрх",
-    backToUserLogin: "Хэрэглэгчээр нэвтрэх рүү буцах"
+    backToUserLogin: "Хэрэглэгчээр нэвтрэх рүү буцах",
+    topPerformingListings: "Шилдэг бүтээгдэхүүний жагсаалт",
+    net: "Цэвэр",
+    revenueOverview: "Орлогын тойм",
+    last6Months: "Сүүлийн 6 сар",
+    last1Year: "Сүүлийн 1 жил",
+    last14Days: "Сүүлийн 14 хоног",
+    title: "Гарчиг",
+    analyticsSubtitle: "Өөрийн үр дүнг нэг дороос хянах"
   },
 };

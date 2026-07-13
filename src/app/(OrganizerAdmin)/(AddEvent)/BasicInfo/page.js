@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { useEffect, useState, Suspense } from "react";
-import { Col, Form, Row } from "react-bootstrap";
+import { Col, Form, Row, Modal, Button } from "react-bootstrap";
 import { useEventContext } from "@/context/EventContext";
 import authApi from "@/api/authApi";
 import eventApi from "@/api/eventApi";
@@ -20,6 +20,7 @@ function BasicInfoContent() {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showBackModal, setShowBackModal] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -235,8 +236,7 @@ function BasicInfoContent() {
         eventData.shortdesc.trim() !== "" &&
         eventData.shortdesc.length >= 10 &&
         eventData.longdesc &&
-        eventData.longdesc.trim() !== "" &&
-        eventData.longdesc.length >= 50
+        eventData.longdesc.trim() !== ""
       );
     };
 
@@ -317,12 +317,18 @@ function BasicInfoContent() {
       return;
     }
 
-    if (eventData.longdesc.length < 50) {
-      toast.error(t("detailedDescriptionMinLength"));
-      return;
-    }
-
     router.push("/DateTime");
+  };
+
+  const handleBackClick = () => {
+    // Check if there's any data to save
+    const hasChanges = eventData.eventTitle || eventData.eventCategory || eventData.shortdesc;
+    
+    if (hasChanges) {
+      setShowBackModal(true);
+    } else {
+      router.push("/EventsManagement");
+    }
   };
 
   useEffect(() => {
@@ -684,7 +690,7 @@ function BasicInfoContent() {
                 <button
                   className="outline-btn"
                   type="button"
-                  onClick={() => router.back()}>
+                  onClick={handleBackClick}>
                   {t("back")}
                 </button>
                 <button
@@ -698,6 +704,60 @@ function BasicInfoContent() {
           </Form>
         </Col>
       </Row>
+
+      {/* Back Confirmation Modal */}
+      <Modal show={showBackModal} onHide={() => setShowBackModal(false)} centered>
+        <Modal.Body className="text-center p-5">
+          <div className="mb-4">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#f39c12" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <div className="d-flex gap-3 justify-content-center">
+            <Button variant="secondary" onClick={() => {
+              setShowBackModal(false);
+              router.push("/EventsManagement");
+            }} style={{ borderRadius: "20px", padding: "8px 24px", background: "transparent", border: "1px solid #454545", color: "#e0e0e0" }}>
+              {t("discard") || "Discard"}
+            </Button>
+            <Button variant="primary" onClick={async () => {
+              try {
+                const isPublishedEdit = eventData._id && eventData.isDraft === false;
+                const payload = { ...eventData, isDraft: !isPublishedEdit };
+                if (payload.eventCategory && typeof payload.eventCategory === 'object') {
+                  payload.eventCategory = payload.eventCategory._id;
+                }
+                if (payload.createdBy && typeof payload.createdBy === 'object') {
+                  payload.createdBy = payload.createdBy._id;
+                }
+                const fieldsToRemove = ['duration', 'status', 'totalAttendees', 'isBooked', 'totalRevenue', 'createdAt', 'updatedAt', '__v'];
+                fieldsToRemove.forEach(field => delete payload[field]);
+
+                let response;
+                if (eventData._id) {
+                  const { _id, fetcherEvent, featureEventFee, createdBy, ...updatePayload } = payload;
+                  response = await eventApi.updateEvent(_id, updatePayload);
+                } else {
+                  response = await eventApi.createEvent(payload);
+                }
+                
+                if (response.status) {
+                  toast.success(isPublishedEdit ? (t("profileUpdatedSuccessfully") || "Changes saved successfully") : (t("draftSavedSuccessfully") || "Draft saved successfully"));
+                  setShowBackModal(false);
+                  router.push("/EventsManagement");
+                }
+              } catch (error) {
+                console.error("Error saving event:", error);
+                toast.error(error.response?.data?.message || "Failed to save event");
+              }
+            }} className="custom-btn" style={{ borderRadius: "20px", padding: "8px 24px" }}>
+              {eventData._id && eventData.isDraft === false ? (t("saveChanges") || "Save Changes") : (t("saveDraft") || "Save Draft")}
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

@@ -746,14 +746,15 @@ input[type="number"]::-webkit-outer-spin-button {
   color: #737373;
 }
 
-.event-form-card .outline-btn {
-  border-color: #737373;
-  color: #737373;
+.outline-btn {
+  border-color: var(--primary-teal, #23ada4);
+  color: var(--primary-teal, #23ada4);
 }
 
-.event-form-card .outline-btn:hover {
+.outline-btn:hover {
   color: var(--white);
-  border-color: var(--primary-teal);
+  background-color: var(--primary-teal, #23ada4);
+  border-color: var(--primary-teal, #23ada4);
 }
 
 .location-map .map-box {

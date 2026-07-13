@@ -161,6 +161,14 @@ export default function OrganizerSidebar({ toggleSidebar }) {
           <span className="text">{t("earnings")}</span>
         </Link>
         <Link
+          href="/Analytic"
+          className={`menu-item ${isActive("/Analytic") ? "active" : ""}`}>
+          <span className="icon">
+            <img src="/img/org-img/sidebar-icon-03.svg" alt="" />
+          </span>
+          <span className="text">{t("analytics")}</span>
+        </Link>
+        <Link
           href="/OrganizerReferral"
           className={`menu-item ${isActive("/OrganizerReferral") ? "active" : ""}`}>
           <span className="icon">
