@@ -335,6 +335,9 @@ function RegisterForm() {
       const profileRes = await authApi.getSelfProfile();
       if (profileRes?.status) {
         const profile = profileRes?.data?.user;
+        if (profile) {
+          localStorage.setItem("userProfile", JSON.stringify(profile));
+        }
         const isOrganizer = profile?.roleId === 2 || profile?.organizerVerificationStatus;
 
         if (isOrganizer) {
