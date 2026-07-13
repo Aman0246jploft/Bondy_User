@@ -323,7 +323,7 @@ function BasicInfoContent() {
   const handleBackClick = () => {
     // Check if there's any data to save
     const hasChanges = eventData.eventTitle || eventData.eventCategory || eventData.shortdesc;
-    
+
     if (hasChanges) {
       setShowBackModal(true);
     } else {
@@ -668,7 +668,8 @@ function BasicInfoContent() {
                       controls
                       controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
                     />
-                    <style dangerouslySetInnerHTML={{__html: `
+                    <style dangerouslySetInnerHTML={{
+                      __html: `
                       video::-webkit-media-controls-volume-control-container { display: none !important; }
                       video::-webkit-media-controls-timeline { display: none !important; }
                       video::-webkit-media-controls-current-time-display { display: none !important; }
@@ -686,7 +687,7 @@ function BasicInfoContent() {
                 ))}
               </div>
 
-               <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
+              <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
                 <button
                   className="outline-btn"
                   type="button"
@@ -742,7 +743,7 @@ function BasicInfoContent() {
                 } else {
                   response = await eventApi.createEvent(payload);
                 }
-                
+
                 if (response.status) {
                   toast.success(isPublishedEdit ? (t("profileUpdatedSuccessfully") || "Changes saved successfully") : (t("draftSavedSuccessfully") || "Draft saved successfully"));
                   setShowBackModal(false);
