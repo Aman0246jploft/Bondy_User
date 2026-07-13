@@ -342,7 +342,7 @@ function page() {
                 <button
                   type="submit"
                   className="custom-btn">
-                  {t("saveAndContinue")}
+                  {t("continue")}
                 </button>
               </div>
             </div>

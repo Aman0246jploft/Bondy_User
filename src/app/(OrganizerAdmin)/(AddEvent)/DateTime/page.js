@@ -402,7 +402,7 @@ function page() {
                 </Col>
               </Row>
 
-               <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
+              <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
                 <Link href="/BasicInfo" className="outline-btn">
                   {t("back")}
                 </Link>
@@ -411,7 +411,7 @@ function page() {
                   type="button"
                   onClick={handleNext}
                   className="custom-btn">
-                  {t("saveAndContinue")}
+                  {t("continue")}
                 </button>
               </div>
             </div>

@@ -1936,6 +1936,7 @@ export const translations = {
     tagsPlaceholder: "Холбогдох шошгуудыг оруулна (таслан тусгаарлана)",
     back: "Буцах",
     saveAndContinue: "Хадгалах ба үргэлжлүүлэх",
+    continue: "Үргэлжлүүлэх",
     // AddEvent DateTime (MN)
     dateTimePageTitle: "Огноо, цаг ба байршил - Bondy",
     venueNamePlaceholder: "Тогтоолын нэр оруулна уу",

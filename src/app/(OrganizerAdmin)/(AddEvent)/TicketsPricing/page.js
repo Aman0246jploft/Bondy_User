@@ -625,12 +625,12 @@ function page() {
                 </div>
               )}
 
-               <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
+              <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
                 <Link href="/DateTime" className="outline-btn">
                   {t("back")}
                 </Link>
                 <button type="submit" className="custom-btn">
-                  {t("saveAndContinue")}
+                  {t("continue")}
                 </button>
               </div>
             </div>
