@@ -117,7 +117,7 @@ function Page() {
     if (amount < minPayout) {
       toast.error(
         t("minPayoutAmount", { amount: minPayout.toLocaleString() }) ||
-          `Minimum payout amount is ₮${minPayout.toLocaleString()}`,
+        `Minimum payout amount is ₮${minPayout.toLocaleString()}`,
       );
       return;
     }
@@ -130,7 +130,7 @@ function Page() {
     if (!payoutReference.trim()) {
       toast.error(
         t("paymentRefRequired") ||
-          "Payment reference / bank account details are required",
+        "Payment reference / bank account details are required",
       );
       return;
     }

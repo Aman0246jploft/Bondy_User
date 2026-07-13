@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useRef,useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { Col, Row } from "react-bootstrap";
 import { useLanguage } from "@/context/LanguageContext";
 import RevenueChart from "../Components/RevenueChart";
@@ -21,7 +21,7 @@ function page() {
     }
   };
   const inputRef = useRef(null);
-  
+
   useEffect(() => {
     document.title = "Analytics - Bondy";
   }, []);
