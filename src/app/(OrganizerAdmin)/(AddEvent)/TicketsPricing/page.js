@@ -296,7 +296,7 @@ function page() {
     <div>
       <Row className="justify-content-center">
         <Col lg={10} md={12} xs={12}>
-          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-4">
             <h2 className="text-white mb-0">{t("createEvent")}</h2>
             <button
               type="button"
@@ -625,7 +625,7 @@ function page() {
                 </div>
               )}
 
-              <div className="d-flex gap-2 justify-content-end mt-4">
+               <div className="d-flex gap-2 justify-content-end mt-4 flex-wrap">
                 <Link href="/DateTime" className="outline-btn">
                   {t("back")}
                 </Link>

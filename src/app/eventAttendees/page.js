@@ -61,14 +61,14 @@ function EventAttendeesContent() {
         style={{ minHeight: "100vh", backgroundColor: "#000", color: "#fff" }}
       >
         <Container>
-          <div className="d-flex align-items-center mb-4">
+          <div className="d-flex align-items-center mb-4" style={{ marginTop: "50px" }}>
             <button
               onClick={() => router.back()}
               className="btn btn-link text-white text-decoration-none p-0 me-3"
             >
               <FaArrowLeft size={20} />
             </button>
-            <h2 className="mb-0 fw-bold" style={{ marginTop: "50px" }}>{t("eventAttendeesTitle")}</h2>
+            <h2 className="mb-0 fw-bold" >{t("eventAttendeesTitle")}</h2>
           </div>
 
           <div className="mb-4">

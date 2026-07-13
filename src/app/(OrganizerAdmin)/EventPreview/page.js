@@ -142,9 +142,13 @@ function page() {
                 onError={(e) => { e.target.src = "/img/sidebar-logo.svg" }}
               />
             </div>
-            <h3 style={{ flex: 1, minWidth: 0, wordBreak: "break-word", overflowWrap: "anywhere", margin: 0, alignSelf: "center" }}>
+            <div>
+
+             <span className="status-badge pending mb-3">{eventData.isDraft ? t("draftLabel") : t("reviewLabel")}</span>
+            <h3 style={{ minWidth: 0, wordBreak: "break-word", overflowWrap: "anywhere", margin: 0, alignSelf: "center" }}>
               {eventData.eventTitle || "Event Title"}
             </h3>
+            </div>
           </div>
           {/* Category / Start Date below image */}
           <ul className="event-dtl-rgt">
@@ -156,9 +160,7 @@ function page() {
               <h6>{t("startDate")}</h6>
               <p>{formatDateString(eventData.startDate)} {formatTime(eventData.startTime, true, language)}</p>
             </li>
-            <li>
-              <span className="status-badge pending">{eventData.isDraft ? t("draftLabel") : t("reviewLabel")}</span>
-            </li>
+            
           </ul>
         </div>
         <div className="time-location common-dtl-list mt-20">
@@ -204,7 +206,7 @@ function page() {
             </li>
           </ul>
         </div>
-        <div className="ticket-pricing common-dtl-list mt-20">
+        <div className="ticket-pricing common-dtl-list">
           <h4 className="line-title">
             <span>{t("ticketAndPricing")}</span>
           </h4>
