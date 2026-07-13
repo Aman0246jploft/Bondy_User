@@ -485,6 +485,7 @@ function RegisterForm() {
                                   <Form.Control
                                     type="email"
                                     name="email"
+                                    maxLength={50}
                                     placeholder={t("email")}
                                     value={customerData.email}
                                     onChange={handleCustomerChange}
@@ -517,6 +518,7 @@ function RegisterForm() {
                                     <Form.Control
                                       type={show ? "text" : "password"}
                                       name="password"
+                                      maxLength={50}
                                       placeholder={t("password")}
                                       value={customerData.password}
                                       onChange={handleCustomerChange}
@@ -547,6 +549,7 @@ function RegisterForm() {
                                     <Form.Control
                                       type={show2 ? "text" : "password"}
                                       name="confirmPassword"
+                                      maxLength={50}
                                       placeholder={t("confirmPassword")}
                                       value={customerData.confirmPassword}
                                       onChange={handleCustomerChange}
@@ -669,6 +672,7 @@ function RegisterForm() {
                                   <Form.Control
                                     type="text"
                                     name="fullname"
+                                    maxLength={25}
                                     placeholder={t("fullName") || "Full Name"}
                                     value={organizerData.fullname || ""}
                                     onChange={handleOrganizerChange}
@@ -683,6 +687,7 @@ function RegisterForm() {
                                   <Form.Control
                                     type="email"
                                     name="email"
+                                    maxLength={50}
                                     placeholder={t("email")}
                                     value={organizerData.email}
                                     onChange={handleOrganizerChange}
@@ -715,6 +720,7 @@ function RegisterForm() {
                                     <Form.Control
                                       type={show ? "text" : "password"}
                                       name="password"
+                                      maxLength={50}
                                       placeholder={t("password")}
                                       value={organizerData.password}
                                       onChange={handleOrganizerChange}
@@ -745,6 +751,7 @@ function RegisterForm() {
                                     <Form.Control
                                       type={show2 ? "text" : "password"}
                                       name="confirmPassword"
+                                      maxLength={50}
                                       placeholder={t("confirmPassword")}
                                       value={organizerData.confirmPassword}
                                       onChange={handleOrganizerChange}

@@ -134,8 +134,15 @@ export default function Footer() {
               <h2>{t("stayUpdated")}</h2>
               <p>{t("stayUpdatedDesc")}</p>
               <div className="input-box">
+                <style>{`
+                  .footer-email-input::placeholder { color: #fff !important; opacity: 1 !important; }
+                  .footer-email-input::-webkit-input-placeholder { color: #fff !important; opacity: 1 !important; }
+                  .footer-email-input::-moz-placeholder { color: #fff !important; opacity: 1 !important; }
+                  .footer-email-input:-ms-input-placeholder { color: #fff !important; opacity: 1 !important; }
+                `}</style>
                 <input
                   type="email"
+                  className="footer-email-input"
                   placeholder={t("emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

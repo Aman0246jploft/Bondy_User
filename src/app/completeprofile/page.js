@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { Col, Container, Form, Row, Button } from "react-bootstrap";
+import { Col, Container, Form, Row, Button, Dropdown } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
@@ -9,6 +9,27 @@ import VerificationModl from "@/components/Modal/VerificationModl";
 import { Upload, Camera } from "lucide-react";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
+
+// Helper component: Dropdown item with teal hover via inline style state
+function DropdownItemWithHover({ children, active, onClick }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <Dropdown.Item
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        color: "#fff",
+        fontSize: "14px",
+        padding: "8px 15px",
+        backgroundColor: active || hovered ? "#23ada4" : "transparent",
+        transition: "background-color 0.15s ease",
+      }}
+    >
+      {children}
+    </Dropdown.Item>
+  );
+}
 
 export default function CompleteProfile() {
   return (
@@ -155,7 +176,12 @@ function CompleteProfileContent() {
 
   const handleCustomerChange = (e) => {
     const { name, value } = e.target;
-    setCustomerData((prev) => ({ ...prev, [name]: value }));
+    if (name === "firstName" || name === "lastName") {
+      const cleanValue = value.replace(/\d/g, "");
+      setCustomerData((prev) => ({ ...prev, [name]: cleanValue }));
+    } else {
+      setCustomerData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleOrganizerChange = (e) => {
@@ -282,6 +308,7 @@ function CompleteProfileContent() {
                         <Form.Control
                           type="text"
                           name="businessName"
+                          maxLength={50}
                           placeholder="Enter business name"
                           className="custom_field_input"
                           value={organizerData.businessName}
@@ -292,20 +319,44 @@ function CompleteProfileContent() {
 
                       <Form.Group className="mb-3" controlId="businessCategory">
                         <Form.Label className="text-light">Primary category</Form.Label>
-                        <Form.Select
-                          name="businessCategory"
-                          className="custom_field_input"
-                          value={organizerData.businessCategory}
-                          onChange={handleOrganizerChange}
-                          required
-                        >
-                          <option value="" disabled>Select category</option>
-                          {categories?.map((cat) => (
-                            <option key={cat._id} value={cat._id}>
-                              {cat.name}
-                            </option>
-                          ))}
-                        </Form.Select>
+                        <Dropdown className="w-100">
+                          <Dropdown.Toggle
+                            variant="transparent"
+                            className="w-100 text-start d-flex align-items-center justify-content-between text-light"
+                            style={{
+                              border: "1px solid #333",
+                              borderRadius: "100px",
+                              padding: "10px 20px",
+                              fontSize: "14px",
+                              backgroundColor: "#212121",
+                              color: "#fff",
+                              boxShadow: "none",
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {categories.find(c => c._id === organizerData.businessCategory)?.name || "Select category"}
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu
+                            className="w-100"
+                            style={{
+                              maxHeight: "250px",
+                              overflowY: "auto",
+                              backgroundColor: "#1a1a1a",
+                              border: "1px solid rgba(255,255,255,0.1)",
+                              borderRadius: "8px",
+                            }}
+                          >
+                            {categories?.map((cat) => (
+                              <DropdownItemWithHover
+                                key={cat._id}
+                                active={organizerData.businessCategory === cat._id}
+                                onClick={() => handleOrganizerChange({ target: { name: "businessCategory", value: cat._id } })}
+                              >
+                                <span style={{ textTransform: "capitalize" }}>{cat.name}</span>
+                              </DropdownItemWithHover>
+                            ))}
+                          </Dropdown.Menu>
+                        </Dropdown>
                       </Form.Group>
 
                       <Form.Group className="mb-3" controlId="shortDesc">
@@ -314,6 +365,7 @@ function CompleteProfileContent() {
                           as="textarea"
                           rows={3}
                           name="shortDesc"
+                          maxLength={150}
                           placeholder="Tell us about your organization"
                           className="custom_field_input custom_bio"
                           value={organizerData.shortDesc}
@@ -443,6 +495,7 @@ function CompleteProfileContent() {
                           <Form.Control
                             type="text"
                             name="firstName"
+                            maxLength={25}
                             placeholder="First name"
                             className="custom_field_input"
                             value={customerData.firstName}
@@ -456,6 +509,7 @@ function CompleteProfileContent() {
                           <Form.Control
                             type="text"
                             name="lastName"
+                            maxLength={25}
                             placeholder="Last name"
                             className="custom_field_input"
                             value={customerData.lastName}
@@ -591,6 +645,35 @@ function CompleteProfileContent() {
           justify-content: center;
           color: #fff;
           border: 1px solid #161616;
+        }
+        :global(.custom-dropdown .dropdown-toggle) {
+          border: 1px solid #23ada4 !important;
+          background-color: transparent !important;
+          border-radius: 8px !important;
+          padding: 10px 15px !important;
+          font-size: 14px !important;
+        }
+        :global(.custom-dropdown .dropdown-toggle::after) {
+          margin-left: auto !important;
+        }
+        :global(.custom-dropdown-menu) {
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          background-color: #1a1a1a !important;
+          border-radius: 8px !important;
+        }
+        :global(.dropdown-item-custom) {
+          color: #fff !important;
+          font-size: 14px !important;
+          padding: 8px 15px !important;
+          background: transparent !important;
+        }
+        :global(.dropdown-item-custom:hover), :global(.dropdown-item-custom:focus) {
+          background-color: #23ada4 !important;
+          color: #fff !important;
+        }
+        :global(.dropdown-item-custom.active) {
+          background-color: #23ada4 !important;
+          color: #fff !important;
         }
         :global(.compplete_profile_sec .custom_date_input) {
           color: #fff !important;

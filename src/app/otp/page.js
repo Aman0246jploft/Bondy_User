@@ -46,6 +46,8 @@ function OTPContent() {
     }
   }, [searchParams]);
 
+  const [focusedIndex, setFocusedIndex] = useState(null);
+
   const handleChange = (element, index) => {
     if (isNaN(element.value)) return false;
 
@@ -247,11 +249,13 @@ function OTPContent() {
                             key={index}
                             type="text"
                             maxLength="1"
-                            placeholder="—"
+                            placeholder={focusedIndex === index ? "" : "—"}
                             ref={(el) => (inputRefs.current[index] = el)}
                             value={data}
                             onChange={(e) => handleChange(e.target, index)}
                             onKeyDown={(e) => handleKeyDown(e, index)}
+                            onFocus={() => setFocusedIndex(index)}
+                            onBlur={() => setFocusedIndex(null)}
                             className="otp-input"
                           />
                         ))}

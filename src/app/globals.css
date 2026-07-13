@@ -2458,8 +2458,21 @@ footer::before {
   width: 100%;
 }
 
-.input-box input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
+.footer-right .input-box input::placeholder {
+  color: #fff !important;
+  opacity: 1 !important;
+}
+.footer-right .input-box input::-webkit-input-placeholder {
+  color: #fff !important;
+  opacity: 1 !important;
+}
+.footer-right .input-box input::-moz-placeholder {
+  color: #fff !important;
+  opacity: 1 !important;
+}
+.footer-right .input-box input:-ms-input-placeholder {
+  color: #fff !important;
+  opacity: 1 !important;
 }
 
 .stay-btn {

@@ -249,14 +249,14 @@ export default function Page() {
                             <Tab.Pane eventKey="Customer">
                               <Form className="login_field" noValidate onSubmit={handleLogin}>
                                 <Form.Group className="mb-3" controlId="customerEmail">
-                                  <Form.Control type="email" name="email" placeholder={t("email")} value={formData.email} onChange={handleChange} />
+                                  <Form.Control type="email" name="email" maxLength={50} placeholder={t("email")} value={formData.email} onChange={handleChange} />
                                   {errors.email && (
                                     <div className="text-danger small mt-1">{errors.email}</div>
                                   )}
                                 </Form.Group>
                                 <Form.Group className="mb-3" controlId="customerPassword">
                                   <div className="d-flex gap-2 position-relative">
-                                    <Form.Control type={show ? "text" : "password"} name="password" placeholder={t("enterPassword")} value={formData.password} onChange={handleChange} />
+                                    <Form.Control type={show ? "text" : "password"} name="password" maxLength={50} placeholder={t("enterPassword")} value={formData.password} onChange={handleChange} />
                                     <button type="button" onClick={() => setShow(!show)} className="password-eye-btn">
                                       <img src={show ? "/img/lock.svg" : "/img/unlock.svg"} alt="toggle password" />
                                     </button>
@@ -299,14 +299,14 @@ export default function Page() {
                             <Tab.Pane eventKey="Organizer">
                               <Form className="login_field" noValidate onSubmit={handleLogin}>
                                 <Form.Group className="mb-3" controlId="organizerEmail">
-                                  <Form.Control type="email" name="email" placeholder={t("email")} value={formData.email} onChange={handleChange} />
+                                  <Form.Control type="email" name="email" maxLength={50} placeholder={t("email")} value={formData.email} onChange={handleChange} />
                                   {errors.email && (
                                     <div className="text-danger small mt-1">{errors.email}</div>
                                   )}
                                 </Form.Group>
                                 <Form.Group className="mb-3" controlId="organizerPassword">
                                   <div className="d-flex gap-2 position-relative">
-                                    <Form.Control type={show ? "text" : "password"} name="password" placeholder={t("enterPassword")} value={formData.password} onChange={handleChange} />
+                                    <Form.Control type={show ? "text" : "password"} name="password" maxLength={50} placeholder={t("enterPassword")} value={formData.password} onChange={handleChange} />
                                     <button type="button" onClick={() => setShow(!show)} className="password-eye-btn">
                                       <img src={show ? "/img/lock.svg" : "/img/unlock.svg"} alt="toggle password" />
                                     </button>
@@ -349,14 +349,14 @@ export default function Page() {
                             <Tab.Pane eventKey="Staff">
                               <Form className="login_field" noValidate onSubmit={handleLogin}>
                                 <Form.Group className="mb-3" controlId="staffEmail">
-                                  <Form.Control type="email" name="email" placeholder={t("email")} value={formData.email} onChange={handleChange} />
+                                  <Form.Control type="email" name="email" maxLength={50} placeholder={t("email")} value={formData.email} onChange={handleChange} />
                                   {errors.email && (
                                     <div className="text-danger small mt-1">{errors.email}</div>
                                   )}
                                 </Form.Group>
                                 <Form.Group className="mb-3" controlId="staffPassword">
                                   <div className="d-flex gap-2 position-relative">
-                                    <Form.Control type={show ? "text" : "password"} name="password" placeholder={t("enterPassword")} value={formData.password} onChange={handleChange} />
+                                    <Form.Control type={show ? "text" : "password"} name="password" maxLength={50} placeholder={t("enterPassword")} value={formData.password} onChange={handleChange} />
                                     <button type="button" onClick={() => setShow(!show)} className="password-eye-btn">
                                       <img src={show ? "/img/lock.svg" : "/img/unlock.svg"} alt="toggle password" />
                                     </button>

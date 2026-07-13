@@ -31,19 +31,10 @@ function PersonalInfoContent() {
     firstName: "",
     lastName: "",
     email: "",
-    state: "",
-    stateCode: "",
-    city: "",
-    country: "",
-    countryCode: "",
     dob: "",
     contactNumber: "",
-    zipcode: "",
     profileImage: "",
     backgroundImage: "",
-    latitude: 0,
-    longitude: 0,
-    address: "",
     organizerVerificationStatus: "",
     totalFollowers: 0,
     totalFollowing: 0,
@@ -51,6 +42,8 @@ function PersonalInfoContent() {
     reviewCount: 0,
     role: "",
     isVerified: false,
+    gender: "",
+    bio: "",
   });
 
   const [countries] = useState(Country.getAllCountries());
@@ -114,23 +107,14 @@ function PersonalInfoContent() {
             firstName: profile.firstName || "",
             lastName: profile.lastName || "",
             email: profile.email || "",
-            state: location.state || "",
-            stateCode: stateCode,
-            city: location.city || "",
-            country: location.country || "",
-            countryCode: countryCode,
             dob: profile.dob ? profile.dob.split("T")[0] : "",
             contactNumber: profile.contactNumber
               ? profile.countryCode
                 ? `${profile.countryCode}${profile.contactNumber}`
                 : profile.contactNumber
               : "",
-            zipcode: location.zipcode || "",
             profileImage: profile.profileImage || "",
             backgroundImage: profile.backgroundImage || "",
-            latitude: location.coordinates?.[1] || 0,
-            longitude: location.coordinates?.[0] || 0,
-            address: location.address || "",
             organizerVerificationStatus: profile.organizerVerificationStatus || "",
             totalFollowers: profile.totalFollowers || 0,
             totalFollowing: profile.totalFollowing || 0,
@@ -138,6 +122,8 @@ function PersonalInfoContent() {
             reviewCount: profile.reviewCount || 0,
             role: profile.role || "",
             isVerified: profile.isVerified || false,
+            gender: profile.gender || "",
+            bio: profile.bio || "",
           };
 
           setSelfUserId(profile._id);
@@ -310,25 +296,16 @@ function PersonalInfoContent() {
         }
       }
 
-      // Construct location object to match backend requirement exactly
+      // Construct payload to match backend requirement
       const updatePayload = {
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         dob: profileData.dob,
-        contactNumber: finalContactNumber,
-        countryCode: finalCountryCode,
         profileImage: uploadedProfileImage,
         backgroundImage: uploadedBackgroundImage,
         categories: selectedCategoryIds,
-        location: {
-          latitude: Number(profileData.latitude) || 0,
-          longitude: Number(profileData.longitude) || 0,
-          city: profileData.city,
-          country: profileData.country,
-          address: `${profileData.city}, ${profileData.state}`,
-          state: profileData.state,
-          zipcode: profileData.zipcode,
-        },
+        gender: profileData.gender,
+        bio: profileData.bio,
       };
 
       const response = await authApi.updateProfile(updatePayload);
@@ -344,23 +321,14 @@ function PersonalInfoContent() {
           firstName: finalProfile.firstName || "",
           lastName: finalProfile.lastName || "",
           email: finalProfile.email || "",
-          state: location.state || "",
-          stateCode: profileData.stateCode,
-          city: location.city || "",
-          country: location.country || "",
-          countryCode: profileData.countryCode,
           dob: finalProfile.dob ? finalProfile.dob.split("T")[0] : "",
           contactNumber: finalProfile.contactNumber
             ? finalProfile.countryCode
               ? `${finalProfile.countryCode}${finalProfile.contactNumber}`
               : finalProfile.contactNumber
             : "",
-          zipcode: location.zipcode || "",
           profileImage: finalProfile.profileImage || "",
           backgroundImage: finalProfile.backgroundImage || "",
-          latitude: location.coordinates?.[1] || 0,
-          longitude: location.coordinates?.[0] || 0,
-          address: location.address || "",
           organizerVerificationStatus: finalProfile.organizerVerificationStatus || "",
           totalFollowers: finalProfile.totalFollowers || 0,
           totalFollowing: finalProfile.totalFollowing || 0,
@@ -368,6 +336,8 @@ function PersonalInfoContent() {
           reviewCount: finalProfile.reviewCount || 0,
           role: finalProfile.role || "",
           isVerified: finalProfile.isVerified || false,
+          gender: finalProfile.gender || "",
+          bio: finalProfile.bio || "",
         };
 
         setProfileData(updatedFetchedData);
@@ -626,105 +596,59 @@ function PersonalInfoContent() {
               </div>
             </Col>
 
-            {/* Row 3: Country and State */}
+            {/* Row 3: Gender and Contact Number */}
             <Col md={6}>
               <div className="profile-input-container">
-                <label htmlFor="country">{t("country")}</label>
+                <label htmlFor="gender">Gender</label>
                 <div className="input-wrapper">
                   <select
                     className="form-select"
-                    id="country"
-                    value={profileData.country}
-                    onChange={handleCountryChange}
+                    id="gender"
+                    value={profileData.gender}
+                    onChange={handleChange}
                     disabled={!isEditMode}>
-                    <option value="">
-                      {t("selectCountry") || "Select Country"}
-                    </option>
-                    {countries.map((c) => (
-                      <option key={c.isoCode} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
+                    <option value="">Select Gender</option>
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
                   </select>
                   <span className="form-icon">
-                    <img src="/img/form-globe.svg" alt="" />
+                    <img src="/img/form-user.svg" alt="" />
                   </span>
                 </div>
-                {errors.country && (
-                  <small className="text-danger ps-2">{errors.country}</small>
-                )}
               </div>
             </Col>
-            <Col md={6}>
-              <div className="profile-input-container">
-                <label htmlFor="state">{t("state")}</label>
-                <div className="input-wrapper">
-                  <select
-                    className="form-select"
-                    id="state"
-                    value={profileData.state}
-                    onChange={handleStateChange}
-                    disabled={!isEditMode || !profileData.country}>
-                    <option value="">{t("selectState") || "Select State"}</option>
-                    {states.map((s) => (
-                      <option key={s.isoCode} value={s.name}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="form-icon">
-                    <img src="/img/form-globe.svg" alt="" />
-                  </span>
-                </div>
-                {errors.state && (
-                  <small className="text-danger ps-2">{errors.state}</small>
-                )}
-              </div>
-            </Col>
-
-            {/* Row 4: City and Zipcode */}
-            <Col md={6}>
-              <div className="profile-input-container">
-                <label htmlFor="city">{t("city")}</label>
-                <div className="input-wrapper">
-                  <select
-                    className="form-select"
-                    id="city"
-                    value={profileData.city}
-                    onChange={handleCityChange}
-                    disabled={!isEditMode || !profileData.state}>
-                    <option value="">{t("selectCity") || "Select City"}</option>
-                    {cities.map((city) => (
-                      <option key={city.name} value={city.name}>
-                        {city.name}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="form-icon">
-                    <img src="/img/form-mark.svg" alt="" />
-                  </span>
-                </div>
-                {errors.city && (
-                  <small className="text-danger ps-2">{errors.city}</small>
-                )}
-              </div>
-            </Col>
-
-            {/* Row 5: Contact Number */}
             <Col md={6}>
               <div className="profile-input-container">
                 <label>{t("contactNumber") || "Contact Number"}</label>
-                <div
-                  className={`phone_input_wrapper ${!isEditMode ? "disabled" : ""}`}>
+                <div className="phone_input_wrapper disabled">
                   <PhoneInput
                     country={"us"}
                     value={profileData.contactNumber}
-                    onChange={(phone) => handlePhoneChange("+" + phone)}
                     inputClass="form-control"
                     containerClass="phone_input"
                     dropdownClass="phone_input_dropdown"
                     buttonClass="phone_input_button"
+                    disabled={true}
+                  />
+                </div>
+              </div>
+            </Col>
+
+            {/* Bio */}
+            <Col md={12}>
+              <div className="profile-input-container">
+                <label htmlFor="bio">Bio</label>
+                <div className="input-wrapper">
+                  <textarea
+                    className="form-control"
+                    id="bio"
+                    rows={3}
+                    maxLength={200}
+                    placeholder="Tell us about yourself..."
+                    value={profileData.bio}
+                    onChange={handleChange}
                     disabled={!isEditMode}
+                    style={{ resize: "none", minHeight: "90px" }}
                   />
                 </div>
               </div>
