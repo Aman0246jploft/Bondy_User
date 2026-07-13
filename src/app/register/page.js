@@ -344,7 +344,7 @@ function RegisterForm() {
           if (!profile?.businessName || !profile?.businessCategory) {
             return router.push("/completeprofile");
           }
-          if (!profile?.isVerified) {
+          if (!(profile?.hasBeenApproved || profile?.isVerified)) {
             return router.push("/completeprofile");
           }
           router.push("/");

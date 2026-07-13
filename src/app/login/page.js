@@ -118,7 +118,7 @@ export default function Page() {
           if (!profile?.businessName || !profile?.businessCategory) {
             return router.push("/completeprofile");
           }
-          if (!profile?.isVerified) {
+          if (!(profile?.hasBeenApproved || profile?.isVerified)) {
             // Redirect to completeprofile or root where verification modal will be shown
             return router.push("/completeprofile");
           }

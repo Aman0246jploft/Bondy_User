@@ -88,7 +88,7 @@ function CompleteProfileContent() {
           // Check role: 2 is Organizer
           if (profile?.roleId === 2 || profile?.organizerVerificationStatus) {
             setIsOrganizer(true);
-            const isVerified = profile?.isVerified ?? false;
+            const isApproved = profile?.hasBeenApproved || profile?.isVerified || false;
 
             const hasBusinessDetails = (
               profile?.businessName ||
@@ -97,7 +97,7 @@ function CompleteProfileContent() {
               profile?.socialMediaLink
             );
 
-            if (!isVerified) {
+            if (!isApproved) {
               if (hasBusinessDetails) {
                 // Already submitted details but still not verified -> Open verification modal directly
                 setModalShow(true);
@@ -111,7 +111,7 @@ function CompleteProfileContent() {
                 });
               }
             } else {
-              // Verified -> Redirect to homepage
+              // Approved -> Redirect to homepage
               router.push("/");
             }
           } else {
