@@ -2483,7 +2483,23 @@ footer::before {
 }
 
 input.footer-email-input::placeholder {
-  color: #fff !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+input.footer-email-input::-webkit-input-placeholder {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+input.footer-email-input::-moz-placeholder {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+input.footer-email-input:-ms-input-placeholder {
+  color: #ffffff !important;
+  opacity: 1 !important;
 }
 
 .stay-btn {
@@ -6980,6 +6996,12 @@ input[placeholder]::placeholder,
 textarea[placeholder]::placeholder {
   color: #a0a0a0 !important;
   -webkit-text-fill-color: #a0a0a0 !important;
+  opacity: 1 !important;
+}
+
+input.footer-email-input::placeholder {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   opacity: 1 !important;
 }
 
