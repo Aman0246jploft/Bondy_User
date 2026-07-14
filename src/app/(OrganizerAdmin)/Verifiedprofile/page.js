@@ -244,7 +244,7 @@ function VerificationPageContent() {
         contactNumber: finalContactNumber
       });
       if (res?.status) {
-        toast.success(res.message || t("phoneOtpSent") || "OTP sent successfully to your phone number!");
+        toast.success(t("phoneOtpSent") || "OTP sent successfully to your phone number!");
         setPhoneOtpSent(true);
       }
     } catch (err) {
@@ -289,7 +289,7 @@ function VerificationPageContent() {
         email: emailVal
       });
       if (res?.status) {
-        toast.success(res.message || t("emailOtpSent") || "OTP sent successfully to your email!");
+        toast.success(t("emailOtpSent") || res.message || "OTP sent successfully to your email!");
         setEmailOtpSent(true);
       }
     } catch (err) {
@@ -436,10 +436,10 @@ function VerificationPageContent() {
   return (
     <div className="cards verification-container">
       {/* Back to Profile */}
-      <Link href="/OrganizerProfile" className="back-btn mb-4">
+      <div onClick={() => router.back()} className="back-btn mb-4" style={{ cursor: "pointer" }}>
         <ArrowLeft size={18} className="me-2" />
         <span>{t("backToProfile") || "Back to Profile"}</span>
-      </Link>
+      </div>
 
       {/* Main Status Header */}
       {allVerified ? (

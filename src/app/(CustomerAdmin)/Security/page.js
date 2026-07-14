@@ -108,7 +108,7 @@ function SecurityPageContent() {
         contactNumber: finalContactNumber
       });
       if (res?.status) {
-        toast.success(res.message || t("phoneOtpSent") || "OTP sent successfully to your phone number!");
+        toast.success(t("phoneOtpSent") || res.message || "OTP sent successfully to your phone number!");
         setPhoneOtpSent(true);
       }
     } catch (err) {
@@ -153,7 +153,7 @@ function SecurityPageContent() {
         email: emailVal
       });
       if (res?.status) {
-        toast.success(res.message || t("emailOtpSent") || "OTP sent successfully to your email!");
+        toast.success(t("emailOtpSent") || res.message || "OTP sent successfully to your email!");
         setEmailOtpSent(true);
       }
     } catch (err) {
