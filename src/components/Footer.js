@@ -146,7 +146,7 @@ export default function Footer() {
                   placeholder={t("emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
+                // disabled={loading}
                 />
               </div>
               <button

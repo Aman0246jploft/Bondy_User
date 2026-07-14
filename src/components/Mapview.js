@@ -269,6 +269,8 @@ export default function Mapview({ searchParams }) {
           { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#3d3d3d" }] }
         ],
         disableDefaultUI: true,
+        keyboardShortcuts: false,
+        gestureHandling: "greedy",
       });
 
       // Fetch fresh events whenever map stops moving (zoom/pan complete).
@@ -462,8 +464,15 @@ export default function Mapview({ searchParams }) {
             <div
               ref={mapRef}
               className="map-box"
-              style={{ borderRadius: '15px', height: '600px', background: '#1a1a1a' }}
+              style={{ borderRadius: '15px', height: '600px', background: '#1a1a1a', position: 'relative' }}
             >
+              <style dangerouslySetInnerHTML={{
+                __html: `
+                .gm-style a[href*="maps.google.com"] { display: none !important; }
+                .gm-style-cc { display: none !important; }
+                .gmnoprint { display: none !important; }
+                .gm-style-moc { display: none !important; }
+              `}} />
               {!isLoaded && <div className="d-flex align-items-center justify-content-center h-100"><p>Loading Google Maps...</p></div>}
             </div>
           </Col>
