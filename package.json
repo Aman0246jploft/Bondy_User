@@ -13,6 +13,7 @@
     "@internationalized/date": "^3.12.1",
     "@nextui-org/react": "^2.6.11",
     "@react-oauth/google": "^0.13.5",
+    "apexcharts": "^5.16.0",
     "axios": "^1.13.4",
     "bootstrap": "^5.3.8",
     "chart.js": "^4.5.1",
