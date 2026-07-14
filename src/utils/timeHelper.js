@@ -6,7 +6,9 @@ export const formatTime = (time, is24Hour = true, language = "") => {
   const minute = minuteStr.padStart(2, "0");
 
   if (is24Hour) {
-    const suffix = language === "mn" ? " Цаг" : language ? " H" : "";
+    // const suffix = language === "mn" ? " Цаг" : language ? " H" : "";
+    const suffix = language === "mn" ? " " : language ? " " : "";
+
     return `${hour.toString().padStart(2, "0")}:${minute}${suffix}`;
   }
 
