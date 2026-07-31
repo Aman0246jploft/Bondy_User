@@ -32,6 +32,11 @@ function StaffHome() {
   const [loadingAttendees, setLoadingAttendees] = useState(false);
   const [attendeeSearch, setAttendeeSearch] = useState("");
   const [attendeeStats, setAttendeeStats] = useState({ total: 0, checkedIn: 0 });
+  const [expandedAttendeeId, setExpandedAttendeeId] = useState(null);
+
+  const toggleExpand = (id) => {
+    setExpandedAttendeeId(expandedAttendeeId === id ? null : id);
+  };
 
   // Scan History states
   const [scanHistory, setScanHistory] = useState([]);
@@ -1317,45 +1322,82 @@ function StaffHome() {
               </div>
             ) : (
               <div className="attendee-list-scroll">
-                {filteredAttendees.map((a) => (
-                  <div
-                    className="attendee-item-row"
-                    key={a.transactionId || a._id}
-                    onClick={() => handleVerifyCode(a.bookingId)}
-                  >
-                    <div className="attendee-item-info">
-                      <div className="attendee-item-avatar">
-                        {a.user?.profileImage ? (
-                          <img src={a.user.profileImage} alt="avatar" onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                {filteredAttendees.map((a) => {
+                  const isExpanded = expandedAttendeeId === (a.transactionId || a._id);
+                  return (
+                    <div key={a.transactionId || a._id} className="mb-2">
+                      <div
+                        className="attendee-item-row"
+                        style={{
+                          borderBottomLeftRadius: isExpanded ? 0 : "16px",
+                          borderBottomRightRadius: isExpanded ? 0 : "16px",
+                          borderBottom: isExpanded ? "none" : undefined
+                        }}
+                        onClick={() => toggleExpand(a.transactionId || a._id)}
+                      >
+                        <div className="attendee-item-info">
+                          <div className="attendee-item-avatar">
+                            {a.user?.profileImage ? (
+                              <img src={a.user.profileImage} alt="avatar" onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ) : (
+                              <svg width="20" height="20" fill="#7c7c7c" viewBox="0 0 16 16">
+                                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="attendee-item-text">
+                            <h6>{`${a.user?.firstName || ""} ${a.user?.lastName || ""}`}</h6>
+                            <p>{`${t("bookingID") || "Booking ID"}: ${a.bookingId || "N/A"}`}</p>
+                          </div>
+                        </div>
+
+                        {(a.isFullyCheckedIn || a.tickets?.isFullyCheckedIn) ? (
+                          <button className="checkin-action-btn checked" disabled onClick={(e) => e.stopPropagation()}>
+                            &#10003;
+                          </button>
                         ) : (
-                          <svg width="20" height="20" fill="#7c7c7c" viewBox="0 0 16 16">
-                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
-                          </svg>
+                          <button
+                            className="checkin-action-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCheckInSubmit(a.bookingId);
+                            }}
+                          >
+                            &#10142;
+                          </button>
                         )}
                       </div>
-                      <div className="attendee-item-text">
-                        <h6>{`${a.user?.firstName || ""} ${a.user?.lastName || ""}`}</h6>
-                        <p>{`${t("bookingID") || "Booking ID"}: ${a.bookingId || "N/A"}`}</p>
-                      </div>
+                      {isExpanded && a.tickets?.details && a.tickets.details.length > 0 && (
+                        <div className="p-3" style={{ background: "#181818", borderBottomLeftRadius: "16px", borderBottomRightRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.05)", borderTop: "none" }}>
+                          {a.tickets.details.map((ticket, idx) => (
+                            <div key={idx} className="d-flex justify-content-between align-items-center py-2" style={{ borderBottom: idx !== a.tickets.details.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none" }}>
+                              <div>
+                                <p className="m-0" style={{ fontSize: "14px", fontWeight: "600", color: "#fff" }}>{ticket.ticketName}</p>
+                                <p className="m-0" style={{ fontSize: "12px", color: "#7c7c7c" }}>Qty: {ticket.qty}</p>
+                              </div>
+                              {ticket.isCheckedIn ? (
+                                <button className="checkin-action-btn checked" style={{ width: "28px", height: "28px", fontSize: "12px" }} disabled>
+                                  &#10003;
+                                </button>
+                              ) : (
+                                <button
+                                  className="checkin-action-btn"
+                                  style={{ width: "28px", height: "28px", fontSize: "12px" }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCheckInSubmit(ticket.qrCodeData || a.bookingId);
+                                  }}
+                                >
+                                  &#10142;
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-
-                    {(a.isFullyCheckedIn || a.tickets?.isFullyCheckedIn) ? (
-                      <button className="checkin-action-btn checked" disabled onClick={(e) => e.stopPropagation()}>
-                        &#10003;
-                      </button>
-                    ) : (
-                      <button
-                        className="checkin-action-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCheckInSubmit(a.bookingId);
-                        }}
-                      >
-                        &#10142;
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

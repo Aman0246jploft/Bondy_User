@@ -916,14 +916,17 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                             style={{
                                                 backgroundColor: "#111",
                                                 border: "1px solid rgba(35, 173, 164, 0.2)",
+                                                overflow: "hidden",
                                             }}
                                         >
-                                            <div className="d-flex justify-content-between align-items-start mb-2">
-                                                <div>
-                                                    <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "16px" }}>{ticket.ticketName}</h6>
-                                                    <p className="mb-0 text-muted" style={{ fontSize: "13px" }}>{ticket.ticketShortDesc || t("standardEntry")}</p>
+                                            <div className="d-flex justify-content-between align-items-start mb-2 gap-3" style={{ minWidth: 0 }}>
+                                                <div style={{ flex: 1, minWidth: 0, wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                                                    <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "16px", wordBreak: "break-word", overflowWrap: "anywhere" }}>{ticket.ticketName}</h6>
+                                                    <p className="mb-0 text-muted" style={{ fontSize: "13px", wordBreak: "break-word", overflowWrap: "anywhere" }}>{ticket.ticketShortDesc || t("standardEntry")}</p>
                                                 </div>
-                                                <h5 className="fw-bold text-white mb-0" style={{ color: "#23ada4" }}>{formatPrice(ticket.price)}</h5>
+                                                {ticket.price != null && (
+                                                    <h5 className="fw-bold text-white mb-0 text-nowrap" style={{ color: "#23ada4" }}>{formatPrice(ticket.price)}</h5>
+                                                )}
                                             </div>
                                             <div className="d-flex justify-content-between align-items-center mt-3">
                                                 <div className="d-flex flex-column gap-1">
@@ -1011,9 +1014,9 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                         </svg>
                                                     </span>
                                                 )}
-                                                <div className="d-flex justify-content-between align-items-center">
-                                                    <div className="d-flex align-items-center gap-3">
-                                                        <div className="d-flex align-items-center justify-content-center rounded-3" style={{ width: "48px", height: "48px", backgroundColor: "rgba(35, 173, 164, 0.12)" }}>
+                                                <div className="d-flex justify-content-between align-items-center gap-2" style={{ minWidth: 0 }}>
+                                                    <div className="d-flex align-items-center gap-3" style={{ flex: 1, minWidth: 0 }}>
+                                                        <div className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0" style={{ width: "48px", height: "48px", backgroundColor: "rgba(35, 173, 164, 0.12)" }}>
                                                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                                 <rect x="2" y="5" width="20" height="14" rx="2" stroke="#23ada4" strokeWidth="2" />
                                                                 <path d="M6 10H10V14H6V10Z" fill="#ff4c8b" />
@@ -1021,16 +1024,16 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                                 <circle cx="22" cy="12" r="2" fill="#0f0f0f" />
                                                             </svg>
                                                         </div>
-                                                        <div>
-                                                            <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px" }}>
+                                                        <div style={{ flex: 1, minWidth: 0, wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                                                            <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
                                                                 {t("singleSessionPerlass") || "Single Session / per class"}
                                                             </h6>
-                                                            <p className="mb-0 text-muted" style={{ fontSize: "12px" }}>
+                                                            <p className="mb-0 text-muted" style={{ fontSize: "12px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
                                                                 {t("singleSessionDesc") || "Book one specific session only"}
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <div className="d-flex align-items-center gap-3">
+                                                    <div className="d-flex align-items-center gap-3 flex-shrink-0">
                                                         <span className="fw-bold" style={{ fontSize: "16px", color: selectedPassType === "single" ? "#23ada4" : "#fff" }}>
                                                             {formatPrice(item.price * Math.max(1, Object.keys(selectedSlots).length))}
                                                         </span>
@@ -1067,9 +1070,9 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                                 </svg>
                                                             </span>
                                                         )}
-                                                        <div className="d-flex justify-content-between align-items-center">
-                                                            <div className="d-flex align-items-center gap-3">
-                                                                <div className="d-flex align-items-center justify-content-center rounded-3" style={{ width: "48px", height: "48px", backgroundColor: "rgba(35, 173, 164, 0.12)" }}>
+                                                        <div className="d-flex justify-content-between align-items-center gap-2" style={{ minWidth: 0 }}>
+                                                            <div className="d-flex align-items-center gap-3" style={{ flex: 1, minWidth: 0 }}>
+                                                                <div className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0" style={{ width: "48px", height: "48px", backgroundColor: "rgba(35, 173, 164, 0.12)" }}>
                                                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                                         <rect x="3" y="4" width="18" height="16" rx="2" stroke="#23ada4" strokeWidth="2" />
                                                                         <line x1="3" y1="9" x2="21" y2="9" stroke="#23ada4" strokeWidth="2" />
@@ -1080,16 +1083,16 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                                         <circle cx="16" cy="13" r="1.5" fill="#23ada4" />
                                                                     </svg>
                                                                 </div>
-                                                                <div>
-                                                                    <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px" }}>
+                                                                <div style={{ flex: 1, minWidth: 0, wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                                                                    <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
                                                                         {t("oneMonthPass") || "1-Month Pass"}
                                                                     </h6>
-                                                                    <p className="mb-0 text-muted" style={{ fontSize: "12px" }}>
+                                                                    <p className="mb-0 text-muted" style={{ fontSize: "12px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
                                                                         {t("oneMonthPassDesc") || "Valid for 30 days from check-in"}
                                                                     </p>
                                                                 </div>
                                                             </div>
-                                                            <div className="d-flex align-items-center gap-3">
+                                                            <div className="d-flex align-items-center gap-3 flex-shrink-0">
                                                                 <span className="fw-bold" style={{ fontSize: "16px", color: selectedPassType === "1_month" ? "#23ada4" : "#fff" }}>
                                                                     {formatPrice(item.oneMonthPassPrice)}
                                                                 </span>
@@ -1118,24 +1121,24 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                             </svg>
                                                         </span>
                                                     )}
-                                                    <div className="d-flex justify-content-between align-items-center">
-                                                        <div className="d-flex align-items-center gap-3">
-                                                            <div className="d-flex align-items-center justify-content-center rounded-3" style={{ width: "48px", height: "48px", backgroundColor: "rgba(35, 173, 164, 0.12)" }}>
+                                                    <div className="d-flex justify-content-between align-items-center gap-2" style={{ minWidth: 0 }}>
+                                                        <div className="d-flex align-items-center gap-3" style={{ flex: 1, minWidth: 0 }}>
+                                                            <div className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0" style={{ width: "48px", height: "48px", backgroundColor: "rgba(35, 173, 164, 0.12)" }}>
                                                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                                     <path d="M12 3L14.5 8.5L20 11L14.5 13.5L12 19L9.5 13.5L4 11L9.5 8.5L12 3Z" stroke="#23ada4" strokeWidth="2" strokeLinejoin="round" fill="none" />
                                                                     <path d="M5 3L6 5L8 6L6 7L5 9L4 7L2 6L4 5L5 3Z" fill="#23ada4" />
                                                                 </svg>
                                                             </div>
-                                                            <div>
-                                                                <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px" }}>
+                                                            <div style={{ flex: 1, minWidth: 0, wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                                                                <h6 className="fw-bold mb-1 text-white" style={{ fontSize: "15px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
                                                                     {t("threeMonthPass") || "3-Month Pass"}
                                                                 </h6>
-                                                                <p className="mb-0 text-muted" style={{ fontSize: "12px" }}>
+                                                                <p className="mb-0 text-muted" style={{ fontSize: "12px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
                                                                     {t("threeMonthPassDesc") || "Valid for 90 days from check-in"}
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <div className="d-flex align-items-center gap-3">
+                                                        <div className="d-flex align-items-center gap-3 flex-shrink-0">
                                                             <span className="fw-bold" style={{ fontSize: "16px", color: selectedPassType === "3_month" ? "#23ada4" : "#fff" }}>
                                                                 {formatPrice(item.threeMonthPassPrice)}
                                                             </span>
