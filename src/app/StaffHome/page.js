@@ -269,9 +269,9 @@ function StaffHome() {
     setLoadingVerify(true);
     try {
       const payload = { qrCodeData: code.trim() };
-      if (activeEntity) {
-        payload.entityId = activeEntity._id;
-      }
+      // if (activeEntity) {
+      //   payload.entityId = activeEntity._id;
+      // }
       // Single-shot: verify + auto check-in via /booking/scan-qr
       const res = await staffApi.bookingScanQR(payload);
       if (res?.status) {
@@ -1337,8 +1337,8 @@ function StaffHome() {
                       >
                         <div className="attendee-item-info">
                           <div className="attendee-item-avatar">
-                            {a.user?.profileImage ? (
-                              <img src={a.user.profileImage} alt="avatar" onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            {(a.user?.profileImage || a.profileImage) ? (
+                              <img src={a.user?.profileImage || a.profileImage} alt="avatar" onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             ) : (
                               <svg width="20" height="20" fill="#7c7c7c" viewBox="0 0 16 16">
                                 <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
@@ -1346,8 +1346,8 @@ function StaffHome() {
                             )}
                           </div>
                           <div className="attendee-item-text">
-                            <h6>{`${a.user?.firstName || ""} ${a.user?.lastName || ""}`}</h6>
-                            <p>{`${t("bookingID") || "Booking ID"}: ${a.bookingId || "N/A"}`}</p>
+                            <h6>{`${a.user?.firstName || a.firstName || ""} ${a.user?.lastName || a.lastName || ""}`.trim()}</h6>
+                            <p>{`${t("bookingID") || "Booking ID"}: ${a.bookingId || a.ticketNumber || "N/A"}`}</p>
                           </div>
                         </div>
 
@@ -1355,9 +1355,11 @@ function StaffHome() {
                           {isExpanded ? "▲" : "▼"}
                         </div>
                       </div>
-                      {isExpanded && a.tickets?.details && a.tickets.details.length > 0 && (
+                      {isExpanded && (
                         <div className="p-3" style={{ background: "#181818", borderBottomLeftRadius: "16px", borderBottomRightRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.05)", borderTop: "none" }}>
-                          {a.tickets.details.map((ticket, idx) => (
+
+                          {/* Events */}
+                          {a.tickets?.details && a.tickets.details.length > 0 && a.tickets.details.map((ticket, idx) => (
                             <div key={idx} className="d-flex justify-content-between align-items-center py-2" style={{ borderBottom: idx !== a.tickets.details.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none" }}>
                               <div>
                                 <p className="m-0" style={{ fontSize: "14px", fontWeight: "600", color: "#fff" }}>{ticket.ticketName}</p>
@@ -1381,6 +1383,59 @@ function StaffHome() {
                               )}
                             </div>
                           ))}
+
+                          {/* Courses (enrolledBatches) */}
+                          {a.enrolledBatches && a.enrolledBatches.length > 0 && a.enrolledBatches.map((batch, idx) => (
+                            <div key={idx} className="d-flex justify-content-between align-items-center py-2" style={{ borderBottom: idx !== a.enrolledBatches.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none" }}>
+                              <div>
+                                <p className="m-0" style={{ fontSize: "14px", fontWeight: "600", color: "#fff" }}>{batch.batchName || "Session"}</p>
+                                <p className="m-0" style={{ fontSize: "12px", color: "#7c7c7c" }}>{batch.startTime} - {batch.endTime}</p>
+                              </div>
+                              {(a.isFullyCheckedIn || a.checkedInQty >= a.qty) ? (
+                                <button className="checkin-action-btn checked" style={{ width: "28px", height: "28px", fontSize: "12px" }} disabled>
+                                  &#10003;
+                                </button>
+                              ) : (
+                                <button
+                                  className="checkin-action-btn"
+                                  style={{ width: "28px", height: "28px", fontSize: "12px" }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCheckInSubmit(batch.bookingId || a.bookingId);
+                                  }}
+                                >
+                                  &#10142;
+                                </button>
+                              )}
+                            </div>
+                          ))}
+
+                          {/* Fallback for Course Passes without specific batch/slots */}
+                          {(!a.tickets?.details?.length && !a.enrolledBatches?.length) && (
+                            <div className="d-flex justify-content-between align-items-center py-2">
+                              <div>
+                                <p className="m-0" style={{ fontSize: "14px", fontWeight: "600", color: "#fff" }}>{a.ticketName || "General Entry / Pass"}</p>
+                                <p className="m-0" style={{ fontSize: "12px", color: "#7c7c7c" }}>Qty: {a.qty || 1}</p>
+                              </div>
+                              {(a.isFullyCheckedIn || (a.checkedInQty !== undefined && a.checkedInQty >= a.qty) || a.isCheckedIn) ? (
+                                <button className="checkin-action-btn checked" style={{ width: "28px", height: "28px", fontSize: "12px" }} disabled>
+                                  &#10003;
+                                </button>
+                              ) : (
+                                <button
+                                  className="checkin-action-btn"
+                                  style={{ width: "28px", height: "28px", fontSize: "12px" }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCheckInSubmit(a.ticketNumber || a.bookingId);
+                                  }}
+                                >
+                                  &#10142;
+                                </button>
+                              )}
+                            </div>
+                          )}
+
                         </div>
                       )}
                     </div>
@@ -1682,10 +1737,10 @@ function StaffHome() {
             </div>
 
             {/* Title & description */}
-            <h3 style={{ fontSize: "20px", fontWeight: "700", color: "#fff", marginBottom: "10px" }}>
+            <h3 style={{ fontSize: "20px", fontWeight: "700", color: "#fff", marginBottom: "10px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
               {detailEntity.eventTitle || detailEntity.courseTitle}
             </h3>
-            <p style={{ color: "#8c8c8c", fontSize: "14px", lineHeight: "1.5", marginBottom: "25px" }}>
+            <p style={{ color: "#8c8c8c", fontSize: "14px", lineHeight: "1.5", marginBottom: "25px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
               {detailEntity.shortdesc || detailEntity.longdesc || (t("noDescriptionProvided") || "No description provided.")}
             </p>
 
@@ -1832,16 +1887,12 @@ function StaffHome() {
                 {/* Event Info */}
                 <div className="verify-event-info mb-3">
                   <span className="verify-label">{t("eventOrCourse") || "Event / Course"}</span>
-                  <div className="verify-val">{verifiedTicket.event?.title || "Unknown"}</div>
+                  <div className="verify-val" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>{verifiedTicket.event?.title || "Unknown"}</div>
                 </div>
 
                 {/* Status Badge — reflects auto check-in result */}
                 <div className="badge-wrapper mb-4">
-                  {isSuccess ? (
-                    <div className="badge-status valid" style={{ background: "rgba(35, 173, 164, 0.15)", color: "#23ada4" }}>
-                      &#10003; {t("checkedInSuccess") || "Checked In Successfully"}
-                    </div>
-                  ) : isCheckedInToday ? (
+                  {isCheckedInToday ? (
                     <div className="badge-status checked-in" style={{ background: "rgba(52, 199, 89, 0.15)", color: "#34c759" }}>
                       {t("checkedInToday") || "Already Checked In Today"}
                     </div>
@@ -1852,6 +1903,10 @@ function StaffHome() {
                   ) : isExpired ? (
                     <div className="badge-status expired">
                       {t("expiredTicket") || "Expired Ticket"}
+                    </div>
+                  ) : isSuccess ? (
+                    <div className="badge-status valid" style={{ background: "rgba(35, 173, 164, 0.15)", color: "#23ada4" }}>
+                      &#10003; {verifiedTicket.message || t("ticketVerified") || "Valid for Check-in"}
                     </div>
                   ) : (
                     <div className="badge-status expired">
@@ -1916,15 +1971,25 @@ function StaffHome() {
                   </div>
                 )}
 
-                {/* Single close button — no manual check-in needed */}
+                {/* Verification Actions */}
                 <div className="verify-actions d-flex gap-2">
+                  {isSuccess && !isAlreadyIn && !isCheckedInToday && !isExpired && verifiedTicket.bookingType === 'EVENT' && (
+                    <button
+                      className="common_btn w-100"
+                      onClick={() => handlePerformCheckIn()}
+                      disabled={checkingIn}
+                      style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}
+                    >
+                      {checkingIn ? <Spinner animation="border" size="sm" /> : (t("checkIn") || "Check In")}
+                    </button>
+                  )}
                   <button
                     className="common_btn w-100"
                     onClick={() => {
                       closeVerifyModal();
                       setManualTicketNumber("");
                     }}
-                    style={{ background: isSuccess ? "#23ada4" : "#333", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}
+                    style={{ background: "#333", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}
                   >
                     {t("close") || "Close"}
                   </button>
