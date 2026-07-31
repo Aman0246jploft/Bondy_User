@@ -1395,7 +1395,7 @@ function StaffHome() {
                                 <p className="m-0" style={{ fontSize: "14px", fontWeight: "600", color: "#fff" }}>{batch.batchName || "Session"}</p>
                                 <p className="m-0" style={{ fontSize: "12px", color: "#7c7c7c" }}>{batch.startTime} - {batch.endTime}</p>
                               </div>
-                              {(a.isFullyCheckedIn || a.checkedInQty >= a.qty) ? (
+                              {(a.isFullyCheckedIn || a.checkedInQty >= a.qty || batch.isCheckedIn) ? (
                                 <button className="checkin-action-btn checked" style={{ width: "28px", height: "28px", fontSize: "12px" }} disabled>
                                   &#10003;
                                 </button>
@@ -1405,7 +1405,7 @@ function StaffHome() {
                                   style={{ width: "28px", height: "28px", fontSize: "12px" }}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleCheckInSubmit(batch.bookingId || a.bookingId);
+                                    handleCheckInSubmit(batch.qrCodeData || batch.bookingId || a.bookingId);
                                   }}
                                 >
                                   &#10142;
@@ -1896,7 +1896,11 @@ function StaffHome() {
 
                 {/* Status Badge — reflects auto check-in result */}
                 <div className="badge-wrapper mb-4">
-                  {isCheckedInToday ? (
+                  {isSuccess ? (
+                    <div className="badge-status valid" style={{ background: "rgba(35, 173, 164, 0.15)", color: "#23ada4" }}>
+                      &#10003; {verifiedTicket.message || t("checkedInSuccess") || "Checked In Successfully"}
+                    </div>
+                  ) : isCheckedInToday ? (
                     <div className="badge-status checked-in" style={{ background: "rgba(52, 199, 89, 0.15)", color: "#34c759" }}>
                       {t("checkedInToday") || "Already Checked In Today"}
                     </div>
@@ -1907,10 +1911,6 @@ function StaffHome() {
                   ) : isExpired ? (
                     <div className="badge-status expired">
                       {t("expiredTicket") || "Expired Ticket"}
-                    </div>
-                  ) : isSuccess ? (
-                    <div className="badge-status valid" style={{ background: "rgba(35, 173, 164, 0.15)", color: "#23ada4" }}>
-                      &#10003; {verifiedTicket.message || t("ticketVerified") || "Valid for Check-in"}
                     </div>
                   ) : (
                     <div className="badge-status expired">
@@ -1975,18 +1975,8 @@ function StaffHome() {
                   </div>
                 )}
 
-                {/* Verification Actions */}
+                {/* Single close button — auto check-in is complete */}
                 <div className="verify-actions d-flex gap-2">
-                  {isSuccess && !isAlreadyIn && !isCheckedInToday && !isExpired && verifiedTicket.bookingType === 'EVENT' && (
-                    <button
-                      className="common_btn w-100"
-                      onClick={() => handlePerformCheckIn()}
-                      disabled={checkingIn}
-                      style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}
-                    >
-                      {checkingIn ? <Spinner animation="border" size="sm" /> : (t("checkIn") || "Check In")}
-                    </button>
-                  )}
                   <button
                     className="common_btn w-100"
                     onClick={() => {
