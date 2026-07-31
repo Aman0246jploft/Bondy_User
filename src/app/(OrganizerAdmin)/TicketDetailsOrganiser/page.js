@@ -142,6 +142,41 @@ function TicketDetailsContent() {
     }
   };
 
+  const handleDownloadSessionQR = async (session) => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const queryParams = new URLSearchParams();
+      if (session.ticketNumber) queryParams.append("ticketNumber", session.ticketNumber);
+      if (session.subBookingId) queryParams.append("subBookingId", session.subBookingId);
+      if (session.qrCodeData) queryParams.append("qrCodeData", session.qrCodeData);
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/booking/public/ticket/download/${id}?${queryParams.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+        }
+      });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      let filename = `Ticket-${ticketInfo?.bookingId || id}`;
+      if (session.ticketNumber) filename = `Ticket-${session.ticketNumber}`;
+      else if (session.subBookingId) filename = `Session-${session.subBookingId}`;
+      a.download = `${filename}.pdf`;
+      
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading individual QR:", error);
+      toast.error(t("shareLinkCopyFailed") || "Could not download ticket");
+    }
+  };
+
   const handleShare = async () => {
     try {
       const res = await bookingApi.getShareAndDownloadUrls(id);
@@ -612,6 +647,14 @@ function TicketDetailsContent() {
               {selectedSession.subBookingId && (
                 <p className="mt-1 text-secondary small mb-0">ID: {selectedSession.subBookingId}</p>
               )}
+              <div className="mt-4">
+                <button 
+                  className="common_btn px-4 py-2 w-auto mx-auto d-inline-block" 
+                  onClick={() => handleDownloadSessionQR(selectedSession)}
+                >
+                  {t("save") || "Save"}
+                </button>
+              </div>
             </>
           )}
         </Modal.Body>
