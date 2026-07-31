@@ -23,6 +23,13 @@ export default function TicketBooking({ item, type, scheduleId }) {
     // State for selected pass type: "single", "1_month", "3_month"
     const [selectedPassType, setSelectedPassType] = useState("single");
 
+    const handleSelectPassType = (passType) => {
+        if (selectedPassType !== passType) {
+            setSelectedPassType(passType);
+            setSelectedSlots({});
+        }
+    };
+
     // New state for price breakdown
     const [priceBreakdown, setPriceBreakdown] = useState({
         basePrice: 0,
@@ -296,7 +303,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 } else if (type === "COURSE") {
                     let payload;
                     if (item?.enrollmentType === "Ongoing") {
-                        const slots = Object.values(selectedSlots);
+                        const slots = selectedPassType === "single" ? Object.values(selectedSlots) : [];
                         if (selectedPassType === "single" && slots.length === 0) {
                             setPriceBreakdown({
                                 basePrice: 0, taxes: 0, discount: 0, totalAmount: 0,
@@ -396,7 +403,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
             } else if (type === "COURSE") {
                 let payload;
                 if (item?.enrollmentType === "Ongoing") {
-                    const slots = Object.values(selectedSlots);
+                    const slots = selectedPassType === "single" ? Object.values(selectedSlots) : [];
                     if (selectedPassType === "single" && slots.length === 0) {
                         toast.error(t("pleaseSelectBatchFirst") || "Please select at least one schedule first");
                         return;
@@ -490,7 +497,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 initResponse = await bookingApi.initiateBooking(payload);
             } else if (type === "COURSE") {
                 if (item?.enrollmentType === "Ongoing") {
-                    const slotEntries = Object.values(selectedSlots);
+                    const slotEntries = selectedPassType === "single" ? Object.values(selectedSlots) : [];
                     if (selectedPassType === "single" && slotEntries.length === 0) {
                         toast.error(t("pleaseSelectBatchFirst") || "Please select at least one schedule");
                         setLoading(false);
@@ -603,7 +610,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                 }
             } else if (type === "COURSE") {
                 if (item?.enrollmentType === "Ongoing") {
-                    const slotEntries = Object.values(selectedSlots);
+                    const slotEntries = selectedPassType === "single" ? Object.values(selectedSlots) : [];
                     if (selectedPassType === "single" && slotEntries.length === 0) {
                         toast.error(t("pleaseSelectBatchFirst") || "Please select at least one schedule");
                         setLoading(false);
@@ -989,7 +996,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                             {/* Single Session Card */}
                                             <div
                                                 className="p-3 rounded-3 text-start position-relative"
-                                                onClick={() => setSelectedPassType("single")}
+                                                onClick={() => handleSelectPassType("single")}
                                                 style={{
                                                     backgroundColor: selectedPassType === "single" ? "rgba(35, 173, 164, 0.05)" : "#2b2a2a",
                                                     border: selectedPassType === "single" ? "1.5px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
@@ -1045,7 +1052,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                     </div>
                                                     <div
                                                         className="p-3 rounded-3 text-start position-relative"
-                                                        onClick={() => setSelectedPassType("1_month")}
+                                                        onClick={() => handleSelectPassType("1_month")}
                                                         style={{
                                                             backgroundColor: selectedPassType === "1_month" ? "rgba(35, 173, 164, 0.05)" : "#2b2a2a",
                                                             border: selectedPassType === "1_month" ? "1.5px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
@@ -1096,7 +1103,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                             {item.threeMonthPassEnabled && (
                                                 <div
                                                     className="p-3 rounded-3 text-start position-relative"
-                                                    onClick={() => setSelectedPassType("3_month")}
+                                                    onClick={() => handleSelectPassType("3_month")}
                                                     style={{
                                                         backgroundColor: selectedPassType === "3_month" ? "rgba(35, 173, 164, 0.05)" : "#2b2a2a",
                                                         border: selectedPassType === "3_month" ? "1.5px solid #23ada4" : "1px solid rgba(255,255,255,0.1)",
