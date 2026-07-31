@@ -1613,7 +1613,18 @@ export const translations = {
     last1Year: "Last 1 Year",
     last14Days: "Last 14 Days",
     title: "Title",
-    analyticsSubtitle: "Track your performance at a glance"
+    analyticsSubtitle: "Track your performance at a glance",
+    individualTickets: "Individual Tickets",
+    checkedIn: "Checked In",
+    pending: "Pending",
+    sessionSchedule: "Session Schedule",
+    upcomingSessions: "Upcoming Sessions",
+    pastSessions: "Past Sessions",
+    viewQr: "View QR",
+    scanToVerify: "Scan to Verify",
+    scanToEntry: "Scan for Entry",
+    ticketQrCode: "Ticket QR Code",
+    sessionQrCode: "Session QR Code"
   },
   mn: {
     almostSoldOut: "Бараг зарагдаж дууссан",
@@ -3236,6 +3247,17 @@ export const translations = {
     last1Year: "Сүүлийн 1 жил",
     last14Days: "Сүүлийн 14 хоног",
     title: "Гарчиг",
-    analyticsSubtitle: "Өөрийн үр дүнг нэг дороос хянах"
+    analyticsSubtitle: "Өөрийн үр дүнг нэг дороос хянах",
+    individualTickets: "Тусгай тасалбарууд",
+    checkedIn: "Бүртгэгдсэн",
+    pending: "Хүлээгдэж буй",
+    sessionSchedule: "Хуралдааны хуваарь",
+    upcomingSessions: "Удахгүй болох хуралдаанууд",
+    pastSessions: "Өнгөрсөн хуралдаанууд",
+    viewQr: "QR харах",
+    scanToVerify: "Баталгаажуулахын тулд уншуулна уу",
+    scanToEntry: "Орохын тулд уншуулна уу",
+    ticketQrCode: "Тасалбарын QR код",
+    sessionQrCode: "Хуралдааны QR код"
   },
 };

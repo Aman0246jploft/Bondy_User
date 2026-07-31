@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import React, { useEffect, useState, Suspense, useRef } from "react";
-import { Col, Row, Spinner } from "react-bootstrap";
+import { Col, Row, Spinner, Modal } from "react-bootstrap";
 import { useSearchParams } from "next/navigation";
 import bookingApi from "@/api/bookingApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import QRCode from "react-qr-code";
 import { useLanguage } from "@/context/LanguageContext";
-import { formatTime } from "@/utils/timeHelper";
+import { formatTime, formatEventDate } from "@/utils/timeHelper";
 import toast from "react-hot-toast";
 
 const ExpandableText = ({ text, limit = 100, forceExpanded = false, hideToggle = false }) => {
@@ -49,9 +49,17 @@ function TicketDetailsContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [ticketInfo, setTicketInfo] = useState(null);
+  const [ticketInfoFull, setTicketInfoFull] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSharingImage, setIsSharingImage] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
   const ticketRef = useRef(null);
+
+  const openQrModal = (session) => {
+    setSelectedSession(session);
+    setShowQrModal(true);
+  };
 
   useEffect(() => {
     if (id) {
@@ -69,6 +77,7 @@ function TicketDetailsContent() {
       const res = await bookingApi.getTicketDetail(transactionId);
       if (res?.status && res?.data) {
         setTicketInfo(res?.data?.ticket);
+        setTicketInfoFull(res?.data);
       }
     } catch (error) {
       console.error("Error fetching ticket details:", error);
@@ -429,10 +438,49 @@ function TicketDetailsContent() {
             </Row>
           </div>
 
+          {(isEvent && ticketInfoFull?.tickets?.length > 0) && (
+            <div className="ticket-section-block mt-4 pt-4 border-top border-secondary">
+              <h4 className="line-title mb-3">
+                <span>{t("individualTickets") || "Individual Tickets"}</span>
+              </h4>
+              <Row className="g-4">
+                <Col md={12}>
+                  <div className="info-box ticket-panel-box">
+                    <div className="session-list overflow-auto custom-scrollbar pe-2" style={{ maxHeight: "300px" }}>
+                      {ticketInfoFull.tickets.map((tkt, idx) => (
+                        <div key={idx} className="session-item d-flex justify-content-between align-items-center py-2 border-bottom border-secondary last-border-0">
+                          <div>
+                            <span className="d-block fw-bold text-capitalize">
+                              {tkt.ticketName} <small className="text-secondary fw-normal">({tkt.ticketNumber})</small>
+                            </span>
+                            <span className={`badge ${tkt.isCheckedIn ? 'bg-success' : 'bg-warning'} mt-1`}>
+                              {tkt.isCheckedIn ? t("checkedIn") || "Checked In" : t("pending") || "Pending"}
+                            </span>
+                          </div>
+                          <div className="text-end">
+                            {tkt.qrCodeData && (
+                              <button
+                                className="btn-link-teal p-0 border-0 bg-transparent text-decoration-underline"
+                                onClick={() => openQrModal({ ...tkt, subBookingId: tkt.ticketNumber })}
+                                style={{ fontSize: "0.85rem", color: "var(--primary-teal)" }}
+                              >
+                                {t("viewQr") || "View QR"}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+            </div>
+          )}
+
           {((isFixedStart || isOngoingSession) && (ticketInfo?.upcoming?.length > 0 || ticketInfo?.past?.length > 0)) && (
             <div className="ticket-section-block mt-4 pt-4 border-top border-secondary">
               <h4 className="line-title mb-3">
-                <span>{t("sessionSchedule") || "Session Schedule"}</span>
+                <span>{t("sessionSchedule") === "sessionSchedule" ? "Session Schedule" : t("sessionSchedule")}</span>
               </h4>
               <Row className="g-4">
                 {ticketInfo.upcoming?.length > 0 && (
@@ -440,13 +488,24 @@ function TicketDetailsContent() {
                     <div className="info-box ticket-panel-box h-100">
                       <h6 className="text-teal mb-3 d-flex align-items-center">
                         <span className="dot bg-teal me-2 d-inline-block rounded-circle" style={{ width: "8px", height: "8px", backgroundColor: "var(--primary-teal)" }}></span>
-                        {t("upcomingSessions") || "Upcoming Sessions"}
+                        {t("upcomingSessions") === "upcomingSessions" ? "Upcoming Sessions" : t("upcomingSessions")}
                       </h6>
-                      <div className="session-list overflow-auto" style={{ maxHeight: "250px" }}>
+                      <div className="session-list overflow-auto custom-scrollbar pe-2" style={{ maxHeight: "250px" }}>
                         {ticketInfo.upcoming.map((session, idx) => (
                           <div key={idx} className="session-item d-flex justify-content-between py-2 border-bottom border-secondary last-border-0">
                             <span>{formatEventDate(session.date)} <small className="text-secondary">({t(session.selectedDay) || session.selectedDay})</small></span>
-                            <span className="text-white-50">{session.timing}</span>
+                            <div className="text-end">
+                              <span className="text-white-50 d-block">{session.timing}</span>
+                              {(!isFixedStart && session.qrCodeData) && (
+                                <button
+                                  className="btn-link-teal p-0 mt-1 border-0 bg-transparent text-decoration-underline"
+                                  onClick={() => openQrModal(session)}
+                                  style={{ fontSize: "0.85rem", color: "var(--primary-teal)" }}
+                                >
+                                  {t("viewQr") === "viewQr" ? "View QR" : t("viewQr")}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -458,13 +517,24 @@ function TicketDetailsContent() {
                     <div className="info-box ticket-panel-box h-100">
                       <h6 className="text-secondary mb-3 d-flex align-items-center">
                         <span className="dot bg-secondary me-2 d-inline-block rounded-circle" style={{ width: "8px", height: "8px" }}></span>
-                        {t("pastSessions") || "Past Sessions"}
+                        {t("pastSessions") === "pastSessions" ? "Past Sessions" : t("pastSessions")}
                       </h6>
-                      <div className="session-list overflow-auto" style={{ maxHeight: "250px" }}>
+                      <div className="session-list overflow-auto custom-scrollbar pe-2" style={{ maxHeight: "250px" }}>
                         {ticketInfo.past.map((session, idx) => (
                           <div key={idx} className="session-item d-flex justify-content-between py-2 border-bottom border-secondary last-border-0">
                             <span className="text-white-50">{formatEventDate(session.date)} <small className="text-secondary">({t(session.selectedDay) || session.selectedDay})</small></span>
-                            <span className="text-muted">{session.timing}</span>
+                            <div className="text-end">
+                              <span className="text-muted d-block">{session.timing}</span>
+                              {(!isFixedStart && session.qrCodeData) && (
+                                <button
+                                  className="btn-link-teal p-0 mt-1 border-0 bg-transparent text-decoration-underline"
+                                  onClick={() => openQrModal(session)}
+                                  style={{ fontSize: "0.85rem", color: "var(--primary-teal)" }}
+                                >
+                                  {t("viewQr") === "viewQr" ? "View QR" : t("viewQr")}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -484,29 +554,69 @@ function TicketDetailsContent() {
                   <p className="text-secondary small mt-1">{t("totalPaid") || "Total Paid"}: <span className="text-white fw-bold">₮{ticketInfo?.totalAmount}</span></p>
                 </div>
               </Col>
-              <Col md={6} className="text-md-end mt-4 mt-md-0">
-                <div className="qr-container ticket-panel-box p-3 bg-transparent border-0 d-inline-block">
-                  {ticketInfo?.qrCodeData ? (
-                    <div className="qr-wrapper">
-                      <div className="qr-box p-2 bg-white rounded-3 shadow-lg" style={{ width: "140px", height: "140px" }}>
-                        <QRCode
-                          value={ticketInfo.qrCodeData}
-                          size={120}
-                          style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                          viewBox={`0 0 256 256`}
-                        />
+              {(isOngoingPass || isFixedStart) && (
+                <Col md={6} className="text-md-end mt-4 mt-md-0">
+                  <div className="qr-container ticket-panel-box p-3 bg-transparent border-0 d-inline-block">
+                    {ticketInfo?.qrCodeData ? (
+                      <div className="qr-wrapper">
+                        <div className="qr-box p-2 bg-white rounded-3 shadow-lg" style={{ width: "140px", height: "140px" }}>
+                          <QRCode
+                            value={ticketInfo.qrCodeData}
+                            size={120}
+                            style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                            viewBox={`0 0 256 256`}
+                          />
+                        </div>
+                        <p className="mt-2 text-secondary small text-center">{t("scanToVerify") || "Scan to Verify"}</p>
                       </div>
-                      <p className="mt-2 text-secondary small text-center">{t("scanToVerify") || "Scan to Verify"}</p>
-                    </div>
-                  ) : (
-                    <img src="/img/barcode-ticket.svg" alt="Barcode" className="img-fluid" style={{ maxWidth: "200px" }} />
-                  )}
-                </div>
-              </Col>
+                    ) : (
+                      <img src="/img/barcode-ticket.svg" alt="Barcode" className="img-fluid" style={{ maxWidth: "200px" }} />
+                    )}
+                  </div>
+                </Col>
+              )}
             </Row>
           </div>
         </div>
       </div>
+
+      <Modal show={showQrModal} onHide={() => setShowQrModal(false)} centered className="custom-modal dark-modal">
+        <Modal.Header closeButton className="border-secondary border-bottom">
+          <Modal.Title>{selectedSession?.ticketNumber ? (t("ticketQrCode") === "ticketQrCode" ? "Ticket QR Code" : t("ticketQrCode")) : (t("sessionQrCode") === "sessionQrCode" ? "Session QR Code" : t("sessionQrCode"))}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center p-4">
+          {selectedSession && (
+            <>
+              {selectedSession.ticketNumber ? (
+                <>
+                  <h5 className="mb-1 text-white text-capitalize">{selectedSession.ticketName}</h5>
+                  <p className="text-white-50 mb-4">{selectedSession.ticketNumber}</p>
+                </>
+              ) : (
+                <>
+                  <h5 className="mb-1 text-white">{formatEventDate(selectedSession.date)} <small className="text-secondary">({t(selectedSession.selectedDay) || selectedSession.selectedDay})</small></h5>
+                  <p className="text-white-50 mb-4">{selectedSession.timing}</p>
+                </>
+              )}
+              <div className="qr-container d-inline-block">
+                <div className="qr-box p-3 bg-white rounded-3 shadow-lg mx-auto" style={{ width: "200px", height: "200px" }}>
+                  <QRCode
+                    value={selectedSession.qrCodeData}
+                    size={160}
+                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                    viewBox={`0 0 256 256`}
+                  />
+                </div>
+              </div>
+              <p className="mt-4 text-secondary small">{t("scanToVerify") || "Scan to Verify"}</p>
+              {selectedSession.subBookingId && (
+                <p className="mt-1 text-secondary small mb-0">ID: {selectedSession.subBookingId}</p>
+              )}
+            </>
+          )}
+        </Modal.Body>
+      </Modal>
+
       <style jsx>{`
         .ticket-details-card {
           background: rgba(255, 255, 255, 0.02);
