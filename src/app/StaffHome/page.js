@@ -1351,8 +1351,12 @@ function StaffHome() {
                           </div>
                         </div>
 
-                        <div style={{ color: "#7c7c7c", fontSize: "12px", paddingRight: "10px" }}>
-                          {isExpanded ? "▲" : "▼"}
+                        <div style={{ color: "#7c7c7c", fontSize: "12px", paddingRight: "10px", display: "flex", alignItems: "center" }}>
+                          {(a.isFullyCheckedIn || (a.checkedInQty !== undefined && a.checkedInQty > 0 && a.checkedInQty >= a.qty) || a.isCheckedIn) ? (
+                            <span style={{ color: "#34c759", fontSize: "16px", fontWeight: "bold" }}>&#10003;</span>
+                          ) : (
+                            isExpanded ? "▲" : "▼"
+                          )}
                         </div>
                       </div>
                       {isExpanded && (
