@@ -18,10 +18,7 @@ const staffApi = {
     getEventAttendees: (eventId, params) => apiClient.get(`/attendee/event/${eventId}`, { params, skipToast: true }),
     getEventBookingAttendees: (eventId, params) => apiClient.get(`/booking/event/${eventId}/attendees`, { params, skipToast: true }),
     getCourseBookingAttendees: (courseId, params) => apiClient.get(`/booking/course/${courseId}/attendees`, { params, skipToast: true }),
-    checkInAttendee: (data) => apiClient.post("/attendee/check-in", data),
-    scanQR: (data) => apiClient.post("/attendee/scan-qr", data),
-    getTicketDetails: (ticketNumber) => apiClient.get(`/attendee/ticket/${ticketNumber}`),
-    verifyTicket: (data) => apiClient.post("/attendee/verify", data),
+    bookingScanQR: (data) => apiClient.post("/booking/scan-qr", data),
 };
 
 export default staffApi;

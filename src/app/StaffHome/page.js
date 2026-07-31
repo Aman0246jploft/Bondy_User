@@ -263,21 +263,23 @@ function StaffHome() {
     setShowVerifyModal(true);
     setLoadingVerify(true);
     try {
-      const payload = {
-        code: code.trim()
-      };
+      const payload = { qrCodeData: code.trim() };
       if (activeEntity) {
         payload.entityId = activeEntity._id;
       }
-      const res = await staffApi.verifyTicket(payload);
+      // Single-shot: verify + auto check-in via /booking/scan-qr
+      const res = await staffApi.bookingScanQR(payload);
       if (res?.status) {
         setVerifiedTicket(res.data);
+        // Refresh lists in background after successful scan
+        fetchAttendeesList();
+        fetchScanHistory();
       } else {
         setVerifyError(res?.message || "Failed to verify ticket");
       }
     } catch (err) {
-      console.error("Verification failed", err);
-      setVerifyError(err?.response?.data?.message || "Verification failed");
+      console.error("Scan failed", err);
+      setVerifyError(err?.response?.data?.message || "Scan failed");
     } finally {
       setLoadingVerify(false);
     }
@@ -1777,12 +1779,12 @@ function StaffHome() {
           {loadingVerify ? (
             <div className="text-center py-4">
               <Spinner animation="border" variant="teal" className="mb-2" />
-              <p className="m-0 text-muted" style={{ fontSize: "14px" }}>{t("verifyingTicketDetails") || "Verifying ticket/QR details..."}</p>
+              <p className="m-0 text-muted" style={{ fontSize: "14px" }}>{t("verifyingTicketDetails") || "Verifying & checking in..."}</p>
             </div>
           ) : verifyError ? (
             <div className="text-center py-3">
               <div className="verify-error-icon mb-3">&#9888;</div>
-              <h5 className="text-danger mb-2" style={{ fontSize: "16px", fontWeight: "600" }}>{t("verificationFailed") || "Verification Failed"}</h5>
+              <h5 className="text-danger mb-2" style={{ fontSize: "16px", fontWeight: "600" }}>{t("verificationFailed") || "Scan Failed"}</h5>
               <p className="text-muted mb-4" style={{ fontSize: "14px" }}>{verifyError}</p>
               <button className="common_btn w-100" onClick={closeVerifyModal} style={{ background: "#333", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
                 {t("close") || "Close"}
@@ -1790,6 +1792,10 @@ function StaffHome() {
             </div>
           ) : verifiedTicket ? (() => {
             const isCheckedInToday = verifiedTicket.checkedInToday;
+            // Determine the outcome status for display
+            const isSuccess = verifiedTicket.isValid;
+            const isAlreadyIn = verifiedTicket.isAlreadyCheckedIn;
+            const isExpired = verifiedTicket.isExpired;
 
             return (
               <div className="verify-details-container">
@@ -1799,23 +1805,27 @@ function StaffHome() {
                   <div className="verify-val">{verifiedTicket.event?.title || "Unknown"}</div>
                 </div>
 
-                {/* Status Badge */}
+                {/* Status Badge — reflects auto check-in result */}
                 <div className="badge-wrapper mb-4">
-                  {isCheckedInToday ? (
-                    <div className="badge-status checked-in" style={{ background: "rgba(52, 199, 89, 0.15)", color: "#34c759" }}>
-                      {t("checkedInToday") || "Checked In Today"}
+                  {isSuccess ? (
+                    <div className="badge-status valid" style={{ background: "rgba(35, 173, 164, 0.15)", color: "#23ada4" }}>
+                      &#10003; {t("checkedInSuccess") || "Checked In Successfully"}
                     </div>
-                  ) : verifiedTicket.isAlreadyCheckedIn ? (
+                  ) : isCheckedInToday ? (
+                    <div className="badge-status checked-in" style={{ background: "rgba(52, 199, 89, 0.15)", color: "#34c759" }}>
+                      {t("checkedInToday") || "Already Checked In Today"}
+                    </div>
+                  ) : isAlreadyIn ? (
                     <div className="badge-status checked-in">
                       {t("alreadyCheckedIn") || "Already Checked In"}
                     </div>
-                  ) : verifiedTicket.isExpired ? (
+                  ) : isExpired ? (
                     <div className="badge-status expired">
                       {t("expiredTicket") || "Expired Ticket"}
                     </div>
                   ) : (
-                    <div className="badge-status valid">
-                      {t("validTicket") || "Valid Ticket"}
+                    <div className="badge-status expired">
+                      {verifiedTicket.message || "Check-in not allowed"}
                     </div>
                   )}
                 </div>
@@ -1841,112 +1851,53 @@ function StaffHome() {
                         <span className="verify-val">{verifiedTicket.attendee.ticketName}</span>
                       </div>
                     )}
+                    {(verifiedTicket.attendee.sessionsAttended !== undefined) && (
+                      <div className="verify-row">
+                        <span className="verify-label">{t("sessionsAttended") || "Sessions Attended"}</span>
+                        <span className="verify-val">{verifiedTicket.attendee.sessionsAttended}</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Transaction Details */}
-                {verifiedTicket.transaction && (
+                {/* Booking Details */}
+                {verifiedTicket.booking && (
                   <div className="verify-section mb-4">
                     <div className="verify-row">
                       <span className="verify-label">{t("bookingID") || "Booking ID"}</span>
-                      <span className="verify-val">{verifiedTicket.transaction.bookingId}</span>
+                      <span className="verify-val">{verifiedTicket.booking.bookingId}</span>
                     </div>
-                    {verifiedTicket.transaction.passType && (
+                    {verifiedTicket.booking.passType && (
                       <div className="verify-row">
                         <span className="verify-label">{t("passType") || "Pass Type"}</span>
-                        <span className="verify-val" style={{ textTransform: "capitalize" }}>{verifiedTicket.transaction.passType.replace("_", " ")}</span>
+                        <span className="verify-val" style={{ textTransform: "capitalize" }}>{verifiedTicket.booking.passType.replace("_", " ")}</span>
                       </div>
                     )}
-                    {verifiedTicket.transaction.passExpiryDate && (
+                    {verifiedTicket.booking.passExpiryDate && (
                       <div className="verify-row">
                         <span className="verify-label">{t("passExpiry") || "Pass Expiry"}</span>
-                        <span className="verify-val">{new Date(verifiedTicket.transaction.passExpiryDate).toLocaleDateString()}</span>
+                        <span className="verify-val">{new Date(verifiedTicket.booking.passExpiryDate).toLocaleDateString()}</span>
                       </div>
                     )}
                     <div className="verify-row">
-                      <span className="verify-label">{t("totalQty") || "Total Qty"}</span>
-                      <span className="verify-val">{verifiedTicket.transaction.qty} ticket(s)</span>
-                    </div>
-                    <div className="verify-row">
                       <span className="verify-label">{t("checkedInQty") || "Checked In Qty"}</span>
-                      <span className="verify-val">{verifiedTicket.transaction.checkedInQty} / {verifiedTicket.transaction.qty}</span>
+                      <span className="verify-val">{verifiedTicket.booking.checkedInQty || 0} / {verifiedTicket.booking.totalQty}</span>
                     </div>
                   </div>
                 )}
 
-                {/* Ongoing Slots/Sessions (if present) */}
-                {verifiedTicket.transaction && verifiedTicket.transaction.ongoingSlots && verifiedTicket.transaction.ongoingSlots.length > 0 && (
-                  <div className="verify-section mb-4">
-                    <div className="verify-label mb-2" style={{ fontWeight: "600", color: "#23ada4" }}>{t("bookedSlots") || "Booked Slots"} ({verifiedTicket.transaction.ongoingSlots.length})</div>
-                    <div className="d-flex flex-column gap-2" style={{ maxHeight: "150px", overflowY: "auto" }}>
-                      {verifiedTicket.transaction.ongoingSlots.map((slot) => {
-                        const slotDate = slot.selectedDate;
-                        // Check if checked in via attendee history or slot flag
-                        const isSlotChecked = verifiedTicket.attendee?.checkInHistory?.some(entry =>
-                          entry.batchId === slot.batchId && entry.sessionDate === slotDate
-                        ) || slot.isCheckedIn;
-
-                        return (
-                          <div key={slot._id} className="d-flex justify-content-between align-items-center p-2 rounded" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.06)" }}>
-                            <div className="d-flex flex-column text-start">
-                              <span style={{ fontSize: "13px", fontWeight: "600", color: "#fff" }}>{slot.selectedDay}, {slotDate || "N/A"}</span>
-                              <span style={{ fontSize: "11px", color: "#8c8c8c" }}>Batch: {slot.batchId.slice(-6).toUpperCase()}</span>
-                            </div>
-                            {isSlotChecked ? (
-                              <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style={{ borderRadius: "10px", fontSize: "11px" }}>{t("checkedIn") || "Checked In"}</span>
-                            ) : (
-                              <button
-                                className="btn btn-sm"
-                                disabled={checkingIn}
-                                onClick={() => handlePerformCheckInForSlot(slotDate, slot.batchId)}
-                                style={{ background: "#23ada4", color: "#fff", borderRadius: "10px", fontSize: "11px", border: "none", padding: "4px 10px" }}
-                              >
-                                {t("checkIn") || "Check In"}
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {verifiedTicket.isAlreadyCheckedIn && verifiedTicket.checkedInAt && (
-                  <div className="verify-checkin-time text-muted mb-4" style={{ fontSize: "12px", textAlign: "center" }}>
-                    {t("checkedInAtSuffix") || "Checked in at:"} {new Date(verifiedTicket.checkedInAt).toLocaleString()}
-                  </div>
-                )}
-
-                {/* Actions */}
+                {/* Single close button — no manual check-in needed */}
                 <div className="verify-actions d-flex gap-2">
-                  {!verifiedTicket.isAlreadyCheckedIn && !verifiedTicket.isExpired ? (
-                    <>
-                      <button className="common_btn flex-grow-1" onClick={closeVerifyModal} style={{ background: "#222", border: "1px solid #444", color: "#ccc", borderRadius: "20px", height: "40px" }}>
-                        {t("cancel") || "Cancel"}
-                      </button>
-                      {(verifiedTicket.transaction?.passType || !verifiedTicket.transaction?.ongoingSlots || verifiedTicket.transaction.ongoingSlots.length === 0) && (
-                        isCheckedInToday ? (
-                          <button className="common_btn flex-grow-1" disabled style={{ background: "rgba(52, 199, 89, 0.15)", color: "#34c759", border: "1px solid #34c759", borderRadius: "20px", height: "40px" }}>
-                            {t("scannedForToday") || "Scanned for Today"}
-                          </button>
-                        ) : (
-                          <button className="common_btn flex-grow-1" onClick={handlePerformCheckIn} disabled={checkingIn} style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
-                            {checkingIn ? (
-                              <Spinner animation="border" size="sm" />
-                            ) : verifiedTicket.transaction?.passType ? (
-                              t("checkInPass") || "Check In Pass"
-                            ) : (
-                              t("checkIn") || "Check In"
-                            )}
-                          </button>
-                        )
-                      )}
-                    </>
-                  ) : (
-                    <button className="common_btn w-100" onClick={closeVerifyModal} style={{ background: "#23ada4", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}>
-                      {t("close") || "Close"}
-                    </button>
-                  )}
+                  <button
+                    className="common_btn w-100"
+                    onClick={() => {
+                      closeVerifyModal();
+                      setManualTicketNumber("");
+                    }}
+                    style={{ background: isSuccess ? "#23ada4" : "#333", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}
+                  >
+                    {t("close") || "Close"}
+                  </button>
                 </div>
               </div>
             );
