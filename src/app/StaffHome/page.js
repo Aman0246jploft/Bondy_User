@@ -1351,21 +1351,9 @@ function StaffHome() {
                           </div>
                         </div>
 
-                        {(a.isFullyCheckedIn || a.tickets?.isFullyCheckedIn) ? (
-                          <button className="checkin-action-btn checked" disabled onClick={(e) => e.stopPropagation()}>
-                            &#10003;
-                          </button>
-                        ) : (
-                          <button
-                            className="checkin-action-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCheckInSubmit(a.bookingId);
-                            }}
-                          >
-                            &#10142;
-                          </button>
-                        )}
+                        <div style={{ color: "#7c7c7c", fontSize: "12px", paddingRight: "10px" }}>
+                          {isExpanded ? "▲" : "▼"}
+                        </div>
                       </div>
                       {isExpanded && a.tickets?.details && a.tickets.details.length > 0 && (
                         <div className="p-3" style={{ background: "#181818", borderBottomLeftRadius: "16px", borderBottomRightRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.05)", borderTop: "none" }}>
