@@ -17,27 +17,137 @@ function Page() {
 
   const TYPE_LABEL = {
     TICKET_SALE: t("ticketSale"),
+    COURSE_SALE: t("courseSale") || "Course Sale",
     PAYOUT_REQUEST: t("payoutRequest"),
     PAYOUT_REJECTED: t("payoutRejected"),
     REFUND: t("refund"),
+    CANCELLATION_DEDUCTION: t("cancellationDeduction") || "Cancellation Deduction",
     ADJUSTMENT: t("adjustment"),
     REFERRAL: t("referralReward"),
     PURCHASE: t("purchase"),
+    "Ticket Sale": t("ticketSale"),
+    "Course Sale": t("courseSale") || "Course Sale",
+    "Purchase": t("purchase"),
+    "Payout Request": t("payoutRequest"),
+    "Payout Refunded": t("payoutRejected"),
+    "Payout Rejected": t("payoutRejected"),
+    "Refund": t("refund"),
+    "Cancellation Deduction": t("cancellationDeduction") || "Cancellation Deduction",
+    "Adjustment": t("adjustment"),
+    "Referral Reward": t("referralReward"),
+    "Тасалбар борлуулалт": t("ticketSale") || "Тасалбар борлуулалт",
+    "Сургалт борлуулалт": t("courseSale") || "Сургалт борлуулалт",
+    "Худалдан авалт": t("purchase") || "Худалдан авалт",
+    "Төлбөрийн хүсэлт": t("payoutRequest") || "Төлбөрийн хүсэлт",
+    "Төлбөр буцаагдсан": t("payoutRejected") || "Төлбөр буцаагдсан",
+    "Буцаан олголт": t("refund") || "Буцаан олголт",
+    "Цуцлалтын суутгал": t("cancellationDeduction") || "Цуцлалтын суутгал",
+    "Зохицуулалт": t("adjustment") || "Зохицуулалт",
+    "Урилгын шагнал": t("referralReward") || "Урилгын шагнал",
   };
 
   const TYPE_BADGE = {
     TICKET_SALE: "complete",
+    COURSE_SALE: "complete",
     PAYOUT_REQUEST: "pending",
     PAYOUT_REJECTED: "cancel",
     REFUND: "cancel",
+    CANCELLATION_DEDUCTION: "cancel",
     ADJUSTMENT: "upcoming",
     REFERRAL: "complete",
     PURCHASE: "purchase",
+    "Ticket Sale": "complete",
+    "Course Sale": "complete",
+    "Purchase": "purchase",
+    "Payout Request": "pending",
+    "Payout Refunded": "cancel",
+    "Payout Rejected": "cancel",
+    "Refund": "cancel",
+    "Cancellation Deduction": "cancel",
+    "Adjustment": "upcoming",
+    "Referral Reward": "complete",
+    "Тасалбар борлуулалт": "complete",
+    "Сургалт борлуулалт": "complete",
+    "Худалдан авалт": "purchase",
+    "Төлбөрийн хүсэлт": "pending",
+    "Төлбөр буцаагдсан": "cancel",
+    "Буцаан олголт": "cancel",
+    "Цуцлалтын суутгал": "cancel",
+    "Зохицуулалт": "upcoming",
+    "Урилгын шагнал": "complete",
   };
 
   const formatAmount = (amount) => {
     const abs = Math.abs(amount).toLocaleString();
     return amount < 0 ? `-₮${abs}` : `+₮${abs}`;
+  };
+
+  const formatDescription = (desc) => {
+    if (!desc) return "";
+    const isMongolian = t("ticketSale") === "Тасалбар борлуулалт";
+    if (isMongolian) {
+      if (desc.startsWith("Ticket Sale: ")) return `Тасалбар борлуулалт: ${desc.slice(13)}`;
+      if (desc.startsWith("Course Sale: ")) return `Сургалт борлуулалт: ${desc.slice(13)}`;
+      if (desc.startsWith("Event: ")) {
+        const rest = desc.slice(7);
+        return `Арга хэмжээ: ${rest === "Unknown Event" ? "Тодорхойгүй арга хэмжээ" : rest}`;
+      }
+      if (desc.startsWith("Course: ")) {
+        const rest = desc.slice(8);
+        return `Сургалт: ${rest === "Unknown Course" ? "Тодорхойгүй сургалт" : rest}`;
+      }
+      if (desc.startsWith("Payout Request of ")) return `Төлбөрийн хүсэлт: ₮${desc.slice(18)}`;
+      if (desc.startsWith("Payout request of ")) return `Төлбөрийн хүсэлт: ₮${desc.slice(18)}`;
+      if (desc.startsWith("Payout Request: ")) return `Төлбөрийн хүсэлт: ${desc.slice(16)}`;
+      if (desc.startsWith("Payout rejected: ")) {
+        const rest = desc.slice(17);
+        return `Төлбөр татгалзагдсан: ${rest === "No reason provided" ? "Шалтгаан тодорхойгүй" : rest}`;
+      }
+      if (desc.startsWith("Payout Rejected: ")) {
+        const rest = desc.slice(17);
+        return `Төлбөр татгалзагдсан: ${rest === "No reason provided" ? "Шалтгаан тодорхойгүй" : rest}`;
+      }
+      if (desc.startsWith("Admin manual payout: ")) {
+        const rest = desc.slice(21);
+        return `Админы гараар хийсэн төлбөр: ${rest === "No notes" ? "Тэмдэглэлгүй" : rest}`;
+      }
+      if (desc.startsWith("Cancellation Deduction: ")) {
+        const rest = desc.slice(24);
+        return `Цуцлалтын суутгал: ${rest === "Booking cancelled" ? "Захиалга цуцлагдсан" : rest}`;
+      }
+      if (desc === "1st Successful Referral Reward - 10% Off") return "1 дэх амжилттай урилгын шагнал - 10% хөнгөлөлт";
+      if (desc === "5th Successful Referral Reward - 25,000 MNT Off") return "5 дахь амжилттай урилгын шагнал - 25,000₮ хөнгөлөлт";
+      if (desc.startsWith("Referral Reward: ")) return `Урилгын шагнал: ${desc.slice(17)}`;
+      if (desc === "Referral Reward" || desc === "Referral") return "Урилгын шагнал";
+    } else {
+      if (desc.startsWith("Тасалбар борлуулалт: ")) return `Ticket Sale: ${desc.slice(21)}`;
+      if (desc.startsWith("Сургалт борлуулалт: ")) return `Course Sale: ${desc.slice(20)}`;
+      if (desc.startsWith("Арга хэмжээ: ")) {
+        const rest = desc.slice(13);
+        return `Event: ${rest === "Тодорхойгүй арга хэмжээ" ? "Unknown Event" : rest}`;
+      }
+      if (desc.startsWith("Сургалт: ")) {
+        const rest = desc.slice(9);
+        return `Course: ${rest === "Тодорхойгүй сургалт" ? "Unknown Course" : rest}`;
+      }
+      if (desc.startsWith("Төлбөрийн хүсэлт: ₮")) return `Payout Request of ${desc.slice(19)}`;
+      if (desc.startsWith("Төлбөрийн хүсэлт: ")) return `Payout Request: ${desc.slice(18)}`;
+      if (desc.startsWith("Төлбөр татгалзагдсан: ")) {
+        const rest = desc.slice(22);
+        return `Payout rejected: ${rest === "Шалтгаан тодорхойгүй" ? "No reason provided" : rest}`;
+      }
+      if (desc.startsWith("Админы гараар хийсэн төлбөр: ")) {
+        const rest = desc.slice(29);
+        return `Admin manual payout: ${rest === "Тэмдэглэлгүй" ? "No notes" : rest}`;
+      }
+      if (desc.startsWith("Цуцлалтын суутгал: ")) {
+        const rest = desc.slice(19);
+        return `Cancellation Deduction: ${rest === "Захиалга цуцлагдсан" ? "Booking cancelled" : rest}`;
+      }
+      if (desc.startsWith("Урилгын шагнал: ")) return `Referral Reward: ${desc.slice(16)}`;
+      if (desc === "Урилгын шагнал") return "Referral Reward";
+    }
+    return desc;
   };
 
   const formatDate = (dateStr) =>
@@ -165,6 +275,19 @@ function Page() {
     .filter((p) => p.status === "PENDING")
     .reduce((sum, p) => sum + p.amount, 0);
 
+  const FILTER_OPTIONS = [
+    { value: "ALL", label: t("allTypes") || "All Types" },
+    { value: "TICKET_SALE", label: t("ticketSale") || "Ticket Sale" },
+    { value: "COURSE_SALE", label: t("courseSale") || "Course Sale" },
+    { value: "PURCHASE", label: t("purchase") || "Purchase" },
+    { value: "PAYOUT_REQUEST", label: t("payoutRequest") || "Payout Request" },
+    { value: "PAYOUT_REJECTED", label: t("payoutRejected") || "Payout Refunded" },
+    { value: "REFUND", label: t("refund") || "Refund" },
+    { value: "CANCELLATION_DEDUCTION", label: t("cancellationDeduction") || "Cancellation Deduction" },
+    { value: "ADJUSTMENT", label: t("adjustment") || "Adjustment" },
+    { value: "REFERRAL", label: t("referralReward") || "Referral Reward" },
+  ];
+
   // Filter wallet history
   const filteredHistory = earnings.walletHistory.filter((item) => {
     const q = search.toLowerCase();
@@ -173,7 +296,18 @@ function Page() {
       item.description?.toLowerCase().includes(q) ||
       item.type?.toLowerCase().includes(q) ||
       item._id?.toLowerCase().includes(q);
-    const matchType = typeFilter === "ALL" || item.type === typeFilter;
+    const matchType =
+      typeFilter === "ALL" ||
+      item.type === typeFilter ||
+      (typeFilter === "TICKET_SALE" && (item.type === "Ticket Sale" || item.type === "Тасалбар борлуулалт")) ||
+      (typeFilter === "COURSE_SALE" && (item.type === "Course Sale" || item.type === "Сургалт борлуулалт")) ||
+      (typeFilter === "PURCHASE" && (item.type === "Purchase" || item.type === "Худалдан авалт")) ||
+      (typeFilter === "PAYOUT_REQUEST" && (item.type === "Payout Request" || item.type === "Төлбөрийн хүсэлт")) ||
+      (typeFilter === "PAYOUT_REJECTED" && (item.type === "Payout Refunded" || item.type === "Payout Rejected" || item.type === "Төлбөр буцаагдсан")) ||
+      (typeFilter === "REFUND" && (item.type === "Refund" || item.type === "Буцаан олголт")) ||
+      (typeFilter === "CANCELLATION_DEDUCTION" && (item.type === "Cancellation Deduction" || item.type === "Цуцлалтын суутгал")) ||
+      (typeFilter === "ADJUSTMENT" && (item.type === "Adjustment" || item.type === "Зохицуулалт")) ||
+      (typeFilter === "REFERRAL" && (item.type === "Referral" || item.type === "Referral Reward" || item.type === "Урилгын шагнал"));
     return matchSearch && matchType;
   });
 
@@ -238,7 +372,7 @@ function Page() {
               <h4>
                 ₮
                 {earnings.walletHistory
-                  .filter((w) => w.type === "REFERRAL")
+                  .filter((w) => w.type === "REFERRAL" || w.type === "Referral Reward" || w.type === "Урилгын шагнал")
                   .reduce((s, w) => s + (w.amount || 0), 0)
                   .toLocaleString()}
               </h4>
@@ -259,10 +393,9 @@ function Page() {
                 style={{ maxWidth: 180 }}
                 value={typeFilter}
                 onChange={(e) => handleTypeFilter(e.target.value)}>
-                <option value="ALL">{t("allTypes")}</option>
-                {Object.entries(TYPE_LABEL).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
+                {FILTER_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
                   </option>
                 ))}
               </select>
@@ -322,7 +455,7 @@ function Page() {
                       <td>{formatDate(item.createdAt)}</td>
                       <td>
                         <div className="title">
-                          {item.description ||
+                          {formatDescription(item.description) ||
                             TYPE_LABEL[item.type] ||
                             item.type}
                         </div>

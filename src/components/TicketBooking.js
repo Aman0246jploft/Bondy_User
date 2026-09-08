@@ -49,6 +49,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
     const [qpayData, setQpayData] = useState(null);
     const [qpayPolling, setQpayPolling] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [checkingManual, setCheckingManual] = useState(false);
 
     useEffect(() => {
         setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
@@ -218,19 +219,29 @@ export default function TicketBooking({ item, type, scheduleId }) {
         );
     };
 
-    // QPay Polling
+    // QPay Polling with 5-minute timeout
     useEffect(() => {
         let intervalId;
+        const POLL_TIMEOUT_MS = 300000; // 5 minutes
+        const startTime = Date.now();
+
         if (qpayPolling && transactionId) {
             intervalId = setInterval(async () => {
+                if (Date.now() - startTime > POLL_TIMEOUT_MS) {
+                    setQpayPolling(false);
+                    clearInterval(intervalId);
+                    toast.error(t("qpayTimeout") || "Payment timed out. Please try again.");
+                    return;
+                }
+
                 try {
                     const res = await bookingApi.checkQpayStatus({ transactionId: Array.isArray(transactionId) ? transactionId[0] : transactionId });
-                    if (res.status) {
-                        if (res.data.status === "PAID") {
+                    if (res?.status) {
+                        if (res.data?.status === "PAID") {
                             setQpayPolling(false);
                             setModalShow(true);
                             clearInterval(intervalId);
-                        } else if (res.data.status === "REFUND_INITIATED") {
+                        } else if (res.data?.status === "REFUND_INITIATED") {
                             setQpayPolling(false);
                             toast.error(t("refundInitiated") || "Booking cancelled. Refund initiated.");
                             clearInterval(intervalId);
@@ -243,6 +254,31 @@ export default function TicketBooking({ item, type, scheduleId }) {
         }
         return () => clearInterval(intervalId);
     }, [qpayPolling, transactionId]);
+
+    const handleManualCheckPayment = async () => {
+        if (!transactionId || checkingManual) return;
+        setCheckingManual(true);
+        try {
+            const res = await bookingApi.checkQpayStatus({
+                transactionId: Array.isArray(transactionId) ? transactionId[0] : transactionId,
+            });
+            if (res?.status && res.data?.status === "PAID") {
+                setQpayPolling(false);
+                setModalShow(true);
+            } else {
+                toast(t("waitingForPayment") || "Waiting for payment confirmation...", { icon: "⏳" });
+            }
+        } catch (e) {
+            console.error("Manual payment check error:", e);
+        } finally {
+            setCheckingManual(false);
+        }
+    };
+
+    const handleCancelQPay = () => {
+        setQpayPolling(false);
+        setQpayData(null);
+    };
 
     // Pre-populate ticket selections when event is loaded
     useEffect(() => {
@@ -1458,22 +1494,87 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                 </div>
                             </div>
                         </div>
-                        <div className="tickets_btn">
-                            {qpayData ? (
-                                <div className="text-center mt-4 qpay-qr-container" style={{ width: "100%" }}>
-                                    <h4 className="text-white mb-3">{t("scanQpayQR") || "Scan QR to Pay with QPay"}</h4>
-                                    <div className="bg-white p-3 d-inline-block rounded mb-3">
-                                        <img src={`data:image/png;base64,${qpayData.qr_image}`} alt="QPay QR" style={{ width: "200px", height: "200px" }} />
-                                    </div>
-                                    <p className="text-info mb-4">{t("waitingForPayment") || "Waiting for payment..."}</p>
+                        {qpayData ? (
+                            <div className="text-center mt-4 qpay-qr-container" style={{ width: "100%" }}>
+                                <div
+                                    className="p-4 rounded-4 mb-4 text-center"
+                                    style={{
+                                        backgroundColor: "rgba(255, 255, 255, 0.04)",
+                                        border: "1px solid rgba(255, 255, 255, 0.12)",
+                                        backdropFilter: "blur(12px)",
+                                        borderRadius: "16px",
+                                    }}
+                                >
+                                    <h4 className="text-white mb-2 fw-bold" style={{ fontSize: "18px" }}>
+                                        {t("scanQpayQR") || "Scan QR to Pay with QPay"}
+                                    </h4>
+                                    <p className="text-muted mb-3" style={{ fontSize: "13px" }}>
+                                        {t("bankLinkNote") || "(Open your banking app and scan the QR code to complete payment)"}
+                                    </p>
 
-                                    {isMobile && qpayData.urls && qpayData.urls.length > 0 && (
-                                        <div className="mt-4 text-start w-100">
-                                            <h5 className="text-white mb-1 text-center" style={{ fontSize: "14px" }}>{t("payViaBankApp") || "Or Pay directly via Bank App:"}</h5>
-                                            <p className="text-muted text-center mb-3" style={{ fontSize: "11px" }}>
-                                                {t("bankLinkNote") || "(Links will open banking apps on mobile devices. For desktop, please scan the QR code above.)"}
-                                            </p>
-                                            <div className="d-flex flex-wrap gap-2 justify-content-center" style={{ maxHeight: "250px", overflowY: "auto", padding: "10px" }}>
+                                    {/* QR Code Container */}
+                                    <div
+                                        className="bg-white p-3 d-inline-block rounded-3 mb-3 shadow"
+                                        style={{ borderRadius: "12px", boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}
+                                    >
+                                        <img
+                                            src={`data:image/png;base64,${qpayData.qr_image}`}
+                                            alt="QPay QR"
+                                            style={{ width: "220px", height: "220px", display: "block" }}
+                                        />
+                                    </div>
+
+                                    {/* Live Status Indicator */}
+                                    <div className="d-flex align-items-center justify-content-center gap-2 mb-3">
+                                        <span
+                                            className="spinner-grow spinner-grow-sm text-info"
+                                            role="status"
+                                            aria-hidden="true"
+                                        ></span>
+                                        <span className="text-info fw-medium" style={{ fontSize: "14px" }}>
+                                            {t("waitingForPayment") || "Waiting for payment confirmation..."}
+                                        </span>
+                                    </div>
+
+                                    {/* Actions: Manual Check & Cancel */}
+                                    <div className="d-flex flex-column flex-sm-row gap-2 justify-content-center align-items-center mb-3">
+                                        <button
+                                            type="button"
+                                            className="btn px-4 py-2 rounded-pill fw-semibold text-white shadow-sm"
+                                            style={{ fontSize: "14px", backgroundColor: "#ff5b2e", borderColor: "#ff5b2e" }}
+                                            onClick={handleManualCheckPayment}
+                                            disabled={checkingManual}
+                                        >
+                                            {checkingManual ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    {t("checkingPayment") || "Checking..."}
+                                                </>
+                                            ) : (
+                                                t("checkPaymentStatus") || "Check Payment Status"
+                                            )}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-light px-3 py-2 rounded-pill"
+                                            style={{ fontSize: "13px", opacity: 0.85 }}
+                                            onClick={handleCancelQPay}
+                                        >
+                                            {t("changePaymentMethod") || "Cancel / Change Payment Method"}
+                                        </button>
+                                    </div>
+
+                                    {/* Bank Apps Grid */}
+                                    {qpayData.urls && qpayData.urls.length > 0 && (
+                                        <div className="mt-3 pt-3 text-start" style={{ borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                                            <h5 className="text-white mb-2 text-center" style={{ fontSize: "14px", fontWeight: "600" }}>
+                                                {t("payViaBankApp") || "Supported Banking Apps (23 Banks):"}
+                                            </h5>
+                                            <div
+                                                className="d-flex flex-wrap gap-2 justify-content-center"
+                                                style={{ maxHeight: "220px", overflowY: "auto", padding: "8px" }}
+                                            >
                                                 {qpayData.urls.map((bank, idx) => (
                                                     <a
                                                         key={idx}
@@ -1482,39 +1583,43 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                                         rel="noopener noreferrer"
                                                         className="d-flex align-items-center gap-2 p-2 rounded text-decoration-none"
                                                         style={{
-                                                            backgroundColor: "rgba(255, 255, 255, 0.05)",
-                                                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                                                            backgroundColor: "rgba(255, 255, 255, 0.06)",
+                                                            border: "1px solid rgba(255, 255, 255, 0.12)",
                                                             color: "#fff",
-                                                            width: "150px",
+                                                            width: "155px",
                                                             fontSize: "12px",
                                                             cursor: "pointer",
-                                                            transition: "all 0.2s"
+                                                            transition: "all 0.2s ease-in-out",
                                                         }}
                                                     >
                                                         {bank.logo && (
                                                             <img
                                                                 src={bank.logo}
                                                                 alt={bank.name}
-                                                                style={{ width: "24px", height: "24px", borderRadius: "4px" }}
+                                                                style={{ width: "24px", height: "24px", borderRadius: "4px", objectFit: "contain" }}
                                                             />
                                                         )}
-                                                        <span className="text-truncate" title={bank.description}>{bank.name}</span>
+                                                        <span className="text-truncate" title={bank.description || bank.name}>
+                                                            {bank.name}
+                                                        </span>
                                                     </a>
                                                 ))}
                                             </div>
                                         </div>
                                     )}
                                 </div>
-                            ) : (
+                            </div>
+                        ) : (
+                            <div className="tickets_btn">
                                 <button
-                                    className="common_btn  mt-4"
+                                    className="common_btn mt-4"
                                     onClick={handleConfirmBooking} // Call confirm booking
                                     disabled={loading}
                                 >
                                     {loading ? t("processing") : t("payNow")}
                                 </button>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 );
         }
