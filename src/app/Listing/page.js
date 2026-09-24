@@ -203,11 +203,12 @@ function ListingContent() {
           categoryId: categoryId || "",
           status: "Upcoming,Live",
           excludemyevents: true,
-          placement: "homePage",
         };
 
-        // fetch geolocation if no manual location is provided
-        if (!params.latitude) {
+        const isNearYou = (meta.filter === "nearYou" || type === "nearYou");
+
+        // Only fetch browser geolocation if nearYou is selected and no manual location was provided
+        if (isNearYou && !params.latitude) {
           try {
             const pos = await new Promise((resolve, reject) =>
               navigator.geolocation.getCurrentPosition(resolve, reject),
@@ -215,17 +216,36 @@ function ListingContent() {
             params.latitude = pos.coords.latitude;
             params.longitude = pos.coords.longitude;
           } catch {
-            console.warn("Location access denied");
-            setLoading(false);
-            return;
+            console.warn("Location access denied or failed, falling back to all events");
+            delete params.latitude;
+            delete params.longitude;
+            params.filter = "all";
           }
         }
 
-        const response = await eventApi.getEvents(params);
-        if (response?.data) {
-          setEvents(response?.data?.events || []);
-          setTotal(response?.data?.total || 0);
+        let response = await eventApi.getEvents(params);
+        let fetchedEvents = response?.data?.events || [];
+        let fetchedTotal = response?.data?.total || 0;
+
+        // Fallback for nearYou if 0 events found nearby (e.g. user location is far away)
+        if (isNearYou && fetchedEvents.length === 0) {
+          const fallbackParams = {
+            ...params,
+            filter: "all",
+            status: "Upcoming,Live",
+            excludemyevents: true,
+          };
+          delete fallbackParams.latitude;
+          delete fallbackParams.longitude;
+          const fallbackRes = await eventApi.getEvents(fallbackParams);
+          if (fallbackRes?.data) {
+            fetchedEvents = fallbackRes.data.events || [];
+            fetchedTotal = fallbackRes.data.total || 0;
+          }
         }
+
+        setEvents(fetchedEvents);
+        setTotal(fetchedTotal);
       } catch (err) {
         console.error("Error fetching events:", err);
       } finally {
@@ -344,8 +364,13 @@ function ListingContent() {
                           </div>
 
                           <div className="price-tag">
-                            {/* from{" "} */}
-                            {item.ticketPrice ? `$${item.ticketPrice}` : t("freeLabel")}
+                            {(() => {
+                              if (!item.tickets || item.tickets.length === 0) return t("freeLabel");
+                              const prices = item.tickets.map(tk => tk.price).filter(p => typeof p === 'number');
+                              if (prices.length === 0) return t("freeLabel");
+                              const minPrice = Math.min(...prices);
+                              return minPrice === 0 ? (t("free") || "Free") : `₮${minPrice}`;
+                            })()}
                           </div>
                         </div>
                       </div>

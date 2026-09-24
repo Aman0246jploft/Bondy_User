@@ -94,7 +94,8 @@ function ListingContent() {
         };
 
         // geolocation for "nearYou" ONLY if no manual location is provided
-        if (combinedFilters.includes("nearYou") && !params.latitude) {
+        const isNearYou = combinedFilters.includes("nearYou");
+        if (isNearYou && !params.latitude) {
           try {
             const pos = await new Promise((resolve, reject) =>
               navigator.geolocation.getCurrentPosition(resolve, reject),
@@ -102,19 +103,35 @@ function ListingContent() {
             params.latitude = pos.coords.latitude;
             params.longitude = pos.coords.longitude;
           } catch {
-            console.warn("Location access denied");
-            // If nearYou is the ONLY filter, we might want to return 0, 
-            // but the backend handler also does fallback logic
+            console.warn("Location access denied or failed, falling back to all courses");
+            delete params.latitude;
+            delete params.longitude;
+            params.filter = "all";
           }
         }
 
-        const response = await courseApi.getCourses(params);
-        if (response?.data) {
-          console.log("======>", response.data)
-          // Backend structure might be { totalCourses, courses, ... }
-          setCourses(response?.data?.courses || []);
-          setTotal(response?.data?.totalCourses || 0);
+        let response = await courseApi.getCourses(params);
+        let fetchedCourses = response?.data?.courses || [];
+        let fetchedTotal = response?.data?.totalCourses || 0;
+
+        // Fallback for nearYou if 0 courses found nearby (e.g. user location is far away)
+        if (isNearYou && fetchedCourses.length === 0) {
+          const fallbackParams = {
+            ...params,
+            filter: "all",
+            excludeMyCourses: true,
+          };
+          delete fallbackParams.latitude;
+          delete fallbackParams.longitude;
+          const fallbackRes = await courseApi.getCourses(fallbackParams);
+          if (fallbackRes?.data) {
+            fetchedCourses = fallbackRes.data.courses || [];
+            fetchedTotal = fallbackRes.data.totalCourses || 0;
+          }
         }
+
+        setCourses(fetchedCourses);
+        setTotal(fetchedTotal);
       } catch (err) {
         console.error("Error fetching courses:", err);
       } finally {
