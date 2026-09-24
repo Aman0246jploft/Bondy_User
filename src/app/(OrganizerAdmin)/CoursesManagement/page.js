@@ -19,7 +19,8 @@ function CoursesManagement() {
   const [filters, setFilters] = useState({
     search: "",
     categoryId: "",
-    enrollmentType: "", // "" (All), "Ongoing", "fixedStart"
+    // enrollmentType: "", // "" (All), "Ongoing", "fixedStart"
+    enrollmentType: "fixedStart",
   });
   const [activeTab, setActiveTab] = useState("all");
   const [pagination, setPagination] = useState({
@@ -375,7 +376,7 @@ function CoursesManagement() {
                 </Form.Select>
               </Col> */}
               {/* Enrollment type toggles */}
-              <Col lg={3} md={6} xs={12}>
+              {/* <Col lg={3} md={6} xs={12}>
                 <Form.Select
                   value={filters.enrollmentType}
                   onChange={(e) =>
@@ -394,7 +395,7 @@ function CoursesManagement() {
                   <option value="Ongoing">Ongoing Classes</option>
                   <option value="fixedStart">Fixed Start</option>
                 </Form.Select>
-              </Col>
+              </Col> */}
             </Row>
           </Form>
         </div>
@@ -405,7 +406,7 @@ function CoursesManagement() {
             <Tabs activeKey={activeTab} onSelect={(k) => { setActiveTab(k); setPagination((prev) => ({ ...prev, page: 1 })); }} className="">
               <Tab eventKey="all" title={t("all")} />
               <Tab eventKey="upcoming" title={t("upcoming")} />
-              <Tab eventKey="live" title={t("ongoing") || "Ongoing"} />
+              {/* <Tab eventKey="live" title={t("ongoing") || "Ongoing"} /> */}
               <Tab eventKey="past" title={t("past")} />
               <Tab eventKey="drafts" title={t("draftCourses") || "Draft Courses"} />
             </Tabs>
@@ -728,7 +729,7 @@ function CoursesManagement() {
                     </div>
                     <div
                       className="ticket-bottom d-flex flex-wrap align-items-center justify-content-between gap-3"
-                     >
+                    >
                       <div className="d-flex gap-4">
                         <p className="mb-0">
                           {t("price")}{" "}

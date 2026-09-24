@@ -170,9 +170,11 @@ function Page() {
       state: "",
       zipcode: "",
     },
-    enrollmentType: "Ongoing",
+    // enrollmentType: "Ongoing",
+    // endDate: "2099-12-31",
+    enrollmentType: "fixedStart",
     startDate: "",
-    endDate: "2099-12-31",
+    endDate: "",
     totalSessions: "",
     batches: [],
     refundPolicy: "",
@@ -184,7 +186,8 @@ function Page() {
     isDraft: false,
   });
 
-  const [noEndDate, setNoEndDate] = useState(true);
+  // const [noEndDate, setNoEndDate] = useState(true);
+  const [noEndDate, setNoEndDate] = useState(false);
 
   // Track eventData helper context internally for LocationMap dependency compatibility
   const [eventData, setEventData] = useState({
@@ -745,7 +748,7 @@ function Page() {
             {step === 1 && (
               <div>
                 {/* Enrollment Type Toggle Switcher */}
-                <div className="d-flex justify-content-center gap-3 mb-4">
+                {/* <div className="d-flex justify-content-center gap-3 mb-4">
                   <button
                     type="button"
                     className={`custom-btn ${formData.enrollmentType === "Ongoing" ? "" : "outline-btn"}`}
@@ -770,7 +773,7 @@ function Page() {
                   >
                     {t("fixedStartCourse") || "Fixed Start Course"}
                   </button>
-                </div>
+                </div> */}
 
                 <div className="event-frm-bx">
                   <label className="form-label">

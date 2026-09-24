@@ -111,9 +111,10 @@ const EventSection = ({
               params.latitude = position.coords.latitude;
               params.longitude = position.coords.longitude;
             } catch (error) {
-              console.warn("Location access denied or failed", error);
-              setLoading(false);
-              return;
+              console.warn("Location access denied or failed, falling back to all events", error);
+              delete params.latitude;
+              delete params.longitude;
+              params.filter = "all";
             }
           }
         }
@@ -131,6 +132,8 @@ const EventSection = ({
               status: "Upcoming,Live",
               excludemyevents: true,
             };
+            delete fallbackParams.latitude;
+            delete fallbackParams.longitude;
             const fallbackResponse = await eventApi.getEvents(fallbackParams);
             if (fallbackResponse?.data?.events?.length > 0) {
               const filteredFallbacks = fallbackResponse.data.events.filter(

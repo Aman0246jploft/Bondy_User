@@ -14,26 +14,8 @@ import CourseSection from "../components/CourseSection";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function HomePage() {
-
   const [view, setView] = useState("hero"); // hero | grid
   const [searchParams, setSearchParams] = useState({});
-
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setSearchParams({
-            latitude: position?.coords?.latitude,
-            longitude: position?.coords?.longitude,
-            filter: "nearYou"
-          });
-        },
-        (error) => {
-          console.warn("Initial geolocation failed or denied:", error);
-        }
-      );
-    }
-  }, []);
 
   const { t } = useLanguage();
   useEffect(() => {
@@ -54,13 +36,13 @@ export default function HomePage() {
       <TopEvents />
 
       <div className="event_bg">
-        <EventSection type="recommended" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
-        <EventSection type="nearYou" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
-        <EventSection type="thisWeekend" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
-        <EventSection type="nextWeek" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
-        <EventSection type="upcoming" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
-        <EventSection type="happeningSoon" extraParams={{ ...searchParams, placement: "homePage", page: 1, limit: 4 }} />
-        <CourseSection type="featured" extraParams={{ ...searchParams, placement: "homePage" }} />
+        <EventSection type="recommended" extraParams={{ placement: "homePage", page: 1, limit: 4 }} />
+        <EventSection type="nearYou" extraParams={{ placement: "homePage", page: 1, limit: 4 }} />
+        <EventSection type="thisWeekend" extraParams={{ placement: "homePage", page: 1, limit: 4 }} />
+        <EventSection type="nextWeek" extraParams={{ placement: "homePage", page: 1, limit: 4 }} />
+        <EventSection type="upcoming" extraParams={{ placement: "homePage", page: 1, limit: 4 }} />
+        <EventSection type="happeningSoon" extraParams={{ placement: "homePage", page: 1, limit: 4 }} />
+        <CourseSection type="featured" extraParams={{ placement: "homePage" }} />
       </div>
 
       <Categories />
