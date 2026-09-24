@@ -12,7 +12,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
     const [step, setStep] = useState(1); // 1: Tickets, 2: Payment, 3: Review
     const [selectedTickets, setSelectedTickets] = useState({});
     const [qty, setQty] = useState(type === "EVENT" ? 0 : 1);
-    const [selectedMethod, setSelectedMethod] = useState("card");
+    const [selectedMethod, setSelectedMethod] = useState("qpay");
     const [modalShow, setModalShow] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -1361,35 +1361,6 @@ export default function TicketBooking({ item, type, scheduleId }) {
 
                             <div className="payment_card_add">
                                 <h2 className="">{t("paymentMethod")}</h2>
-                                <div
-                                    className="payment_method_item"
-                                    onClick={() => setSelectedMethod("card")}
-                                    style={{ cursor: "pointer" }}
-                                >
-                                    <div className="method_left">
-                                        <div
-                                            className={`radio_outer ${selectedMethod === "card" ? "active_radio" : ""}`}
-                                        >
-                                            {selectedMethod === "card" && <div className="radio_inner"></div>}
-                                        </div>
-                                        <div className="card_logo_bg">
-                                            <img
-                                                src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
-                                                width="25"
-                                                alt="mastercard"
-                                            />
-                                        </div>
-                                        <div className="method_info">
-                                            <h6>{t("card")}</h6>
-                                            <span>... 3455</span>
-                                        </div>
-                                    </div>
-                                    <button className="edit_btn" onClick={(e) => e.stopPropagation()}>
-                                        {t("edit")}
-                                    </button>
-                                </div>
-
-                                <hr className="divider_line" />
 
                                 <div
                                     className="payment_method_item"
@@ -1404,27 +1375,6 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                         </div>
                                         <div className="method_info">
                                             <h6>{t("qpay")}</h6>
-                                            <span>{t("fundYourWallet")}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <hr className="divider_line" />
-
-                                <div
-                                    className="payment_method_item"
-                                    onClick={() => setSelectedMethod("social")}
-                                    style={{ cursor: "pointer" }}
-                                >
-                                    <div className="method_left">
-                                        <div
-                                            className={`radio_outer ${selectedMethod === "social" ? "active_radio" : ""
-                                                }`}
-                                        >
-                                            {selectedMethod === "social" && <div className="radio_inner"></div>}
-                                        </div>
-                                        <div className="method_info">
-                                            <h6>{t("socialPay")}</h6>
                                             <span>{t("fundYourWallet")}</span>
                                         </div>
                                     </div>
@@ -1537,7 +1487,7 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                     </div>
 
                                     {/* Actions: Manual Check & Cancel */}
-                                    <div className="d-flex flex-column flex-sm-row gap-2 justify-content-center align-items-center mb-3">
+                                    <div className="d-flex justify-content-center align-items-center mb-3">
                                         <button
                                             type="button"
                                             className="btn px-4 py-2 rounded-pill fw-semibold text-white shadow-sm"
@@ -1553,15 +1503,6 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                             ) : (
                                                 t("checkPaymentStatus") || "Check Payment Status"
                                             )}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-light px-3 py-2 rounded-pill"
-                                            style={{ fontSize: "13px", opacity: 0.85 }}
-                                            onClick={handleCancelQPay}
-                                        >
-                                            {t("changePaymentMethod") || "Cancel / Change Payment Method"}
                                         </button>
                                     </div>
 
