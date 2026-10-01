@@ -1,31 +1,35 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
-import LanguageSelector from "./LanguageSelector";
+
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
+import LanguageSelector from "./LanguageSelector";
 
 export default function BondyHeader() {
   const { t } = useLanguage();
   const pathname = usePathname();
-  const [isAnimating, setIsAnimating] = useState(true);
-  const [showContent, setShowContent] = useState(false);
+  const router = useRouter();
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
+  const profileRef = useRef(null);
 
+  // Close menus on route change
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsAnimating(false);
-      setTimeout(() => setShowContent(true), 800);
-    }, 1500);
+    setIsMenuOpen(false);
+    setIsProfileOpen(false);
+  }, [pathname]);
 
+  // Fetch self profile if token exists
+  useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem("token");
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (token) {
         try {
           const response = await authApi.getSelfProfile();
@@ -64,241 +68,306 @@ export default function BondyHeader() {
         setUserProfile(null);
       }
     };
-    fetchUser();
 
-    return () => clearTimeout(timer);
+    fetchUser();
   }, [pathname]);
 
-  const handleSignUpClick = () => {
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/Explore?search=${encodeURIComponent(searchQuery.trim())}`);
+      setIsMenuOpen(false);
+    }
+  };
+
+  const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userProfile");
     setUserProfile(null);
+    setIsProfileOpen(false);
+    setIsMenuOpen(false);
+    router.push("/login");
   };
 
+  const isOrganizer =
+    userProfile?.role === "ORGANIZER" ||
+    userProfile?.roleId === 2 ||
+    userProfile?.organizerVerificationStatus;
+
+  const isEventsActive = pathname === "/Explore" || pathname === "/Listing";
+  const isCoursesActive = pathname === "/Programs-Listing" || pathname === "/programDetails";
+  const isOrganizersActive = pathname === "/Organizers";
+
   return (
-    <>
-      <nav className="bondy-nav">
-        {/* LOGO INTRO ANIMATION */}
-        <motion.div
-          className="logo-box"
-        // initial={{ scale: 2.5, x: "45vw", y: "45vh" }}
-        // animate={!isAnimating ? { scale: 1, x: 0, y: 0 } : {}}
-        // transition={{ duration: 1.2, ease: [0.6, 0.01, -0.05, 0.9] }}
-        >
-          <div className="logo_box">
-            <Link href="/">
-              <img src="/img/logo.svg" alt="logo" />
+    <header className="bd-header" data-screen-label="Header">
+      <div className="bd-header-inner">
+        {/* LOGO */}
+        <Link href="/" className="bd-logo" aria-label="Bondy">
+          <img src="/img/bondy-logo.svg" alt="Bondy" />
+        </Link>
+
+        {/* DESKTOP NAVIGATION */}
+        <nav className="bd-desk bd-nav-links">
+          <Link
+            href="/Explore"
+            className={`bd-nav-link ${isEventsActive ? "active" : ""}`}
+            data-en="Events"
+          >
+            {t("events") || "Events"}
+          </Link>
+          <Link
+            href="/Programs-Listing"
+            className={`bd-nav-link ${isCoursesActive ? "active" : ""}`}
+            data-en="Courses"
+          >
+            {t("courses") || "Courses"}
+          </Link>
+          <Link
+            href="/Organizers"
+            className={`bd-nav-link ${isOrganizersActive ? "active" : ""}`}
+            data-en="Organizers"
+          >
+            {t("organizers") || "Organizers"}
+          </Link>
+        </nav>
+
+        {/* SEARCH BAR */}
+        <form onSubmit={handleSearchSubmit} className="bd-search-label" role="search">
+          <svg
+            className="bd-search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t("searchPlaceholder") || t("search") || "Search"}
+            className="bd-search-input"
+          />
+        </form>
+
+        {/* RIGHT SECTION */}
+        <div className="bd-header-right">
+          {/* BECOME AN ORGANIZER / PORTAL */}
+          {isOrganizer ? (
+            <Link href="/Dashboard" className="bd-desk bd-become-organizer">
+              {t("organizerSection") || "Organizer Portal"}
             </Link>
-          </div>
-        </motion.div>
+          ) : (
+            <Link href="/register?role=organizer" className="bd-desk bd-become-organizer">
+              {t("becomeAnOrganizer") || "Become an organizer"}
+            </Link>
+          )}
 
-        {/* RIGHT CONTENT */}
-        <AnimatePresence>
-          {showContent && (
-            <div
-              className="nav-content-wrapper"
-              style={{ display: "flex", flexGrow: 1, alignItems: "center" }}>
-              {/* DESKTOP MENU (STATIC) */}
-              <motion.div
-                className="menu-links-container"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                style={{
-                  flexGrow: 1,
-                  display: "flex",
-                  justifyContent: "center",
-                }}>
-                <ul className="desktop-menu">
-                  <li>
-                    <Link href="/">{t("home")}</Link>
-                  </li>
-                  <li>
-                    <Link href="/Explore">{t("explore")}</Link>
-                  </li>
-                  <li>
-                    <Link href="/Programs-Listing">{t("course")}</Link>
-                  </li>
-                  <li>
-                    <Link href="/Organizers">{t("organizers")}</Link>
-                  </li>
-                  <li>
-                    <Link href="/contact-us">{t("contactUs")}</Link>
-                  </li>
-                </ul>
-              </motion.div>
+          {/* LANGUAGE SWITCHER PILL */}
+          <span className="bd-desk bd-lang-wrap" style={{ display: "inline-flex" }}>
+            <LanguageSelector />
+          </span>
 
-              {/* RIGHT ACTIONS */}
-              <motion.div
-                className="nav-right-actions"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.1 }}
-                style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-                <LanguageSelector />
-                {userProfile ? (
+          {/* AUTH ACTIONS */}
+          {userProfile ? (
+            <div className="bd-profile-trigger-wrap" ref={profileRef} style={{ position: "relative" }}>
+              <button
+                type="button"
+                className="bd-profile-trigger"
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                aria-label="User Profile"
+              >
+                <img
+                  src={getFullImageUrl(userProfile.profileImage) || "/img/default-user.png"}
+                  alt="profile"
+                  onError={(e) => {
+                    e.target.src = "/img/default-user.png";
+                  }}
+                  className="bd-avatar-img"
+                />
+              </button>
+
+              {isProfileOpen && (
+                <div className="bd-profile-dropdown">
+                  <div className="bd-profile-dropdown-header">
+                    <div className="bd-profile-dropdown-name">
+                      {userProfile.businessName ||
+                        userProfile.fullname ||
+                        userProfile.firstName ||
+                        "User"}
+                    </div>
+                    <div className="bd-profile-dropdown-role">
+                      {userProfile.role || (isOrganizer ? "ORGANIZER" : "CUSTOMER")}
+                    </div>
+                  </div>
+
                   <Link
                     href={
-                      userProfile.role === "ORGANIZER" ||
-                        userProfile.role === "ORGANIZER"
+                      isOrganizer
                         ? "/OrganizerPersonalInfo"
                         : userProfile.role === "CUSTOMER"
-                          ? "/Personalinfo"
-                          : "/completeprofile"
+                        ? "/Personalinfo"
+                        : "/completeprofile"
                     }
-                    className="profile-img-btn">
-                    <img
-                      src={getFullImageUrl(userProfile.profileImage) || "/img/default-user.png"}
-                      alt="profile"
-                      onError={(e) => { e.target.src = "/img/default-user.png"; }}
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                        border: "2px solid #fff",
-                        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-                      }}
-                    />
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    {t("profile") || "Profile"}
                   </Link>
-                ) : (
-                  <Link
-                    href="/login"
-                    className="signup-btn"
-                    onClick={handleSignUpClick}>
-                    {t("signUp")}
-                  </Link>
-                )}
 
-                {/* MOBILE ICON */}
-                <button
-                  className="mobile-menu-icon"
-                  onClick={() => setIsMenuOpen(true)}>
-                  <Menu size={28} />
-                </button>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-      </nav>
+                  {isOrganizer && (
+                    <Link href="/Dashboard" onClick={() => setIsProfileOpen(false)}>
+                      {t("organizerSection") || "Dashboard"}
+                    </Link>
+                  )}
 
-      {/* MOBILE SIDEBAR */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <>
-            <motion.div
-              className="sidebar-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMenuOpen(false)}
-            />
-
-            <motion.div
-              className="sidebar"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 220 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}>
-                <div className="logo-box">
-                  <img src="/img/logo.svg" alt="logo" />
+                  <button type="button" className="logout-btn" onClick={handleLogout}>
+                    {t("logout") || "Log out"}
+                  </button>
                 </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <Link href="/login" className="bd-desk bd-login-link">
+                {t("logIn") || "Log in"}
+              </Link>
+              <Link href="/register" className="bd-m-hide bd-signup-btn">
+                {t("signUp") || "Sign up"}
+              </Link>
+            </>
+          )}
 
-                <button
-                  style={{ background: "none", border: "none", color: "white" }}
-                  onClick={() => setIsMenuOpen(false)}>
-                  <X size={24} />
-                </button>
-              </div>
+          {/* MOBILE HAMBURGER BUTTON */}
+          <button
+            type="button"
+            className="bd-mob-btn"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={t("menu") || "Menu"}
+          >
+            <span style={{ display: "flex", flexDirection: "column", gap: "4px", pointerEvents: "none" }}>
+              <span style={{ width: "16px", height: "2px", borderRadius: "2px", background: "currentColor" }}></span>
+              <span style={{ width: "16px", height: "2px", borderRadius: "2px", background: "currentColor" }}></span>
+              <span style={{ width: "16px", height: "2px", borderRadius: "2px", background: "currentColor" }}></span>
+            </span>
+          </button>
+        </div>
 
-              {/* MOBILE MENU (STATIC) */}
-              <ul className="sidebar-links">
-                <li>
-                  <Link href="/" onClick={() => setIsMenuOpen(false)}>
-                    {t("home")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/Explore" onClick={() => setIsMenuOpen(false)}>
-                    {t("explore")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/Programs-Listing"
-                    onClick={() => setIsMenuOpen(false)}>
-                    {t("course")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/Organizers" onClick={() => setIsMenuOpen(false)}>
-                    {t("organizers")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact-us" onClick={() => setIsMenuOpen(false)}>
-                    {t("contactUs")}
-                  </Link>
-                </li>
-              </ul>
+        {/* MOBILE SLIDE-DOWN PANEL */}
+        <div className={`bd-mob-panel ${isMenuOpen ? "open" : ""}`} data-mob-panel>
+          <Link
+            href="/Explore"
+            className={`bd-mob-link ${isEventsActive ? "active highlight" : ""}`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {t("events") || "Events"}
+          </Link>
+          <Link
+            href="/Programs-Listing"
+            className={`bd-mob-link ${isCoursesActive ? "active highlight" : ""}`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {t("courses") || "Courses"}
+          </Link>
+          <Link
+            href="/Organizers"
+            className={`bd-mob-link ${isOrganizersActive ? "active highlight" : ""}`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {t("organizers") || "Organizers"}
+          </Link>
 
-              <div style={{ marginTop: "auto" }}>
-                {userProfile ? (
-                  <Link
-                    href={
-                      userProfile.role === "ORGANIZER" ||
-                        userProfile.role === "ORGANIZER"
-                        ? "/Dashboard"
-                        : userProfile.role === "CUSTOMER"
-                          ? "/Personalinfo"
-                          : "/completeprofile"
-                    }
-                    className="profile-img-btn"
-                    onClick={() => setIsMenuOpen(false)}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        color: "white",
-                      }}>
-                      <img
-                        src={getFullImageUrl(userProfile.profileImage) || "/img/default-user.png"}
-                        alt="profile"
-                        onError={(e) => { e.target.src = "/img/default-user.png"; }}
-                        style={{
-                          width: "50px",
-                          height: "50px",
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                          border: "2px solid #fff",
-                        }}
-                      />
-                      <span>{userProfile.firstName || t("profile")}</span>
-                    </div>
-                  </Link>
-                ) : (
-                  <Link
-                    href="/login"
-                    className="signup-btn d-inline-block"
-                    onClick={() => {
-                      handleSignUpClick();
-                      setIsMenuOpen(false);
-                    }}>
-                    {t("signUp")}
-                  </Link>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
+          {isOrganizer ? (
+            <Link
+              href="/Dashboard"
+              className="bd-mob-link highlight"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              {t("organizerSection") || "Organizer Portal"}
+            </Link>
+          ) : (
+            <Link
+              href="/register?role=organizer"
+              className="bd-mob-link highlight"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              {t("becomeAnOrganizer") || "Become an organizer"}
+            </Link>
+          )}
+
+          {userProfile ? (
+            <>
+              <Link
+                href={
+                  isOrganizer
+                    ? "/OrganizerPersonalInfo"
+                    : userProfile.role === "CUSTOMER"
+                    ? "/Personalinfo"
+                    : "/completeprofile"
+                }
+                className="bd-mob-link"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {t("profile") || "Profile"}
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="bd-mob-link"
+                style={{
+                  background: "none",
+                  border: "none",
+                  textAlign: "left",
+                  padding: 0,
+                  color: "#ff6b6b",
+                  cursor: "pointer",
+                  fontSize: "15px",
+                  fontWeight: 500,
+                }}
+              >
+                {t("logout") || "Log out"}
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="bd-mob-link highlight"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {t("logIn") || "Log in"}
+              </Link>
+              <Link
+                href="/register"
+                className="bd-mob-link accent"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {t("signUp") || "Sign up"}
+              </Link>
+            </>
+          )}
+
+          <div style={{ marginTop: "6px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            <LanguageSelector />
+          </div>
+        </div>
+      </div>
+    </header>
   );
 }

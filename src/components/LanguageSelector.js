@@ -1,102 +1,97 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
+import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import toast from "react-hot-toast";
 
-const availableLanguages = [
-  {
-    code: "en",
-    label: "Eng",
-    name: "English (US)",
-    flag: "/img/usflag.svg",
-  },
-  {
-    code: "mn",
-    label: "Mon",
-    name: "Mongolian (MN)",
-    flag: "/img/Flag_of_Mongolia.svg.png",
-  }
-];
-
-export default function LanguageSelector() {
-
-  const [open, setOpen] = useState(false);
-  const { language, changeLanguage, t } = useLanguage();
-
-  const wrapperRef = useRef(null);
-
-  const selectedLang = availableLanguages.find((l) => l.code === language) || availableLanguages[0];
+export default function LanguageSelector({ className = "", style = {} }) {
+  const { language, changeLanguage } = useLanguage();
 
   const handleSelect = (langCode) => {
+    if (langCode === language) return;
     changeLanguage(langCode);
-    setOpen(false);
     if (langCode === "mn") {
       toast.success("Хэлийг Монгол болгож өөрчиллөө");
     } else {
-      toast.success("Language changed to English (US)");
+      toast.success("Language changed to English");
     }
   };
 
-  // 👇 Outside click close logic
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  const isMn = language === "mn";
+  const isEn = language === "en" || !language;
 
   return (
-    <div className="lang-wrapper" ref={wrapperRef}>
-      <button className="lang-selector" onClick={() => setOpen(!open)}>
-        <Image
-          src={selectedLang.flag}
-          alt={selectedLang.name}
-          width={28}
-          height={18}
-          className="lang-flag"
-        />
-        <span className="lang-text">{selectedLang.label}</span>
-
-        <svg
-          className={`lang-arrow ${open ? "rotate" : ""}`}
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-        >
-          <path
-            d="M6 9L12 15L18 9"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+    <div
+      className={`bd-lang-switch ${className}`}
+      data-lang-switch
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "2px",
+        padding: "3px",
+        borderRadius: "999px",
+        background: "var(--bd-ink-850, #161616)",
+        border: "1px solid var(--bd-border, #303030)",
+        flexShrink: 0,
+        boxSizing: "border-box",
+        ...style,
+      }}
+    >
+      <button
+        type="button"
+        data-lang="mn"
+        aria-label="Mongolian"
+        onClick={() => handleSelect("mn")}
+        style={{
+          height: "26px",
+          padding: "0 10px",
+          border: "none",
+          borderRadius: "999px",
+          background: isMn ? "var(--acc, #23ADA4)" : "transparent",
+          color: isMn ? "#FFFFFF" : "var(--bd-gray-400, #a3a3a3)",
+          fontFamily: "var(--bd-font-ui, system-ui, -apple-system, sans-serif)",
+          fontSize: "12px",
+          fontWeight: 700,
+          letterSpacing: "0.02em",
+          cursor: "pointer",
+          transition: "background 200ms cubic-bezier(.2,.8,.2,1), color 200ms cubic-bezier(.2,.8,.2,1)",
+          lineHeight: "26px",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          outline: "none",
+        }}
+      >
+        MN
       </button>
-
-      {open && (
-        <div className="lang-dropdown">
-          {availableLanguages.map((lang) => (
-            <div
-              key={lang.code}
-              className={`lang-option ${selectedLang.code === lang.code ? "active" : ""
-                }`}
-              onClick={() => handleSelect(lang.code)}
-            >
-              <Image src={lang.flag} alt={lang.name} width={24} height={16} />
-              <span>{lang.name}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      <button
+        type="button"
+        data-lang="en"
+        aria-label="English"
+        onClick={() => handleSelect("en")}
+        style={{
+          height: "26px",
+          padding: "0 10px",
+          border: "none",
+          borderRadius: "999px",
+          background: isEn ? "var(--acc, #23ADA4)" : "transparent",
+          color: isEn ? "#FFFFFF" : "var(--bd-gray-400, #a3a3a3)",
+          fontFamily: "var(--bd-font-ui, system-ui, -apple-system, sans-serif)",
+          fontSize: "12px",
+          fontWeight: 700,
+          letterSpacing: "0.02em",
+          cursor: "pointer",
+          transition: "background 200ms cubic-bezier(.2,.8,.2,1), color 200ms cubic-bezier(.2,.8,.2,1)",
+          lineHeight: "26px",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          outline: "none",
+        }}
+      >
+        EN
+      </button>
     </div>
   );
 }
+
