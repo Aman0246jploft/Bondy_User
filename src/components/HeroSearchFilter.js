@@ -200,7 +200,7 @@ export default function HeroSearchFilter({ onDateChange }) {
 
 
             </div>
-            
+
           </div>
         )}
       </div>
