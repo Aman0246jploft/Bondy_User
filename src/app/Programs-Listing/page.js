@@ -426,26 +426,28 @@ const DATE_CHIP_KEYS = [
   { key: "custom", labelKey: "selectDate" },
 ];
 
-const FALLBACK_POSTERS = [
-  "/assets/img/b5e94e90c3d8df6c.jpg",
-  "/assets/img/584415eadd8f2ebe.jpg",
-  "/assets/img/9e7e81cc0090743e.jpg",
-  "/assets/img/902236f864f58ab2.jpg",
-  "/assets/img/afc19b55dffa3545.jpg",
-  "/assets/img/6450ac80291b9a2d.jpg",
-  "/assets/img/2549d679991e8be3.jpg",
-  "/assets/img/1f821f0d15ec4978.jpg",
-];
+const DEFAULT_FALLBACK_IMAGE = "/img/sidebar-logo.svg";
 
-function CourseCardImage({ src, fallback }) {
+function CourseCardImage({ src, fallback = DEFAULT_FALLBACK_IMAGE }) {
   const [imgSrc, setImgSrc] = useState(src || fallback);
 
   useEffect(() => {
     setImgSrc(src || fallback);
   }, [src, fallback]);
 
+  const isLogo = !imgSrc || imgSrc.includes("sidebar-logo.svg");
+
   return (
-    <span className="el-c-img" style={{ backgroundImage: `url(${imgSrc})` }}>
+    <span
+      className="el-c-img"
+      style={{
+        backgroundImage: `url(${imgSrc})`,
+        backgroundSize: isLogo ? "44% auto" : "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: isLogo ? "center 38%" : "center",
+        backgroundColor: "var(--bd-ink-800, #14151a)",
+      }}
+    >
       <img
         src={imgSrc}
         alt=""
@@ -460,15 +462,26 @@ function CourseCardImage({ src, fallback }) {
   );
 }
 
-function MapRowThumb({ src, fallback }) {
+function MapRowThumb({ src, fallback = DEFAULT_FALLBACK_IMAGE }) {
   const [imgSrc, setImgSrc] = useState(src || fallback);
 
   useEffect(() => {
     setImgSrc(src || fallback);
   }, [src, fallback]);
 
+  const isLogo = !imgSrc || imgSrc.includes("sidebar-logo.svg");
+
   return (
-    <span className="bd-mr-img" style={{ backgroundImage: `url(${imgSrc})` }}>
+    <span
+      className="bd-mr-img"
+      style={{
+        backgroundImage: `url(${imgSrc})`,
+        backgroundSize: isLogo ? "55% auto" : "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+        backgroundColor: "var(--bd-ink-800, #14151a)",
+      }}
+    >
       <img
         src={imgSrc}
         alt=""
@@ -621,9 +634,7 @@ function ProgramsListingContent() {
 
       const rawPoster = Array.isArray(crs.posterImage) ? crs.posterImage[0] : crs.posterImage;
       const fullUrl = rawPoster ? getFullImageUrl(rawPoster) : null;
-      const safeImg = fullUrl && !fullUrl.includes("sidebar-logo.svg")
-        ? fullUrl
-        : FALLBACK_POSTERS[idx % FALLBACK_POSTERS.length];
+      const safeImg = (fullUrl && fullUrl.trim()) ? fullUrl : DEFAULT_FALLBACK_IMAGE;
 
       const title = (language === "mn" && crs.courseTitle_thi)
         ? crs.courseTitle_thi
@@ -1635,7 +1646,7 @@ function ProgramsListingContent() {
                       data-km={crs.km}
                     >
                       {/* Image cover with dark gradient */}
-                      <CourseCardImage src={crs.image} fallback={FALLBACK_POSTERS[0]} />
+                      <CourseCardImage src={crs.image} fallback={DEFAULT_FALLBACK_IMAGE} />
 
                       {/* Promo badge */}
                       {crs.promo && <span className="el-c-promo">{t("featuredBadge")}</span>}
@@ -1787,7 +1798,7 @@ function ProgramsListingContent() {
                       setSelectedMapId(item.id);
                     }}
                   >
-                    <MapRowThumb src={item.image} fallback={FALLBACK_POSTERS[0]} />
+                    <MapRowThumb src={item.image} fallback={DEFAULT_FALLBACK_IMAGE} />
                     <span className="bd-mr-b">
                       <b>{item.title}</b>
                       <span>{item.schedLine}</span>

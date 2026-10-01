@@ -469,24 +469,28 @@ const DATE_CHIP_KEYS = [
   { key: "custom", labelKey: "selectDate" },
 ];
 
-const FALLBACK_POSTERS = [
-  "/assets/img/95915dd284f4c106.jpg",
-  "/assets/img/8e94a2fe5d7c034d.jpg",
-  "/assets/img/702844b5b1ca71e6.jpg",
-  "/assets/img/07c6c6c75b998fb6.jpg",
-  "/assets/img/dd5548cce6edebaa.jpg",
-  "/assets/img/7b6105dcfd227890.jpg",
-];
+const DEFAULT_FALLBACK_IMAGE = "/img/sidebar-logo.svg";
 
-function EventCardImage({ src, fallback }) {
+function EventCardImage({ src, fallback = DEFAULT_FALLBACK_IMAGE }) {
   const [imgSrc, setImgSrc] = useState(src || fallback);
 
   useEffect(() => {
     setImgSrc(src || fallback);
   }, [src, fallback]);
 
+  const isLogo = !imgSrc || imgSrc.includes("sidebar-logo.svg");
+
   return (
-    <span className="el-c-img" style={{ backgroundImage: `url(${imgSrc})` }}>
+    <span
+      className="el-c-img"
+      style={{
+        backgroundImage: `url(${imgSrc})`,
+        backgroundSize: isLogo ? "44% auto" : "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: isLogo ? "center 38%" : "center",
+        backgroundColor: "var(--bd-ink-800, #14151a)",
+      }}
+    >
       <img
         src={imgSrc}
         alt=""
@@ -501,15 +505,26 @@ function EventCardImage({ src, fallback }) {
   );
 }
 
-function MapRowThumb({ src, fallback }) {
+function MapRowThumb({ src, fallback = DEFAULT_FALLBACK_IMAGE }) {
   const [imgSrc, setImgSrc] = useState(src || fallback);
 
   useEffect(() => {
     setImgSrc(src || fallback);
   }, [src, fallback]);
 
+  const isLogo = !imgSrc || imgSrc.includes("sidebar-logo.svg");
+
   return (
-    <span className="bd-mr-img" style={{ backgroundImage: `url(${imgSrc})` }}>
+    <span
+      className="bd-mr-img"
+      style={{
+        backgroundImage: `url(${imgSrc})`,
+        backgroundSize: isLogo ? "55% auto" : "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+        backgroundColor: "var(--bd-ink-800, #14151a)",
+      }}
+    >
       <img
         src={imgSrc}
         alt=""
@@ -667,9 +682,7 @@ function ExploreContent() {
 
       const rawPoster = Array.isArray(evt.posterImage) ? evt.posterImage[0] : evt.posterImage;
       const fullUrl = rawPoster ? getFullImageUrl(rawPoster) : null;
-      const safeImg = fullUrl && !fullUrl.includes("sidebar-logo.svg")
-        ? fullUrl
-        : FALLBACK_POSTERS[idx % FALLBACK_POSTERS.length];
+      const safeImg = (fullUrl && fullUrl.trim()) ? fullUrl : DEFAULT_FALLBACK_IMAGE;
 
       const title = (language === "mn" && evt.eventTitle_thi)
         ? evt.eventTitle_thi
@@ -1672,7 +1685,7 @@ function ExploreContent() {
                       data-km={evt.km}
                     >
                       {/* Image cover with dark gradient */}
-                      <EventCardImage src={evt.image} fallback={FALLBACK_POSTERS[0]} />
+                      <EventCardImage src={evt.image} fallback={DEFAULT_FALLBACK_IMAGE} />
 
                       {/* Promo badge */}
                       {evt.promo && <span className="el-c-promo">{t("featuredBadge")}</span>}
@@ -1824,7 +1837,7 @@ function ExploreContent() {
                       setSelectedMapId(item.id);
                     }}
                   >
-                    <MapRowThumb src={item.image} fallback={FALLBACK_POSTERS[0]} />
+                    <MapRowThumb src={item.image} fallback={DEFAULT_FALLBACK_IMAGE} />
                     <span className="bd-mr-b">
                       <b>{item.title}</b>
                       <span>{item.dateText}</span>

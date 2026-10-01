@@ -95,12 +95,11 @@ function isValidMongoliaCoord(lat, lng) {
   return lat >= 40.5 && lat <= 53.0 && lng >= 86.5 && lng <= 121.0;
 }
 
-const DEFAULT_MAP_POSTER = "/assets/img/95915dd284f4c106.jpg";
-const FALLBACK_IMAGE_PLACEHOLDER = "/img/imageholder.png";
+const DEFAULT_MAP_POSTER = "/img/sidebar-logo.svg";
 
 function MapPreviewThumb({ src, alt = "" }) {
   const resolvedSrc =
-    src && typeof src === "string" && src.trim() && !src.includes("sidebar-logo.svg")
+    src && typeof src === "string" && src.trim()
       ? src
       : DEFAULT_MAP_POSTER;
 
@@ -108,7 +107,7 @@ function MapPreviewThumb({ src, alt = "" }) {
 
   useEffect(() => {
     const nextSrc =
-      src && typeof src === "string" && src.trim() && !src.includes("sidebar-logo.svg")
+      src && typeof src === "string" && src.trim()
         ? src
         : DEFAULT_MAP_POSTER;
     setImgSrc(nextSrc);
@@ -117,18 +116,19 @@ function MapPreviewThumb({ src, alt = "" }) {
   const handleError = () => {
     if (imgSrc !== DEFAULT_MAP_POSTER) {
       setImgSrc(DEFAULT_MAP_POSTER);
-    } else {
-      setImgSrc(FALLBACK_IMAGE_PLACEHOLDER);
     }
   };
+
+  const isLogo = !imgSrc || imgSrc.includes("sidebar-logo.svg");
 
   return (
     <span
       className="thumb"
       style={{
         backgroundImage: `url(${imgSrc})`,
-        backgroundColor: "#1c1d22",
-        backgroundSize: "cover",
+        backgroundColor: "var(--bd-ink-800, #16181f)",
+        backgroundSize: isLogo ? "60% auto" : "cover",
+        backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
         borderRadius: "12px",
         flexShrink: 0,
