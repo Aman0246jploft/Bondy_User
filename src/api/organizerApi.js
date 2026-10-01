@@ -7,6 +7,7 @@ const organizerApi = {
         apiClient.post("/payout/request-payout", { amount, paymentReference }),
     getAnalyticsStats: (filter) => apiClient.get("/analytics/organizer/stats", { params: filter ? { filter } : {}, skipToast: true }),
     getRevenueAnalytics: (filter) => apiClient.get("/analytics/organizer/revenue-analytics", { params: filter ? { filter } : {}, skipToast: true }),
+    getPublicOrganizers: (params) => apiClient.get("/user/organizers", { params, skipToast: true }),
 };
 
 export default organizerApi;

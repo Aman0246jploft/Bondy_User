@@ -783,11 +783,6 @@ function ProgramDetailsContent() {
           </div>
         </div>
         <Footer />
-        <style jsx>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }

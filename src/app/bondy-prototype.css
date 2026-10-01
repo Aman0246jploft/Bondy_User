@@ -3322,3 +3322,14 @@ body {
 .gallery-grid-thumb:hover .thumb-hover-overlay {
   opacity: 1 !important;
 }
+
+/* Organizers Directory */
+.bd-hov {
+  transition: transform 200ms cubic-bezier(.2,.8,.2,1), border-color 200ms cubic-bezier(.2,.8,.2,1), background-color 200ms cubic-bezier(.2,.8,.2,1), box-shadow 200ms cubic-bezier(.2,.8,.2,1);
+}
+.bd-hov:hover {
+  transform: translateY(-2px);
+  border-color: var(--bd-border-strong, rgba(255, 255, 255, 0.22)) !important;
+  background-color: var(--bd-ink-800, #1A1A1A) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
