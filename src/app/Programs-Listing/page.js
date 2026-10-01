@@ -773,7 +773,11 @@ function ProgramsListingContent() {
       const coursesList = data?.courses || [];
       const total = typeof data?.totalCourses === "number" ? data.totalCourses : (data?.total || totalCount);
       const mapped = coursesList.map((crs, idx) => mapRawCourse(crs, backendCourses.length + idx));
-      setBackendCourses((prev) => [...prev, ...mapped]);
+      setBackendCourses((prev) => {
+        const existingIds = new Set(prev.map((c) => c.id));
+        const newItems = mapped.filter((c) => !existingIds.has(c.id));
+        return [...prev, ...newItems];
+      });
       setTotalCount(total);
       setCurrentPage(nextPage);
     } catch (err) {
@@ -1759,7 +1763,17 @@ function ProgramsListingContent() {
         {viewMode === "map" && (
           <div className="bd-mapwrap" style={{ display: "grid" }}>
             {/* Left Column: Scrollable List of Result Rows */}
-            <div className="bd-scroll bd-maplist">
+            <div
+              className="bd-scroll bd-maplist"
+              onScroll={(e) => {
+                const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+                if (scrollHeight - scrollTop - clientHeight < 140) {
+                  if (!isLoadingMore && filteredCourses.length < totalCount) {
+                    handleLoadMore();
+                  }
+                }
+              }}
+            >
               {filteredCourses.map((item) => {
                 const isSelected = selectedMapId === item.id;
                 return (
@@ -1786,6 +1800,47 @@ function ProgramsListingContent() {
                   </Link>
                 );
               })}
+
+              {/* Load More Pagination in Map List */}
+              {filteredCourses.length < totalCount && (
+                <div
+                  style={{
+                    padding: "14px 8px 10px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={handleLoadMore}
+                    disabled={isLoadingMore}
+                    style={{
+                      width: "100%",
+                      height: "42px",
+                      borderRadius: "12px",
+                      border: "1px solid var(--bd-border-strong)",
+                      background: "var(--bd-ink-850)",
+                      color: "var(--bd-white)",
+                      fontFamily: "var(--bd-font-ui)",
+                      fontSize: "13.5px",
+                      fontWeight: 600,
+                      cursor: isLoadingMore ? "not-allowed" : "pointer",
+                      opacity: isLoadingMore ? 0.7 : 1,
+                      transition: "all 160ms var(--bd-ease)",
+                    }}
+                  >
+                    {isLoadingMore ? "..." : t("showMore")}
+                  </button>
+                  <span style={{ fontSize: "12px", color: "var(--bd-gray-600)" }}>
+                    {t("resultsOutOf", {
+                      total: totalCount,
+                      shown: filteredCourses.length,
+                    })}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Right Column: Sticky Interactive Google Map */}
@@ -1796,6 +1851,11 @@ function ProgramsListingContent() {
               cityLabel={t("cityUlaanbaatar")}
               zoomInLabel={t("zoomIn")}
               zoomOutLabel={t("zoomOut")}
+              hasMore={filteredCourses.length < totalCount}
+              onLoadMore={handleLoadMore}
+              isLoadingMore={isLoadingMore}
+              totalCount={totalCount}
+              t={t}
             />
           </div>
         )}

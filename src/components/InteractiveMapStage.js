@@ -209,6 +209,11 @@ export default function InteractiveMapStage({
   cityLabel = "Ulaanbaatar City",
   zoomInLabel = "Zoom in",
   zoomOutLabel = "Zoom out",
+  hasMore = false,
+  onLoadMore = null,
+  isLoadingMore = false,
+  totalCount = 0,
+  t = null,
 }) {
   const mapContainerRef = useRef(null);
   const googleMapRef = useRef(null);
@@ -697,6 +702,68 @@ export default function InteractiveMapStage({
           </svg>
           <span>{cityLabel}</span>
         </button>
+
+        {/* Floating Load More Button in Map */}
+        {hasMore && onLoadMore && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onLoadMore();
+            }}
+            disabled={isLoadingMore}
+            title={t?.("showMore") || "Load more items"}
+            style={{
+              position: "absolute",
+              top: "14px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 220,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "7px",
+              height: "32px",
+              padding: "0 14px",
+              borderRadius: "999px",
+              border: "1px solid var(--bd-border-strong)",
+              background: "rgba(18, 19, 23, 0.92)",
+              backdropFilter: "blur(12px)",
+              color: "var(--bd-white)",
+              fontFamily: "var(--bd-font-ui)",
+              fontSize: "12.5px",
+              fontWeight: 600,
+              cursor: isLoadingMore ? "not-allowed" : "pointer",
+              boxShadow: "0 6px 18px rgba(0,0,0,0.45)",
+              transition: "all 160ms var(--bd-ease)",
+            }}
+          >
+            {isLoadingMore ? (
+              <>
+                <span
+                  style={{
+                    width: "12px",
+                    height: "12px",
+                    border: "2px solid rgba(255,255,255,0.2)",
+                    borderTopColor: "var(--acc, #23ada4)",
+                    borderRadius: "50%",
+                    animation: "spin 0.6s linear infinite",
+                    display: "inline-block",
+                  }}
+                />
+                <span>...</span>
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.4">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                <span>
+                  {t?.("showMore") || "Show more"} ({items.length}{totalCount > 0 ? `/${totalCount}` : ""})
+                </span>
+              </>
+            )}
+          </button>
+        )}
 
         {/* Custom Minimalist Zoom Controls */}
         <div className="bd-map-zoom" style={{ zIndex: 220, right: "16px", bottom: "16px" }}>
