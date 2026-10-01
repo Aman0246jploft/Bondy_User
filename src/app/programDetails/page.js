@@ -300,9 +300,19 @@ function ProgramDetailsContent() {
                     ) : (
                       <img
                         src={getFullImageUrl(item.url) || "/img/sidebar-logo.svg"}
-                        onError={(e) => (e.target.src = "/img/sidebar-logo.svg")}
+                        onError={(e) => {
+                          e.target.src = "/img/sidebar-logo.svg";
+                          e.target.style.objectFit = "contain";
+                          e.target.style.padding = "20px";
+                          e.target.style.background = "var(--bd-ink-800, #16181f)";
+                        }}
                         loading="lazy"
-                        className="event-card-img object-fit-cover img-placeholder"
+                        className="event-card-img img-placeholder"
+                        style={{
+                          objectFit: getFullImageUrl(item.url)?.includes("sidebar-logo") ? "contain" : "cover",
+                          padding: getFullImageUrl(item.url)?.includes("sidebar-logo") ? "20px" : 0,
+                          background: "var(--bd-ink-800, #16181f)",
+                        }}
                         alt={`Gallery ${index}`}
                       />
                     )}
@@ -358,7 +368,7 @@ function ProgramDetailsContent() {
                     title={courseTitle}
                     address={venueAddress?.address}
                     venueName={courseDetails?.venueName}
-                    imageUrl={images?.[0]}
+                    imageUrl={images?.[0] || "/img/sidebar-logo.svg"}
                     ticketPrice={price}
                     startDate={currentSchedule?.startDate}
                     startTime={currentSchedule?.startTime}
