@@ -1,15 +1,112 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
+import React, { useState, useEffect, useMemo, useRef, Suspense, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import categoryApi from "@/api/categoryApi";
 import courseApi from "@/api/courseApi";
+import wishlistApi from "@/api/wishlistApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import DateRangeCalendarPopover from "../../components/DateRangeCalendarPopover";
+
+// Helper for distance in km using Haversine formula
+function calcDistanceKm(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 2.5;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
+// Helper for bilingual course date formatting
+function formatCourseDateText(startDate, lang) {
+  if (!startDate) return lang === "mn" ? "Тун удахгүй" : "Coming Soon";
+  const d = new Date(startDate);
+  if (isNaN(d.getTime())) return lang === "mn" ? "Тун удахгүй" : "Coming Soon";
+
+  const enMonthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const m = d.getMonth() + 1;
+  const dateNum = d.getDate();
+
+  if (lang === "mn") {
+    return `${m}-р сарын ${dateNum}-нд эхэлнэ`;
+  } else {
+    return `Starts ${enMonthNames[m - 1]} ${dateNum}`;
+  }
+}
+
+// Loading Skeleton Component
+function GridSkeleton() {
+  return (
+    <div className="el-grid">
+      {Array.from({ length: 8 }).map((_, idx) => (
+        <div
+          key={idx}
+          className="el-c"
+          style={{
+            pointerEvents: "none",
+            opacity: 0.7,
+          }}
+        >
+          <span
+            className="el-c-img"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.06)",
+              display: "block",
+            }}
+          />
+          <span className="el-c-b" style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <span
+              style={{
+                display: "block",
+                height: "18px",
+                width: "75%",
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                borderRadius: "4px",
+              }}
+            />
+            <span
+              style={{
+                display: "block",
+                height: "14px",
+                width: "50%",
+                backgroundColor: "rgba(255, 255, 255, 0.06)",
+                borderRadius: "4px",
+              }}
+            />
+            <span
+              style={{
+                display: "block",
+                height: "14px",
+                width: "40%",
+                backgroundColor: "rgba(255, 255, 255, 0.06)",
+                borderRadius: "4px",
+              }}
+            />
+            <span
+              style={{
+                display: "block",
+                height: "16px",
+                width: "30%",
+                backgroundColor: "rgba(35, 173, 164, 0.2)",
+                borderRadius: "4px",
+                marginTop: "4px",
+              }}
+            />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 // 16 Fixture Courses matching Bondy Learning Listing prototype
 const PROTOTYPE_COURSES = [
@@ -328,16 +425,6 @@ const DATE_CHIP_KEYS = [
   { key: "custom", labelKey: "selectDate" },
 ];
 
-const DEFAULT_CATEGORY_KEYS = [
-  { key: "all", labelKey: "allCategories" },
-  { key: "music", labelKey: "musicCategory" },
-  { key: "dance", labelKey: "danceCategory" },
-  { key: "art", labelKey: "artCategory" },
-  { key: "sports", labelKey: "sportsCategory" },
-  { key: "technology", labelKey: "techCategory" },
-  { key: "business", labelKey: "businessCategory" },
-];
-
 const FALLBACK_POSTERS = [
   "/assets/img/b5e94e90c3d8df6c.jpg",
   "/assets/img/584415eadd8f2ebe.jpg",
@@ -433,8 +520,20 @@ function ProgramsListingContent() {
     dist: "any",
   });
 
-  // Batch / pagination
-  const [batch, setBatch] = useState(1);
+  // Server-side & Incremental progressive pagination (12 items per page)
+  const PAGE_SIZE = 12;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+
+  // Debounce search query to avoid spamming the backend
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Favorites
   const [favs, setFavs] = useState([]);
@@ -478,76 +577,206 @@ function ProgramsListingContent() {
     } catch (e) { }
   }, [searchParams]);
 
-  // Fetch categories from API
+  // Fetch categories from API (filtered by type: 'course')
   useEffect(() => {
     const fetchCats = async () => {
       try {
         const res = await categoryApi.getCategories({ limit: 100 });
-        const cats = res?.data?.categories || res?.data?.data || res?.data || [];
-        if (Array.isArray(cats) && cats.length > 0) {
-          const list = cats.map((c) => ({
-            key: c._id || c.name?.toLowerCase(),
+        const cats = res?.data?.categories || [];
+        const courseCats = cats
+        if (courseCats.length > 0) {
+          const list = courseCats.map((c) => ({
+            key: c._id,
+            slug: (c.name || "").toLowerCase(),
             label: language === "mn" && c.name_thi ? c.name_thi : c.name,
           }));
           setDynamicCategories(list);
         }
-      } catch (err) { }
+      } catch (err) {
+        console.error("Error fetching course categories:", err);
+      }
     };
     fetchCats();
   }, [language]);
 
-  // Fetch real backend courses
+  // Resolve category key to ObjectId if needed
+  const resolvedCategoryId = useMemo(() => {
+    if (!selectedCategoryKey || selectedCategoryKey === "all") return null;
+    if (/^[0-9a-fA-F]{24}$/.test(selectedCategoryKey)) return selectedCategoryKey;
+    const found = dynamicCategories.find(
+      (c) => c.key === selectedCategoryKey || c.slug === selectedCategoryKey.toLowerCase()
+    );
+    return found?.key || null;
+  }, [selectedCategoryKey, dynamicCategories]);
+
+  // Map raw backend course into standardized UI card model
+  const mapRawCourse = useCallback(
+    (crs, idx) => {
+      const priceVal = Number(crs.price || crs.pricingType?.price || 0);
+
+      const rawPoster = Array.isArray(crs.posterImage) ? crs.posterImage[0] : crs.posterImage;
+      const fullUrl = rawPoster ? getFullImageUrl(rawPoster) : null;
+      const safeImg = fullUrl && !fullUrl.includes("sidebar-logo.svg")
+        ? fullUrl
+        : FALLBACK_POSTERS[idx % FALLBACK_POSTERS.length];
+
+      const title = (language === "mn" && crs.courseTitle_thi)
+        ? crs.courseTitle_thi
+        : (crs.courseTitle || "Untitled Course");
+
+      const venue = crs.venueName || crs.venueAddress?.address || crs.venueAddress?.city || (language === "mn" ? "Улаанбаатар" : "Ulaanbaatar");
+      const schedLine = formatCourseDateText(crs.startDate, language);
+
+      const coords = crs.venueAddress?.coordinates;
+      const lng = Array.isArray(coords) && !isNaN(coords[0]) ? Number(coords[0]) : 106.9176;
+      const lat = Array.isArray(coords) && !isNaN(coords[1]) ? Number(coords[1]) : 47.9186;
+      const km = calcDistanceKm(47.9186, 106.9176, lat, lng);
+
+      const catObj = crs.courseCategory || crs.category || crs.categoryId;
+      const catId = catObj?._id ? String(catObj._id) : "";
+      const catKey = (catObj?.name || "").toLowerCase();
+      const catName = language === "mn" && catObj?.name_thi ? catObj.name_thi : (catObj?.name || "");
+
+      const dateStr = crs.startDate ? crs.startDate.split("T")[0] : "";
+      const timeStr = crs.batches?.[0]?.startTime || crs.startTime || "19:00";
+
+      return {
+        id: crs._id,
+        _id: crs._id,
+        title,
+        schedLine,
+        venue,
+        priceText: priceVal > 0 ? `₮${priceVal.toLocaleString()}` : t("freePrice"),
+        priceNum: priceVal,
+        image: safeImg,
+        catId,
+        catKey,
+        catName,
+        km,
+        time: timeStr,
+        date: dateStr,
+        lat,
+        lng,
+        promo: Boolean(crs.isFeatured),
+        href: `/programDetails?id=${crs._id}`,
+        raw: crs,
+      };
+    },
+    [language, t]
+  );
+
+  // Construct query parameters for the backend API
+  const buildFilterParams = useCallback(
+    (page = 1) => {
+      const params = {
+        page,
+        limit: PAGE_SIZE,
+      };
+
+      if (debouncedSearchQuery.trim()) {
+        params.search = debouncedSearchQuery.trim();
+      }
+
+      if (resolvedCategoryId) {
+        params.categoryId = resolvedCategoryId;
+      }
+
+      if (selectedDateKey === "today") {
+        params.filter = "today";
+      } else if (selectedDateKey === "tomorrow") {
+        params.filter = "tomorrow";
+      } else if (selectedDateKey === "weekend") {
+        params.filter = "thisweekend";
+      } else if (selectedDateKey === "week") {
+        params.filter = "thisweek";
+      } else if (selectedDateKey === "custom") {
+        if (customDateFrom) params.fromDate = customDateFrom;
+        if (customDateTo) params.toDate = customDateTo;
+      }
+
+      if (appliedFilters.tod && appliedFilters.tod !== "any") {
+        params.timeOfDay = appliedFilters.tod;
+      }
+
+      if (appliedFilters.dist && appliedFilters.dist !== "any") {
+        params.latitude = 47.9186;
+        params.longitude = 106.9176;
+        params.radius = appliedFilters.dist;
+      }
+
+      return params;
+    },
+    [
+      debouncedSearchQuery,
+      resolvedCategoryId,
+      selectedDateKey,
+      customDateFrom,
+      customDateTo,
+      appliedFilters.tod,
+      appliedFilters.dist,
+    ]
+  );
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch page 1 whenever filters, search, or language change
   useEffect(() => {
-    const fetchBackendCourses = async () => {
+    let isCancelled = false;
+
+    const fetchFirstPage = async () => {
+      setIsLoading(true);
       try {
-        const res = await courseApi.getCourses({
-          limit: 30,
-        });
+        const params = buildFilterParams(1);
+        const res = await courseApi.getCourses(params);
+        if (isCancelled) return;
         const data = res?.data?.data || res?.data || res;
-        if (data?.courses && data.courses.length > 0) {
-          const mapped = data.courses.map((crs, idx) => {
-            const priceVal = Number(crs.price || crs.pricingType?.price || 0);
-            const rawPoster = crs.posterImage?.[0];
-            const fullUrl = rawPoster ? getFullImageUrl(rawPoster) : null;
-            const safeImg = fullUrl && !fullUrl.includes("sidebar-logo.svg")
-              ? fullUrl
-              : FALLBACK_POSTERS[idx % FALLBACK_POSTERS.length];
-
-            const title = (language === "mn" && crs.courseTitle_thi)
-              ? crs.courseTitle_thi
-              : (crs.courseTitle || "Untitled Course");
-            const venue = crs.venueAddress?.city || crs.venueName || (language === "mn" ? "Улаанбаатар" : "Ulaanbaatar");
-            const schedLine = crs.startDate
-              ? (language === "mn"
-                ? `${new Date(crs.startDate).getMonth() + 1}-р сарын ${new Date(crs.startDate).getDate()}-нд`
-                : `Starts ${new Date(crs.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`)
-              : (language === "mn" ? "Тун удахгүй" : "Coming Soon");
-
-            return {
-              id: crs._id || `backend-${idx}`,
-              title,
-              schedLine,
-              venue,
-              priceText: priceVal > 0 ? `₮${priceVal.toLocaleString()}` : t("freePrice"),
-              priceNum: priceVal,
-              image: safeImg,
-              catKey: crs.categoryId?.name?.toLowerCase() || "technology",
-              catName: language === "mn" && crs.categoryId?.name_thi ? crs.categoryId.name_thi : crs.categoryId?.name,
-              km: 2.2,
-              time: crs.startTime || "19:00",
-              date: crs.startDate ? crs.startDate.split("T")[0] : "2026-09-07",
-              lat: parseFloat(crs.latitude) || 47.9192,
-              lng: parseFloat(crs.longitude) || 106.9170,
-              promo: Boolean(crs.isFeatured),
-              href: `/programDetails?id=${crs._id}`,
-            };
-          });
-          setBackendCourses(mapped);
+        const coursesList = data?.courses || [];
+        const total = typeof data?.totalCourses === "number" ? data.totalCourses : (data?.total || coursesList.length);
+        const mapped = coursesList.map((crs, idx) => mapRawCourse(crs, idx));
+        setBackendCourses(mapped);
+        setTotalCount(total);
+        setCurrentPage(1);
+      } catch (err) {
+        if (!isCancelled) {
+          console.error("Error fetching courses:", err);
+          setBackendCourses([]);
+          setTotalCount(0);
         }
-      } catch (err) { }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
     };
-    fetchBackendCourses();
-  }, [language, t]);
+
+    fetchFirstPage();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [buildFilterParams, mapRawCourse]);
+
+  // Load next page of courses from backend
+  const handleLoadMore = async () => {
+    if (isLoadingMore || backendCourses.length >= totalCount) return;
+    setIsLoadingMore(true);
+    const nextPage = currentPage + 1;
+    try {
+      const params = buildFilterParams(nextPage);
+      const res = await courseApi.getCourses(params);
+      const data = res?.data?.data || res?.data || res;
+      const coursesList = data?.courses || [];
+      const total = typeof data?.totalCourses === "number" ? data.totalCourses : (data?.total || totalCount);
+      const mapped = coursesList.map((crs, idx) => mapRawCourse(crs, backendCourses.length + idx));
+      setBackendCourses((prev) => [...prev, ...mapped]);
+      setTotalCount(total);
+      setCurrentPage(nextPage);
+    } catch (err) {
+      console.error("Error loading more courses:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   // Close filter sheet when clicking outside on desktop
   useEffect(() => {
@@ -562,42 +791,38 @@ function ProgramsListingContent() {
     return () => document.removeEventListener("mousedown", handleDocClick);
   }, []);
 
-  // Toggle favorite
-  const toggleFavorite = (title, e) => {
+  // Toggle favorite with backend wishlist API
+  const toggleFavorite = async (item, e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
+    const id = item.id || item._id;
+    const isFav = favs.includes(id) || favs.includes(item.title);
+
     setFavs((prev) => {
-      const next = prev.includes(title)
-        ? prev.filter((t) => t !== title)
-        : [...prev, title];
+      const next = isFav
+        ? prev.filter((t) => t !== id && t !== item.title)
+        : [...prev, id];
       try {
         localStorage.setItem("bondy_favorites", JSON.stringify(next));
       } catch (err) { }
       return next;
     });
+
+    try {
+      if (isFav) {
+        await wishlistApi.removeFromWishlist({ entityId: id });
+      } else {
+        await wishlistApi.addToWishlist({ entityId: id, entityModel: "Course" });
+      }
+    } catch (err) { }
   };
 
-  // Combine backend courses with prototype fixture courses
+  // Dynamic courses from backend (nothing static when backend is used)
   const allCourses = useMemo(() => {
-    const fixtures = PROTOTYPE_COURSES.map((f) => ({
-      ...f,
-      title: language === "mn" ? f.title_mn : f.title_en,
-      venue: language === "mn" ? f.venue_mn : f.venue_en,
-      schedLine: language === "mn" ? f.schedLine_mn : f.schedLine_en,
-      priceText: f.priceNum === 0 ? t("freePrice") : `₮${f.priceNum.toLocaleString()}`,
-    }));
-
-    if (backendCourses.length > 0) {
-      const backendTitles = new Set(backendCourses.map((c) => c.title.toLowerCase()));
-      const remainingFixtures = fixtures.filter(
-        (f) => !backendTitles.has(f.title.toLowerCase())
-      );
-      return [...backendCourses, ...remainingFixtures];
-    }
-    return fixtures;
-  }, [backendCourses, language, t]);
+    return backendCourses;
+  }, [backendCourses]);
 
   // Date filtering logic
   const passesDateFilter = (item) => {
@@ -608,24 +833,32 @@ function ProgramsListingContent() {
       return item.date >= customDateFrom && item.date <= customDateTo;
     }
 
+    if (!item.date) return false;
+    const itemDate = new Date(item.date);
+    if (isNaN(itemDate.getTime())) return true;
+
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+
+    const tom = new Date(now);
+    tom.setDate(tom.getDate() + 1);
+    const tomStr = tom.toISOString().split("T")[0];
+
     if (selectedDateKey === "today") {
-      return item.date === "2026-09-07" || item.schedLine.includes("Өнөөдөр") || item.schedLine.includes("Today");
+      return item.date === todayStr;
     }
     if (selectedDateKey === "tomorrow") {
-      return item.date === "2026-09-08" || item.schedLine.includes("Маргааш") || item.schedLine.includes("Tomorrow");
+      return item.date === tomStr;
     }
     if (selectedDateKey === "weekend") {
-      return (
-        item.date === "2026-09-12" ||
-        item.date === "2026-09-13" ||
-        item.schedLine.includes("Бя") ||
-        item.schedLine.includes("Ня") ||
-        item.schedLine.includes("Sat") ||
-        item.schedLine.includes("Sun")
-      );
+      const day = itemDate.getDay();
+      return day === 0 || day === 6; // Sunday or Saturday
     }
     if (selectedDateKey === "week") {
-      return item.date >= "2026-09-07" && item.date <= "2026-09-14";
+      const in7Days = new Date(now);
+      in7Days.setDate(in7Days.getDate() + 7);
+      const in7DaysStr = in7Days.toISOString().split("T")[0];
+      return item.date >= todayStr && item.date <= in7DaysStr;
     }
 
     return true;
@@ -639,10 +872,10 @@ function ProgramsListingContent() {
     const hour = parseInt(item.time.split(":")[0], 10);
     if (isNaN(hour)) return true;
 
-    if (tod === "morning") return hour < 12;
+    if (tod === "morning") return hour >= 6 && hour < 12;
     if (tod === "afternoon") return hour >= 12 && hour < 17;
     if (tod === "evening") return hour >= 17 && hour < 21;
-    if (tod === "night") return hour >= 21 || hour < 5;
+    if (tod === "night") return hour >= 21 || hour < 6;
     return true;
   };
 
@@ -666,7 +899,8 @@ function ProgramsListingContent() {
   // Category filter
   const passesCategory = (item) => {
     if (selectedCategoryKey === "all") return true;
-    if (item.catKey === selectedCategoryKey) return true;
+    if (item.catId === selectedCategoryKey) return true;
+    if (item.catKey === selectedCategoryKey.toLowerCase()) return true;
     if (item.catName && item.catName.toLowerCase() === selectedCategoryKey.toLowerCase()) return true;
     return false;
   };
@@ -710,11 +944,10 @@ function ProgramsListingContent() {
     sortOption,
   ]);
 
-  // Pagination for grid: batch 1 = 12 items, batch 2 = all
+  // Visible courses in grid (all server-loaded courses)
   const visibleCourses = useMemo(() => {
-    if (batch === 1) return filteredCourses.slice(0, 12);
     return filteredCourses;
-  }, [filteredCourses, batch]);
+  }, [filteredCourses]);
 
   // Calculate active filter count for badge
   const activeAdvCount = useMemo(() => {
@@ -733,7 +966,6 @@ function ProgramsListingContent() {
       dist: draftDist,
     });
     setFilterSheetOpen(false);
-    setBatch(1);
   };
 
   // Clear draft in sheet
@@ -753,12 +985,12 @@ function ProgramsListingContent() {
     setDraftSort("recommended");
     setDraftTod("any");
     setDraftDist("any");
-    setBatch(1);
   };
 
   // Reset entire search, category, and date state
   const handleResetEverything = () => {
     setSearchQuery("");
+    setDebouncedSearchQuery("");
     setSelectedCategoryKey("all");
     setSelectedDateKey("all");
     setCustomDateFrom("");
@@ -771,7 +1003,6 @@ function ProgramsListingContent() {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    setBatch(1);
   };
 
   const getSortLabel = (key) => {
@@ -830,7 +1061,7 @@ function ProgramsListingContent() {
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setBatch(1);
+                resetPagination();
               }}
               placeholder={t("learningSearchPlaceholder") || "Хайх..."}
             />
@@ -863,7 +1094,7 @@ function ProgramsListingContent() {
                     setCustomDateLabel("");
                     setShowDatePickerModal(false);
                   }
-                  setBatch(1);
+                  resetPagination();
                 }}
               >
                 {chipLabel}
@@ -884,7 +1115,7 @@ function ProgramsListingContent() {
                 setCustomDateLabel(label);
                 setSelectedDateKey("custom");
                 setShowDatePickerModal(false);
-                setBatch(1);
+                resetPagination();
               }}
               onCancel={() => {
                 setShowDatePickerModal(false);
@@ -905,8 +1136,23 @@ function ProgramsListingContent() {
 
         {/* 4. CATEGORY CHIP ROW */}
         <div className="bd-scroll bd-chiprow el-cats" style={{ marginTop: "20px" }}>
-          {DEFAULT_CATEGORY_KEYS.map((cat) => {
-            const isActive = selectedCategoryKey === cat.key;
+          <button
+            type="button"
+            className={`bd-chip ${selectedCategoryKey === "all" ? "active" : ""}`}
+            style={{
+              height: "36px",
+              padding: "0 16px",
+              fontSize: "14px",
+            }}
+            onClick={() => {
+              setSelectedCategoryKey("all");
+              resetPagination();
+            }}
+          >
+            {t("allCategories")}
+          </button>
+          {dynamicCategories.map((cat) => {
+            const isActive = selectedCategoryKey === cat.key || selectedCategoryKey === cat.slug;
             return (
               <button
                 key={cat.key}
@@ -919,31 +1165,10 @@ function ProgramsListingContent() {
                 }}
                 onClick={() => {
                   setSelectedCategoryKey(cat.key);
-                  setBatch(1);
+                  resetPagination();
                 }}
               >
-                {t(cat.labelKey)}
-              </button>
-            );
-          })}
-          {dynamicCategories.map((dyn) => {
-            const isActive = selectedCategoryKey === dyn.key;
-            return (
-              <button
-                key={dyn.key}
-                type="button"
-                className={`bd-chip ${isActive ? "active" : ""}`}
-                style={{
-                  height: "36px",
-                  padding: "0 16px",
-                  fontSize: "14px",
-                }}
-                onClick={() => {
-                  setSelectedCategoryKey(dyn.key);
-                  setBatch(1);
-                }}
-              >
-                {dyn.label}
+                {cat.label}
               </button>
             );
           })}
@@ -1386,10 +1611,12 @@ function ProgramsListingContent() {
         {/* 7. GRID VIEW */}
         {viewMode === "grid" && (
           <>
-            {filteredCourses.length > 0 ? (
+            {isLoading ? (
+              <GridSkeleton />
+            ) : filteredCourses.length > 0 ? (
               <div className="el-grid">
                 {visibleCourses.map((crs) => {
-                  const isFavorited = favs.includes(crs.title);
+                  const isFavorited = favs.includes(crs.id) || favs.includes(crs.title);
                   return (
                     <Link
                       href={crs.href}
@@ -1408,7 +1635,7 @@ function ProgramsListingContent() {
                       <button
                         type="button"
                         className={`el-c-fav ${isFavorited ? "active" : ""}`}
-                        onClick={(e) => toggleFavorite(crs.title, e)}
+                        onClick={(e) => toggleFavorite(crs, e)}
                         aria-label="Favorite"
                       >
                         <svg
@@ -1481,7 +1708,7 @@ function ProgramsListingContent() {
             )}
 
             {/* LOAD MORE BUTTON */}
-            {filteredCourses.length > 12 && batch === 1 && (
+            {filteredCourses.length < totalCount && (
               <div
                 style={{
                   display: "flex",
@@ -1493,7 +1720,8 @@ function ProgramsListingContent() {
               >
                 <button
                   type="button"
-                  onClick={() => setBatch(2)}
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
                   style={{
                     height: "48px",
                     padding: "0 28px",
@@ -1504,14 +1732,18 @@ function ProgramsListingContent() {
                     fontFamily: "var(--bd-font-ui)",
                     fontSize: "15px",
                     fontWeight: 600,
-                    cursor: "pointer",
+                    cursor: isLoadingMore ? "not-allowed" : "pointer",
+                    opacity: isLoadingMore ? 0.7 : 1,
                     transition: "border-color 200ms var(--bd-ease), background 200ms var(--bd-ease)",
                   }}
                 >
-                  {t("showMore")}
+                  {isLoadingMore ? "..." : t("showMore")}
                 </button>
                 <span style={{ fontSize: "13px", color: "var(--bd-gray-600)" }}>
-                  {t("resultsOutOf", { total: filteredCourses.length, shown: visibleCourses.length })}
+                  {t("resultsOutOf", {
+                    total: totalCount,
+                    shown: filteredCourses.length,
+                  })}
                 </span>
               </div>
             )}

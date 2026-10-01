@@ -1,15 +1,117 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
+import React, { useState, useEffect, useMemo, useRef, Suspense, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import categoryApi from "@/api/categoryApi";
 import eventApi from "@/api/eventApi";
+import wishlistApi from "@/api/wishlistApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import DateRangeCalendarPopover from "../../components/DateRangeCalendarPopover";
+
+// Helper for distance in km using Haversine formula
+function calcDistanceKm(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 2.5;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
+// Helper for bilingual event date formatting
+function formatEventDateText(startDate, startTime, lang) {
+  if (!startDate) return lang === "mn" ? "Тун удахгүй" : "Coming Soon";
+  const d = new Date(startDate);
+  if (isNaN(d.getTime())) return lang === "mn" ? "Тун удахгүй" : "Coming Soon";
+
+  const mnDayNames = ["Ня", "Да", "Мя", "Лх", "Пү", "Ба", "Бя"];
+  const enDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const enMonthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  const m = d.getMonth() + 1;
+  const dateNum = d.getDate();
+  const dayIdx = d.getDay();
+  const timeStr = startTime || `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
+  if (lang === "mn") {
+    return `${m}-р сарын ${dateNum}, ${mnDayNames[dayIdx]} · ${timeStr}`;
+  } else {
+    return `${enMonthNames[m - 1]} ${dateNum}, ${enDayNames[dayIdx]} · ${timeStr}`;
+  }
+}
+
+// Loading Skeleton Component
+function GridSkeleton() {
+  return (
+    <div className="el-grid">
+      {Array.from({ length: 8 }).map((_, idx) => (
+        <div
+          key={idx}
+          className="el-c"
+          style={{
+            pointerEvents: "none",
+            opacity: 0.7,
+          }}
+        >
+          <span
+            className="el-c-img"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.06)",
+              display: "block",
+            }}
+          />
+          <span className="el-c-b" style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <span
+              style={{
+                display: "block",
+                height: "18px",
+                width: "75%",
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                borderRadius: "4px",
+              }}
+            />
+            <span
+              style={{
+                display: "block",
+                height: "14px",
+                width: "50%",
+                backgroundColor: "rgba(255, 255, 255, 0.06)",
+                borderRadius: "4px",
+              }}
+            />
+            <span
+              style={{
+                display: "block",
+                height: "14px",
+                width: "40%",
+                backgroundColor: "rgba(255, 255, 255, 0.06)",
+                borderRadius: "4px",
+              }}
+            />
+            <span
+              style={{
+                display: "block",
+                height: "16px",
+                width: "30%",
+                backgroundColor: "rgba(35, 173, 164, 0.2)",
+                borderRadius: "4px",
+                marginTop: "4px",
+              }}
+            />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 // Complete 18 fixture events with bilingual titles, venues, and dates
 const PROTOTYPE_EVENTS = [
@@ -366,15 +468,6 @@ const DATE_CHIP_KEYS = [
   { key: "custom", labelKey: "selectDate" },
 ];
 
-const DEFAULT_CATEGORY_KEYS = [
-  { key: "all", labelKey: "allCategories" },
-  { key: "music", labelKey: "musicCategory" },
-  { key: "concerts", labelKey: "concertsCategory" },
-  { key: "sports", labelKey: "sportsCategory" },
-  { key: "conference", labelKey: "conferenceCategory" },
-  { key: "family", labelKey: "familyCategory" },
-];
-
 const FALLBACK_POSTERS = [
   "/assets/img/95915dd284f4c106.jpg",
   "/assets/img/8e94a2fe5d7c034d.jpg",
@@ -468,8 +561,20 @@ function ExploreContent() {
     dist: "any",
   });
 
-  // Batch / pagination
-  const [batch, setBatch] = useState(1);
+  // Server-side & Incremental progressive pagination (12 items per page)
+  const PAGE_SIZE = 12;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+
+  // Debounce search query to avoid spamming the backend
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Favorites
   const [favs, setFavs] = useState([]);
@@ -505,7 +610,7 @@ function ExploreContent() {
     try {
       const stored = localStorage.getItem("bondy_favorites");
       if (stored) setFavs(JSON.parse(stored));
-    } catch (e) {}
+    } catch (e) { }
   }, [searchParams]);
 
   // Fetch categories from API
@@ -514,73 +619,209 @@ function ExploreContent() {
       try {
         const res = await categoryApi.getCategories({ limit: 100 });
         const cats = res?.data?.categories || [];
-        if (cats.length > 0) {
-          const list = cats.map((c) => ({
-            key: c._id || c.name,
+        const eventCats = cats
+        if (eventCats.length > 0) {
+          const list = eventCats.map((c) => ({
+            key: c._id,
+            slug: (c.name || "").toLowerCase(),
             label: language === "mn" && c.name_thi ? c.name_thi : c.name,
           }));
           setDynamicCategories(list);
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error("Error fetching event categories:", err);
+      }
     };
     fetchCats();
   }, [language]);
 
-  // Fetch real backend events
-  useEffect(() => {
-    const fetchBackendEvents = async () => {
-      try {
-        const res = await eventApi.getEvents({
-          limit: 30,
-          status: "Live,Upcoming",
-        });
-        const data = res?.data?.data || res?.data || res;
-        if (data?.events && data.events.length > 0) {
-          const mapped = data.events.map((evt, idx) => {
-            const hasPrice = evt.ticketTypes?.[0]?.price || evt.price;
-            const priceVal = Number(hasPrice || 0);
-            const rawPoster = evt.posterImage?.[0];
-            const fullUrl = rawPoster ? getFullImageUrl(rawPoster) : null;
-            const safeImg = fullUrl && !fullUrl.includes("sidebar-logo.svg")
-              ? fullUrl
-              : FALLBACK_POSTERS[idx % FALLBACK_POSTERS.length];
+  // Resolve category key to ObjectId if needed
+  const resolvedCategoryId = useMemo(() => {
+    if (!selectedCategoryKey || selectedCategoryKey === "all") return null;
+    if (/^[0-9a-fA-F]{24}$/.test(selectedCategoryKey)) return selectedCategoryKey;
+    const found = dynamicCategories.find(
+      (c) => c.key === selectedCategoryKey || c.slug === selectedCategoryKey.toLowerCase()
+    );
+    return found?.key || null;
+  }, [selectedCategoryKey, dynamicCategories]);
 
-            const title = (language === "mn" && evt.eventTitle_thi)
-              ? evt.eventTitle_thi
-              : (evt.eventTitle || "Untitled Event");
-            const venue = evt.venueAddress?.city || evt.venueName || (language === "mn" ? "Улаанбаатар" : "Ulaanbaatar");
-            const dateText = evt.startDate
-              ? new Date(evt.startDate).toLocaleDateString(language === "mn" ? "mn-MN" : "en-US", {
-                  month: "numeric",
-                  day: "numeric",
-                }) + (evt.startTime ? ` · ${evt.startTime}` : "")
-              : (language === "mn" ? "Тун удахгүй" : "Coming Soon");
-
-            return {
-              id: evt._id || `backend-${idx}`,
-              title,
-              dateText,
-              venue,
-              priceText: priceVal > 0 ? `₮${priceVal.toLocaleString()}` : t("freePrice"),
-              priceNum: priceVal,
-              image: safeImg,
-              catKey: evt.categoryId?.name?.toLowerCase() || "music",
-              catName: language === "mn" && evt.categoryId?.name_thi ? evt.categoryId.name_thi : evt.categoryId?.name,
-              km: 2.5,
-              time: evt.startTime || "19:00",
-              date: evt.startDate ? evt.startDate.split("T")[0] : "2026-09-05",
-              lat: parseFloat(evt.latitude) || 47.9186,
-              lng: parseFloat(evt.longitude) || 106.9176,
-              promo: Boolean(evt.isFeatured || evt.fetcherEvent),
-              href: `/eventDetails?id=${evt._id}`,
-            };
-          });
-          setBackendEvents(mapped);
+  // Map raw backend event into standardized UI card model
+  const mapRawEvent = useCallback(
+    (evt, idx) => {
+      let priceVal = 0;
+      if (!evt.isFreeEvent) {
+        if (Array.isArray(evt.tickets) && evt.tickets.length > 0) {
+          const validPrices = evt.tickets
+            .map((t) => Number(t.price))
+            .filter((p) => !isNaN(p) && p >= 0);
+          priceVal = validPrices.length > 0 ? Math.min(...validPrices) : 0;
+        } else if (evt.price !== undefined) {
+          priceVal = Number(evt.price) || 0;
         }
-      } catch (err) {}
+      }
+
+      const rawPoster = Array.isArray(evt.posterImage) ? evt.posterImage[0] : evt.posterImage;
+      const fullUrl = rawPoster ? getFullImageUrl(rawPoster) : null;
+      const safeImg = fullUrl && !fullUrl.includes("sidebar-logo.svg")
+        ? fullUrl
+        : FALLBACK_POSTERS[idx % FALLBACK_POSTERS.length];
+
+      const title = (language === "mn" && evt.eventTitle_thi)
+        ? evt.eventTitle_thi
+        : (evt.eventTitle || "Untitled Event");
+
+      const venue = evt.venueName || evt.venueAddress?.address || evt.venueAddress?.city || (language === "mn" ? "Улаанбаатар" : "Ulaanbaatar");
+      const dateText = formatEventDateText(evt.startDate, evt.startTime, language);
+
+      const coords = evt.venueAddress?.coordinates;
+      const lng = Array.isArray(coords) && !isNaN(coords[0]) ? Number(coords[0]) : 106.9176;
+      const lat = Array.isArray(coords) && !isNaN(coords[1]) ? Number(coords[1]) : 47.9186;
+      const km = calcDistanceKm(47.9186, 106.9176, lat, lng);
+
+      const catObj = evt.eventCategory || evt.category || evt.categoryId;
+      const catId = catObj?._id ? String(catObj._id) : "";
+      const catKey = (catObj?.name || "").toLowerCase();
+      const catName = language === "mn" && catObj?.name_thi ? catObj.name_thi : (catObj?.name || "");
+      const dateStr = evt.startDate ? evt.startDate.split("T")[0] : "";
+
+      return {
+        id: evt._id,
+        _id: evt._id,
+        title,
+        dateText,
+        venue,
+        priceText: priceVal > 0 ? `₮${priceVal.toLocaleString()}` : t("freePrice"),
+        priceNum: priceVal,
+        image: safeImg,
+        catId,
+        catKey,
+        catName,
+        km,
+        time: evt.startTime || "19:00",
+        date: dateStr,
+        lat,
+        lng,
+        promo: Boolean(evt.isFeatured || evt.fetcherEvent),
+        href: `/eventDetails?id=${evt._id}`,
+        raw: evt,
+      };
+    },
+    [language, t]
+  );
+
+  // Construct query parameters for the backend API
+  const buildFilterParams = useCallback(
+    (page = 1) => {
+      const params = {
+        page,
+        limit: PAGE_SIZE,
+        status: "Live,Upcoming",
+      };
+
+      if (debouncedSearchQuery.trim()) {
+        params.search = debouncedSearchQuery.trim();
+      }
+
+      if (resolvedCategoryId) {
+        params.categoryId = resolvedCategoryId;
+      }
+
+      if (selectedDateKey === "today") {
+        params.filter = "today";
+      } else if (selectedDateKey === "tomorrow") {
+        params.filter = "tomorrow";
+      } else if (selectedDateKey === "weekend") {
+        params.filter = "thisweekend";
+      } else if (selectedDateKey === "week") {
+        params.filter = "thisweek";
+      } else if (selectedDateKey === "custom") {
+        if (customDateFrom) params.fromDate = customDateFrom;
+        if (customDateTo) params.toDate = customDateTo;
+      }
+
+      if (appliedFilters.tod && appliedFilters.tod !== "any") {
+        params.timeOfDay = appliedFilters.tod;
+      }
+
+      if (appliedFilters.dist && appliedFilters.dist !== "any") {
+        params.latitude = 47.9186;
+        params.longitude = 106.9176;
+        params.radius = appliedFilters.dist;
+      }
+
+      return params;
+    },
+    [
+      debouncedSearchQuery,
+      resolvedCategoryId,
+      selectedDateKey,
+      customDateFrom,
+      customDateTo,
+      appliedFilters.tod,
+      appliedFilters.dist,
+    ]
+  );
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch page 1 whenever filters, search, or language change
+  useEffect(() => {
+    let isCancelled = false;
+
+    const fetchFirstPage = async () => {
+      setIsLoading(true);
+      try {
+        const params = buildFilterParams(1);
+        const res = await eventApi.getEvents(params);
+        if (isCancelled) return;
+        const data = res?.data?.data || res?.data || res;
+        const eventsList = data?.events || [];
+        const total = typeof data?.total === "number" ? data.total : eventsList.length;
+        const mapped = eventsList.map((evt, idx) => mapRawEvent(evt, idx));
+        setBackendEvents(mapped);
+        setTotalCount(total);
+        setCurrentPage(1);
+      } catch (err) {
+        if (!isCancelled) {
+          console.error("Error fetching events:", err);
+          setBackendEvents([]);
+          setTotalCount(0);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
     };
-    fetchBackendEvents();
-  }, [language, t]);
+
+    fetchFirstPage();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [buildFilterParams, mapRawEvent]);
+
+  // Load next page of events from backend
+  const handleLoadMore = async () => {
+    if (isLoadingMore || backendEvents.length >= totalCount) return;
+    setIsLoadingMore(true);
+    const nextPage = currentPage + 1;
+    try {
+      const params = buildFilterParams(nextPage);
+      const res = await eventApi.getEvents(params);
+      const data = res?.data?.data || res?.data || res;
+      const eventsList = data?.events || [];
+      const total = typeof data?.total === "number" ? data.total : totalCount;
+      const mapped = eventsList.map((evt, idx) => mapRawEvent(evt, backendEvents.length + idx));
+      setBackendEvents((prev) => [...prev, ...mapped]);
+      setTotalCount(total);
+      setCurrentPage(nextPage);
+    } catch (err) {
+      console.error("Error loading more events:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   // Close filter sheet when clicking outside on desktop
   useEffect(() => {
@@ -595,42 +836,38 @@ function ExploreContent() {
     return () => document.removeEventListener("mousedown", handleDocClick);
   }, []);
 
-  // Toggle favorite
-  const toggleFavorite = (title, e) => {
+  // Toggle favorite with backend wishlist API
+  const toggleFavorite = async (item, e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
+    const id = item.id || item._id;
+    const isFav = favs.includes(id) || favs.includes(item.title);
+
     setFavs((prev) => {
-      const next = prev.includes(title)
-        ? prev.filter((t) => t !== title)
-        : [...prev, title];
+      const next = isFav
+        ? prev.filter((t) => t !== id && t !== item.title)
+        : [...prev, id];
       try {
         localStorage.setItem("bondy_favorites", JSON.stringify(next));
-      } catch (err) {}
+      } catch (err) { }
       return next;
     });
+
+    try {
+      if (isFav) {
+        await wishlistApi.removeFromWishlist({ entityId: id });
+      } else {
+        await wishlistApi.addToWishlist({ entityId: id, entityModel: "Event" });
+      }
+    } catch (err) { }
   };
 
-  // Combine backend events with prototype fixture events
+  // Dynamic events from backend (nothing static when backend is used)
   const allEvents = useMemo(() => {
-    const fixtures = PROTOTYPE_EVENTS.map((f) => ({
-      ...f,
-      title: language === "mn" ? f.title_mn : f.title_en,
-      venue: language === "mn" ? f.venue_mn : f.venue_en,
-      dateText: language === "mn" ? f.dateText_mn : f.dateText_en,
-      priceText: f.priceNum === 0 ? t("freePrice") : `₮${f.priceNum.toLocaleString()}`,
-    }));
-
-    if (backendEvents.length > 0) {
-      const backendTitles = new Set(backendEvents.map((e) => e.title.toLowerCase()));
-      const remainingFixtures = fixtures.filter(
-        (f) => !backendTitles.has(f.title.toLowerCase())
-      );
-      return [...backendEvents, ...remainingFixtures];
-    }
-    return fixtures;
-  }, [backendEvents, language, t]);
+    return backendEvents;
+  }, [backendEvents]);
 
   // Date filtering logic
   const passesDateFilter = (item) => {
@@ -641,24 +878,32 @@ function ExploreContent() {
       return item.date >= customDateFrom && item.date <= customDateTo;
     }
 
+    if (!item.date) return false;
+    const itemDate = new Date(item.date);
+    if (isNaN(itemDate.getTime())) return true;
+
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+
+    const tom = new Date(now);
+    tom.setDate(tom.getDate() + 1);
+    const tomStr = tom.toISOString().split("T")[0];
+
     if (selectedDateKey === "today") {
-      return item.date === "2026-09-05" || item.dateText.includes("Өнөөдөр") || item.dateText.includes("Today");
+      return item.date === todayStr;
     }
     if (selectedDateKey === "tomorrow") {
-      return item.date === "2026-09-06" || item.dateText.includes("Маргааш") || item.dateText.includes("Tomorrow");
+      return item.date === tomStr;
     }
     if (selectedDateKey === "weekend") {
-      return (
-        item.date === "2026-09-05" ||
-        item.date === "2026-09-06" ||
-        item.dateText.includes("Бя") ||
-        item.dateText.includes("Ня") ||
-        item.dateText.includes("Sat") ||
-        item.dateText.includes("Sun")
-      );
+      const day = itemDate.getDay();
+      return day === 0 || day === 6; // Sunday or Saturday
     }
     if (selectedDateKey === "week") {
-      return item.date >= "2026-09-05" && item.date <= "2026-09-12";
+      const in7Days = new Date(now);
+      in7Days.setDate(in7Days.getDate() + 7);
+      const in7DaysStr = in7Days.toISOString().split("T")[0];
+      return item.date >= todayStr && item.date <= in7DaysStr;
     }
 
     return true;
@@ -672,10 +917,10 @@ function ExploreContent() {
     const hour = parseInt(item.time.split(":")[0], 10);
     if (isNaN(hour)) return true;
 
-    if (tod === "morning") return hour < 12;
+    if (tod === "morning") return hour >= 6 && hour < 12;
     if (tod === "afternoon") return hour >= 12 && hour < 17;
     if (tod === "evening") return hour >= 17 && hour < 21;
-    if (tod === "night") return hour >= 21 || hour < 5;
+    if (tod === "night") return hour >= 21 || hour < 6;
     return true;
   };
 
@@ -699,7 +944,8 @@ function ExploreContent() {
   // Category filter
   const passesCategory = (item) => {
     if (selectedCategoryKey === "all") return true;
-    if (item.catKey === selectedCategoryKey) return true;
+    if (item.catId === selectedCategoryKey) return true;
+    if (item.catKey === selectedCategoryKey.toLowerCase()) return true;
     if (item.catName && item.catName.toLowerCase() === selectedCategoryKey.toLowerCase()) return true;
     return false;
   };
@@ -743,11 +989,10 @@ function ExploreContent() {
     sortOption,
   ]);
 
-  // Pagination for grid: batch 1 = 12 items, batch 2 = all
+  // Visible events in grid (all server-loaded events)
   const visibleEvents = useMemo(() => {
-    if (batch === 1) return filteredEvents.slice(0, 12);
     return filteredEvents;
-  }, [filteredEvents, batch]);
+  }, [filteredEvents]);
 
   // Calculate active filter count for badge
   const activeAdvCount = useMemo(() => {
@@ -766,7 +1011,6 @@ function ExploreContent() {
       dist: draftDist,
     });
     setFilterSheetOpen(false);
-    setBatch(1);
   };
 
   // Clear draft in sheet
@@ -786,12 +1030,12 @@ function ExploreContent() {
     setDraftSort("recommended");
     setDraftTod("any");
     setDraftDist("any");
-    setBatch(1);
   };
 
   // Reset entire search, category, and date state
   const handleResetEverything = () => {
     setSearchQuery("");
+    setDebouncedSearchQuery("");
     setSelectedCategoryKey("all");
     setSelectedDateKey("all");
     setCustomDateFrom("");
@@ -804,7 +1048,7 @@ function ExploreContent() {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    setBatch(1);
+    resetPagination();
   };
 
   const getSortLabel = (key) => {
@@ -865,7 +1109,7 @@ function ExploreContent() {
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setBatch(1);
+                resetPagination();
               }}
               placeholder={t("exploreSearchPlaceholder")}
             />
@@ -898,7 +1142,7 @@ function ExploreContent() {
                     setCustomDateLabel("");
                     setShowDatePickerModal(false);
                   }
-                  setBatch(1);
+                  resetPagination();
                 }}
               >
                 {chipLabel}
@@ -919,7 +1163,7 @@ function ExploreContent() {
                 setCustomDateLabel(label);
                 setSelectedDateKey("custom");
                 setShowDatePickerModal(false);
-                setBatch(1);
+                resetPagination();
               }}
               onCancel={() => {
                 setShowDatePickerModal(false);
@@ -940,8 +1184,23 @@ function ExploreContent() {
 
         {/* 4. CATEGORY CHIP ROW */}
         <div className="bd-scroll bd-chiprow el-cats" style={{ marginTop: "20px" }}>
-          {DEFAULT_CATEGORY_KEYS.map((cat) => {
-            const isActive = selectedCategoryKey === cat.key;
+          <button
+            type="button"
+            className={`bd-chip ${selectedCategoryKey === "all" ? "active" : ""}`}
+            style={{
+              height: "36px",
+              padding: "0 16px",
+              fontSize: "14px",
+            }}
+            onClick={() => {
+              setSelectedCategoryKey("all");
+              resetPagination();
+            }}
+          >
+            {t("allCategories")}
+          </button>
+          {dynamicCategories.map((cat) => {
+            const isActive = selectedCategoryKey === cat.key || selectedCategoryKey === cat.slug;
             return (
               <button
                 key={cat.key}
@@ -954,31 +1213,10 @@ function ExploreContent() {
                 }}
                 onClick={() => {
                   setSelectedCategoryKey(cat.key);
-                  setBatch(1);
+                  resetPagination();
                 }}
               >
-                {t(cat.labelKey)}
-              </button>
-            );
-          })}
-          {dynamicCategories.map((dyn) => {
-            const isActive = selectedCategoryKey === dyn.key;
-            return (
-              <button
-                key={dyn.key}
-                type="button"
-                className={`bd-chip ${isActive ? "active" : ""}`}
-                style={{
-                  height: "36px",
-                  padding: "0 16px",
-                  fontSize: "14px",
-                }}
-                onClick={() => {
-                  setSelectedCategoryKey(dyn.key);
-                  setBatch(1);
-                }}
-              >
-                {dyn.label}
+                {cat.label}
               </button>
             );
           })}
@@ -1410,10 +1648,12 @@ function ExploreContent() {
         {/* 7. GRID VIEW */}
         {viewMode === "grid" && (
           <>
-            {filteredEvents.length > 0 ? (
+            {isLoading ? (
+              <GridSkeleton />
+            ) : filteredEvents.length > 0 ? (
               <div className="el-grid">
                 {visibleEvents.map((evt) => {
-                  const isFavorited = favs.includes(evt.title);
+                  const isFavorited = favs.includes(evt.id) || favs.includes(evt.title);
                   return (
                     <Link
                       href={evt.href}
@@ -1432,7 +1672,7 @@ function ExploreContent() {
                       <button
                         type="button"
                         className={`el-c-fav ${isFavorited ? "active" : ""}`}
-                        onClick={(e) => toggleFavorite(evt.title, e)}
+                        onClick={(e) => toggleFavorite(evt, e)}
                         aria-label="Favorite"
                       >
                         <svg
@@ -1505,7 +1745,7 @@ function ExploreContent() {
             )}
 
             {/* LOAD MORE BUTTON */}
-            {filteredEvents.length > 12 && batch === 1 && (
+            {filteredEvents.length < totalCount && (
               <div
                 style={{
                   display: "flex",
@@ -1517,7 +1757,8 @@ function ExploreContent() {
               >
                 <button
                   type="button"
-                  onClick={() => setBatch(2)}
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
                   style={{
                     height: "48px",
                     padding: "0 28px",
@@ -1528,14 +1769,18 @@ function ExploreContent() {
                     fontFamily: "var(--bd-font-ui)",
                     fontSize: "15px",
                     fontWeight: 600,
-                    cursor: "pointer",
+                    cursor: isLoadingMore ? "not-allowed" : "pointer",
+                    opacity: isLoadingMore ? 0.7 : 1,
                     transition: "border-color 200ms var(--bd-ease), background 200ms var(--bd-ease)",
                   }}
                 >
-                  {t("showMore")}
+                  {isLoadingMore ? "..." : t("showMore")}
                 </button>
                 <span style={{ fontSize: "13px", color: "var(--bd-gray-600)" }}>
-                  {t("resultsOutOf", { total: filteredEvents.length, shown: visibleEvents.length })}
+                  {t("resultsOutOf", {
+                    total: totalCount,
+                    shown: filteredEvents.length,
+                  })}
                 </span>
               </div>
             )}
