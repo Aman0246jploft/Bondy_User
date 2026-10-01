@@ -569,6 +569,10 @@ function ExploreContent() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
 
+  const resetPagination = useCallback(() => {
+    setCurrentPage(1);
+  }, []);
+
   // Debounce search query to avoid spamming the backend
   useEffect(() => {
     const timer = setTimeout(() => {

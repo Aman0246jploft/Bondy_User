@@ -1,6 +1,20 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+
+function calculateCoords(anchorEl) {
+  if (!anchorEl || typeof window === "undefined") return null;
+  const r = anchorEl.getBoundingClientRect();
+  const w = 276;
+  const h = 330;
+  const x = Math.max(12, Math.min(r.left, window.innerWidth - w - 12));
+  const below = r.bottom + 8;
+  const y = below + h > window.innerHeight - 12 ? Math.max(12, r.top - h - 8) : below;
+  return { top: y, left: x };
+}
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 // Prototype Date Range Calendar Popover matching bondy-datecal.js
 export default function DateRangeCalendarPopover({
@@ -12,7 +26,7 @@ export default function DateRangeCalendarPopover({
   onApply,
   onCancel,
 }) {
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const [coords, setCoords] = useState(() => calculateCoords(anchorRef?.current));
   const panelRef = useRef(null);
 
   const WD_MN = ["Да", "Мя", "Лх", "Пү", "Ба", "Бя", "Ня"];
@@ -43,16 +57,11 @@ export default function DateRangeCalendarPopover({
     return null;
   });
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const updatePosition = () => {
-      if (!anchorRef.current) return;
-      const r = anchorRef.current.getBoundingClientRect();
-      const w = 276;
-      const h = 330;
-      const x = Math.max(12, Math.min(r.left, window.innerWidth - w - 12));
-      const below = r.bottom + 8;
-      const y = below + h > window.innerHeight - 12 ? Math.max(12, r.top - h - 8) : below;
-      setCoords({ top: y, left: x });
+      if (!anchorRef?.current) return;
+      const next = calculateCoords(anchorRef.current);
+      if (next) setCoords(next);
     };
 
     updatePosition();
@@ -184,10 +193,14 @@ export default function DateRangeCalendarPopover({
         onClick={(e) => e.stopPropagation()}
         style={{
           position: "fixed",
-          top: isMobile ? "auto" : `${coords.top}px`,
-          left: isMobile ? "0" : `${coords.left}px`,
+          top: isMobile ? "auto" : `${coords?.top ?? 0}px`,
+          left: isMobile ? "0" : `${coords?.left ?? 0}px`,
           right: isMobile ? "0" : "auto",
           bottom: isMobile ? "0" : "auto",
+          opacity: coords ? 1 : 0,
+          visibility: coords ? "visible" : "hidden",
+          pointerEvents: coords ? "auto" : "none",
+          transition: "opacity 100ms ease",
           width: isMobile ? "100%" : "276px",
           boxSizing: "border-box",
           padding: isMobile ? "10px 16px calc(16px + env(safe-area-inset-bottom, 0px))" : "12px",
@@ -335,8 +348,8 @@ export default function DateRangeCalendarPopover({
                   background: isEnd
                     ? "var(--acc)"
                     : isMid
-                    ? "rgba(35,173,164,0.18)"
-                    : "transparent",
+                      ? "rgba(35,173,164,0.18)"
+                      : "transparent",
                   color: isEnd || isMid ? "var(--bd-white)" : "var(--bd-gray-300)",
                   transition: "background 120ms ease, color 120ms ease",
                 }}
