@@ -11,6 +11,7 @@ import wishlistApi from "@/api/wishlistApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import DateRangeCalendarPopover from "../../components/DateRangeCalendarPopover";
+import InteractiveMapStage from "../../components/InteractiveMapStage";
 
 // Helper for distance in km using Haversine formula
 function calcDistanceKm(lat1, lon1, lat2, lon2) {
@@ -1820,123 +1821,15 @@ function ExploreContent() {
               })}
             </div>
 
-            {/* Right Column: Sticky Interactive Ulaanbaatar Map */}
-            <div className="bd-mapstage">
-              <div className="bd-map-surface">
-                {/* Background Map Grid & Features */}
-                <div
-                  className="bd-map-plate"
-                  style={{
-                    transform: `scale(${mapZoom})`,
-                    transformOrigin: "center center",
-                    transition: "transform 240ms var(--bd-ease)",
-                  }}
-                >
-                  {/* Tuul River Simulation */}
-                  <div className="bd-map-river" />
-                  {/* National Park Green Area */}
-                  <div
-                    className="bd-map-park"
-                    style={{ left: "42%", top: "45%", width: "160px", height: "110px" }}
-                  />
-                  {/* Bogd Khan Mountain Slope */}
-                  <div
-                    className="bd-map-park"
-                    style={{ left: "20%", top: "68%", width: "260px", height: "130px", opacity: 0.8 }}
-                  />
-                  <div className="bd-map-glow" />
-
-                  {/* Pin Markers */}
-                  <div className="bd-map-pins">
-                    {filteredEvents.map((evt) => {
-                      const dLat = (evt.lat || 47.918) - 47.918;
-                      const dLng = (evt.lng || 106.918) - 106.918;
-                      const posX = Math.max(10, Math.min(90, 50 + dLng * 450));
-                      const posY = Math.max(12, Math.min(88, 50 - dLat * 600));
-
-                      const isSel = selectedMapId === evt.id;
-
-                      return (
-                        <button
-                          key={evt.id}
-                          type="button"
-                          className={`bd-map-pin ${isSel ? "active" : ""}`}
-                          style={{
-                            left: `${posX}%`,
-                            top: `${posY}%`,
-                            zIndex: isSel ? 12 : 5,
-                          }}
-                          onClick={() => setSelectedMapId(evt.id)}
-                          onMouseEnter={() => setSelectedMapId(evt.id)}
-                        >
-                          <span>{evt.priceText}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Map Stamp */}
-                <div className="bd-map-stamp">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 21s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 7.2c0 7.3-8 11.8-8 11.8z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  <span>{t("cityUlaanbaatar")}</span>
-                </div>
-
-                {/* Zoom Controls */}
-                <div className="bd-map-zoom">
-                  <button
-                    type="button"
-                    onClick={() => setMapZoom((prev) => Math.min(prev + 0.25, 2.2))}
-                    title={t("zoomIn")}
-                  >
-                    +
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMapZoom((prev) => Math.max(prev - 0.25, 0.75))}
-                    title={t("zoomOut")}
-                  >
-                    −
-                  </button>
-                </div>
-
-                {/* Selected Event Floating Preview Card */}
-                {selectedMapId && (
-                  (() => {
-                    const selEvt = filteredEvents.find((e) => e.id === selectedMapId);
-                    if (!selEvt) return null;
-                    return (
-                      <Link href={selEvt.href} className="bd-map-preview">
-                        <span
-                          className="thumb"
-                          style={{ backgroundImage: `url(${selEvt.image})` }}
-                        />
-                        <span className="body">
-                          <b>{selEvt.title}</b>
-                          <span>{selEvt.dateText}</span>
-                          <span>{selEvt.venue}</span>
-                          <i>{selEvt.priceText}</i>
-                        </span>
-                        <button
-                          type="button"
-                          className="close-btn"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setSelectedMapId(null);
-                          }}
-                        >
-                          ×
-                        </button>
-                      </Link>
-                    );
-                  })()
-                )}
-              </div>
-            </div>
+            {/* Right Column: Sticky Interactive Google Map */}
+            <InteractiveMapStage
+              items={filteredEvents}
+              selectedId={selectedMapId}
+              onSelectItem={setSelectedMapId}
+              cityLabel={t("cityUlaanbaatar")}
+              zoomInLabel={t("zoomIn")}
+              zoomOutLabel={t("zoomOut")}
+            />
           </div>
         )}
       </main>
