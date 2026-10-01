@@ -1,0 +1,32 @@
+/* Bondy — typography.
+   The Figma file uses Sansation (brand display), Inter (web UI), SF Pro (iOS app UI)
+   and Poppins (supporting web copy). Sansation, Inter and Poppins load from Google
+   Fonts; SF Pro is an Apple system face and is referenced through the system stack. */
+@import url('https://fonts.googleapis.com/css2?family=Sansation:wght@300;400;700&family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap');
+
+:root{
+  --bd-font-display:'Sansation','Inter',system-ui,sans-serif;      /* logo lockup, hero, section heroes */
+  --bd-font-ui:'Inter',system-ui,-apple-system,sans-serif;          /* web product UI */
+  --bd-font-app:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro','Inter',system-ui,sans-serif; /* iOS app */
+  --bd-font-support:'Poppins','Inter',system-ui,sans-serif;         /* supporting web copy */
+
+  /* Type scale — sizes transcribed from the file */
+  --bd-fs-2xs:10px;--bd-fs-xs:11px;--bd-fs-sm:12px;--bd-fs-base:14px;--bd-fs-md:16px;
+  --bd-fs-lg:18px;--bd-fs-xl:20px;--bd-fs-2xl:24px;--bd-fs-3xl:28px;--bd-fs-4xl:32px;
+  --bd-fs-5xl:42px;--bd-fs-6xl:56px;
+
+  --bd-lh-tight:100%; /* @kind other */ --bd-lh-snug:1.2; /* @kind other */ --bd-lh-normal:1.4; /* @kind other */ --bd-lh-relaxed:1.55; /* @kind other */
+  --bd-fw-regular:400; /* @kind other */ --bd-fw-medium:500; /* @kind other */ --bd-fw-semibold:600; /* @kind other */ --bd-fw-bold:700; /* @kind other */ --bd-fw-black:900; /* @kind other */
+  --bd-tracking-tight:-0.01em; /* @kind other */ --bd-tracking-normal:0; /* @kind other */ --bd-tracking-wide:0.04em; /* @kind other */
+}
+
+/* Named roles — the recurring text treatments in the file */
+.bd-display{font-family:var(--bd-font-display);font-weight:700;font-size:var(--bd-fs-4xl);line-height:100%;color:var(--bd-text)}
+.bd-h1{font-family:var(--bd-font-ui);font-weight:700;font-size:var(--bd-fs-3xl);line-height:1.2;color:var(--bd-text)}
+.bd-h2{font-family:var(--bd-font-ui);font-weight:700;font-size:var(--bd-fs-2xl);line-height:1.2;color:var(--bd-text)}
+.bd-h3{font-family:var(--bd-font-ui);font-weight:700;font-size:var(--bd-fs-xl);line-height:1.2;color:var(--bd-text)}
+.bd-title{font-family:var(--bd-font-ui);font-weight:700;font-size:var(--bd-fs-md);line-height:1.3;color:var(--bd-text)}
+.bd-body{font-family:var(--bd-font-ui);font-weight:400;font-size:var(--bd-fs-base);line-height:1.4;color:var(--bd-text-strong)}
+.bd-meta{font-family:var(--bd-font-ui);font-weight:400;font-size:var(--bd-fs-sm);line-height:1.4;color:var(--bd-text-muted)}
+.bd-label{font-family:var(--bd-font-ui);font-weight:600;font-size:var(--bd-fs-sm);line-height:1.2;letter-spacing:.02em}
+.bd-price{font-family:var(--bd-font-ui);font-weight:700;font-size:var(--bd-fs-lg);line-height:1.2;color:var(--bd-text)}

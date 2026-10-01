@@ -1,0 +1,76 @@
+/* Bondy — colour tokens. Values transcribed from the Bondy UI Figma file. */
+:root{
+  /* Brand turquoise ramp */
+  --bd-teal-100:#D6F5F2;--bd-teal-200:#A6E9E3;--bd-teal-300:#61D9CB;
+  --bd-teal-400:#36CEC2;/* rgb(36,206,194) */
+  --bd-teal-500:#23ADA4;/* rgb(35,173,164) — primary brand */
+  --bd-teal-600:#1C9F97;--bd-teal-700:#11938A;--bd-teal-800:#0A6668;
+  --bd-teal-alt:#3DB5B4;/* rgb(61,181,180) */
+  --bd-teal-bright:#1CD0C4;/* rgb(28,208,196) */
+  --bd-turquoise:#22D1D6;/* Figma var "Turquoise Color" */
+  --bd-navy:#053853;/* logo overlap shadow */
+
+  /* Accents used in the file */
+  --bd-magenta:#C14FE6;/* Signup button fill */
+  --bd-indigo:#3D50DF;/* rgb(61,80,223) */
+  --bd-blue:#047EFF;--bd-blue-alt:#0D85FE;--bd-blue-deep:#0147FF;
+  --bd-orange:#FF8A33;--bd-sand:#CC9989;--bd-peach:#EABDA7;--bd-cocoa:#322924;
+
+  /* Neutrals — dark end */
+  --bd-black:#000000;--bd-ink-900:#0D0D0D;--bd-ink-850:#161616;--bd-ink-800:#1A1A1A;
+  --bd-ink-780:#1B1B1B;--bd-ink-760:#1C1D1E;--bd-ink-750:#1D1D1D;--bd-ink-700:#222222;
+  --bd-ink-650:#242424;--bd-ink-600:#2B2A2A;--bd-ink-550:#2C2C2C;--bd-ink-500:#303030;
+  --bd-ink-450:#363636;--bd-ink-400:#4F4F4F;
+
+  /* Neutrals — light end */
+  --bd-gray-700:#737373;--bd-gray-600:#979797;--bd-gray-550:#999999;--bd-gray-500:#B3B3B3;
+  --bd-gray-400:#BCC8C8;--bd-gray-300:#D9D9D9;--bd-gray-250:#DADADA;--bd-gray-200:#DEDEDE;
+  --bd-gray-150:#EAEAEA;--bd-gray-100:#F2F2F2;--bd-gray-050:#F6F7F9;--bd-white:#FFFFFF;
+
+  /* Semantic status */
+  --bd-success:#34C759;--bd-danger:#FF3B30;--bd-warning:#FF8A33;--bd-info:#047EFF;
+
+  /* ── Semantic aliases (use these in product code) ── */
+  --bd-brand:var(--bd-teal-500);
+  --bd-brand-hover:var(--bd-teal-400);
+  --bd-brand-press:var(--bd-teal-600);
+  --bd-brand-soft:rgba(35,173,164,.14);
+  --bd-brand-ring:rgba(61,181,180,.5);   /* Figma var Primary 50 */
+  --bd-brand-ring-strong:rgba(61,181,180,.7); /* Primary 70 */
+
+  --bd-bg:var(--bd-ink-900);
+  --bd-bg-page:var(--bd-ink-650);         /* website canvas */
+  --bd-surface:var(--bd-ink-800);
+  --bd-surface-raised:var(--bd-ink-700);
+  --bd-surface-sunken:var(--bd-ink-850);
+  --bd-surface-blur:rgba(27,27,27,.8);    /* Figma var bg blur */
+  --bd-scrim:rgba(0,0,0,.6);
+  --bd-overlay-soft:rgba(255,255,255,.1);
+
+  --bd-border:var(--bd-ink-500);
+  --bd-border-soft:rgba(255,255,255,.08);
+  --bd-border-strong:var(--bd-ink-400);
+
+  --bd-text:var(--bd-white);
+  --bd-text-strong:var(--bd-gray-100);
+  --bd-text-muted:var(--bd-gray-550);
+  --bd-text-faint:var(--bd-gray-700);
+  --bd-text-on-brand:var(--bd-white);
+  --bd-link:var(--bd-teal-400);
+  --bd-link-hover:var(--bd-teal-300);
+}
+/* Light surface scope — used for sheets, tickets and the checkout column */
+.bd-light{
+  --bd-bg:var(--bd-white);
+  --bd-bg-page:var(--bd-gray-050);
+  --bd-surface:var(--bd-white);
+  --bd-surface-raised:var(--bd-white);
+  --bd-surface-sunken:var(--bd-gray-050);
+  --bd-border:var(--bd-gray-200);
+  --bd-border-soft:var(--bd-gray-150);
+  --bd-border-strong:var(--bd-gray-300);
+  --bd-text:#161A21;
+  --bd-text-strong:#161A21;
+  --bd-text-muted:var(--bd-gray-700);
+  --bd-text-faint:var(--bd-gray-600);
+}

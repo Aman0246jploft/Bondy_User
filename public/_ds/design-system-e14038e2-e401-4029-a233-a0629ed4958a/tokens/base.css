@@ -1,0 +1,8 @@
+/* Bondy — base element defaults. Kept intentionally small. */
+*,*::before,*::after{box-sizing:border-box}
+body{font-family:var(--bd-font-ui);color:var(--bd-text);background:var(--bd-bg);-webkit-font-smoothing:antialiased;text-wrap:pretty}
+a{color:var(--bd-link);text-decoration:none;transition:color var(--bd-dur) var(--bd-ease)}
+a:hover{color:var(--bd-link-hover)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;box-shadow:var(--bd-shadow-focus)}
+::selection{background:var(--bd-brand);color:var(--bd-white)}
+img{max-width:100%;display:block}

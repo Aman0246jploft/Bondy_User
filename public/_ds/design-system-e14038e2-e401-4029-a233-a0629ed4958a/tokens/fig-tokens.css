@@ -1,0 +1,80 @@
+/* Generated from Figma Variables. First mode = :root default.
+   FLOAT tokens are unitless — multiply by 1px in calc() where a length is needed. */
+
+:root {
+  --bg-blur: rgba(27,27,27,0.8); /* @kind color */
+  --black: rgb(22,26,33); /* @kind color */
+  --blue: rgb(1,71,255); /* @kind color */
+  --border-primary: var(--gray-700); /* @kind color */
+  --color-neutral-09: rgba(255,255,255,0.9); /* @kind color */
+  --color-neutral-light-gray: rgb(246,247,249); /* @kind color */
+  --color: rgb(255,255,255); /* @kind color */
+  --colors-green: rgb(52,199,89); /* @kind color */
+  --colors-red: rgb(255,59,48); /* @kind color */
+  --corner-extra-large: 28;
+  --dark: rgb(28,26,26); /* @kind color */
+  --gray-0: rgb(255,255,255); /* @kind color */
+  --gray-700: rgb(79,79,79); /* @kind color */
+  --miscellaneous-alert-menu-action-sheet-separators: rgba(128,128,128,0.55); /* @kind color */
+  --orange: rgb(255,138,51); /* @kind color */
+  --primary-50: rgba(61,181,180,0.5); /* @kind color */
+  --primary-70: rgba(61,181,180,0.7); /* @kind color */
+  --primary: rgb(12,0,223); /* @kind color */
+  --size-text-lg: 18;
+  --space-050: 2;
+  --space-400: 16;
+  --text-primary: var(--gray-0); /* @kind color */
+  --turquoise-color: rgb(34,209,214); /* @kind color */
+  --weight-regular: "Regular";
+  --weight-semibold: "Semibold";
+  --white-2: rgb(255,255,255); /* @kind color */
+  --white-3: rgb(255,255,255); /* @kind color */
+  --white: rgb(255,255,255); /* @kind color */
+}
+
+:root[data-mode="mode-2"] {
+  --orange: rgb(255,255,255); /* @kind color */
+  --turquoise-color: rgb(34,209,214); /* @kind color */
+  --white: rgb(255,255,255); /* @kind color */
+}
+
+:root[data-mode="red"] {
+  --black: rgb(22,26,33); /* @kind color */
+  --white-2: rgb(255,255,255); /* @kind color */
+}
+
+:root[data-mode="mono-color"] {
+  --black: rgb(0,0,0); /* @kind color */
+  --white-2: rgb(255,255,255); /* @kind color */
+}
+
+:root[data-mode="blue"] {
+  --black: rgb(2,6,16); /* @kind color */
+  --white-2: rgb(255,255,255); /* @kind color */
+}
+
+:root[data-mode="mode"] {
+  --color-neutral-light-gray: rgb(16,16,16); /* @kind color */
+}
+
+:root[data-theme="dark"], .dark {
+  --colors-green: rgb(48,209,88); /* @kind color */
+  --colors-green: rgb(48,209,88); /* @kind color */
+  --colors-green: rgb(48,219,91); /* @kind color */
+  --colors-green: rgb(48,219,91); /* @kind color */
+  --colors-red: rgb(255,105,97); /* @kind color */
+  --colors-red: rgb(255,105,97); /* @kind color */
+  --colors-red: rgb(255,69,58); /* @kind color */
+  --colors-red: rgb(255,69,58); /* @kind color */
+  --miscellaneous-alert-menu-action-sheet-separators: rgba(128,128,128,0.7); /* @kind color */
+  --miscellaneous-alert-menu-action-sheet-separators: rgba(128,128,128,0.7); /* @kind color */
+  --miscellaneous-alert-menu-action-sheet-separators: rgba(128,128,128,0.74); /* @kind color */
+  --miscellaneous-alert-menu-action-sheet-separators: rgba(128,128,128,0.74); /* @kind color */
+}
+
+:root[data-theme="light"], .light {
+  --color-neutral-09: rgba(34,34,34,0.9); /* @kind color */
+  --colors-green: rgb(36,138,61); /* @kind color */
+  --colors-red: rgb(215,0,21); /* @kind color */
+  --miscellaneous-alert-menu-action-sheet-separators: rgba(128,128,128,0.7); /* @kind color */
+}

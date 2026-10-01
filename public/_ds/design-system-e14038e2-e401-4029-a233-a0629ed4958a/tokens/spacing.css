@@ -1,0 +1,31 @@
+/* Bondy — spacing, radii, elevation, motion. Values transcribed from the Figma file. */
+:root{
+  --bd-space-1:2px;--bd-space-2:4px;--bd-space-3:8px;--bd-space-4:10px;--bd-space-5:12px;
+  --bd-space-6:16px;--bd-space-7:20px;--bd-space-8:24px;--bd-space-9:32px;--bd-space-10:40px;
+  --bd-space-11:48px;--bd-space-12:64px;--bd-space-13:80px;
+
+  /* Page geometry — desktop frames are 1440 wide with a 108px gutter */
+  --bd-page-max:1440px;--bd-page-gutter:108px;--bd-page-gutter-md:48px;--bd-page-gutter-sm:20px;
+  --bd-content-max:1224px;
+  --bd-header-h:72px;--bd-bottomnav-h:83px;
+
+  /* Radii */
+  --bd-radius-xs:4px;--bd-radius-sm:8px;--bd-radius-md:12px;--bd-radius-lg:16px;
+  --bd-radius-xl:20px;--bd-radius-2xl:25px;--bd-radius-3xl:28px;--bd-radius-device:40px;
+  --bd-radius-pill:999px;
+
+  /* Elevation — the file leans on borders and blur, not deep shadows */
+  --bd-shadow-none:none;
+  --bd-shadow-card:0 1px 2px rgba(0,0,0,.35);
+  --bd-shadow-raised:0 8px 24px rgba(0,0,0,.35);
+  --bd-shadow-overlay:0 20px 60px rgba(0,0,0,.55);
+  --bd-shadow-focus:0 0 0 3px var(--bd-brand-ring);
+  --bd-inset-hairline:inset 0 0 0 1px var(--bd-border);
+
+  --bd-blur-nav:180px; /* @kind other */ --bd-blur-panel:64px; /* @kind other */ --bd-blur-chip:4px; /* @kind other */
+
+  /* Motion */
+  --bd-ease:cubic-bezier(.2,.8,.2,1); /* @kind other */
+  --bd-ease-out:cubic-bezier(0,0,.2,1); /* @kind other */
+  --bd-dur-fast:120ms; /* @kind other */ --bd-dur:200ms; /* @kind other */ --bd-dur-slow:320ms; /* @kind other */
+}

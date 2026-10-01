@@ -1,0 +1,302 @@
+/* Bondy mobile layer — loaded by every screen after the design-system styles.
+   Desktop is untouched: every rule lives behind a max-width media query
+   (plus two tiny min-width guards). Breakpoints: 1080 nav switch (existing),
+   900 detail stack (existing), 760 core mobile, 640 compact header, 520 phones. */
+
+/* guards: mobile-only helpers stay hidden on desktop */
+@media (min-width: 1081px) {
+  .og-mob { display: none !important; }
+}
+@media (min-width: 901px) {
+  .bd-cta-bar { display: none !important; }
+}
+@media (min-width: 761px) {
+  .bd-m-only { display: none !important; }
+}
+
+/* ───────────────── Language selector: one per screen ─────────────────
+   Above 760px the compact MN | EN control lives in the global header, right
+   before the account controls (the .bd-desk wrapper otherwise hides it below
+   1080). At phone widths the header has no room, so it sits in the menu sheet
+   instead — never both at once. */
+@media (min-width: 761px) {
+  /* header rules must out-specify each page's own `.bd-desk{display:none}` */
+  header .bd-lang-wrap { display: inline-flex !important; }
+  header .bd-mob-panel > [data-lang-switch] { display: none !important; }
+}
+header [data-lang-switch] { padding: 2px !important; gap: 2px !important; }
+header [data-lang-switch] > button { height: 26px !important; padding: 0 9px !important; font-size: 11.5px !important; }
+
+/* ───────────────────────── Attendee marketplace ───────────────────────── */
+
+@media (max-width: 760px) {
+  /* header: drop the inline signup button; it moves into the menu sheet */
+  .bd-m-hide { display: none !important; }
+
+  /* menu sheet: full-width rows, 48px targets, calm dividers */
+  .bd-mob-panel { gap: 0 !important; padding: 6px 2px 14px !important; animation: bdSheet 240ms cubic-bezier(.2,.8,.2,1); }
+  .bd-mob-panel > a { display: flex; align-items: center; min-height: 50px; font-size: 16px !important; border-bottom: 1px solid var(--bd-border-soft); }
+  .bd-mob-panel > a:last-of-type { border-bottom: none; }
+  .bd-mob-panel > [data-lang-switch] { margin-top: 12px; align-self: flex-start; }
+  @keyframes bdSheet { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+  /* card grids tagged as rails become edge-to-edge scroll-snap rails (~1.2 cards) */
+  .bd-rail { display: grid !important; grid-auto-flow: column; grid-auto-columns: min(76vw, 320px); grid-template-columns: none !important; overflow-x: auto; scroll-snap-type: x mandatory; margin-left: -20px; margin-right: -20px; padding: 4px 20px 8px; scrollbar-width: none; }
+  .bd-rail::-webkit-scrollbar { display: none; }
+  .bd-rail > * { scroll-snap-align: start; min-width: 0; }
+
+  /* category tiles: two compact columns instead of a long stack */
+  .bd-cats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+  .bd-cats > a { padding: 13px 14px !important; gap: 11px !important; }
+  .bd-cats > a > span:first-child { width: 36px !important; height: 36px !important; border-radius: 12px !important; }
+  .bd-cats > a > span:last-child { font-size: 14px !important; }
+
+  /* hero search: stacked field card, dividers off, full-width action */
+  .bd-sform { flex-direction: column !important; align-items: stretch !important; gap: 8px !important; padding: 12px !important; border-radius: 20px !important; }
+  .bd-sform > label { flex: none !important; min-width: 0 !important; width: 100%; box-sizing: border-box; background: rgba(255,255,255,.045); border: 1px solid var(--bd-border-soft); border-radius: 14px !important; padding: 10px 14px !important; }
+  .bd-sdiv { display: none !important; }
+  .bd-m-full { width: 100% !important; }
+  .bd-m-full button { width: 100% !important; }
+
+  /* footer: brand block full width, link columns side by side */
+  footer div[style*="grid-template-columns"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 28px 20px !important; }
+  footer div[style*="grid-template-columns"] > div:first-child { grid-column: 1 / -1; }
+
+  /* stray fixed-width two-column blocks collapse cleanly */
+  .bd-cols2 { grid-template-columns: 1fr !important; }
+
+  /* detail pages: the sticky bar carries price + primary action, so the booking
+     panel it duplicates (price, Хадгалах, Хуваалцах, QR note) is dropped here.
+     Save and share live in the hero circles. */
+  .bd-book { display: none !important; }
+}
+
+@media (max-width: 640px) {
+  /* header: tighter gaps so logo + search + burger breathe at 390 */
+  header > div { gap: 12px !important; }
+  html { scroll-padding-top: 72px; }
+}
+
+/* detail pages: sticky bottom CTA bar (below 761px it replaces the booking aside) */
+.bd-cta-bar { display: none; }
+@media (max-width: 900px) {
+  .bd-cta-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; display: flex; align-items: center; gap: 14px; padding: 12px 20px calc(14px + env(safe-area-inset-bottom, 0px)); background: rgba(11,11,11,.92); backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%); border-top: 1px solid var(--bd-border); box-shadow: 0 -14px 34px rgba(0,0,0,.45); }
+  .bd-cta-bar .bd-cta-price { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+  .bd-cta-bar .bd-cta-price small { font-size: 11.5px; color: var(--bd-gray-600); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+  .bd-cta-bar .bd-cta-price b { font-size: 19px; font-weight: 700; letter-spacing: -.02em; color: var(--bd-white); white-space: nowrap; }
+  /* 47% is the floor, not a cap: a long label ("Тасалбар авах" at 360px) takes
+     the slack from the wider price column instead of overflowing the button */
+  .bd-cta-bar .bd-cta-act { display: block; flex: 0 1 auto; min-width: 47%; max-width: 56%; }
+  .bd-cta-bar .bd-cta-act > * { width: 100%; }
+  .bd-cta-bar .bd-cta-act button { width: 100% !important; height: 52px !important; padding: 0 24px !important; border-radius: 16px !important; font-size: 16px !important; white-space: nowrap; }
+  div:has(> .bd-cta-bar) main { padding-bottom: 132px !important; }
+  /* booking aside still shows between 761–900px: keep it, tighter */
+  .bd-book { padding: 18px !important; }
+}
+
+/* ───────────────────────── Organizer dashboard ───────────────────────── */
+
+/* organizer primary nav on mobile: the chip rail becomes a slide-out drawer
+   behind the header hamburger. Desktop keeps its sidebar untouched. */
+@media (min-width: 1081px) {
+  .og-burger { display: none !important; }
+}
+
+@media (max-width: 1080px) {
+  /* the closed drawer parks off-canvas; clip so it never adds page width */
+  html:has(.og-mob) { overflow-x: clip; }
+  .og-burger {
+    display: inline-flex !important; order: 3; align-items: center; justify-content: center;
+    width: 40px; height: 40px; flex-shrink: 0; padding: 0; cursor: pointer;
+    border-radius: 999px; border: 1px solid var(--bd-border); background: var(--bd-ink-850);
+    color: var(--bd-white); transition: background 200ms cubic-bezier(.2,.8,.2,1), border-color 200ms cubic-bezier(.2,.8,.2,1);
+  }
+  .og-burger:active { transform: scale(.95); }
+
+  .og-mob {
+    display: flex !important; flex-direction: column !important; align-items: stretch !important;
+    gap: 4px !important; -webkit-overflow-scrolling: touch;
+    position: fixed !important; top: 0 !important; left: 0 !important; bottom: 0 !important; right: auto !important; z-index: 120;
+    width: min(296px, 84vw); box-sizing: border-box;
+    padding: 14px 12px calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    overflow-y: auto; overflow-x: hidden;
+    background: var(--bd-ink-850); border-right: 1px solid var(--bd-border);
+    box-shadow: 26px 0 64px rgba(0,0,0,.5);
+    visibility: hidden; transform: translateX(-102%);
+    transition: transform 320ms cubic-bezier(.2,.8,.2,1), visibility 320ms;
+  }
+  .og-mob[data-open="1"] { visibility: visible; transform: none; }
+  /* compact rows: icon + label only, no card treatment */
+  .og-mob > button {
+    display: flex !important; align-items: center; justify-content: flex-start;
+    gap: 12px !important; width: 100%; height: 50px !important; flex-shrink: 0;
+    box-sizing: border-box; margin: 0 !important;
+    padding: 0 12px !important; border-radius: 12px !important;
+    font-size: 14.5px !important; font-weight: 600 !important; line-height: 1;
+    white-space: nowrap; text-align: left;
+  }
+  .og-mob > button[data-og-active="0"] {
+    background: transparent !important; border: 1px solid transparent !important;
+    color: var(--bd-gray-300) !important;
+  }
+  .og-mob > button[data-og-active="0"]:hover { background: rgba(255,255,255,.045) !important; }
+  .og-mob > button[data-og-active="1"] { border-color: transparent !important; }
+  .og-mob > button > span:first-child,
+  .og-mob > button > svg { flex-shrink: 0; }
+
+  .og-drawer-rule {
+    display: block; height: 1px; flex-shrink: 0;
+    margin: 10px 8px; background: var(--bd-border-soft);
+  }
+  .og-drawer-out {
+    display: flex; align-items: center; gap: 12px; width: 100%; height: 50px;
+    flex-shrink: 0; box-sizing: border-box; padding: 0 12px;
+    border: 1px solid transparent; border-radius: 12px; background: transparent;
+    color: var(--bd-gray-300); font-family: var(--bd-font-ui);
+    font-size: 14.5px; font-weight: 600; line-height: 1; text-align: left; cursor: pointer;
+  }
+  .og-drawer-out:hover { background: rgba(255,255,255,.045); }
+  .og-drawer-out-ic {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 17px; height: 17px; flex-shrink: 0; color: currentColor;
+  }
+  .og-drawer-top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-shrink: 0; margin-bottom: 8px; padding: 2px 4px 12px;
+    border-bottom: 1px solid var(--bd-border-soft);
+  }
+  .og-drawer-top > span {
+    font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--bd-gray-600);
+  }
+  .og-drawer-top > button {
+    width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--bd-border); border-radius: 999px; background: transparent;
+    color: var(--bd-gray-400); font-family: var(--bd-font-ui); font-size: 15px; line-height: 1; cursor: pointer;
+  }
+  .og-drawer-foot {
+    display: flex; align-items: center; flex-shrink: 0;
+    margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--bd-border-soft);
+  }
+  .og-scrim {
+    position: fixed; inset: 0; z-index: 110; background: rgba(6,6,8,.62);
+    opacity: 0; pointer-events: none; transition: opacity 240ms cubic-bezier(.2,.8,.2,1);
+  }
+  .og-scrim[data-open="1"] { opacity: 1; pointer-events: auto; }
+}
+
+@media (max-width: 700px) {
+  /* KPI cards: two per row; the page owns their type and spacing (.og-kpi*). */
+  .og-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
+}
+
+@media (max-width: 1080px) {
+  /* organizer header stays one row: title truncates, controls pin right */
+  .og-shell header > div:first-child { flex-wrap: nowrap !important; }
+  .og-shell header > div:first-child > div:first-child { flex: 1 1 auto; min-width: 0; }
+  .og-shell header > div:first-child > div:last-child { flex-shrink: 0; margin-left: auto; }
+  .og-shell header > div:first-child > div:first-child > .og-h1,
+  .og-shell header > div:first-child > div:first-child > p {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+}
+
+@media (max-width: 640px) {
+  /* header: single compact row — subtitle drops, avatar-only account chip */
+  .og-shell header > div:first-child > div:first-child > p { display: none !important; }
+  .og-shell header > div:first-child { padding-top: 12px !important; padding-bottom: 12px !important; }
+  .og-org-txt { display: none !important; }
+  main[data-screen-label] { padding-left: 16px !important; padding-right: 16px !important; }
+  header > div:first-child { padding-left: 16px !important; padding-right: 16px !important; gap: 12px !important; }
+}
+
+@media (max-width: 720px) {
+  /* tagged tables become stacked cards:
+     r1  title ─ actions      (og-m-act)
+     r2  meta  ─ status       (og-m-inline / og-m-badge)
+     r3  sub line             (og-m-sub)
+     r4  value ─ value        (og-m-end) */
+  .og-cardify .og-table-inner { min-width: 0 !important; }
+  .og-cardify .og-row.og-head { display: none !important; }
+  .og-cardify .og-row { grid-template-columns: minmax(0, 1fr) auto !important; gap: 7px 12px !important; padding: 14px 16px !important; align-items: center; }
+  .og-cardify .og-row > * { min-width: 0; }
+  .og-m-hide { display: none !important; }
+  .og-m-span { grid-column: 1 / -1; }
+  .og-m-end { grid-column: 2; justify-self: end; text-align: right; }
+  .og-m-act { grid-row: 1; grid-column: 2; justify-self: end; }
+  .og-m-badge { grid-row: 2; grid-column: 2; justify-self: end; }
+  .og-m-inline { flex-direction: row !important; align-items: baseline !important; gap: 6px !important; flex-wrap: wrap; }
+  .og-m-sub { grid-column: 1 / -1; font-size: 12.5px !important; color: var(--bd-gray-500) !important; }
+}
+
+/* ───────────────────────── Shared fine-tuning ───────────────────────── */
+
+@media (max-width: 520px) {
+  /* full-bleed feel: sections keep the 20px gutter, cards stay rounded */
+  .bd-book { border-radius: 20px !important; }
+  /* floating filter dropdowns never overflow the viewport
+     (account screens use [data-panel] for full-width sections — leave those alone) */
+  [data-dropdown-panel] { max-width: min(280px, calc(100vw - 44px)); }
+}
+
+/* ───────────────────── Type scale (desktop + mobile) ─────────────────────
+   h1 page titles and hero keep their own fluid sizes; these rules pin the
+   repeating roles: section heading, card title, meta, price, action. */
+
+/* card titles and prices come from the design-system card, styled inline */
+div[role="button"] h3 { font-size: 17px !important; line-height: 1.3 !important; letter-spacing: -.01em !important; }
+div[role="button"] span[style*="font-size: 20px"],
+div[role="button"] span[style*="font-size:20px"] { font-size: 18px !important; line-height: 26px !important; }
+/* view-all / section actions */
+div:has(> .bd-h2) > a { font-size: 13px !important; font-weight: 600 !important; }
+
+@media (max-width: 760px) {
+  .bd-h1 { font-size: 26px !important; line-height: 1.14 !important; }
+  .bd-h2 { font-size: 24px !important; line-height: 1.18 !important; }
+  .og-h1 { font-size: 19px !important; }
+  div[role="button"] h3 { font-size: 16px !important; }
+  div[role="button"] span[style*="font-size: 20px"],
+  div[role="button"] span[style*="font-size:20px"] { font-size: 17px !important; line-height: 24px !important; }
+
+  /* 16px page gutters everywhere the desktop clamp puts 20–34px */
+  [style*="clamp(20px,4vw,32px)"],
+  [style*="clamp(20px, 4vw, 32px)"],
+  [style*="clamp(18px,2.4vw,34px)"],
+  [style*="clamp(18px,2.4vw,32px)"] { padding-left: 16px !important; padding-right: 16px !important; }
+  main[data-screen-label] { padding-left: 16px !important; padding-right: 16px !important; }
+  .bd-rail { margin-left: -16px !important; margin-right: -16px !important; padding-left: 16px !important; padding-right: 16px !important; }
+  .bd-cta-bar { padding-left: 16px !important; padding-right: 16px !important; }
+
+  /* section header rows tighten up */
+  div:has(> .bd-h2) { gap: 12px !important; margin-bottom: 14px !important; }
+  div:has(> .bd-h2) > a { height: 34px !important; padding: 0 13px !important; }
+}
+
+/* ───────────────────── Search fields (all breakpoints) ─────────────────────
+   Organizer toolbars stack into a column at their own breakpoints. A fixed
+   flex-basis (`flex:1 1 260px`) then resolves against the MAIN axis and turns
+   into a 260px-tall field. Basis auto keeps the row behaviour (grow + max-width)
+   and lets the explicit height win when stacked. */
+.lm-tools > label,
+.cd-tools > label { flex: 1 1 auto !important; height: 46px !important; box-sizing: border-box; }
+.ud-search { flex: 1 1 auto !important; height: 44px !important; box-sizing: border-box; }
+
+@media (max-width: 760px) {
+  /* hero carousel: dots only, arrows are redundant on touch */
+  .bd-hero div:has(> button[aria-label="Өмнөх"]) { display: none !important; }
+
+  /* photo gallery: 3-up mosaic instead of 4 shrunken columns */
+  .bd-gal { grid-template-columns: repeat(3, 1fr) !important; grid-auto-rows: 88px !important; gap: 8px !important; }
+
+  /* listing map view: stack list under the map, cap map height */
+  .bd-mapwrap { grid-template-columns: 1fr !important; }
+  .bd-map { height: 340px !important; }
+  .bd-maplist { max-height: none !important; }
+}
+
+/* ───────────────────── Breadcrumbs: desktop only ─────────────────────
+   On phones the page title, back button and hamburger carry the hierarchy.
+   Hiding the nav takes its bottom margin with it, so nothing is left behind. */
+@media (max-width: 760px) {
+  .bd-crumb { display: none !important; }
+}
