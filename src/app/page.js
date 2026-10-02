@@ -11,6 +11,7 @@ import eventApi from "@/api/eventApi";
 import courseApi from "@/api/courseApi";
 import contactApi from "@/api/contactApi";
 import wishlistApi from "@/api/wishlistApi";
+import organizerApi from "@/api/organizerApi";
 import toast from "react-hot-toast";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -241,6 +242,7 @@ export default function HomePage() {
   const [weekendEvents, setWeekendEvents] = useState([]);
   const [featuredCourses, setFeaturedCourses] = useState([]);
   const [happeningSoon, setHappeningSoon] = useState([]);
+  const [promotedOrganizers, setPromotedOrganizers] = useState([]);
   const [sectionLoading, setSectionLoading] = useState(true);
 
   // Search
@@ -279,13 +281,14 @@ export default function HomePage() {
 
     const load = async () => {
       try {
-        // Fetch hero (slider), recommended, weekend, courses, happening-soon in parallel
-        const [heroRes, recRes, weekendRes, courseRes, soonRes] = await Promise.allSettled([
+        // Fetch hero (slider), recommended, weekend, courses, happening-soon, organizers in parallel
+        const [heroRes, recRes, weekendRes, courseRes, soonRes, orgRes] = await Promise.allSettled([
           eventApi.getEvents({ addToSlider: true, status: "Live,Upcoming", limit: 10 }),
           eventApi.getEvents({ isFeatured: true, status: "Live,Upcoming", limit: 10 }),
           eventApi.getEvents({ filter: "thisweekend", status: "Live,Upcoming", limit: 8 }),
           courseApi.getCourses({ isFeatured: true, limit: 10 }),
           eventApi.getEvents({ filter: "today", status: "Live,Upcoming", limit: 8 }),
+          organizerApi.getPublicOrganizers({ featured: 1 }),
         ]);
 
         if (cancelled) return;
@@ -326,6 +329,26 @@ export default function HomePage() {
           : [];
         const soonEvts = soonRaw.map(mapEvent);
         setHappeningSoon(soonEvts.length > 0 ? soonEvts : recEvts.slice(0, 5));
+
+        // Promoted Organizers (100% dynamic from DB)
+        const orgRaw = orgRes.status === "fulfilled"
+          ? (orgRes.value?.data?.data?.organizers || orgRes.value?.data?.organizers || [])
+          : [];
+        const dbPromoted = orgRaw.filter((o) => o.isPromoted);
+        const dynamicList = dbPromoted.length > 0
+          ? dbPromoted
+          : orgRaw.filter((o) => o.verified || o.isApproved);
+
+        setPromotedOrganizers(
+          dynamicList.slice(0, 8).map((o) => ({
+            id: o._id,
+            name: o.name,
+            avatar: o.avatar || FALLBACK_IMG,
+            verified: o.verified,
+            isPromoted: o.isPromoted,
+            href: `/profile?id=${o._id}`,
+          }))
+        );
 
         setSectionLoading(false);
       } catch (err) {
@@ -749,6 +772,147 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ════ SECTION 5: PROMOTED ORGANIZERS ════════════════════════════════ */}
+      {(sectionLoading || promotedOrganizers.length > 0) && (
+        <section id="organizers" data-screen-label="Featured organizers" style={{ padding: "clamp(44px,4.2vw,64px) 0" }}>
+          <div className="bd-container">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap", marginBottom: 20 }}>
+              <h2 className="bd-h2" style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "var(--bd-white)" }}>
+                {language === "en" ? "Promoted organizers" : "Онцлох зохион байгуулагчид"}
+              </h2>
+              <Link
+                href="/Organizers?featured=1"
+                className="bd-btn-outline"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  height: 38,
+                  padding: "0 16px",
+                  borderRadius: 999,
+                  border: "1px solid var(--bd-border, rgba(255,255,255,0.1))",
+                  color: "var(--bd-gray-300, #d4d4d4)",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                  transition: "border-color 200ms cubic-bezier(.2,.8,.2,1), color 200ms cubic-bezier(.2,.8,.2,1)",
+                }}
+              >
+                {language === "en" ? "See all" : "Бүгдийг харах"}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+            </div>
+            <div
+              className="bd-rail"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                gap: 12,
+              }}
+            >
+              {sectionLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={`org-skel-${i}`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 13,
+                      padding: "15px 17px",
+                      borderRadius: 20,
+                      background: "var(--bd-ink-850, #131b2e)",
+                      border: "1px solid var(--bd-border, rgba(255,255,255,0.08))",
+                    }}
+                  >
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ width: "60%", height: 16, background: "rgba(255,255,255,0.08)", borderRadius: 4 }} />
+                      <div style={{ width: "35%", height: 12, background: "rgba(255,255,255,0.05)", borderRadius: 4 }} />
+                    </div>
+                  </div>
+                ))
+              ) : (
+                promotedOrganizers.map((org) => (
+                  <Link
+                    key={org.id || org._id}
+                    href={org.href || `/profile?id=${org._id || org.id}`}
+                    className="bd-hov"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 13,
+                      padding: "15px 17px",
+                      borderRadius: 20,
+                      background: "var(--bd-ink-850, #131b2e)",
+                      border: "1px solid var(--bd-border, rgba(255,255,255,0.08))",
+                      color: "inherit",
+                      textDecoration: "none",
+                      transition: "border-color 200ms cubic-bezier(.2,.8,.2,1), transform 200ms cubic-bezier(.2,.8,.2,1), background 200ms",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "50%",
+                        overflow: "hidden",
+                        flexShrink: 0,
+                        background: "rgba(255,255,255,0.06)",
+                      }}
+                    >
+                      <img
+                        src={org.avatar || FALLBACK_IMG}
+                        alt={org.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = FALLBACK_IMG;
+                        }}
+                      />
+                    </div>
+                    <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 5 }}>
+                      <span
+                        style={{
+                          maxWidth: "100%",
+                          fontSize: 15,
+                          fontWeight: 700,
+                          color: "var(--bd-white)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          boxSizing: "border-box",
+                        }}
+                      >
+                        {org.name}
+                      </span>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          padding: "2px 8px",
+                          borderRadius: 999,
+                          background: "rgba(34, 197, 94, 0.14)",
+                          color: "#4ade80",
+                          border: "1px solid rgba(34, 197, 94, 0.25)",
+                        }}
+                      >
+                        {language === "en" ? "Verified" : "Баталгаажсан"}
+                      </span>
+                    </span>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ════ SECTION 6: ORGANIZER CTA ═══════════════════════════════════════ */}
       <section id="partner" data-screen-label="Organizer CTA">

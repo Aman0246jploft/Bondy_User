@@ -63,6 +63,8 @@ function OrganizersContent() {
 
   // Filter client-side for instantaneous feedback while typing
   const filteredOrganizers = organizers.filter((o) => {
+    // Only approved/verified organizers
+    if (o.isApproved === false && o.verified === false) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.trim().toLowerCase();
     const nameMatch = (o.name || "").toLowerCase().includes(q);
