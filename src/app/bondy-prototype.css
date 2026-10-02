@@ -1830,6 +1830,7 @@ body {
   text-decoration: none;
   line-height: 1.35;
   transition: color 200ms var(--bd-ease);
+  cursor: pointer;
 }
 
 .bd-footer-links a:hover {

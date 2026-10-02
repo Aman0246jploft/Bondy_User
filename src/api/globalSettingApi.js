@@ -6,6 +6,7 @@ const globalSettingApi = {
     getTermsConditions: () => apiClient.get("/globalsetting/terms_conditions", { skipToast: true }),
     getTermsConditionsMn: () => apiClient.get("/globalsetting/terms_conditions_mn", { skipToast: true }),
     getSocialLinks: () => apiClient.get("/globalsetting/SOCIAL_LINKS", { skipToast: true }),
+    getFooterLinks: () => apiClient.get("/globalsetting/FOOTER_LINKS", { skipToast: true }),
 };
 
 export default globalSettingApi;
