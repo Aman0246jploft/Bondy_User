@@ -687,8 +687,109 @@ function EventDetailsContent() {
     return parts.join(", ") || (language === "en" ? "Ulaanbaatar, Mongolia" : "Улаанбаатар, Монгол Улс");
   }, [event, language]);
 
+  // ─── Event Date & Past Status Validation ─────────────────────────────────
+  const isPastEvent = useMemo(() => {
+    if (!event) return false;
+
+    // Status flag check
+    if (event.status && ["completed", "expired", "cancelled", "ended"].includes(event.status.toLowerCase())) {
+      return true;
+    }
+
+    const now = new Date();
+
+    // Check end date/time if provided
+    if (event.endDate) {
+      const end = new Date(event.endDate);
+      if (event.endTime) {
+        const [h, m] = String(event.endTime).split(":").map(Number);
+        end.setHours(h || 23, m || 59, 59, 999);
+      } else {
+        end.setHours(23, 59, 59, 999);
+      }
+      if (!isNaN(end.getTime()) && end < now) return true;
+    } else if (event.startDate) {
+      // If only startDate is provided
+      const start = new Date(event.startDate);
+      if (event.startTime) {
+        const [h, m] = String(event.startTime).split(":").map(Number);
+        start.setHours(h || 0, m || 0, 0, 0);
+      } else {
+        start.setHours(23, 59, 59, 999);
+      }
+      // If the event day has passed
+      const startDayEnd = new Date(start);
+      startDayEnd.setHours(23, 59, 59, 999);
+      if (startDayEnd < now) return true;
+    }
+
+    // Booking cutoff check
+    if (event.bookingCutOff && event.startDate) {
+      const match = String(event.bookingCutOff).match(/^(\d+)([hmdw])$/i);
+      if (match) {
+        const value = parseInt(match[1], 10);
+        const unit = match[2].toLowerCase();
+        let ms = 0;
+        if (unit === "h") ms = value * 60 * 60 * 1000;
+        else if (unit === "m") ms = value * 60 * 1000;
+        else if (unit === "d") ms = value * 24 * 60 * 60 * 1000;
+        else if (unit === "w") ms = value * 7 * 24 * 60 * 60 * 1000;
+
+        const start = new Date(event.startDate);
+        if (event.startTime) {
+          const [h, m] = String(event.startTime).split(":").map(Number);
+          start.setHours(h || 0, m || 0, 0, 0);
+        }
+        const cutoffTime = new Date(start.getTime() - ms);
+        if (cutoffTime < now) return true;
+      }
+    }
+
+    return false;
+  }, [event]);
+
+  // ─── Seat & Ticket Capacity Validation ───────────────────────────────────
+  const { isSoldOut, totalAvailableSeats, remainingSeatsText } = useMemo(() => {
+    if (!event) return { isSoldOut: false, totalAvailableSeats: null, remainingSeatsText: null };
+
+    // 1. Check overall event ticketQtyAvailable
+    if (event.ticketQtyAvailable !== undefined && Number(event.ticketQtyAvailable) <= 0) {
+      return { isSoldOut: true, totalAvailableSeats: 0, remainingSeatsText: null };
+    }
+
+    // 2. Check ticket tiers
+    if (event.tickets && event.tickets.length > 0) {
+      let totalAvail = 0;
+      let hasAvailabilityData = false;
+
+      event.tickets.forEach((t) => {
+        const avail = t.availableQty !== undefined ? Number(t.availableQty) : (t.qty !== undefined ? Number(t.qty) : null);
+        if (avail !== null) {
+          hasAvailabilityData = true;
+          totalAvail += Math.max(0, avail);
+        }
+      });
+
+      if (hasAvailabilityData && totalAvail <= 0) {
+        return { isSoldOut: true, totalAvailableSeats: 0, remainingSeatsText: null };
+      }
+
+      if (totalAvail > 0 && totalAvail <= 10) {
+        const text = language === "en" ? `Only ${totalAvail} seats left` : `Ердөө ${totalAvail} суудал үлдсэн`;
+        return { isSoldOut: false, totalAvailableSeats: totalAvail, remainingSeatsText: text };
+      }
+
+      return { isSoldOut: false, totalAvailableSeats: totalAvail, remainingSeatsText: null };
+    }
+
+    return { isSoldOut: false, totalAvailableSeats: null, remainingSeatsText: null };
+  }, [event, language]);
+
   // Ticket totals
   const ticketTotals = useMemo(() => {
+    if (isPastEvent || isSoldOut) {
+      return { qty: 0, subtotal: 0 };
+    }
     if (!event?.tickets || event.tickets.length === 0) {
       return { qty: 1, subtotal: minPrice || 0 };
     }
@@ -700,9 +801,10 @@ function EventDetailsContent() {
       subtotal += q * (Number(tk.price) || 0);
     });
     return { qty, subtotal };
-  }, [event, ticketQtys, minPrice]);
+  }, [event, ticketQtys, minPrice, isPastEvent, isSoldOut]);
 
   const handleStepTicket = (tkId, delta) => {
+    if (isPastEvent || isSoldOut) return;
     setTicketQtys((prev) => {
       const cur = prev[tkId] || 0;
       const next = Math.max(0, cur + delta);
@@ -712,6 +814,18 @@ function EventDetailsContent() {
 
   const handleGoToBooking = () => {
     if (!eventId) return;
+    if (isPastEvent) {
+      toast.error(language === "en" ? "This event has already ended." : "Энэ эвент өндөрлөсөн тул захиалах боломжгүй.");
+      return;
+    }
+    if (isSoldOut) {
+      toast.error(language === "en" ? "All tickets are sold out." : "Бүх тасалбар дууссан байна.");
+      return;
+    }
+    if (event?.tickets && event.tickets.length > 0 && ticketTotals.qty <= 0) {
+      toast.error(language === "en" ? "Please select at least one ticket." : "Ядаж нэг тасалбар сонгоно уу.");
+      return;
+    }
     router.push(`/eventbooking?eventId=${eventId}`);
   };
 
@@ -984,9 +1098,23 @@ function EventDetailsContent() {
 
             {/* Desktop Title Block */}
             <div className="bd-titleblock" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20 }}>
-              <h1 className="bd-h1" style={{ margin: 0, fontFamily: "var(--bd-font-ui)", fontSize: "clamp(28px, 2.55vw, 32px)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-.02em", color: "var(--bd-white)", maxWidth: "22ch" }}>
-                {event.eventTitle}
-              </h1>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <h1 className="bd-h1" style={{ margin: 0, fontFamily: "var(--bd-font-ui)", fontSize: "clamp(28px, 2.55vw, 32px)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-.02em", color: "var(--bd-white)", maxWidth: "22ch" }}>
+                    {event.eventTitle}
+                  </h1>
+                  {isPastEvent && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 11px", borderRadius: 999, background: "rgba(255, 90, 90, 0.15)", border: "1px solid rgba(255, 90, 90, 0.3)", color: "#FF6B6B", fontSize: 12, fontWeight: 700 }}>
+                      {language === "en" ? "Event Ended" : "Өнгөрсөн эвент"}
+                    </span>
+                  )}
+                  {!isPastEvent && isSoldOut && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 11px", borderRadius: 999, background: "rgba(255, 140, 0, 0.15)", border: "1px solid rgba(255, 140, 0, 0.3)", color: "#FF9A3C", fontSize: 12, fontWeight: 700 }}>
+                      {language === "en" ? "Sold Out" : "Суудал дүүрсэн"}
+                    </span>
+                  )}
+                </div>
+              </div>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 10, flexShrink: 0, marginTop: 5 }}>
                 <button
                   type="button"
@@ -1520,97 +1648,148 @@ function EventDetailsContent() {
             }}
           >
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <h2 style={{ margin: 0, fontFamily: "var(--bd-font-ui)", fontSize: 19, fontWeight: 700, letterSpacing: "-.014em", color: "var(--bd-white)" }}>
-                {language === "en" ? "Select Tickets" : "Тасалбар сонгох"}
-              </h2>
-
-              {/* Tickets Stepper List */}
-              <div className="bs-opts" style={{ marginTop: 14 }}>
-                {event.tickets && event.tickets.length > 0 ? (
-                  event.tickets.map((ticket, idx) => {
-                    const tkId = ticket._id || idx;
-                    const q = ticketQtys[tkId] || 0;
-                    const total = ticket.qty || 0;
-                    const available = ticket.availableQty !== undefined ? ticket.availableQty : total;
-                    const isSoldOut = available <= 0;
-                    const tPrice = Number(ticket.price) || 0;
-
-                    return (
-                      <div key={tkId} className="bs-tk">
-                        <div className="bs-tk-l">
-                          <span className="bs-tk-nm">{ticket.ticketName}</span>
-                          <span className="bs-tk-sub">
-                            {ticket.ticketShortDesc || (isSoldOut ? (language === "en" ? "Sold out" : "Дууссан") : (language === "en" ? "Free seating" : "Суудал чөлөөтэй"))}
-                          </span>
-                        </div>
-                        <div className="bs-tk-r">
-                          <span className="bs-tk-pr">
-                            {tPrice === 0 ? (language === "en" ? "Free" : "Үнэгүй") : `₮${tPrice.toLocaleString()}`}
-                          </span>
-                          <span className="bs-stp">
-                            <button
-                              type="button"
-                              onClick={() => handleStepTicket(tkId, -1)}
-                              disabled={q <= 0}
-                              aria-label="Decrease"
-                            >
-                              −
-                            </button>
-                            <b>{q}</b>
-                            <button
-                              type="button"
-                              onClick={() => handleStepTicket(tkId, 1)}
-                              disabled={isSoldOut || q >= available}
-                              aria-label="Increase"
-                            >
-                              +
-                            </button>
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="bs-tk">
-                    <div className="bs-tk-l">
-                      <span className="bs-tk-nm">{language === "en" ? "Standard Entry" : "Энгийн тасалбар"}</span>
-                      <span className="bs-tk-sub">{language === "en" ? "General admission" : "Ерөнхий нэвтрэх эрх"}</span>
-                    </div>
-                    <div className="bs-tk-r">
-                      <span className="bs-tk-pr">{formattedMinPrice}</span>
-                      <span className="bs-stp">
-                        <button type="button" disabled>−</button>
-                        <b>1</b>
-                        <button type="button" disabled>+</button>
-                      </span>
-                    </div>
-                  </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                <h2 style={{ margin: 0, fontFamily: "var(--bd-font-ui)", fontSize: 19, fontWeight: 700, letterSpacing: "-.014em", color: "var(--bd-white)" }}>
+                  {isPastEvent
+                    ? (language === "en" ? "Event Ended" : "Эвент өндөрлөсөн")
+                    : isSoldOut
+                      ? (language === "en" ? "Sold Out" : "Суудал дүүрсэн")
+                      : (language === "en" ? "Select Tickets" : "Тасалбар сонгох")}
+                </h2>
+                {!isPastEvent && remainingSeatsText && (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#FFA143", background: "rgba(255, 140, 0, 0.12)", padding: "2px 8px", borderRadius: 6 }}>
+                    {remainingSeatsText}
+                  </span>
                 )}
               </div>
 
-              {/* Running Total */}
-              <div className="bs-tkfoot">
-                <span>
-                  <small>{language === "en" ? "Total" : "Нийт"}</small>
-                  <b style={{ color: ticketTotals.qty ? "var(--acc-bright, #36CEC2)" : "var(--bd-white, #fff)" }}>
-                    {ticketTotals.subtotal === 0 && ticketTotals.qty > 0
-                      ? (language === "en" ? "Free" : "Үнэгүй")
-                      : `₮${ticketTotals.subtotal.toLocaleString()}`}
+              {/* Past Event State Notice */}
+              {isPastEvent && (
+                <div style={{ padding: "16px", borderRadius: 16, background: "rgba(255, 90, 90, 0.08)", border: "1px solid rgba(255, 90, 90, 0.22)", color: "#FF8A8A", fontSize: 14, lineHeight: 1.5, marginTop: 14 }}>
+                  <b style={{ display: "block", marginBottom: 4, color: "#FF6B6B" }}>
+                    {language === "en" ? "Event has ended" : "Эвент өндөрлөсөн байна"}
                   </b>
-                </span>
-              </div>
+                  {language === "en"
+                    ? "This event has already taken place. Ticket booking is no longer available."
+                    : "Уг эвент хугацаа нь өнгөрсөн тул тасалбар захиалах боломжгүй."}
+                </div>
+              )}
+
+              {/* Sold Out State Notice */}
+              {!isPastEvent && isSoldOut && (
+                <div style={{ padding: "16px", borderRadius: 16, background: "rgba(255, 140, 0, 0.08)", border: "1px solid rgba(255, 140, 0, 0.22)", color: "#FFB067", fontSize: 14, lineHeight: 1.5, marginTop: 14 }}>
+                  <b style={{ display: "block", marginBottom: 4, color: "#FFA143" }}>
+                    {language === "en" ? "All seats are booked" : "Бүх тасалбар дууссан байна"}
+                  </b>
+                  {language === "en"
+                    ? "All available tickets have been purchased. No more seats left for this event."
+                    : "Энэхүү арга хэмжээний бүх суудал дүүрсэн тул тасалбар дууссан байна."}
+                </div>
+              )}
+
+              {/* Tickets Stepper List (Shown when event is active) */}
+              {!isPastEvent && !isSoldOut && (
+                <>
+                  <div className="bs-opts" style={{ marginTop: 14 }}>
+                    {event.tickets && event.tickets.length > 0 ? (
+                      event.tickets.map((ticket, idx) => {
+                        const tkId = ticket._id || idx;
+                        const q = ticketQtys[tkId] || 0;
+                        const total = ticket.qty || 0;
+                        const available = ticket.availableQty !== undefined ? ticket.availableQty : total;
+                        const isTierSoldOut = available <= 0;
+                        const tPrice = Number(ticket.price) || 0;
+
+                        return (
+                          <div key={tkId} className="bs-tk">
+                            <div className="bs-tk-l">
+                              <span className="bs-tk-nm">{ticket.ticketName}</span>
+                              <span className="bs-tk-sub">
+                                {ticket.ticketShortDesc || (isTierSoldOut ? (language === "en" ? "Sold out" : "Дууссан") : (language === "en" ? "Free seating" : "Суудал чөлөөтэй"))}
+                              </span>
+                            </div>
+                            <div className="bs-tk-r">
+                              <span className="bs-tk-pr">
+                                {tPrice === 0 ? (language === "en" ? "Free" : "Үнэгүй") : `₮${tPrice.toLocaleString()}`}
+                              </span>
+                              <span className="bs-stp">
+                                <button
+                                  type="button"
+                                  onClick={() => handleStepTicket(tkId, -1)}
+                                  disabled={q <= 0}
+                                  aria-label="Decrease"
+                                >
+                                  −
+                                </button>
+                                <b>{q}</b>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStepTicket(tkId, 1)}
+                                  disabled={isTierSoldOut || q >= available}
+                                  aria-label="Increase"
+                                >
+                                  +
+                                </button>
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="bs-tk">
+                        <div className="bs-tk-l">
+                          <span className="bs-tk-nm">{language === "en" ? "Standard Entry" : "Энгийн тасалбар"}</span>
+                          <span className="bs-tk-sub">{language === "en" ? "General admission" : "Ерөнхий нэвтрэх эрх"}</span>
+                        </div>
+                        <div className="bs-tk-r">
+                          <span className="bs-tk-pr">{formattedMinPrice}</span>
+                          <span className="bs-stp">
+                            <button type="button" disabled>−</button>
+                            <b>1</b>
+                            <button type="button" disabled>+</button>
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Running Total */}
+                  <div className="bs-tkfoot">
+                    <span>
+                      <small>{language === "en" ? "Total" : "Нийт"}</small>
+                      <b style={{ color: ticketTotals.qty ? "var(--acc-bright, #36CEC2)" : "var(--bd-white, #fff)" }}>
+                        {ticketTotals.subtotal === 0 && ticketTotals.qty > 0
+                          ? (language === "en" ? "Free" : "Үнэгүй")
+                          : `₮${ticketTotals.subtotal.toLocaleString()}`}
+                      </b>
+                    </span>
+                  </div>
+                </>
+              )}
 
               {/* Submit CTA */}
               <button
                 type="button"
                 className="bs-go"
                 onClick={handleGoToBooking}
-                disabled={ticketTotals.qty <= 0}
-                style={{ width: "100%", marginTop: 14, borderRadius: 14 }}
+                disabled={isPastEvent || isSoldOut || ticketTotals.qty <= 0}
+                style={{
+                  width: "100%",
+                  marginTop: 14,
+                  borderRadius: 14,
+                  background: isPastEvent || isSoldOut ? "var(--bd-ink-800)" : undefined,
+                  border: isPastEvent || isSoldOut ? "1px solid var(--bd-border)" : undefined,
+                  color: isPastEvent || isSoldOut ? "var(--bd-gray-500)" : undefined,
+                  cursor: isPastEvent || isSoldOut ? "not-allowed" : undefined,
+                }}
               >
-                {ticketTotals.qty > 0 && ticketTotals.subtotal === 0
-                  ? (language === "en" ? "Register for Free" : "Үнэгүй бүртгүүлэх")
-                  : (language === "en" ? "Get Tickets" : "Тасалбар авах")}
+                {isPastEvent
+                  ? (language === "en" ? "Event Ended" : "Өндөрлөсөн")
+                  : isSoldOut
+                    ? (language === "en" ? "Sold Out" : "Суудал дүүрсэн")
+                    : ticketTotals.qty > 0 && ticketTotals.subtotal === 0
+                      ? (language === "en" ? "Register for Free" : "Үнэгүй бүртгүүлэх")
+                      : (language === "en" ? "Get Tickets" : "Тасалбар авах")}
               </button>
             </div>
           </aside>
@@ -1708,11 +1887,18 @@ function EventDetailsContent() {
       <div className="bd-cta-bar">
         <span className="bd-cta-price">
           <small>{language === "en" ? "Starting price" : "Эхлэх үнэ"}</small>
-          <b>{formattedMinPrice}</b>
+          <b>
+            {isPastEvent
+              ? (language === "en" ? "Ended" : "Өндөрлөсөн")
+              : isSoldOut
+                ? (language === "en" ? "Sold Out" : "Дууссан")
+                : formattedMinPrice}
+          </b>
         </span>
         <button
           type="button"
           onClick={handleGoToBooking}
+          disabled={isPastEvent || isSoldOut}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -1721,14 +1907,18 @@ function EventDetailsContent() {
             padding: "0 24px",
             borderRadius: 14,
             border: "none",
-            background: "var(--acc)",
-            color: "var(--bd-white)",
+            background: isPastEvent || isSoldOut ? "var(--bd-ink-800)" : "var(--acc)",
+            color: isPastEvent || isSoldOut ? "var(--bd-gray-500)" : "var(--bd-white)",
             fontSize: 15,
             fontWeight: 700,
-            cursor: "pointer",
+            cursor: isPastEvent || isSoldOut ? "not-allowed" : "pointer",
           }}
         >
-          {language === "en" ? "Get Tickets" : "Тасалбар авах"}
+          {isPastEvent
+            ? (language === "en" ? "Event Ended" : "Өндөрлөсөн")
+            : isSoldOut
+              ? (language === "en" ? "Sold Out" : "Суудал дүүрсэн")
+              : (language === "en" ? "Get Tickets" : "Тасалбар авах")}
         </button>
       </div>
 
