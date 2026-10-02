@@ -257,6 +257,7 @@ export default function HomePage() {
   const [partnerName, setPartnerName] = useState("");
   const [partnerEmail, setPartnerEmail] = useState("");
   const [partnerPhone, setPartnerPhone] = useState("");
+  const [partnerCountryCode, setPartnerCountryCode] = useState("+976");
   const [partnerIntro, setPartnerIntro] = useState("");
   const [partnerLoading, setPartnerLoading] = useState(false);
 
@@ -459,9 +460,11 @@ export default function HomePage() {
     setPartnerLoading(true);
     try {
       await contactApi.createContact({
+        fullName: partnerName.trim(),
         name: partnerName.trim(),
         email: partnerEmail.trim(),
-        phone: partnerPhone.trim() || undefined,
+        phone: partnerPhone.trim() ? `${partnerCountryCode} ${partnerPhone.trim()}` : undefined,
+        topic: "Organizer Partnership",
         message: partnerIntro.trim(),
       });
       toast.success(
@@ -988,11 +991,114 @@ export default function HomePage() {
                   {language === "en" ? "Phone (optional)" : "Утас (заавал биш)"}
                 </span>
                 <div style={{ display: "flex", gap: 12 }}>
-                  <div style={{ flex: "0 0 94px", height: 48, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bd-surface-sunken)", border: "1px solid var(--bd-border)", borderRadius: 12, color: "var(--bd-white)", fontSize: 14, fontWeight: 600 }}>
-                    MN +976
-                  </div>
-                  <input type="tel" value={partnerPhone} onChange={(e) => setPartnerPhone(e.target.value)}
-                    placeholder="9911 2233" className="bd-form-input" style={{ flex: 1 }} />
+                  <select
+                    value={partnerCountryCode}
+                    onChange={(e) => setPartnerCountryCode(e.target.value)}
+                    className="bd-form-input"
+                    style={{ flex: "0 0 130px", cursor: "pointer", paddingLeft: 10, fontWeight: 600 }}
+                  >
+                    {/* East Asia */}
+                    <option value="+976">MN +976</option>
+                    <option value="+86">CN +86</option>
+                    <option value="+81">JP +81</option>
+                    <option value="+82">KR +82</option>
+                    <option value="+852">HK +852</option>
+                    <option value="+886">TW +886</option>
+                    {/* Southeast Asia */}
+                    <option value="+65">SG +65</option>
+                    <option value="+66">TH +66</option>
+                    <option value="+84">VN +84</option>
+                    <option value="+60">MY +60</option>
+                    <option value="+63">PH +63</option>
+                    <option value="+62">ID +62</option>
+                    <option value="+95">MM +95</option>
+                    <option value="+855">KH +855</option>
+                    <option value="+856">LA +856</option>
+                    {/* South Asia */}
+                    <option value="+91">IN +91</option>
+                    <option value="+92">PK +92</option>
+                    <option value="+880">BD +880</option>
+                    <option value="+94">LK +94</option>
+                    <option value="+977">NP +977</option>
+                    <option value="+93">AF +93</option>
+                    {/* Central Asia */}
+                    <option value="+7">KZ +7</option>
+                    <option value="+998">UZ +998</option>
+                    <option value="+996">KG +996</option>
+                    <option value="+992">TJ +992</option>
+                    <option value="+993">TM +993</option>
+                    {/* Middle East */}
+                    <option value="+971">AE +971</option>
+                    <option value="+966">SA +966</option>
+                    <option value="+90">TR +90</option>
+                    <option value="+98">IR +98</option>
+                    <option value="+964">IQ +964</option>
+                    <option value="+962">JO +962</option>
+                    <option value="+961">LB +961</option>
+                    <option value="+972">IL +972</option>
+                    <option value="+965">KW +965</option>
+                    <option value="+974">QA +974</option>
+                    <option value="+973">BH +973</option>
+                    <option value="+968">OM +968</option>
+                    {/* Europe */}
+                    <option value="+44">GB +44</option>
+                    <option value="+49">DE +49</option>
+                    <option value="+33">FR +33</option>
+                    <option value="+39">IT +39</option>
+                    <option value="+34">ES +34</option>
+                    <option value="+31">NL +31</option>
+                    <option value="+32">BE +32</option>
+                    <option value="+41">CH +41</option>
+                    <option value="+43">AT +43</option>
+                    <option value="+46">SE +46</option>
+                    <option value="+47">NO +47</option>
+                    <option value="+45">DK +45</option>
+                    <option value="+358">FI +358</option>
+                    <option value="+48">PL +48</option>
+                    <option value="+7">RU +7</option>
+                    <option value="+380">UA +380</option>
+                    <option value="+30">GR +30</option>
+                    <option value="+351">PT +351</option>
+                    <option value="+420">CZ +420</option>
+                    <option value="+36">HU +36</option>
+                    <option value="+40">RO +40</option>
+                    {/* Americas */}
+                    <option value="+1">US +1</option>
+                    <option value="+1">CA +1</option>
+                    <option value="+52">MX +52</option>
+                    <option value="+55">BR +55</option>
+                    <option value="+54">AR +54</option>
+                    <option value="+56">CL +56</option>
+                    <option value="+57">CO +57</option>
+                    <option value="+51">PE +51</option>
+                    <option value="+58">VE +58</option>
+                    <option value="+593">EC +593</option>
+                    {/* Africa */}
+                    <option value="+27">ZA +27</option>
+                    <option value="+234">NG +234</option>
+                    <option value="+20">EG +20</option>
+                    <option value="+254">KE +254</option>
+                    <option value="+251">ET +251</option>
+                    <option value="+233">GH +233</option>
+                    <option value="+212">MA +212</option>
+                    <option value="+216">TN +216</option>
+                    {/* Oceania */}
+                    <option value="+61">AU +61</option>
+                    <option value="+64">NZ +64</option>
+                  </select>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={partnerPhone}
+                    onChange={(e) => {
+                      const numeric = e.target.value.replace(/[^0-9]/g, "");
+                      setPartnerPhone(numeric);
+                    }}
+                    placeholder="9911 2233"
+                    className="bd-form-input"
+                    style={{ flex: 1 }}
+                  />
                 </div>
               </div>
 
