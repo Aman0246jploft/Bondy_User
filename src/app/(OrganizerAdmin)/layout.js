@@ -68,7 +68,7 @@ export default function RootLayout({ children }) {
     if (pathname.includes("/SupportTickets")) return t("supportTickets") || "Help & Support";
     if (pathname.includes("/Notifications")) return t("notification") || "Notifications";
     if (pathname.includes("/Settings")) return t("settings") || "Settings";
-    if (pathname.includes("/OrganizerChangePassword")) return t("changePassword") || "Change Password";
+    // if (pathname.includes("/OrganizerChangePassword")) return t("changePassword") || "Change Password";
     if (pathname.includes("/TicketDetailsOrganiser")) return t("ticketDetails") || "Ticket Details";
     return t("organizerDashboard") || "Organizer Dashboard";
   };
