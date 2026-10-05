@@ -612,7 +612,7 @@ export default function HomePage() {
         </div>
 
         {/* Floating Search */}
-        <div style={{ position: "relative", zIndex: 10, maxWidth: 1560, margin: "clamp(12px,1.4vw,18px) auto 0", padding: "0 clamp(16px,2vw,34px)" }}>
+        <div style={{ position: "relative", zIndex: 30, maxWidth: 1560, margin: "clamp(12px,1.4vw,18px) auto 0", padding: "0 clamp(16px,2vw,34px)" }}>
           <div className="bd-hero-sbox">
             <form onSubmit={handleSearchSubmit} className="bd-sform">
               <label className="bd-sform-label">
@@ -641,6 +641,39 @@ export default function HomePage() {
                   <b>{language === "en" ? "When" : "Хэзээ"}</b>
                   <span style={{ fontSize: 15, color: "var(--bd-white)", whiteSpace: "nowrap" }}>{selectedDateLabel}</span>
                 </span>
+
+                {/* Date picker dropdown positioned directly relative to When */}
+                {isDatePickerOpen && (
+                  <div className="bd-ds" onClick={(e) => e.stopPropagation()}>
+                    <div className="bd-ds-bd" onClick={(e) => { e.stopPropagation(); setIsDatePickerOpen(false); }} />
+                    <div className="bd-ds-p">
+                      <div className="bd-ds-grab" />
+                      <div className="bd-ds-list">
+                        {DATE_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            className="bd-ds-opt"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDateKey(opt.key);
+                              setIsDatePickerOpen(false);
+                            }}
+                          >
+                            <span>{language === "en" ? opt.en : opt.mn}</span>
+                            {selectedDateKey === opt.key && (
+                              <span className="bd-ds-ck">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <button type="submit" className="bd-sform-btn">
@@ -653,30 +686,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Date picker sheet */}
-      {isDatePickerOpen && (
-        <div className="bd-ds">
-          <div className="bd-ds-bd" onClick={() => setIsDatePickerOpen(false)} />
-          <div className="bd-ds-p">
-            <div className="bd-ds-grab" />
-            <div className="bd-ds-list">
-              {DATE_OPTIONS.map((opt) => (
-                <button key={opt.key} type="button" className="bd-ds-opt" onClick={() => { setSelectedDateKey(opt.key); setIsDatePickerOpen(false); }}>
-                  <span>{language === "en" ? opt.en : opt.mn}</span>
-                  {selectedDateKey === opt.key && (
-                    <span className="bd-ds-ck">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ════ SECTION 1: RECOMMENDED (featured) EVENTS ══════════════════════ */}
       <section id="upcoming" data-screen-label="Recommended events" style={{ padding: "clamp(46px,4.4vw,68px) 0" }}>
