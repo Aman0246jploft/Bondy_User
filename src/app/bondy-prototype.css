@@ -1742,6 +1742,9 @@ body {
    FOOTER (BONDY PROTOTYPE)
    ========================================================================== */
 .bd-footer {
+  position: relative;
+  z-index: 20;
+  pointer-events: auto;
   margin-top: clamp(20px, 2vw, 28px);
   border-top: 1px solid var(--bd-border-soft);
   background: var(--bd-ink-850);
@@ -1793,12 +1796,15 @@ body {
   background: transparent;
   color: var(--bd-gray-300);
   text-decoration: none;
-  transition: color 200ms var(--bd-ease), border-color 200ms var(--bd-ease);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 200ms var(--bd-ease), border-color 200ms var(--bd-ease), transform 150ms var(--bd-ease);
 }
 
 .bd-footer-social a:hover {
   color: var(--bd-teal-400);
   border-color: var(--bd-teal-500);
+  transform: translateY(-2px);
 }
 
 .bd-footer-col {
@@ -1818,23 +1824,45 @@ body {
   color: var(--bd-teal-400);
 }
 
+.bd-footer a,
+.bd-footer-links a,
+.bd-footer-link,
+.bd-footer-social a,
+.bd-footer-bar button,
+.bd-footer-h4 a {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
 .bd-footer-links {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.bd-footer-links a {
+.bd-footer-links a,
+.bd-footer-link {
+  display: inline-flex;
+  align-items: center;
   font-size: 14px;
   color: var(--bd-gray-300);
   text-decoration: none;
   line-height: 1.35;
-  transition: color 200ms var(--bd-ease);
-  cursor: pointer;
+  transition: color 200ms var(--bd-ease), transform 150ms var(--bd-ease);
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  user-select: none;
 }
 
-.bd-footer-links a:hover {
+.bd-footer-links a:hover,
+.bd-footer-link:hover {
   color: var(--bd-teal-400);
+  transform: translateX(3px);
+}
+
+.bd-footer-links a:active,
+.bd-footer-link:active {
+  color: var(--bd-teal-300);
 }
 
 .bd-footer-bar {

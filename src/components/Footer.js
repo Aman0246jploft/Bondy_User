@@ -13,31 +13,25 @@ export default function BondyFooter() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [socialLinks, setSocialLinks] = useState({
-    facebook: "",
-    instagram: "",
-    youtube: "",
+  const [socialLinks, setSocialLinks] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("bondy_social_links");
+        if (cached) return JSON.parse(cached);
+      } catch (e) { }
+    }
+    return { facebook: "", instagram: "", youtube: "", linkedin: "" };
   });
 
-  const DEFAULT_FOOTER_LINKS = {
-    explore: [
-      { label: language === "en" ? "Events" : "Арга хэмжээ", href: "/Explore" },
-      { label: language === "en" ? "Courses" : "Сургалт", href: "/Programs-Listing" },
-      { label: language === "en" ? "Organizers" : "Зохион байгуулагчид", href: "/Organizers" },
-    ],
-    organizer: [
-      { label: language === "en" ? "Become an organizer" : "Зохион байгуулагч болох", href: "/register?role=organizer" },
-      { label: language === "en" ? "Partner with us" : "Хамтрагч болох", href: "/#partner" },
-      { label: language === "en" ? "Dashboard" : "Хяналтын самбар", href: "/Dashboard" },
-    ],
-    help: [
-      { label: language === "en" ? "Contact Us" : "Холбоо барих", href: "/contact-us" },
-      { label: language === "en" ? "Privacy Policy" : "Нууцлалын бодлого", href: "/privacy-policy" },
-      { label: language === "en" ? "Terms of Service" : "Үйлчилгээний нөхцөл", href: "/terms" },
-    ],
-  };
-
-  const [footerLinks, setFooterLinks] = useState(null);
+  const [footerLinks, setFooterLinks] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("bondy_footer_links");
+        if (cached) return JSON.parse(cached);
+      } catch (e) { }
+    }
+    return null;
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,15 +43,30 @@ export default function BondyFooter() {
 
         if (socialRes.status === "fulfilled" && socialRes.value?.status && socialRes.value?.data?.value) {
           const links = socialRes.value.data.value;
-          setSocialLinks({
+          const newSocial = {
             facebook: links.facebook || "",
             instagram: links.instagram || "",
             youtube: links.youtube || "",
-          });
+            linkedin: links.linkedin || "",
+          };
+          setSocialLinks(newSocial);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("bondy_social_links", JSON.stringify(newSocial));
+            } catch (e) { }
+          }
         }
 
-        if (footerRes.status === "fulfilled" && footerRes.value?.status && footerRes.value?.data?.value) {
-          setFooterLinks(footerRes.value.data.value);
+        if (footerRes.status === "fulfilled" && footerRes.value?.status) {
+          const val = footerRes.value?.data?.value || footerRes.value?.data;
+          if (val) {
+            setFooterLinks(val);
+            if (typeof window !== "undefined") {
+              try {
+                localStorage.setItem("bondy_footer_links", JSON.stringify(val));
+              } catch (e) { }
+            }
+          }
         }
       } catch (error) {
         console.error("Footer fetch error:", error);
@@ -93,33 +102,75 @@ export default function BondyFooter() {
   };
 
   // Only render social icon if the link is actually configured
-  const isValidLink = (url) => url && url.trim() !== "" && url.trim() !== "#";
+  const isValidLink = (url) => url && typeof url === "string" && url.trim() !== "" && url.trim() !== "#";
 
-  // Auth-aware dashboard navigation
-  const handleDashboardClick = (e) => {
-    e.preventDefault();
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token) {
-      toast.error(
-        language === "en"
-          ? "Please log in to access the dashboard"
-          : "Хяналтын самбарт хандахын тулд нэвтэрнэ үү"
-      );
-      router.push("/login");
+  // Unified click handler for footer navigation
+  const handleLinkClick = (e, href) => {
+    console.log("duffer", href, e)
+    if (!href || href === "#") {
+      e.preventDefault();
       return;
     }
-    router.push("/Dashboard");
+
+    // External links open normally
+    if (href.startsWith("http://") || href.startsWith("https://")) {
+      return;
+    }
+
+    // Smooth scroll for #partner
+    if (href === "/#partner" || href === "#partner") {
+      e.preventDefault();
+      if (typeof window !== "undefined") {
+        if (window.location.pathname === "/") {
+          const el = document.getElementById("partner");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth" });
+            return;
+          }
+        }
+        router.push("/#partner");
+      }
+      return;
+    }
+
+    // Auth-aware Dashboard navigation
+    if (href === "/Dashboard") {
+      e.preventDefault();
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token) {
+        toast.error(
+          language === "en"
+            ? "Please log in to access the dashboard"
+            : "Хяналтын самбарт хандахын тулд нэвтэрнэ үү"
+        );
+        router.push("/login");
+        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "instant" });
+        return;
+      }
+      router.push("/Dashboard");
+      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "instant" });
+      return;
+    }
+
+    // Internal navigation with immediate scroll-to-top
+    e.preventDefault();
+    router.push(href);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
   };
 
-  // Smooth scroll to #partner on homepage, navigate from other pages
-  const handlePartnerClick = (e) => {
-    e.preventDefault();
-    if (window.location.pathname === "/") {
-      const el = document.getElementById("partner");
-      if (el) el.scrollIntoView({ behavior: "smooth" });
-    } else {
-      router.push("/#partner");
+  const getLabel = (link) => {
+    if (!link) return "";
+    if (language === "mn") {
+      return link.labelMn || link.name_mn || link.name_thi || link.label || link.labelEn || link.name || "";
     }
+    return link.labelEn || link.label || link.name || "";
+  };
+
+  const getHref = (link) => {
+    if (!link) return "#";
+    return link.href || link.url || link.link || "#";
   };
 
   return (
@@ -128,8 +179,14 @@ export default function BondyFooter() {
         <div className="bd-footer-grid">
           {/* Brand Info */}
           <div className="bd-footer-brand">
-            <Link href="/" aria-label="Bondy">
+            <Link
+              href="/"
+              aria-label="Bondy"
+              onClick={(e) => handleLinkClick(e, "/")}
+              style={{ display: "inline-block", cursor: "pointer" }}
+            >
               <img src="/img/bondy-logo.svg" alt="Bondy" style={{ height: "30px", width: "auto" }} />
+
             </Link>
             <p className="bd-footer-tag">
               {language === "en"
@@ -138,7 +195,13 @@ export default function BondyFooter() {
             </p>
             <div className="bd-footer-social">
               {isValidLink(socialLinks.instagram) && (
-                <a href={socialLinks.instagram} target="_blank" rel="noreferrer" aria-label="Instagram">
+                <a
+                  href={socialLinks.instagram}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Instagram"
+                  className="bd-footer-social-link"
+                >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.7" />
                     <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" />
@@ -147,7 +210,13 @@ export default function BondyFooter() {
                 </a>
               )}
               {isValidLink(socialLinks.facebook) && (
-                <a href={socialLinks.facebook} target="_blank" rel="noreferrer" aria-label="Facebook">
+                <a
+                  href={socialLinks.facebook}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Facebook"
+                  className="bd-footer-social-link"
+                >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path
                       d="M14.5 8.5V6.9c0-.8.2-1.2 1.4-1.2h1.5V3h-2.5c-2.6 0-3.6 1.5-3.6 3.6v1.9H9.2V11h2.1v10h3.2V11h2.3l.4-2.5h-2.7Z"
@@ -157,63 +226,102 @@ export default function BondyFooter() {
                 </a>
               )}
               {isValidLink(socialLinks.youtube) && (
-                <a href={socialLinks.youtube} target="_blank" rel="noreferrer" aria-label="YouTube">
+                <a
+                  href={socialLinks.youtube}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="YouTube"
+                  className="bd-footer-social-link"
+                >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <rect x="2.6" y="5.4" width="18.8" height="13.2" rx="4" stroke="currentColor" strokeWidth="1.7" />
                     <path d="M10.4 9.4l4.8 2.6-4.8 2.6V9.4Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
                   </svg>
                 </a>
               )}
-              {!isValidLink(socialLinks.instagram) && !isValidLink(socialLinks.facebook) && !isValidLink(socialLinks.youtube) && (
-                <span style={{ fontSize: 12, color: "var(--bd-gray-600)" }}>
-                  {language === "en" ? "Social links coming soon" : "Удахгүй нэмэгдэнэ"}
-                </span>
+              {isValidLink(socialLinks.linkedin) && (
+                <a
+                  href={socialLinks.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="LinkedIn"
+                  className="bd-footer-social-link"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"
+                      stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+                    />
+                    <circle cx="4" cy="4" r="2" stroke="currentColor" strokeWidth="1.6" />
+                  </svg>
+                </a>
               )}
+              {!isValidLink(socialLinks.instagram) &&
+                !isValidLink(socialLinks.facebook) &&
+                !isValidLink(socialLinks.youtube) &&
+                !isValidLink(socialLinks.linkedin) && (
+                  <span style={{ fontSize: 12, color: "var(--bd-gray-600)" }}>
+                    {language === "en" ? "Social links coming soon" : "Удахгүй нэмэгдэнэ"}
+                  </span>
+                )}
             </div>
           </div>
 
           {/* Dynamic Footer Nav Columns */}
           {[
-            { key: "explore", titleEn: "Explore", titleMn: "Судлах" },
-            { key: "organizer", titleEn: "Organizer", titleMn: "Зохион байгуулагч" },
-            { key: "help", titleEn: "Help", titleMn: "Тусламж" },
-          ].map(({ key, titleEn, titleMn }) => {
-            const cols = footerLinks || DEFAULT_FOOTER_LINKS;
+            { key: "explore", titleEn: "Explore", titleMn: "Судлах", defaultRoute: "/Explore" },
+            { key: "organizer", titleEn: "Organizer", titleMn: "Зохион байгуулагч", defaultRoute: "/register?role=organizer" },
+            { key: "help", titleEn: "Help", titleMn: "Тусламж", defaultRoute: "/contact-us" },
+          ].map(({ key, titleEn, titleMn, defaultRoute }) => {
+            const cols = footerLinks || {};
             const links = cols[key] || [];
+            const colTitle = language === "en"
+              ? (footerLinks?.titles?.[key]?.en || titleEn)
+              : (footerLinks?.titles?.[key]?.mn || titleMn);
+
             return (
               <div key={key} className="bd-footer-col">
-                <h4 className="bd-footer-h4">{language === "en" ? titleEn : titleMn}</h4>
+                <h4 className="bd-footer-h4">
+                  <a
+                    href={defaultRoute}
+                    onClick={(e) => handleLinkClick(e, defaultRoute)}
+                    style={{
+                      color: "inherit",
+                      textDecoration: "none",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      pointerEvents: "auto",
+                    }}
+                  >
+                    {colTitle}
+                  </a>
+                </h4>
                 <nav className="bd-footer-links">
+                  {links.length === 0 && !footerLinks && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "4px 0" }}>
+                      <span style={{ height: 16, width: 85, background: "rgba(255,255,255,0.08)", borderRadius: 4, display: "inline-block" }} />
+                      <span style={{ height: 16, width: 105, background: "rgba(255,255,255,0.08)", borderRadius: 4, display: "inline-block" }} />
+                      <span style={{ height: 16, width: 95, background: "rgba(255,255,255,0.08)", borderRadius: 4, display: "inline-block" }} />
+                    </div>
+                  )}
                   {links.map((link, idx) => {
-                    const isExternal = link.href?.startsWith("http");
-                    const isDashboard = link.href === "/Dashboard";
-                    const isPartner = link.href === "/#partner";
+                    const href = getHref(link);
+                    const label = getLabel(link);
+                    const isExternal = href.startsWith("http://") || href.startsWith("https://");
 
-                    if (isDashboard) {
-                      return (
-                        <a key={idx} href="/Dashboard" onClick={handleDashboardClick} style={{ cursor: "pointer" }}>
-                          {link.label}
-                        </a>
-                      );
-                    }
-                    if (isPartner) {
-                      return (
-                        <a key={idx} href="/#partner" onClick={handlePartnerClick} style={{ cursor: "pointer" }}>
-                          {link.label}
-                        </a>
-                      );
-                    }
-                    if (isExternal) {
-                      return (
-                        <a key={idx} href={link.href} target="_blank" rel="noreferrer">
-                          {link.label}
-                        </a>
-                      );
-                    }
                     return (
-                      <Link key={idx} href={link.href}>
-                        {link.label}
-                      </Link>
+                      <a
+                        key={idx}
+                        href={href}
+                        onClick={(e) => handleLinkClick(e, href)}
+                        className="bd-footer-link"
+                        style={{ cursor: "pointer", pointerEvents: "auto" }}
+                        target={isExternal ? "_blank" : undefined}
+                        rel={isExternal ? "noreferrer" : undefined}
+                      >
+                        <span style={{ cursor: "pointer" }}>{label}</span>
+                      </a>
                     );
                   })}
                 </nav>
