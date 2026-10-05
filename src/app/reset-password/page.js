@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import staffApi from "@/api/staffApi";
 import toast from "react-hot-toast";
-import { useLanguage } from "@/context/LanguageContext";
 import GuestRoute from "@/components/GuestRoute";
-import LanguageSelector from "@/components/LanguageSelector";
+import Header from "@/components/Header";
+import { useLanguage } from "@/context/LanguageContext";
 
 const STRONG_PASSWORD_REGEX =
   /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
@@ -259,12 +259,9 @@ function ResetPasswordContent() {
 
   return (
     <GuestRoute>
+      <Header />
       <main className="lg-shell">
         <section className="lg-panel">
-          {/* ── Top Bar ── */}
-          <div className="lg-header" style={{ justifyContent: "flex-end", marginBottom: 12 }}>
-            <LanguageSelector />
-          </div>
 
           {/* ── STEP 1: OTP VERIFICATION ── */}
           {step === 1 && (

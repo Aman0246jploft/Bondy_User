@@ -7,6 +7,7 @@ import staffApi from "@/api/staffApi";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import GuestRoute from "@/components/GuestRoute";
+import Header from "@/components/Header";
 import { useLanguage } from "@/context/LanguageContext";
 import { useGoogleLogin } from "@react-oauth/google";
 
@@ -158,12 +159,8 @@ export default function Page() {
 
   return (
     <GuestRoute>
+      <Header />
       <main className="lg-shell">
-        {/* Language selector */}
-        <div style={{ position: "fixed", top: "20px", right: "20px", zIndex: 1050 }}>
-          <LanguageSelector />
-        </div>
-
         <section className="lg-panel">
 
           {/* ── Staff badge ── */}

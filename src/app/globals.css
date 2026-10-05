@@ -5068,7 +5068,7 @@ a.view-map {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  min-height: calc(100vh - 68px);
   padding: clamp(24px, 4vw, 56px) 20px;
   background: var(--bd-ink-900);
 }

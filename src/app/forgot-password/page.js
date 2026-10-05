@@ -6,7 +6,7 @@ import staffApi from "@/api/staffApi";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import GuestRoute from "@/components/GuestRoute";
-import LanguageSelector from "@/components/LanguageSelector";
+import Header from "@/components/Header";
 import { useLanguage } from "@/context/LanguageContext";
 
 function ForgotPasswordContent() {
@@ -57,12 +57,9 @@ function ForgotPasswordContent() {
 
   return (
     <GuestRoute>
+      <Header />
       <main className="lg-shell">
         <section className="lg-panel">
-          {/* ── Top Bar ── */}
-          <div className="lg-header" style={{ justifyContent: "flex-end", marginBottom: 16 }}>
-            <LanguageSelector />
-          </div>
 
           {/* ── Icon mark ── */}
           <span

@@ -9,6 +9,7 @@ import authApi from "@/api/authApi";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import GuestRoute from "@/components/GuestRoute";
+import Header from "@/components/Header";
 import { useLanguage } from "@/context/LanguageContext";
 import { useGoogleLogin } from "@react-oauth/google";
 
@@ -346,12 +347,8 @@ function RegisterForm() {
 
   return (
     <GuestRoute>
+      <Header />
       <main className="lg-shell">
-        {/* Language selector */}
-        <div style={{ position: "fixed", top: "20px", right: "20px", zIndex: 1050 }}>
-          <LanguageSelector />
-        </div>
-
         <section className="lg-panel">
           {/* ── Title ── */}
           <h1 className="lg-h1">{t("getStarted")}</h1>

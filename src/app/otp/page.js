@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import GuestRoute from "@/components/GuestRoute";
+import Header from "@/components/Header";
 import { useLanguage } from "@/context/LanguageContext";
 import VerificationModl from "@/components/Modal/VerificationModl";
 
@@ -195,6 +196,7 @@ function OTPContent() {
 
   return (
     <GuestRoute>
+      <Header />
       <main className="lg-shell">
         <section className="lg-panel">
 
