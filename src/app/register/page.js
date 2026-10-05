@@ -399,7 +399,7 @@ function RegisterForm() {
 
                 {/* Phone */}
                 <div>
-                  <div className="lg-phone-wrap">
+                  <div className={`lg-phone-wrap ${customerErrors.contactNumber ? "has-error" : ""}`}>
                     <PhoneInput
                       country={"us"}
                       value={customerData.contactNumber}
@@ -554,7 +554,7 @@ function RegisterForm() {
 
                 {/* Phone */}
                 <div>
-                  <div className="lg-phone-wrap">
+                  <div className={`lg-phone-wrap ${organizerErrors.contactNumber ? "has-error" : ""}`}>
                     <PhoneInput
                       country={"us"}
                       value={organizerData.contactNumber}

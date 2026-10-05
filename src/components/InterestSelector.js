@@ -7,45 +7,56 @@ const InterestSelector = ({ categories = [], selectedIds = [], onToggle, disable
 
   const getCategoryName = (item) => {
     const localizedName = language === "mn" && item?.name_thi ? item.name_thi : item?.name;
-    return localizedName?.charAt(0).toUpperCase() + localizedName?.slice(1);
+    return localizedName ? localizedName.charAt(0).toUpperCase() + localizedName.slice(1) : "";
   };
 
   return (
     <div className="interest-container">
-      {categories.map((item) => (
-        <div
-          key={item._id}
-          onClick={() => !disabled && onToggle && onToggle(item._id)}
-          className={`chip ${selectedIds.includes(item._id) ? "selected" : ""} ${disabled ? "disabled" : ""}`}>
-          <span className="icon">
-            {item.image ? (
-              <img
-                src={getFullImageUrl(item.image)}
-                alt={getCategoryName(item)}
-                style={{
-                  width: "18px",
-                  height: "18px",
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                }}
-                onError={(e) => {
-                  e.target.src = "/img/sidebar-logo.svg";
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: "18px",
-                  height: "18px",
-                  background: "#eee",
-                  borderRadius: "50%",
-                }}
-              />
-            )}
-          </span>
-          <span>{getCategoryName(item)}</span>
-        </div>
-      ))}
+      {categories.map((item) => {
+        const isSelected = selectedIds.includes(item._id);
+        const name = getCategoryName(item);
+
+        return (
+          <button
+            key={item._id}
+            type="button"
+            onClick={() => !disabled && onToggle && onToggle(item._id)}
+            className={`chip ${isSelected ? "selected" : ""} ${disabled ? "disabled" : ""}`}
+            aria-pressed={isSelected}
+          >
+            <span className="icon">
+              {item.image ? (
+                <img
+                  src={getFullImageUrl(item.image)}
+                  alt=""
+                  aria-hidden="true"
+                  style={{
+                    width: "20px",
+                    height: "20px",
+                    objectFit: "contain",
+                    filter: isSelected ? "brightness(0) invert(1)" : "brightness(0) invert(0.92)",
+                    transition: "filter 0.2s ease, transform 0.2s ease",
+                  }}
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                  }}
+                />
+              ) : (
+                <span
+                  style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    backgroundColor: isSelected ? "#fff" : "var(--acc, #23ada4)",
+                    display: "inline-block",
+                  }}
+                />
+              )}
+            </span>
+            <span>{name}</span>
+          </button>
+        );
+      })}
     </div>
   );
 };

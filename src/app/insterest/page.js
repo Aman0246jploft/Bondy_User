@@ -1,13 +1,13 @@
 "use client";
-import InterestSelector from "@/components/InterestSelector";
 import React, { useState, useEffect } from "react";
-import { Col, Container, Row, Button } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-
+import Header from "@/components/Header";
+import InterestSelector from "@/components/InterestSelector";
+import { Sparkles, Check } from "lucide-react";
 import {
   fetchCurrentLocation,
   formatLocationForApi,
@@ -31,6 +31,8 @@ function InterestPageContent() {
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
+    document.title = "Interest Categories - Bondy";
+
     const fetchData = async () => {
       try {
         const [catRes, profileRes] = await Promise.all([
@@ -39,7 +41,7 @@ function InterestPageContent() {
         ]);
 
         if (catRes?.status) {
-          setCategories(catRes.data.categories);
+          setCategories(catRes.data.categories || []);
         }
 
         if (profileRes?.status) {
@@ -51,7 +53,6 @@ function InterestPageContent() {
             return router.push("/");
           }
 
-          // Ensure we only store IDs
           const existingInterests = (profileData?.categories || []).map(
             (cat) => cat?._id || cat,
           );
@@ -64,7 +65,7 @@ function InterestPageContent() {
       }
     };
     fetchData();
-  }, []);
+  }, [router]);
 
   // Auto-fetch location if missing
   useEffect(() => {
@@ -102,50 +103,31 @@ function InterestPageContent() {
 
   const handleContinue = async () => {
     if (selectedIds.length === 0) {
-      toast.error(t("pleaseSelectAtLeastOneInterest"));
+      toast.error(t("pleaseSelectAtLeastOneInterest") || "Please select at least one interest");
       return;
     }
 
     try {
       setLoading(true);
-      // Construct allowed payload based on updateUserSchema
       const payload = {
-        categories: selectedIds, // Updated with user selection
-        location: formatLocationForApi(profile?.location), // Formatted
+        categories: selectedIds,
+        location: formatLocationForApi(profile?.location),
       };
-      if (profile?.profileImage) {
-        payload.profileImage = profile?.profileImage;
-      }
-      if (profile?.bio) {
-        payload.bio = profile?.bio;
-      }
-      if (profile?.dob) {
-        payload.dob = profile?.dob;
-      }
-      if (profile?.gender) {
-        payload.gender = profile?.gender;
-      }
-      if (profile?.countryCode) {
-        payload.countryCode = profile?.countryCode;
-      }
-      if (profile?.contactNumber) {
-        payload.contactNumber = profile?.contactNumber;
-      }
-      if (profile?.email) {
-        payload.email = profile?.email;
-      }
-      if (profile?.firstName) {
-        payload.firstName = profile?.firstName;
-      }
-      if (profile?.lastName) {
-        payload.lastName = profile?.lastName;
-      }
+      if (profile?.profileImage) payload.profileImage = profile.profileImage;
+      if (profile?.bio) payload.bio = profile.bio;
+      if (profile?.dob) payload.dob = profile.dob;
+      if (profile?.gender) payload.gender = profile.gender;
+      if (profile?.countryCode) payload.countryCode = profile.countryCode;
+      if (profile?.contactNumber) payload.contactNumber = profile.contactNumber;
+      if (profile?.email) payload.email = profile.email;
+      if (profile?.firstName) payload.firstName = profile.firstName;
+      if (profile?.lastName) payload.lastName = profile.lastName;
 
       const response = await authApi.updateProfile(payload);
 
       if (response?.status) {
-        toast.success(t("interestsUpdatedSuccessfully"));
-        router.push("/"); // Redirect to home or dashboard
+        toast.success(t("interestsUpdatedSuccessfully") || "Interests updated successfully!");
+        router.push("/");
       }
     } catch (error) {
       console.error("Failed to update interests:", error);
@@ -154,72 +136,125 @@ function InterestPageContent() {
     }
   };
 
-  useEffect(() => {
-    document.title = "Interest - Bondy";
-  }, []);
-
   if (isChecking) {
-    return null; // Don't flash the page while checking profile
+    return (
+      <>
+        <Header />
+        <div className="lg-shell">
+          <div className="lg-panel" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 280 }}>
+            <span className="lg-spin" />
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
-    <div className="login_sec compplete_profile_sec">
-      <Container fluid>
-        <Row className="justify-content-between align-items-center gy-4">
-          <Col xl={5} lg={7}>
-            <div className="login_img">
-              <img src="/img/login_side_img.png" alt="login side" />
-              <div className="content_img_box">
-                <h4>Explore Events Effortlessly</h4>
-                <p>
-                  Discover, book, and track events seamlessly with calendar
-                  integration and personalized event curation
-                </p>
-              </div>
-            </div>
-          </Col>
-          <Col xl={6} lg={5}>
-            <Row className="justify-content-center align-items-center">
-              <Col xl={7} lg={9} md={12}>
-                <div className="fz_32">
-                  <h2 className="">Interest Categories</h2>
-                  <p>
-                    Tell us what you’re interested in. We’ll customize things
-                    just for you.
-                  </p>
-                </div>
-                <main>
-                  {/* <div className="d-flex justify-content-end mb-2">
-                    {categories.length > 0 && (
-                      <Button
-                        variant="link"
-                        className="text-decoration-none p-0 fw-semibold text-primary"
-                        onClick={handleSelectAll}
-                      >
-                        {allSelected ? "Deselect All" : "Select All"}
-                      </Button>
-                    )}
-                  </div> */}
-                  <div className="interest-scroll-area">
-                    <InterestSelector
-                      categories={categories}
-                      selectedIds={selectedIds}
-                      onToggle={handleToggle}
-                    />
-                  </div>
-                  <Button
-                    onClick={handleContinue}
-                    className="common_btn w-100 mt-4 border-0"
-                    disabled={loading}
-                  >
-                    {loading ? "Saving..." : "Continue"}
-                  </Button>
-                </main>
-              </Col>
-            </Row>
-          </Col>
-        </Row>
-      </Container>
-    </div>
+    <>
+      <Header />
+      <main className="lg-shell" style={{ padding: "36px 20px" }}>
+        <section className="lg-panel" style={{ maxWidth: 540 }}>
+          {/* Icon Mark */}
+          <span
+            className="lg-otp-mark"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 56,
+              height: 56,
+              borderRadius: "999px",
+              background: "rgba(35,173,164,.14)",
+              color: "var(--acc-bright)",
+              marginBottom: 16,
+            }}
+          >
+            <Sparkles size={26} />
+          </span>
+
+          {/* Title & Subtitle */}
+          <h1 className="lg-h1">
+            {t("interestCategories") && t("interestCategories") !== "interestCategories"
+              ? t("interestCategories")
+              : "Interest Categories"}
+          </h1>
+          <p className="lg-sub" style={{ marginBottom: 18 }}>
+            {t("interestSubtitle") && t("interestSubtitle") !== "interestSubtitle"
+              ? t("interestSubtitle")
+              : "Tell us what you're interested in. We'll customize things just for you."}
+          </p>
+
+          {/* Quick Action Toolbar: Counter & Select All */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "10px 14px",
+              borderRadius: 14,
+              background: "rgba(255, 255, 255, 0.03)",
+              border: "1px solid var(--bd-border-strong, #222)",
+              marginBottom: 16,
+            }}
+          >
+            <span style={{ fontSize: 13, color: "var(--bd-gray-500, #9ca3af)", fontWeight: 500 }}>
+              <span style={{ color: "var(--acc-bright, #23ada4)", fontWeight: 700 }}>
+                {selectedIds.length}
+              </span>{" "}
+              of {categories.length} selected
+            </span>
+
+            {categories.length > 0 && (
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--acc-bright, #23ada4)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  padding: 0,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                {allSelected ? "Deselect All" : "Select All"}
+              </button>
+            )}
+          </div>
+
+          {/* Interest Chips Area */}
+          <div
+            className="interest-scroll-area"
+            style={{
+              maxHeight: 300,
+              overflowY: "auto",
+              paddingRight: 6,
+              margin: "4px 0 20px",
+            }}
+          >
+            <InterestSelector
+              categories={categories}
+              selectedIds={selectedIds}
+              onToggle={handleToggle}
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="button"
+            onClick={handleContinue}
+            className="lg-submit"
+            disabled={loading || selectedIds.length === 0}
+          >
+            {loading && <span className="lg-spin" />}
+            {loading ? "Saving..." : "Continue"}
+          </button>
+        </section>
+      </main>
+    </>
   );
 }

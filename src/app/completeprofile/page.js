@@ -1,35 +1,14 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { Col, Container, Form, Row, Button, Dropdown } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 import toast from "react-hot-toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Header from "@/components/Header";
 import VerificationModl from "@/components/Modal/VerificationModl";
-import { Upload, Camera } from "lucide-react";
+import { Upload, Camera, Building2, User } from "lucide-react";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
-
-// Helper component: Dropdown item with teal hover via inline style state
-function DropdownItemWithHover({ children, active, onClick }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <Dropdown.Item
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        color: "#fff",
-        fontSize: "14px",
-        padding: "8px 15px",
-        backgroundColor: active || hovered ? "#23ada4" : "transparent",
-        transition: "background-color 0.15s ease",
-      }}
-    >
-      {children}
-    </Dropdown.Item>
-  );
-}
 
 export default function CompleteProfile() {
   return (
@@ -96,22 +75,19 @@ function CompleteProfileContent() {
 
     const fetchInitialData = async () => {
       try {
-        // Fetch categories first for organizer dropdown
         const catRes = await authApi.getCategoryList();
         if (catRes?.status) {
           setCategories(catRes?.data?.categories || []);
         }
 
-        // Fetch self profile to detect role and verification state
         const response = await authApi.getSelfProfile();
         if (response?.status) {
           const profile = response?.data?.user;
-          // Check role: 2 is Organizer
           if (profile?.roleId === 2 || profile?.organizerVerificationStatus) {
             setIsOrganizer(true);
             const isApproved = profile?.hasBeenApproved || profile?.isVerified || false;
 
-            const hasBusinessDetails = (
+            const hasBusinessDetails = !!(
               profile?.businessName ||
               profile?.businessCategory ||
               profile?.shortDesc ||
@@ -120,10 +96,8 @@ function CompleteProfileContent() {
 
             if (!isApproved) {
               if (hasBusinessDetails) {
-                // Already submitted details but still not verified -> Open verification modal directly
                 setModalShow(true);
               } else {
-                // Fields are null -> show details page
                 setOrganizerData({
                   businessName: profile?.businessName || "",
                   businessCategory: profile?.businessCategory || "",
@@ -132,13 +106,11 @@ function CompleteProfileContent() {
                 });
               }
             } else {
-              // Approved -> Redirect to homepage
               router.push("/");
             }
           } else {
             setIsOrganizer(false);
 
-            // If customer already has profile data filled, skip this step
             if (profile?.firstName && profile?.lastName) {
               if (!profile?.categories || profile?.categories.length === 0) {
                 return router.push("/insterest");
@@ -172,7 +144,7 @@ function CompleteProfileContent() {
     };
 
     fetchInitialData();
-  }, []);
+  }, [router]);
 
   const handleCustomerChange = (e) => {
     const { name, value } = e.target;
@@ -191,8 +163,8 @@ function CompleteProfileContent() {
 
   const handleCustomerSubmit = async (e) => {
     e.preventDefault();
-    if (!customerData.firstName || !customerData.lastName) {
-      toast.error("Please enter your name");
+    if (!customerData.firstName.trim() || !customerData.lastName.trim()) {
+      toast.error("Please enter your first and last name");
       return;
     }
     if (!customerData.dob) {
@@ -205,7 +177,6 @@ function CompleteProfileContent() {
       let uploadedProfileImage = customerData.profileImage;
       let uploadedBackgroundImage = customerData.backgroundImage;
 
-      // 1. Upload profile image if a new file was selected
       if (profileImageFile) {
         const formData = new FormData();
         formData.append("files", profileImageFile);
@@ -215,7 +186,6 @@ function CompleteProfileContent() {
         }
       }
 
-      // 2. Upload background/cover image if a new file was selected
       if (backgroundImageFile) {
         const formData = new FormData();
         formData.append("files", backgroundImageFile);
@@ -227,12 +197,15 @@ function CompleteProfileContent() {
 
       const payload = {
         ...customerData,
+        firstName: customerData.firstName.trim(),
+        lastName: customerData.lastName.trim(),
         profileImage: uploadedProfileImage,
         backgroundImage: uploadedBackgroundImage,
       };
 
       const response = await authApi.updateProfile(payload);
       if (response?.status) {
+        toast.success("Profile updated!");
         router.push("/insterest");
       }
     } catch (error) {
@@ -244,7 +217,7 @@ function CompleteProfileContent() {
 
   const handleOrganizerSubmit = async (e) => {
     e.preventDefault();
-    if (!organizerData.businessName || !organizerData.businessCategory) {
+    if (!organizerData.businessName.trim() || !organizerData.businessCategory) {
       toast.error("Business Name and Primary Category are required");
       return;
     }
@@ -253,10 +226,10 @@ function CompleteProfileContent() {
       setLoading(true);
       const payload = {
         businessVerification: {
-          businessName: organizerData.businessName,
+          businessName: organizerData.businessName.trim(),
           businessCategory: organizerData.businessCategory,
-          shortDesc: organizerData.shortDesc,
-          socialMediaLink: organizerData.socialMediaLink,
+          shortDesc: organizerData.shortDesc.trim(),
+          socialMediaLink: organizerData.socialMediaLink.trim(),
         },
       };
 
@@ -272,425 +245,400 @@ function CompleteProfileContent() {
   };
 
   if (isChecking) {
-    return null; // Don't flash the form while checking profile
-  }
-
-  if (isOrganizer) {
     return (
-      <div className="login_sec compplete_profile_sec">
-        <Container fluid>
-          <Row className="justify-content-between align-items-center gy-4">
-            <Col xl={5} lg={7}>
-              <div className="login_img">
-                <img src="/img/login_side_img.png" alt="login side" />
-                <div className="content_img_box">
-                  <h4>Explore Events Effortlessly</h4>
-                  <p>
-                    Discover, book, and track events seamlessly with calendar
-                    integration and personalized event curation
-                  </p>
-                </div>
-              </div>
-            </Col>
-            <Col xl={6} lg={5}>
-              <Row className="justify-content-center align-items-center">
-                <Col xl={7} lg={9} md={12}>
-                  <div className="profile_setup_container">
-                    <div style={{ color: "white" }} className="text-center mb-4">
-                      <img src="/img/business_store.svg" alt="business" style={{ width: "80px", marginBottom: "20px" }} onError={(e) => { e.target.src = "/img/Success.svg"; }} />
-                      <h2 className="fz_32">Tell us about your organization</h2>
-                      <p>Help us review your organizer account.</p>
-                    </div>
-
-                    <Form className="common_field" onSubmit={handleOrganizerSubmit}>
-                      <Form.Group className="mb-3" controlId="businessName">
-                        <Form.Label className="text-light">Organizer / Business name</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="businessName"
-                          maxLength={50}
-                          placeholder="Enter business name"
-                          className="custom_field_input"
-                          value={organizerData.businessName}
-                          onChange={handleOrganizerChange}
-                          required
-                        />
-                      </Form.Group>
-
-                      <Form.Group className="mb-3" controlId="businessCategory">
-                        <Form.Label className="text-light">Primary category</Form.Label>
-                        <Dropdown className="w-100">
-                          <Dropdown.Toggle
-                            variant="transparent"
-                            className="w-100 text-start d-flex align-items-center justify-content-between text-light"
-                            style={{
-                              border: "1px solid #333",
-                              borderRadius: "100px",
-                              padding: "10px 20px",
-                              fontSize: "14px",
-                              backgroundColor: "#212121",
-                              color: "#fff",
-                              boxShadow: "none",
-                              textTransform: "capitalize",
-                            }}
-                          >
-                            {categories.find(c => c._id === organizerData.businessCategory)?.name || "Select category"}
-                          </Dropdown.Toggle>
-                          <Dropdown.Menu
-                            className="w-100"
-                            style={{
-                              maxHeight: "250px",
-                              overflowY: "auto",
-                              backgroundColor: "#1a1a1a",
-                              border: "1px solid rgba(255,255,255,0.1)",
-                              borderRadius: "8px",
-                            }}
-                          >
-                            {categories?.map((cat) => (
-                              <DropdownItemWithHover
-                                key={cat._id}
-                                active={organizerData.businessCategory === cat._id}
-                                onClick={() => handleOrganizerChange({ target: { name: "businessCategory", value: cat._id } })}
-                              >
-                                <span style={{ textTransform: "capitalize" }}>{cat.name}</span>
-                              </DropdownItemWithHover>
-                            ))}
-                          </Dropdown.Menu>
-                        </Dropdown>
-                      </Form.Group>
-
-                      <Form.Group className="mb-3" controlId="shortDesc">
-                        <Form.Label className="text-light">Short description</Form.Label>
-                        <Form.Control
-                          as="textarea"
-                          rows={3}
-                          name="shortDesc"
-                          maxLength={150}
-                          placeholder="Tell us about your organization"
-                          className="custom_field_input custom_bio"
-                          value={organizerData.shortDesc}
-                          onChange={handleOrganizerChange}
-                        />
-                      </Form.Group>
-
-                      <Form.Group className="mb-3" controlId="socialMediaLink">
-                        <Form.Label className="text-light">Instagram or Facebook link (optional)</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="socialMediaLink"
-                          placeholder="Paste social link"
-                          className="custom_field_input"
-                          value={organizerData.socialMediaLink}
-                          onChange={handleOrganizerChange}
-                        />
-                      </Form.Group>
-
-                      <Button
-                        type="submit"
-                        className="common_btn w-100 mt-4 border-0"
-                        disabled={loading}
-                      >
-                        {loading ? "Submitting..." : "Submit for review"}
-                      </Button>
-                    </Form>
-                  </div>
-                </Col>
-              </Row>
-            </Col>
-          </Row>
-        </Container>
-        <VerificationModl
-          show={modalShow}
-          onHide={() => {
-            setModalShow(false);
-            localStorage.removeItem("token");
-            router.push("/");
-          }}
-          onGoBack={() => {
-            localStorage.removeItem("token");
-          }}
-          redirectPath="/"
-        />
-      </div>
+      <>
+        <Header />
+        <div className="lg-shell">
+          <div className="lg-panel" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 280 }}>
+            <span className="lg-spin" />
+          </div>
+        </div>
+      </>
     );
   }
 
-  // Customer Profile layout (original fallback/default)
   return (
-    <div className="login_sec compplete_profile_sec">
-      <Container fluid>
-        <Row className="justify-content-between align-items-center gy-4">
-          <Col xl={5} lg={7}>
-            <div className="login_img">
-              <img src="/img/login_side_img.png" alt="login side" />
-              <div className="content_img_box">
-                <h4>Explore Events Effortlessly</h4>
-                <p>
-                  Discover, book, and track events seamlessly with calendar
-                  integration and personalized event curation
-                </p>
+    <>
+      <Header />
+      <main className="lg-shell" style={{ padding: "36px 20px" }}>
+        <section className="lg-panel" style={{ maxWidth: 520 }}>
+          {isOrganizer ? (
+            /* ══════════════ ORGANIZER COMPLETE PROFILE ══════════════ */
+            <>
+              {/* Icon */}
+              <span
+                className="lg-otp-mark"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 56,
+                  height: 56,
+                  borderRadius: "999px",
+                  background: "rgba(35,173,164,.14)",
+                  color: "var(--acc-bright)",
+                  marginBottom: 16,
+                }}
+              >
+                <Building2 size={26} />
+              </span>
+
+              {/* Title & Subtitle */}
+              <h1 className="lg-h1">Tell us about your organization</h1>
+              <p className="lg-sub" style={{ marginBottom: 24 }}>
+                Help us verify your organizer account so you can start creating events.
+              </p>
+
+              {/* Form */}
+              <form onSubmit={handleOrganizerSubmit} noValidate>
+                <div className="lg-fields">
+                  {/* Business Name */}
+                  <label>
+                    <input
+                      type="text"
+                      name="businessName"
+                      maxLength={50}
+                      placeholder="Organizer / Business name *"
+                      className="lg-in"
+                      value={organizerData.businessName}
+                      onChange={handleOrganizerChange}
+                      required
+                    />
+                  </label>
+
+                  {/* Primary Category */}
+                  <label>
+                    <select
+                      name="businessCategory"
+                      value={organizerData.businessCategory}
+                      onChange={handleOrganizerChange}
+                      className="lg-in"
+                      style={{
+                        cursor: "pointer",
+                        appearance: "none",
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "right 20px center",
+                        paddingRight: "44px",
+                      }}
+                      required
+                    >
+                      <option value="" disabled style={{ background: "#1a1a1a", color: "#888" }}>
+                        Select Primary Category *
+                      </option>
+                      {categories?.map((cat) => (
+                        <option key={cat._id} value={cat._id} style={{ background: "#1a1a1a", color: "#fff" }}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {/* Short Description */}
+                  <label>
+                    <textarea
+                      name="shortDesc"
+                      rows={3}
+                      maxLength={150}
+                      placeholder="Tell us about your organization (short description)"
+                      className="lg-in"
+                      value={organizerData.shortDesc}
+                      onChange={handleOrganizerChange}
+                      style={{
+                        height: "auto",
+                        minHeight: 96,
+                        borderRadius: 20,
+                        padding: "16px 20px",
+                        resize: "vertical",
+                        lineHeight: 1.4,
+                      }}
+                    />
+                  </label>
+
+                  {/* Social Media Link */}
+                  <label>
+                    <input
+                      type="text"
+                      name="socialMediaLink"
+                      placeholder="Instagram or Facebook link (optional)"
+                      className="lg-in"
+                      value={organizerData.socialMediaLink}
+                      onChange={handleOrganizerChange}
+                    />
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  className="lg-submit"
+                  disabled={loading || !organizerData.businessName.trim() || !organizerData.businessCategory}
+                  style={{ marginTop: 24 }}
+                >
+                  {loading && <span className="lg-spin" />}
+                  {loading ? "Submitting..." : "Submit for review"}
+                </button>
+              </form>
+            </>
+          ) : (
+            /* ══════════════ CUSTOMER COMPLETE PROFILE ══════════════ */
+            <>
+              {/* Title & Subtitle */}
+              <h1 className="lg-h1">Complete Profile</h1>
+              <p className="lg-sub" style={{ marginBottom: 20 }}>
+                Complete your personal details to personalize your event experience.
+              </p>
+
+              {/* Cover & Avatar Upload Hero */}
+              <div className="cp-upload-wrap">
+                {/* Cover Banner */}
+                <div
+                  className="cp-cover"
+                  onClick={() => coverInputRef.current?.click()}
+                  title="Click to change cover photo"
+                >
+                  {backgroundPreview ? (
+                    <img src={backgroundPreview} alt="Cover Preview" className="cp-cover-img" />
+                  ) : (
+                    <div className="cp-cover-empty">
+                      <Upload size={18} />
+                      <span>Add Cover Photo</span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    ref={coverInputRef}
+                    style={{ display: "none" }}
+                    accept="image/*"
+                    onChange={handleBackgroundFileChange}
+                  />
+                </div>
+
+                {/* Overlapping Avatar */}
+                <div
+                  className="cp-avatar"
+                  onClick={() => avatarInputRef.current?.click()}
+                  title="Click to upload profile photo"
+                >
+                  <img
+                    src={preview || "/img/default-user.png"}
+                    alt="Avatar Preview"
+                    onError={(e) => {
+                      e.target.src = "/img/default-user.png";
+                    }}
+                  />
+                  <div className="cp-avatar-badge">
+                    <Camera size={13} />
+                  </div>
+                  <input
+                    type="file"
+                    ref={avatarInputRef}
+                    style={{ display: "none" }}
+                    accept="image/*"
+                    onChange={handleProfileFileChange}
+                  />
+                </div>
               </div>
-            </div>
-          </Col>
-          <Col xl={6} lg={5}>
-            <Row className="justify-content-center align-items-center">
-              <Col xl={7} lg={9} md={12}>
-                <div className="profile_setup_container">
-                  <div className="fz_32">
-                    <h2 className="">Complete Profile</h2>
-                    <p>
-                      Complete your personal details to get started. This helps
-                      us personalize your experience
-                    </p>
+
+              {/* Customer Form */}
+              <form onSubmit={handleCustomerSubmit} noValidate style={{ marginTop: 28 }}>
+                <div className="lg-fields">
+                  {/* Name Row */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <label>
+                      <input
+                        type="text"
+                        name="firstName"
+                        maxLength={25}
+                        placeholder="First name *"
+                        className="lg-in"
+                        value={customerData.firstName}
+                        onChange={handleCustomerChange}
+                        required
+                      />
+                    </label>
+                    <label>
+                      <input
+                        type="text"
+                        name="lastName"
+                        maxLength={25}
+                        placeholder="Last name *"
+                        className="lg-in"
+                        value={customerData.lastName}
+                        onChange={handleCustomerChange}
+                        required
+                      />
+                    </label>
                   </div>
 
-                  <Form className="common_field" onSubmit={handleCustomerSubmit}>
-                    {/* Cover/Avatar Setup Box */}
-                    <div className="profile-images-setup">
-                      {/* Cover Banner Uploader */}
-                      <div className="profile-cover-upload" onClick={() => coverInputRef.current.click()}>
-                        {backgroundPreview ? (
-                          <img src={backgroundPreview} alt="Cover Preview" className="cover-preview-img" onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }} />
-                        ) : (
-                          <div className="cover-placeholder">
-                            <Upload size={20} className="mb-1 text-teal" />
-                            <span>Add Cover Photo</span>
-                          </div>
-                        )}
-                        <input
-                          type="file"
-                          ref={coverInputRef}
-                          style={{ display: "none" }}
-                          accept="image/*"
-                          onChange={handleBackgroundFileChange}
-                        />
-                      </div>
-
-                      {/* Profile Image Uploader */}
-                      <div className="profile-avatar-upload" onClick={() => avatarInputRef.current.click()}>
-                        <div className="avatar-preview-box">
-                          <img
-                            src={preview || "/img/default-user.png"}
-                            alt="Avatar Preview"
-                            onError={(e) => {
-                              e.target.src = "/img/default-user.png";
-                            }}
-                          />
-                          <div className="avatar-edit-icon">
-                            <Camera size={12} />
-                          </div>
-                        </div>
-                        <input
-                          type="file"
-                          ref={avatarInputRef}
-                          style={{ display: "none" }}
-                          accept="image/*"
-                          onChange={handleProfileFileChange}
-                        />
-                      </div>
-                    </div>
-                    <Row className="gy-3">
-                      <Col md={6}>
-                        <Form.Group controlId="firstName">
-                          <Form.Control
-                            type="text"
-                            name="firstName"
-                            maxLength={25}
-                            placeholder="First name"
-                            className="custom_field_input"
-                            value={customerData.firstName}
-                            onChange={handleCustomerChange}
-                            required
-                          />
-                        </Form.Group>
-                      </Col>
-                      <Col md={6}>
-                        <Form.Group controlId="lastName">
-                          <Form.Control
-                            type="text"
-                            name="lastName"
-                            maxLength={25}
-                            placeholder="Last name"
-                            className="custom_field_input"
-                            value={customerData.lastName}
-                            onChange={handleCustomerChange}
-                            required
-                          />
-                        </Form.Group>
-                      </Col>
-                    </Row>
-
-                    <Row className="mt-3">
-                      <Col xs={12}>
-                        <div className="select_gender">
-                          <span>Gender</span>
-                          <Form.Group controlId="gender">
-                            <Form.Select
-                              name="gender"
-                              className="custom_field_input custom_select"
-                              value={customerData.gender}
-                              onChange={handleCustomerChange}
-                            >
-                              <option value="" disabled>
-                                Gender
-                              </option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
-                            </Form.Select>
-                          </Form.Group>
-                        </div>
-                      </Col>
-                    </Row>
-
-                    <Row className="mt-3">
-                      <Col xs={12}>
-                        <div className="select_gender">
-                          <span>{t("dob") || "Date of birth"}</span>
-                          <Form.Group controlId="dob">
-                            <Form.Control
-                              type="date"
-                              name="dob"
-                              className="custom_field_input custom_date_input"
-                              value={customerData.dob}
-                              onChange={handleCustomerChange}
-                              max={new Date().toISOString().split("T")[0]}
-                              required
-                            />
-                          </Form.Group>
-                        </div>
-                      </Col>
-                    </Row>
-
-                    <Button
-                      type="submit"
-                      className="common_btn w-100 mt-4 border-0"
-                      disabled={loading}
+                  {/* Gender Select */}
+                  <label>
+                    <select
+                      name="gender"
+                      value={customerData.gender}
+                      onChange={handleCustomerChange}
+                      className="lg-in"
+                      style={{
+                        cursor: "pointer",
+                        appearance: "none",
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "right 20px center",
+                        paddingRight: "44px",
+                      }}
                     >
-                      {loading ? "Updating..." : "Continue"}
-                    </Button>
-                  </Form>
+                      <option value="" disabled style={{ background: "#1a1a1a", color: "#888" }}>
+                        Gender
+                      </option>
+                      <option value="male" style={{ background: "#1a1a1a", color: "#fff" }}>Male</option>
+                      <option value="female" style={{ background: "#1a1a1a", color: "#fff" }}>Female</option>
+                      <option value="other" style={{ background: "#1a1a1a", color: "#fff" }}>Other</option>
+                    </select>
+                  </label>
+
+                  {/* Date of Birth */}
+                  <label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="date"
+                        name="dob"
+                        className="lg-in"
+                        value={customerData.dob}
+                        onChange={handleCustomerChange}
+                        max={new Date().toISOString().split("T")[0]}
+                        style={{
+                          colorScheme: "dark",
+                          cursor: "pointer",
+                        }}
+                        required
+                      />
+                    </div>
+                  </label>
+
+                  {/* Bio (Optional) */}
+                  <label>
+                    <textarea
+                      name="bio"
+                      rows={2}
+                      maxLength={150}
+                      placeholder="Short bio (optional)"
+                      className="lg-in"
+                      value={customerData.bio}
+                      onChange={handleCustomerChange}
+                      style={{
+                        height: "auto",
+                        minHeight: 80,
+                        borderRadius: 20,
+                        padding: "14px 20px",
+                        resize: "vertical",
+                        lineHeight: 1.4,
+                      }}
+                    />
+                  </label>
                 </div>
-              </Col>
-            </Row>
-          </Col>
-        </Row>
-      </Container>
+
+                <button
+                  type="submit"
+                  className="lg-submit"
+                  disabled={loading || !customerData.firstName.trim() || !customerData.lastName.trim() || !customerData.dob}
+                  style={{ marginTop: 24 }}
+                >
+                  {loading && <span className="lg-spin" />}
+                  {loading ? "Updating..." : "Continue"}
+                </button>
+              </form>
+            </>
+          )}
+        </section>
+      </main>
+
+      <VerificationModl
+        show={modalShow}
+        onHide={() => {
+          setModalShow(false);
+          localStorage.removeItem("token");
+          router.push("/");
+        }}
+        onGoBack={() => {
+          localStorage.removeItem("token");
+        }}
+        redirectPath="/"
+      />
+
       <style jsx>{`
-        .profile-images-setup {
+        .cp-upload-wrap {
           position: relative;
           width: 100%;
-          margin-bottom: 45px;
+          margin-bottom: 24px;
         }
-        .profile-cover-upload {
+        .cp-cover {
           width: 100%;
-          height: 140px;
-          border-radius: 12px;
-          background-color: #262626;
-          border: 2px dashed rgba(255, 255, 255, 0.1);
+          height: 130px;
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1.5px dashed rgba(255, 255, 255, 0.16);
           overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: border-color 0.2s ease;
+          transition: border-color 0.2s ease, background 0.2s ease;
         }
-        .profile-cover-upload:hover {
-          border-color: #23ada4;
+        .cp-cover:hover {
+          border-color: var(--acc, #23ada4);
+          background: rgba(35, 173, 164, 0.05);
         }
-        .cover-preview-img {
+        .cp-cover-img {
           width: 100%;
           height: 100%;
           object-fit: cover;
         }
-        .cover-placeholder {
+        .cp-cover-empty {
           display: flex;
-          flex-direction: column;
           align-items: center;
-          color: #9ca3af;
-          font-size: 13px;
+          gap: 8px;
+          color: var(--bd-gray-500, #9ca3af);
+          font-size: 13.5px;
+          font-weight: 500;
         }
-        .profile-avatar-upload {
+        .cp-avatar {
           position: absolute;
-          bottom: -25px;
+          bottom: -22px;
           left: 20px;
-          cursor: pointer;
-          z-index: 10;
-        }
-        .avatar-preview-box {
-          position: relative;
-          width: 80px;
-          height: 80px;
+          width: 72px;
+          height: 72px;
           border-radius: 50%;
-          border: 3px solid #161616;
-          overflow: hidden;
-          background-color: #374151;
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+          border: 3px solid var(--bd-ink-850, #141414);
+          background: #222;
+          overflow: visible;
+          cursor: pointer;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
         }
-        .avatar-preview-box img {
+        .cp-avatar img {
           width: 100%;
           height: 100%;
+          border-radius: 50%;
           object-fit: cover;
+          display: block;
         }
-        .avatar-edit-icon {
+        .cp-avatar-badge {
           position: absolute;
-          bottom: 0;
-          right: 0;
-          background-color: #23ada4;
+          bottom: -2px;
+          right: -2px;
           width: 24px;
           height: 24px;
           border-radius: 50%;
+          background: var(--acc, #23ada4);
+          color: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #fff;
-          border: 1px solid #161616;
+          border: 2px solid var(--bd-ink-850, #141414);
+          transition: transform 0.15s ease;
         }
-        :global(.custom-dropdown .dropdown-toggle) {
-          border: 1px solid #23ada4 !important;
-          background-color: transparent !important;
-          border-radius: 8px !important;
-          padding: 10px 15px !important;
-          font-size: 14px !important;
-        }
-        :global(.custom-dropdown .dropdown-toggle::after) {
-          margin-left: auto !important;
-        }
-        :global(.custom-dropdown-menu) {
-          border: 1px solid rgba(255, 255, 255, 0.1) !important;
-          background-color: #1a1a1a !important;
-          border-radius: 8px !important;
-        }
-        :global(.dropdown-item-custom) {
-          color: #fff !important;
-          font-size: 14px !important;
-          padding: 8px 15px !important;
-          background: transparent !important;
-        }
-        :global(.dropdown-item-custom:hover), :global(.dropdown-item-custom:focus) {
-          background-color: #23ada4 !important;
-          color: #fff !important;
-        }
-        :global(.dropdown-item-custom.active) {
-          background-color: #23ada4 !important;
-          color: #fff !important;
-        }
-        :global(.compplete_profile_sec .custom_date_input) {
-          color: #fff !important;
-          background-color: transparent !important;
-          border: none !important;
-          width: 140px !important;
-          font-size: 14px !important;
-          outline: none !important;
-          box-shadow: none !important;
-          padding: 0 !important;
-          height: auto !important;
-        }
-        :global(.compplete_profile_sec .custom_date_input::-webkit-calendar-picker-indicator) {
-          filter: invert(1);
-          cursor: pointer;
+        .cp-avatar:hover .cp-avatar-badge {
+          transform: scale(1.1);
         }
       `}</style>
-    </div>
+    </>
   );
 }
