@@ -5063,112 +5063,536 @@ a.view-map {
 
 /* login page css start */
 
-.login_sec {
-  background-image: url("/img/Login.png");
-  background-repeat: no-repeat;
-  background-position: center;
+/* ── Auth shell: full-page centered layout ── */
+.lg-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: clamp(24px, 4vw, 56px) 20px;
+  background: var(--bd-ink-900);
+}
+
+/* ── Card panel ── */
+.lg-panel {
   width: 100%;
-  height: 100%;
-  background-size: cover;
-  padding: 60px;
+  max-width: 472px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 36px 30px 30px;
+  border-radius: 26px;
+  background: var(--bd-ink-850);
+  border: 1px solid var(--bd-border-strong);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
 }
 
-.login_img {
-  width: 100%;
-  height: calc(90vh - 34px);
-  position: relative;
-  overflow: hidden;
-}
-
-.login_img img {
-  width: 100%;
-  height: 100%;
-  border-radius: 20px;
-  object-fit: cover;
-}
-
-.content_img_box {
-  border-radius: 25px;
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(67px);
-  padding: 20px;
-  position: absolute;
-  bottom: 35px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 75%;
-}
-
-.content_img_box h4 {
-  color: var(--white);
-  font-size: 24px;
-  font-style: normal;
+/* ── Title ── */
+.lg-h1 {
+  margin: 0;
+  font-family: var(--bd-font-ui);
+  font-size: clamp(20px, 2.15vw, 25px);
   font-weight: 700;
-  line-height: normal;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--bd-white);
 }
 
-.content_img_box p {
-  color: var(--white);
+.lg-sub {
+  margin: 10px 0 0;
   font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: normal;
+  line-height: 1.55;
+  color: var(--bd-gray-500);
 }
 
-.login_sec .fz_32 {
-  margin-bottom: 30px;
+/* ── Tab switcher (Login / Sign Up) ── */
+.lg-tab-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 22px 0 0;
+  border-bottom: 1px solid var(--bd-border-soft);
+  padding-bottom: 0;
+}
+
+.lg-tab-btn {
+  flex: 1;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--bd-gray-500);
+  font-family: var(--bd-font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 200ms var(--bd-ease), border-color 200ms var(--bd-ease);
+  margin-bottom: -1px;
+}
+
+.lg-tab-btn[aria-selected="true"] {
+  color: var(--bd-white);
+  border-bottom-color: var(--acc);
+}
+
+/* ── User / Organizer segment control ── */
+.lg-seg {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 22px 0 0;
+  padding: 5px;
+  border-radius: 999px;
+  border: 1px solid var(--bd-border-strong);
+}
+
+.lg-seg-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 12px;
+  white-space: nowrap;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bd-gray-500);
+  font-family: var(--bd-font-ui);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 200ms var(--bd-ease), color 200ms var(--bd-ease);
+}
+
+.lg-seg-btn[aria-selected="true"] {
+  background: var(--acc);
+  color: var(--bd-white);
+  font-weight: 700;
+}
+
+/* ── Fields ── */
+.lg-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.lg-in {
+  width: 100%;
+  box-sizing: border-box;
+  height: 56px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--bd-border-strong);
+  color: var(--bd-white);
+  font-family: var(--bd-font-ui);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 200ms var(--bd-ease);
+}
+
+.lg-in:focus {
+  border-color: var(--acc);
+}
+
+.lg-in[aria-invalid="true"] {
+  border-color: #FF5A5A;
+}
+
+.lg-in::placeholder {
+  color: var(--bd-gray-600);
+}
+
+/* ── Password wrapper ── */
+.lg-pw {
+  position: relative;
+}
+
+.lg-pw .lg-in {
+  padding-right: 56px;
+}
+
+.lg-eye-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bd-gray-500);
+  cursor: pointer;
+  transition: color 150ms var(--bd-ease);
+}
+
+.lg-eye-btn:hover {
+  color: var(--bd-white);
+}
+
+.lg-eye-btn img {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+}
+
+.lg-eye-btn:hover img {
+  opacity: 1;
+}
+
+/* ── Error text ── */
+.lg-err {
+  display: block;
+  margin: 5px 0 0 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #FF5A5A;
+}
+
+/* ── Phone input custom style ── */
+.lg-phone-wrap .react-phone-input-2 {
+  width: 100% !important;
+}
+
+.lg-phone-wrap .phone_input {
+  display: block;
+}
+
+.lg-phone-wrap .phone_input .flag-dropdown {
+  border-radius: 999px 0 0 999px !important;
+  background: transparent !important;
+  border: 1px solid var(--bd-border-strong) !important;
+  border-right: none !important;
+}
+
+.lg-phone-wrap .phone_input .flag-dropdown.open {
+  border-radius: 999px 0 0 0 !important;
+}
+
+.lg-phone-wrap .phone_input input.form-control {
+  height: 56px !important;
+  border-radius: 0 999px 999px 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--bd-border-strong) !important;
+  border-left: none !important;
+  color: var(--bd-white) !important;
+  font-family: var(--bd-font-ui) !important;
+  font-size: 15px !important;
+  padding-left: 12px !important;
+  width: 100% !important;
+  box-shadow: none !important;
+}
+
+.lg-phone-wrap .phone_input input.form-control:focus {
+  border-color: var(--acc) !important;
+}
+
+/* ── Forgot password link ── */
+.lg-forgot {
+  display: block;
+  text-align: right;
+  margin: 4px 4px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--acc-bright);
+  text-decoration: none;
+  transition: color 150ms var(--bd-ease);
+}
+
+.lg-forgot:hover {
+  color: var(--bd-teal-300);
+}
+
+/* ── Submit button ── */
+.lg-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 56px;
+  margin-top: 20px;
+  border: none;
+  border-radius: 14px;
+  background: var(--acc);
+  color: var(--bd-white);
+  font-family: var(--bd-font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 200ms var(--bd-ease), transform 150ms var(--bd-ease);
+}
+
+.lg-submit:hover {
+  filter: brightness(1.1);
+}
+
+.lg-submit:active {
+  transform: scale(0.97);
+}
+
+.lg-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+}
+
+/* ── OR divider ── */
+.lg-or {
+  position: relative;
+  margin-top: 26px;
   text-align: center;
 }
 
-.login_sec .fz_32 h2 {
-  margin-bottom: 10px;
-}
-
-.login_sec .password-eye-btn {
-  border: unset;
-  background: none;
-  padding: 0;
+.lg-or::before {
+  content: "";
   position: absolute;
+  left: 0;
+  right: 0;
   top: 50%;
-  right: 25px;
-  transform: translateY(-50%);
+  height: 1px;
+  background: var(--bd-border-soft);
 }
 
-.login_sec .sign_in_btn {
-  background: #26a69a;
+.lg-or span {
+  position: relative;
+  padding: 0 14px;
+  background: var(--bd-ink-850);
+  font-size: 13px;
+  color: var(--bd-gray-500);
+}
+
+/* ── Social login circles ── */
+.lg-social {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(20px, 4vw, 34px);
+  margin-top: 20px;
+}
+
+.lg-social-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
   border: none;
-  border-radius: 25px;
-  width: 100%;
-  padding: 12px;
-  color: white;
-  font-weight: bold;
+  background: none;
+  color: var(--bd-gray-400);
+  font-family: var(--bd-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 200ms var(--bd-ease);
+}
+
+.lg-social-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.lg-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  border: 1px solid var(--bd-border-strong);
+  transition: border-color 200ms var(--bd-ease);
+}
+
+.lg-circle img {
+  width: 28px;
+  height: 28px;
+}
+
+.lg-social-btn:not(:disabled):hover .lg-circle {
+  border-color: var(--acc);
+}
+
+.lg-social-btn:not(:disabled):hover {
+  color: var(--bd-white);
+}
+
+/* ── Switch row ── */
+.lg-switch {
+  margin: 28px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--bd-gray-500);
+}
+
+.lg-switch-link {
+  color: var(--acc-bright);
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 150ms var(--bd-ease);
+}
+
+.lg-switch-link:hover {
+  color: var(--bd-teal-300);
+}
+
+.lg-guest-link {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--acc-bright);
+  text-decoration: underline;
+  transition: color 150ms var(--bd-ease);
+}
+
+.lg-guest-link:hover {
+  color: var(--bd-teal-300);
+}
+
+/* ── Terms checkbox ── */
+.lg-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--bd-gray-400);
   cursor: pointer;
 }
 
+.lg-terms input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin: 0;
+  accent-color: var(--acc);
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.lg-terms a {
+  color: var(--acc-bright);
+  text-decoration: underline;
+}
+
+/* ── Staff login link ── */
+.lg-staff-link {
+  display: block;
+  text-align: center;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--bd-border-soft);
+  font-size: 13px;
+  color: var(--acc-bright);
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  width: 100%;
+  text-decoration: underline;
+  transition: color 150ms var(--bd-ease);
+}
+
+.lg-staff-link:hover {
+  color: var(--bd-teal-300);
+}
+
+/* ── Staff badge ── */
+.lg-staff-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(35, 173, 164, 0.12);
+  border: 1px solid rgba(35, 173, 164, 0.3);
+  color: var(--acc-bright);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ── Spinner ── */
+.lg-spin {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: var(--bd-white);
+  animation: lgSpin 700ms linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes lgSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Textarea (for organizer about) ── */
+.lg-ta {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 96px;
+  padding: 16px 20px;
+  border-radius: 20px;
+  background: transparent;
+  border: 1px solid var(--bd-border-strong);
+  color: var(--bd-white);
+  font-family: var(--bd-font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  transition: border-color 200ms var(--bd-ease);
+}
+
+.lg-ta:focus {
+  border-color: var(--acc);
+}
+
+.lg-ta::placeholder {
+  color: var(--bd-gray-600);
+}
+
+/* ── Legacy compatibility: keep old classes working elsewhere ── */
 .other_text {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 30px;
+  margin: 20px 0;
 }
 
 .other_text h6 {
   color: var(--white);
   text-align: center;
   font-size: 14px;
-  font-style: normal;
   font-weight: 400;
-  line-height: normal;
   white-space: nowrap;
   margin: 0;
 }
 
 .other_text span {
-  width: 200px;
-  height: 2px;
-  background: linear-gradient(90deg,
-      rgba(255, 245, 238, 0) 0%,
-      rgba(255, 255, 255, 0.4) 100%);
+  flex: 1;
+  height: 1px;
+  background: var(--bd-border-soft);
 }
 
 .other_signup {
@@ -5177,48 +5601,38 @@ a.view-map {
 
 .other_signup span {
   color: var(--white);
-  text-align: center;
   font-size: 14px;
-  font-style: normal;
   font-weight: 400;
-  line-height: normal;
 }
 
 .other_signup span a {
   color: var(--primary-teal);
 }
 
-.login_sec .social_icon {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.login_sec .social_icon img {
-  max-width: 100%;
-  width: 50px;
-}
-
 /* form field css start */
 .common_field .form-control,
 .common_field .form-select {
   color: var(--white);
-  background-color: #1f1f1f;
-  border: 1px solid #737373;
-  border-radius: 29px;
+  background-color: transparent;
+  border: 1px solid var(--bd-border-strong);
+  border-radius: 999px;
   padding: 15px 25px;
-  font-size: 14px;
+  font-size: 15px;
+  height: 56px;
+  transition: border-color 200ms var(--bd-ease);
+}
+
+.common_field .form-control:focus {
+  border-color: var(--acc);
+  box-shadow: none;
+  background-color: transparent;
 }
 
 .common_field label {
   color: var(--white);
   font-size: 13px;
-  font-style: normal;
   font-weight: 400;
   line-height: 150%;
-  /* 19.5px */
 }
 
 .common_field .PhoneInputInput {
@@ -5229,24 +5643,19 @@ a.view-map {
 }
 
 .phone_input {
-  /* background: #1f1f1f;
-  border: 1px solid #737373;
-  border-radius: 29px;
-  padding: 0 15px; */
   display: block;
-  /* Fixed empty ruleset lint */
 }
 
 .login_field .phone_input .flag-dropdown {
-  border-radius: 29px 0 0 29px !important;
+  border-radius: 999px 0 0 999px !important;
 }
 
 .login_field input.form-control {
-  border-radius: 29px !important;
+  border-radius: 999px !important;
 }
 
 .common_field .form-control::placeholder {
-  color: var(--white) !important;
+  color: var(--bd-gray-600) !important;
 }
 
 /* form field css end */
@@ -5491,25 +5900,86 @@ a.view-map {
   }
 }
 
-@media (max-width: 1100px) {
-  .login_sec {
-    padding: 20px;
+@media (max-width: 480px) {
+  .lg-panel {
+    padding: 28px 20px 24px;
+    border-radius: 20px;
+  }
+
+  .lg-seg-btn {
+    font-size: 12px;
+    padding: 0 8px;
   }
 }
 
-@media (max-width: 991px) {
-  .login_img {
-    height: 100%;
-    display: none;
-  }
+/* ── OTP grid ── */
+.lg-otp {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-top: 28px;
+}
 
-  .login_sec {
-    height: 100vh;
-    overflow-y: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.lg-otp-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 64px;
+  padding: 0;
+  text-align: center;
+  border-radius: 18px;
+  background: transparent;
+  border: 1px solid var(--bd-border-strong);
+  color: var(--bd-white);
+  font-family: var(--bd-font-ui);
+  font-size: 24px;
+  font-weight: 700;
+  outline: none;
+  transition: border-color 200ms var(--bd-ease), box-shadow 200ms var(--bd-ease);
+  caret-color: var(--acc-bright);
+}
+
+.lg-otp-input:focus {
+  border-color: var(--acc);
+  box-shadow: 0 0 0 3px rgba(35, 173, 164, 0.18);
+}
+
+.lg-otp-input::placeholder {
+  color: var(--bd-gray-700);
+  font-weight: 400;
+  font-size: 18px;
+}
+
+/* ── Resend row ── */
+.lg-resend-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--bd-gray-500);
+}
+
+.lg-resend-timer {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bd-gray-600);
+}
+
+.lg-resend-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--bd-font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--acc-bright);
+  cursor: pointer;
+  transition: color 150ms var(--bd-ease);
+}
+
+.lg-resend-btn:hover {
+  color: var(--bd-teal-300);
 }
 
 /* login page css end */
