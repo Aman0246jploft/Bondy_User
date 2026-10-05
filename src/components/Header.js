@@ -169,12 +169,8 @@ export default function BondyHeader() {
 
         {/* RIGHT SECTION */}
         <div className="bd-header-right">
-          {/* BECOME AN ORGANIZER / PORTAL */}
-          {isOrganizer ? (
-            <Link href="/Dashboard" className="bd-desk bd-become-organizer">
-              {t("organizerSection") || "Organizer Portal"}
-            </Link>
-          ) : (
+          {/* BECOME AN ORGANIZER (hidden when logged in as organizer) */}
+          {!isOrganizer && (
             <Link href="/register?role=organizer" className="bd-desk bd-become-organizer">
               {t("becomeAnOrganizer") || "Become an organizer"}
             </Link>
@@ -293,15 +289,7 @@ export default function BondyHeader() {
             {t("organizers") || "Organizers"}
           </Link>
 
-          {isOrganizer ? (
-            <Link
-              href="/Dashboard"
-              className="bd-mob-link highlight"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {t("organizerSection") || "Organizer Portal"}
-            </Link>
-          ) : (
+          {!isOrganizer && (
             <Link
               href="/register?role=organizer"
               className="bd-mob-link highlight"

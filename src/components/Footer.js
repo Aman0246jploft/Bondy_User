@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import globalSettingApi from "../api/globalSettingApi";
 import stayUpdatedApi from "../api/stayUpdatedApi";
 import toast from "react-hot-toast";
@@ -11,8 +11,45 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function BondyFooter() {
   const { t, language, setLanguage } = useLanguage();
   const router = useRouter();
+  const pathname = usePathname();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isOrganizer, setIsOrganizer] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("userProfile");
+        if (cached) {
+          const u = JSON.parse(cached);
+          return !!(u?.role === "ORGANIZER" || u?.roleId === 2 || u?.organizerVerificationStatus);
+        }
+      } catch (e) { }
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const checkUser = () => {
+      if (typeof window !== "undefined") {
+        try {
+          const cached = localStorage.getItem("userProfile");
+          if (cached) {
+            const u = JSON.parse(cached);
+            setIsOrganizer(!!(u?.role === "ORGANIZER" || u?.roleId === 2 || u?.organizerVerificationStatus));
+            return;
+          }
+        } catch (e) { }
+        setIsOrganizer(false);
+      }
+    };
+    checkUser();
+    window.addEventListener("storage", checkUser);
+    window.addEventListener("focus", checkUser);
+    return () => {
+      window.removeEventListener("storage", checkUser);
+      window.removeEventListener("focus", checkUser);
+    };
+  }, [pathname]);
+
   const [socialLinks, setSocialLinks] = useState(() => {
     if (typeof window !== "undefined") {
       try {
@@ -270,11 +307,31 @@ export default function BondyFooter() {
           {/* Dynamic Footer Nav Columns */}
           {[
             { key: "explore", titleEn: "Explore", titleMn: "Судлах", defaultRoute: "/Explore" },
-            { key: "organizer", titleEn: "Organizer", titleMn: "Зохион байгуулагч", defaultRoute: "/register?role=organizer" },
+            {
+              key: "organizer",
+              titleEn: "Organizer",
+              titleMn: "Зохион байгуулагч",
+              defaultRoute: isOrganizer ? "/Dashboard" : "/register?role=organizer",
+            },
             { key: "help", titleEn: "Help", titleMn: "Тусламж", defaultRoute: "/contact-us" },
           ].map(({ key, titleEn, titleMn, defaultRoute }) => {
             const cols = footerLinks || {};
-            const links = cols[key] || [];
+            const rawLinks = cols[key] || [];
+            const links = rawLinks.filter((link) => {
+              if (isOrganizer) {
+                const href = (getHref(link) || "").toLowerCase();
+                const labelEn = (link.labelEn || link.label || link.name || "").toLowerCase();
+                const labelMn = (link.labelMn || link.name_mn || "").toLowerCase();
+                if (
+                  href.includes("role=organizer") ||
+                  labelEn.includes("become an organizer") ||
+                  labelMn.includes("зохион байгуулагч болох")
+                ) {
+                  return false;
+                }
+              }
+              return true;
+            });
             const colTitle = language === "en"
               ? (footerLinks?.titles?.[key]?.en || titleEn)
               : (footerLinks?.titles?.[key]?.mn || titleMn);
