@@ -61,6 +61,7 @@ export default function RootLayout({ children }) {
     if (pathname.includes("/Earnings")) return t("earnings") || "Earnings & Payout";
     if (pathname.includes("/MyTicketsOrganiser")) return t("tickets") || "Ticket Sales";
     if (pathname.includes("/Message")) return t("messages") || "Messages";
+    if (pathname.includes("/MyFavorite")) return t("myFavorite") || "Saved & Favorites";
     if (pathname.includes("/Promotions")) return t("promotions") || "Promotions";
     if (pathname.includes("/Staff")) return t("staff") || "Team Staff";
     if (pathname.includes("/SubscriptionBilling")) return t("subscription") || "Billing & Plan";
