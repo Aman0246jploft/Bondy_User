@@ -23,7 +23,7 @@ const DATE_OPTIONS = [
   { key: "today", mn: "Өнөөдөр", en: "Today" },
   { key: "tomorrow", mn: "Маргааш", en: "Tomorrow" },
   { key: "weekend", mn: "Энэ амралтын өдрүүдэд", en: "This weekend" },
-  { key: "week", mn: "Энэ долоо хоног", en: "This week" },
+  // { key: "week", mn: "Энэ долоо хоног", en: "This week" },
   { key: "next7", mn: "Дараагийн 7 хоног", en: "Next 7 days" },
 ];
 
