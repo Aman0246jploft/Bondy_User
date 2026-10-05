@@ -183,6 +183,7 @@ export default function BondyFooter() {
               href="/"
               aria-label="Bondy"
               onClick={(e) => handleLinkClick(e, "/")}
+              className="cursor-pointer"
               style={{ display: "inline-block", cursor: "pointer" }}
             >
               <img src="/img/bondy-logo.svg" alt="Bondy" style={{ height: "30px", width: "auto" }} />
@@ -200,7 +201,7 @@ export default function BondyFooter() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Instagram"
-                  className="bd-footer-social-link"
+                  className="bd-footer-social-link cursor-pointer"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.7" />
@@ -215,7 +216,7 @@ export default function BondyFooter() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Facebook"
-                  className="bd-footer-social-link"
+                  className="bd-footer-social-link cursor-pointer"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path
@@ -231,7 +232,7 @@ export default function BondyFooter() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="YouTube"
-                  className="bd-footer-social-link"
+                  className="bd-footer-social-link cursor-pointer"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <rect x="2.6" y="5.4" width="18.8" height="13.2" rx="4" stroke="currentColor" strokeWidth="1.7" />
@@ -245,7 +246,7 @@ export default function BondyFooter() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="LinkedIn"
-                  className="bd-footer-social-link"
+                  className="bd-footer-social-link cursor-pointer"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path
@@ -266,7 +267,6 @@ export default function BondyFooter() {
                 )}
             </div>
           </div>
-
           {/* Dynamic Footer Nav Columns */}
           {[
             { key: "explore", titleEn: "Explore", titleMn: "Судлах", defaultRoute: "/Explore" },
@@ -285,6 +285,7 @@ export default function BondyFooter() {
                   <a
                     href={defaultRoute}
                     onClick={(e) => handleLinkClick(e, defaultRoute)}
+                    className="cursor-pointer"
                     style={{
                       color: "inherit",
                       textDecoration: "none",
@@ -297,7 +298,7 @@ export default function BondyFooter() {
                     {colTitle}
                   </a>
                 </h4>
-                <nav className="bd-footer-links">
+                <nav className="bd-footer-links" style={{ cursor: "pointer" }}>
                   {links.length === 0 && !footerLinks && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "4px 0" }}>
                       <span style={{ height: 16, width: 85, background: "rgba(255,255,255,0.08)", borderRadius: 4, display: "inline-block" }} />
@@ -315,12 +316,12 @@ export default function BondyFooter() {
                         key={idx}
                         href={href}
                         onClick={(e) => handleLinkClick(e, href)}
-                        className="bd-footer-link"
-                        style={{ cursor: "pointer", pointerEvents: "auto" }}
+                        className="bd-footer-link cursor-pointer"
+                        style={{ cursor: "pointer", pointerEvents: "auto", display: "inline-flex", alignItems: "center" }}
                         target={isExternal ? "_blank" : undefined}
                         rel={isExternal ? "noreferrer" : undefined}
                       >
-                        <span style={{ cursor: "pointer" }}>{label}</span>
+                        <span style={{ cursor: "pointer", pointerEvents: "none" }}>{label}</span>
                       </a>
                     );
                   })}
