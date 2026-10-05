@@ -842,14 +842,7 @@ export default function HomePage() {
                 </svg>
               </Link>
             </div>
-            <div
-              className="bd-rail"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-                gap: 12,
-              }}
-            >
+            <div className="bd-org-grid">
               {sectionLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <div
