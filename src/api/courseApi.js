@@ -19,6 +19,9 @@ const courseApi = {
     getCourseAnalytics: (courseId, params) => {
         return apiClient.get(`/course/analytics/${courseId}`, { params, skipToast: true });
     },
+    deleteDraftCourse: (courseId) => {
+        return apiClient.post(`/course/delete/${courseId}`);
+    },
 };
 
 export default courseApi;

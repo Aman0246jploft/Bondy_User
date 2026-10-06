@@ -137,7 +137,7 @@ const VenueAutocomplete = ({
             "address_components",
           ],
           // Configure autocomplete behavior
-          componentRestrictions: {}, // No country restrictions - global search
+          componentRestrictions: { country: "mn" },
           strictBounds: false, // Don't restrict to viewport
         }
       );
