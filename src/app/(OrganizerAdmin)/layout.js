@@ -23,7 +23,7 @@ export default function RootLayout({ children }) {
       try {
         const u = localStorage.getItem("userProfile");
         if (u) return JSON.parse(u);
-      } catch (e) {}
+      } catch (e) { }
     }
     return null;
   });
@@ -54,7 +54,7 @@ export default function RootLayout({ children }) {
             setProfile(user);
             try {
               localStorage.setItem("userProfile", JSON.stringify(user));
-            } catch (e) {}
+            } catch (e) { }
             setAuthorized(true);
           }
         } else {
@@ -71,7 +71,7 @@ export default function RootLayout({ children }) {
               setAuthorized(true);
               return;
             }
-          } catch (e) {}
+          } catch (e) { }
         }
         router.push("/login");
       }

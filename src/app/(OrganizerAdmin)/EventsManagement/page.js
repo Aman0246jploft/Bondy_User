@@ -1,691 +1,1128 @@
 "use client";
+
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
-import React, { useState, useEffect } from "react";
-import { Col, Row, Tabs, Tab, Form, Modal, Spinner } from "react-bootstrap";
+import { useRouter } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
 import { useEventContext } from "@/context/EventContext";
 import eventApi from "@/api/eventApi";
 import promotionsApi from "@/api/promotionsApi";
-import toast from "react-hot-toast";
-import { useLanguage } from "@/context/LanguageContext";
-import { formatTime } from "@/utils/timeHelper";
+import { getFullImageUrl } from "@/utils/imageHelper";
 
-function page() {
-  const { t, language } = useLanguage();
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+function formatMoney(amount) {
+  const num = Number(amount) || 0;
+  return `₮${num.toLocaleString("en-US")}`;
+}
+
+function formatDateBilingual(dateStr, timeStr, isMn, isDraft, updatedAtStr) {
+  const mnMonths = ["1-р", "2-р", "3-р", "4-р", "5-р", "6-р", "7-р", "8-р", "9-р", "10-р", "11-р", "12-р"];
+  const enMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const mnDays = ["Ням", "Дав", "Мяг", "Лха", "Пүр", "Баа", "Бям"];
+  const enDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  if (isDraft && updatedAtStr) {
+    const d = new Date(dateStr || updatedAtStr);
+    const u = new Date(updatedAtStr);
+
+    const primary = !isNaN(d.getTime())
+      ? (isMn ? `${mnMonths[d.getMonth()]} сарын ${d.getDate()}` : `${enMonths[d.getMonth()]} ${d.getDate()}`)
+      : (isMn ? "Товлогдоогүй" : "Not set");
+
+    const sub = !isNaN(u.getTime())
+      ? (isMn ? `Зассан: ${mnMonths[u.getMonth()]} сарын ${u.getDate()}` : `Edited: ${enMonths[u.getMonth()]} ${u.getDate()}`)
+      : "";
+
+    return { primary, sub };
+  }
+
+  if (!dateStr) return { primary: isMn ? "Тун удахгүй" : "Coming soon", sub: "" };
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return { primary: isMn ? "Тун удахгүй" : "Coming soon", sub: "" };
+
+  const m = d.getMonth();
+  const dayNum = d.getDate();
+  const dayName = isMn ? mnDays[d.getDay()] : enDays[d.getDay()];
+  const primary = isMn ? `${mnMonths[m]} сарын ${dayNum}` : `${enMonths[m]} ${dayNum}`;
+
+  let timePart = "";
+  if (timeStr) {
+    timePart = ` · ${String(timeStr).slice(0, 5)}`;
+  }
+
+  return {
+    primary,
+    sub: `${dayName}${timePart}`,
+  };
+}
+
+export default function EventsManagementPage() {
+  const router = useRouter();
+  const { language } = useLanguage();
+  const isMn = language === "mn";
   const { clearEventData } = useEventContext();
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("all");
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-  });
-  const [stats, setStats] = useState({ totalRevenue: 0, totalAttendees: 0 });
 
-  // Promotion modal state
+  // ─── State ─────────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState("published"); // 'published' | 'draft' | 'past'
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  // Separate caches for accurate tab badge counts
+  const [publishedEvents, setPublishedEvents] = useState([]);
+  const [draftEvents, setDraftEvents] = useState([]);
+  const [pastEvents, setPastEvents] = useState([]);
+
+  // Kebab Menu State
+  const [activeMenu, setActiveMenu] = useState(null); // { id, x, y, event, left, top }
+  const [toastMessage, setToastMessage] = useState("");
+
+  // Promotion Modal
   const [showPromoModal, setShowPromoModal] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedEventForPromo, setSelectedEventForPromo] = useState(null);
   const [promoPackages, setPromoPackages] = useState([]);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
 
-  const fetchStats = async () => {
-    try {
-      const response = await eventApi.getOrganizerStats();
-      if (response?.data) {
-        setStats({
-          totalRevenue: response?.data?.totalRevenue,
-          totalAttendees: response?.data?.totalAttendees,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to fetch stats", error);
-    }
-  };
+  // Delete Draft Modal
+  const [deleteDraftModal, setDeleteDraftModal] = useState(null); // event object
+  const [deleting, setDeleting] = useState(false);
+  const [delDone, setDelDone] = useState(false);
+  const [delErr, setDelErr] = useState("");
 
-  const fetchEvents = async () => {
+  // ─── Fetch All Categories of Events ────────────────────────────────────────
+  const fetchAllEvents = useCallback(async () => {
     try {
       setLoading(true);
-      const params = {
-        page: pagination.page,
-        limit: pagination.limit,
-      };
 
-      if (activeTab === "drafts") {
-        params.isDraft = "true";
-      } else {
-        params.isDraft = "false";
-        params.status = activeTab === "all" ? "" : activeTab;
+      const [pubRes, draftRes, pastRes] = await Promise.allSettled([
+        // Published (Upcoming & Live)
+        eventApi.getOrganizerEvents({ isDraft: "false", status: "Upcoming,Live", limit: 50 }),
+        // Drafts
+        eventApi.getOrganizerEvents({ isDraft: "true", limit: 50 }),
+        // Past
+        eventApi.getOrganizerEvents({ isDraft: "false", status: "Past", limit: 50 }),
+      ]);
+
+      if (pubRes.status === "fulfilled" && pubRes.value?.data) {
+        const evs = pubRes.value.data.events || pubRes.value.data || [];
+        setPublishedEvents(Array.isArray(evs) ? evs : []);
       }
 
-      const response = await eventApi.getOrganizerEvents(params);
-      if (response?.data) {
-        setEvents(response?.data?.events);
-        setPagination((prev) => ({
-          ...prev,
-          total: response?.data?.total,
-          page: response?.data?.page,
-        }));
+      if (draftRes.status === "fulfilled" && draftRes.value?.data) {
+        const evs = draftRes.value.data.events || draftRes.value.data || [];
+        setDraftEvents(Array.isArray(evs) ? evs : []);
       }
-    } catch (error) {
-      console.error("Failed to fetch events", error);
+
+      if (pastRes.status === "fulfilled" && pastRes.value?.data) {
+        const evs = pastRes.value.data.events || pastRes.value.data || [];
+        setPastEvents(Array.isArray(evs) ? evs : []);
+      }
+    } catch (err) {
+      console.error("Failed to load events list:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchEvents();
-    fetchStats();
-    document.title = "Events Management - Bondy";
-  }, [pagination.page, activeTab]);
+    fetchAllEvents();
+    document.title = isMn ? "Эвентүүд - Bondy" : "Events - Bondy";
+  }, [fetchAllEvents, isMn]);
 
-  const handlePageChange = (newPage) => {
-    setPagination((prev) => ({ ...prev, page: newPage }));
+  // Flash Toast Notification
+  const flashToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage("");
+    }, 2400);
   };
 
-  const handleTabSelect = (k) => {
-    setActiveTab(k);
-    setPagination((prev) => ({ ...prev, page: 1 }));
+  // Close floating menu on document click
+  useEffect(() => {
+    const handleDocClick = (e) => {
+      if (!e.target.closest("[data-rowmenu]") && !e.target.closest(".oe-menu")) {
+        setActiveMenu(null);
+      }
+    };
+    document.addEventListener("click", handleDocClick);
+    return () => document.removeEventListener("click", handleDocClick);
+  }, []);
+
+  // ─── Filtered Events by Search & Tab ───────────────────────────────────────
+  const currentList = useMemo(() => {
+    let base = [];
+    if (activeTab === "published") base = publishedEvents;
+    else if (activeTab === "draft") base = draftEvents;
+    else if (activeTab === "past") base = pastEvents;
+
+    if (!searchQuery.trim()) return base;
+
+    const q = searchQuery.toLowerCase().trim();
+    return base.filter((ev) => {
+      const title = (ev.eventTitle || "").toLowerCase();
+      const venue = (ev.venueName || "").toLowerCase();
+      const category = (ev.eventCategory?.name || "").toLowerCase();
+      return title.includes(q) || venue.includes(q) || category.includes(q);
+    });
+  }, [activeTab, publishedEvents, draftEvents, pastEvents, searchQuery]);
+
+  // ─── Menu Action Handlers ──────────────────────────────────────────────────
+  const handleOpenMenu = (e, event) => {
+    e.stopPropagation();
+    if (activeMenu?.id === event._id) {
+      setActiveMenu(null);
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const W = 196;
+    const H = 196;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    let left = Math.max(12, Math.min(rect.right - W, windowWidth - W - 12));
+    let top = (rect.bottom + 8 + H > windowHeight) ? Math.max(12, rect.top - H - 8) : rect.bottom + 8;
+
+    setActiveMenu({
+      id: event._id,
+      event,
+      left: Math.round(left),
+      top: Math.round(top),
+    });
   };
 
-  const totalPages = Math.ceil(pagination.total / pagination.limit);
-  const locale = language === "mn" ? "mn-MN" : "en-US";
+  const handleRowClick = (ev) => {
+    if (ev.isDraft || activeTab === "draft") {
+      router.push(`/BasicInfo?eventId=${ev._id}`);
+    } else {
+      router.push(`/eventbooking?id=${ev._id}`);
+    }
+  };
 
-  // ---- Promotion Modal Handlers ----
-  const isFeaturedActive = (event) =>
-    event.isFeatured &&
-    event.featuredExpiry &&
-    new Date(event.featuredExpiry) > new Date();
+  // Share Link Action
+  const handleShareLink = (event) => {
+    setActiveMenu(null);
+    const url = `${window.location.origin}/eventbooking?id=${event._id}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).catch(() => { });
+    }
+    flashToast(isMn ? "Нийтийн хуудасны линк хуулагдлаа" : "Public link copied to clipboard");
+  };
 
-  const openPromoModal = async (event) => {
-    setSelectedEvent(event);
-    setSelectedPackage(null);
-    setShowPromoModal(true);
-    setLoadingPackages(true);
+  // Duplicate / Copy Action
+  const handleDuplicateEvent = async (event) => {
+    setActiveMenu(null);
+    const cloneTitle = `${event.eventTitle || "Эвент"} (хуулбар)`;
     try {
-      const res = await promotionsApi.getEventPackages();
-      if (res?.status) {
-        setPromoPackages(res?.data?.packages || []);
+      const payload = {
+        eventTitle: cloneTitle,
+        description: event.description || "",
+        eventCategory: event.eventCategory?._id || event.eventCategory,
+        startDate: event.startDate,
+        startTime: event.startTime,
+        endDate: event.endDate,
+        endTime: event.endTime,
+        venueName: event.venueName,
+        address: event.address,
+        latitude: event.latitude,
+        longitude: event.longitude,
+        posterImage: event.posterImage || [],
+        isDraft: true,
+      };
+
+      const res = await eventApi.createEvent(payload);
+      if (res?.data?.data || res?.data?.event) {
+        const created = res.data.data || res.data.event;
+        setDraftEvents((prev) => [created, ...prev]);
+      } else {
+        setDraftEvents((prev) => [
+          {
+            ...event,
+            _id: `copy-${Date.now()}`,
+            eventTitle: cloneTitle,
+            isDraft: true,
+            totalBooked: 0,
+            totalRevenue: 0,
+          },
+          ...prev,
+        ]);
       }
     } catch (err) {
-      toast.error(t("failedToLoadPromotionPackages"));
+      console.warn("Optimistic duplicate:", err);
+      setDraftEvents((prev) => [
+        {
+          ...event,
+          _id: `copy-${Date.now()}`,
+          eventTitle: cloneTitle,
+          isDraft: true,
+          totalBooked: 0,
+          totalRevenue: 0,
+        },
+        ...prev,
+      ]);
+    }
+    setActiveTab("draft");
+    flashToast(isMn ? "Ноорог хуулбар үүслээ" : "Draft copy created");
+  };
+
+  // Delete Draft Action
+  const handleDeleteDraft = async () => {
+    if (!deleteDraftModal) return;
+    setDeleting(true);
+    setDelErr("");
+
+    try {
+      await eventApi.deleteDraftEvent(deleteDraftModal._id);
+      setDraftEvents((prev) => prev.filter((e) => e._id !== deleteDraftModal._id));
+      setDelDone(true);
+    } catch (err) {
+      console.error("Failed to delete draft:", err);
+      // If error, check if network error or fallback
+      const msg = err.response?.data?.message || (isMn ? "Устгаж чадсангүй. Сүлжээгээ шалгаад дахин оролдоно уу." : "Failed to delete. Please try again.");
+      setDelErr(msg);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Open Promotion Modal
+  const openPromoModal = async (event) => {
+    setActiveMenu(null);
+    setSelectedEventForPromo(event);
+    setShowPromoModal(true);
+    setSelectedPackage(null);
+
+    try {
+      setLoadingPackages(true);
+      const res = await promotionsApi.getEventPackages();
+      if (res?.data?.data) {
+        setPromoPackages(res.data.data);
+      } else if (Array.isArray(res?.data)) {
+        setPromoPackages(res.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch promo packages:", err);
     } finally {
       setLoadingPackages(false);
     }
   };
 
-  const closePromoModal = () => {
-    setShowPromoModal(false);
-    setSelectedEvent(null);
-    setSelectedPackage(null);
-    setPromoPackages([]);
-  };
-
-  const handleCheckout = async () => {
-    if (!selectedPackage) {
-      toast.error(t("pleaseSelectPromotionPackageFirst"));
-      return;
-    }
-    setCheckingOut(true);
+  // Checkout Promotion
+  const handleCheckoutPromo = async () => {
+    if (!selectedPackage || !selectedEventForPromo) return;
     try {
+      setCheckingOut(true);
       const res = await promotionsApi.checkoutEventPromotion({
-        eventId: selectedEvent._id,
+        eventId: selectedEventForPromo._id,
         packageId: selectedPackage._id,
       });
-      if (res?.status) {
-        toast.success(t("promotionActivatedSuccessfully"));
-        closePromoModal();
-        fetchEvents();
+
+      if (res?.data?.invoiceUrl || res?.data?.paymentUrl) {
+        window.location.href = res.data.invoiceUrl || res.data.paymentUrl;
+      } else {
+        flashToast(isMn ? "Сурталчилгаа амжилттай захиалагдлаа!" : "Promotion activated successfully!");
+        setShowPromoModal(false);
       }
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Checkout failed. Please try again.",
-      );
+      console.error("Failed to checkout promotion:", err);
+      flashToast(isMn ? "Алдаа гарлаа. Дахин оролдоно уу." : "Checkout failed. Please try again.");
     } finally {
       setCheckingOut(false);
     }
   };
 
   return (
-    <div>
-      <div className="cards">
-        <div className="card-header">
-          <div>
-            <h2 className="card-title">{t("eventManagement")}</h2>
-            <p className="card-desc">
-              {t("heyUser")}, {t("welcomeBackSnapshot")}
-            </p>
-          </div>
+    <main
+      data-screen-label="Эвентийн удирдлага"
+      style={{
+        flex: 1,
+        padding: "clamp(20px, 2.4vw, 30px) clamp(18px, 2.4vw, 32px) clamp(48px, 4vw, 64px)",
+      }}
+    >
+      {/* ─── Mobile Top Header ────────────────────────────────────────────── */}
+      <div className="oe-mobbar">
+        <button
+          type="button"
+          className="oe-mobback"
+          onClick={() => router.push("/Dashboard")}
+          aria-label={isMn ? "Буцах" : "Back"}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+        </button>
+        <span className="oe-mobbarT">
+          {isMn ? "Миний эвентүүд" : "My Events"}
+        </span>
+      </div>
 
+      {/* ─── Tabs List ────────────────────────────────────────────────────── */}
+      <div className="og-tabs bd-scroll" role="tablist">
+        <button
+          type="button"
+          className="og-tab"
+          role="tab"
+          data-tab="published"
+          aria-selected={activeTab === "published"}
+          onClick={() => setActiveTab("published")}
+        >
+          {isMn ? "Нийтлэгдсэн" : "Published"}
+          <span className="og-tab-n" data-tab-n="published">
+            {publishedEvents.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="og-tab"
+          role="tab"
+          data-tab="draft"
+          aria-selected={activeTab === "draft"}
+          onClick={() => setActiveTab("draft")}
+        >
+          {isMn ? "Ноорог" : "Draft"}
+          <span className="og-tab-n" data-tab-n="draft">
+            {draftEvents.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="og-tab"
+          role="tab"
+          data-tab="past"
+          aria-selected={activeTab === "past"}
+          onClick={() => setActiveTab("past")}
+        >
+          {isMn ? "Өнгөрсөн" : "Past"}
+          <span className="og-tab-n" data-tab-n="past">
+            {pastEvents.length}
+          </span>
+        </button>
+      </div>
+
+      {/* ─── Tools Row: Search + Create CTA ───────────────────────────────── */}
+      <div
+        className="og-tools"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          flexWrap: "wrap",
+          marginBottom: "18px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", flex: "1 1 240px", minWidth: 0 }}>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              flex: "1 1 240px",
+              minWidth: "180px",
+              maxWidth: "360px",
+              height: "42px",
+              padding: "0 14px",
+              borderRadius: "12px",
+              background: "var(--bd-ink-850)",
+              border: "1px solid var(--bd-border)",
+              boxSizing: "border-box",
+              cursor: "text",
+            }}
+          >
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: "var(--bd-gray-600)", flexShrink: 0 }}
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              data-search
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isMn ? "Эвент хайх" : "Search events"}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                background: "none",
+                border: "none",
+                outline: "none",
+                color: "var(--bd-white)",
+                fontFamily: "var(--bd-font-ui)",
+                fontSize: "14px",
+              }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--bd-gray-500)",
+                  cursor: "pointer",
+                  padding: 0,
+                  fontSize: "15px",
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </label>
+        </div>
+
+        {/* Create Event CTA */}
+        <span data-nav="eventnew" style={{ display: "inline-flex", flexShrink: 0, cursor: "pointer" }}>
           <Link
             href="/BasicInfo"
-            className="custom-btn"
-            onClick={() => clearEventData()}>
-            {t("createNew")}
+            onClick={() => clearEventData()}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              height: "40px",
+              padding: "0 18px",
+              borderRadius: "999px",
+              background: "var(--acc)",
+              color: "var(--bd-white)",
+              fontFamily: "var(--bd-font-ui)",
+              fontSize: "14px",
+              fontWeight: 700,
+              textDecoration: "none",
+              cursor: "pointer",
+              transition: "opacity 160ms ease",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>{isMn ? "Эвент үүсгэх" : "Create Event"}</span>
           </Link>
-        </div>
-        <Row>
-          <Col lg={4} xs={6}>
-            <div className="event-cards">
-              <h5>{t("totalRevenue")}</h5>
-              <h3>₮{stats.totalRevenue?.toLocaleString() || 0}</h3>
-              {/* <p>+15%</p> */}
-            </div>
-          </Col>
-          <Col lg={4} xs={6}>
-            <div className="event-cards">
-              <h5>{t("totalAttendees")}</h5>
-              <h3>{stats.totalAttendees?.toLocaleString() || 0}</h3>
-              {/* <p>+10%</p> */}
-            </div>
-          </Col>
-          {/* <Col lg={4} xs={6}>
-            <div className="event-cards">
-              <h5>Average Rating</h5>
-              <h3>1300</h3>
-              <p>+10%</p>
-            </div>
-          </Col> */}
-        </Row>
-        <div className="ticket-tabs">
-          <div className="d-flex mb-3 justify-content-between align-items-center flex-wrap">
-            <Tabs activeKey={activeTab} onSelect={handleTabSelect} className="">
-              <Tab eventKey="all" title={t("all")} />
-              <Tab eventKey="upcoming" title={t("upcoming")} />
-              <Tab eventKey="ongoing" title={t("ongoing")} />
-              <Tab eventKey="past" title={t("past")} />
-              <Tab eventKey="drafts" title={t("draftEvents") || "Drafts"} />
-            </Tabs>
-            {/* <div className="dashboard-filter">
-              <div>
-                <select className="form-select">
-                  <option>Sort by</option>
-                  <option>Latest</option>
-                  <option>Soonest</option>  
-                </select>
-              </div>
-            </div> */}
-          </div>
+        </span>
+      </div>
 
-          <div className="ticket-listing">
+      {/* ─── Events Table Section ────────────────────────────────────────── */}
+      <section
+        style={{
+          borderRadius: "22px",
+          background: "var(--bd-ink-850)",
+          border: "1px solid var(--bd-border)",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "16px", flexWrap: "wrap", padding: "18px 18px 14px" }}>
+          <h2 style={{ margin: 0, fontFamily: "var(--bd-font-ui)", fontSize: "18px", fontWeight: 700, color: "var(--bd-white)" }}>
+            {isMn ? "Эвентүүд" : "Events"}
+          </h2>
+          <span style={{ fontSize: "13px", color: "var(--bd-gray-500)" }} data-count>
+            {currentList.length} {isMn ? "эвент" : "events"}
+          </span>
+        </div>
+
+        <div className="og-table">
+          <div className="og-table-inner og-wide">
+            {/* Table Header */}
+            <div
+              className="og-row og-head"
+              style={{
+                gridTemplateColumns: "minmax(0, 2.3fr) 138px 171px 132px 80px 84px",
+                padding: "10px 18px",
+                borderTop: "1px solid var(--bd-border-soft)",
+                borderBottom: "1px solid var(--bd-border-soft)",
+                background: "var(--bd-ink-800)",
+              }}
+            >
+              <span>{isMn ? "Эвент" : "Event"}</span>
+              <span>{isMn ? "Огноо, цаг" : "Date, Time"}</span>
+              <span>{isMn ? "Байршил" : "Venue"}</span>
+              <span>{isMn ? "Зарагдсан" : "Sold"}</span>
+              <span>{isMn ? "Орлого" : "Revenue"}</span>
+              <span />
+            </div>
+
+            {/* Table Rows */}
             {loading ? (
-              <p className="text-center py-5">{t("loadingTickets")}</p>
-            ) : events.length === 0 ? (
-              <p className="text-center py-5">{t("noTicketsFound")}</p>
+              <div style={{ padding: "40px", textAlign: "center", color: "var(--bd-gray-500)" }}>
+                {isMn ? "Уншиж байна..." : "Loading events..."}
+              </div>
+            ) : currentList.length === 0 ? (
+              <p
+                data-empty
+                style={{
+                  margin: 0,
+                  padding: "26px 18px 30px",
+                  textAlign: "center",
+                  fontSize: "13.5px",
+                  color: "var(--bd-gray-600)",
+                }}
+              >
+                {isMn ? "Илэрц олдсонгүй" : "No results found"}
+              </p>
             ) : (
-              events.map((event) => {
-                const status = event.status?.toLowerCase();
-                const isPastOrEnded =
-                  !event.isDraft &&
-                  (status === "past" || new Date(event.endDate) < new Date());
+              currentList.map((ev) => {
+                const coverImg = ev.posterImage?.[0] ? getFullImageUrl(ev.posterImage[0]) : "/img/sidebar-logo.svg";
+                const isDraftRow = Boolean(ev.isDraft || activeTab === "draft");
+                const dateInfo = formatDateBilingual(ev.startDate, ev.startTime, isMn, isDraftRow, ev.updatedAt);
+                const sold = (ev.totalBooked !== undefined && ev.totalBooked !== null)
+                  ? Number(ev.totalBooked)
+                  : Math.max(0, (Number(ev.totalTickets) || 0) - (Number(ev.ticketQtyAvailable) || 0));
+                const total = Number(ev.totalTickets) || (sold > 0 ? sold : 0);
+                const pct = total > 0 ? Math.min(100, Math.round((sold / total) * 100)) : 0;
+                const revenueText = ev.totalRevenue !== undefined ? formatMoney(ev.totalRevenue) : "—";
 
                 return (
-                  <div className="ticket-cards" key={event._id}>
-                    <div className="ticket-inner">
-                      <div className="ticket-lft">
-                        {/* <Form.Check /> */}
-                        <div className="event-info-box-img">
-                          <img
-                            src={
-                              event.posterImage?.[0] || "/img/sidebar-logo.svg"
-                            }
-                            alt={event.eventTitle}
-                            style={{
-                              width: "80px",
-                              height: "80px",
-                              objectFit: "cover",
-                              borderRadius: "8px",
-                            }}
-                            onError={(e) => {
-                              e.target.src = "/img/sidebar-logo.svg";
-                            }}
-                          />
-                          <div>
-                            <h5 className="d-flex align-items-center gap-2 flex-wrap">
-                              <span
-                                className="text-truncate-1"
-                                style={{ maxWidth: "250px" }}>
-                                {event.eventTitle}
-                              </span>
-                              {isFeaturedActive(event) && (
-                                <span
-                                  style={{
-                                    background:
-                                      "linear-gradient(135deg, #f6d365, #fda085)",
-                                    color: "#fff",
-                                    fontSize: "11px",
-                                    fontWeight: 600,
-                                    padding: "2px 10px",
-                                    borderRadius: "20px",
-                                    letterSpacing: "0.5px",
-                                  }}>
-                                  ⭐ {t("featured")}
-                                </span>
-                              )}
-                            </h5>
-                            <p
-                              className="ref text-truncate-1"
-                              style={{ maxWidth: "300px", textTransform: "capitalize" }}>
-                              {event.eventCategory?.name || "General"}
-                            </p>
-                            {isFeaturedActive(event) && (
-                              <p
-                                style={{
-                                  fontSize: "11px",
-                                  color: "#fda085",
-                                  margin: 0,
-                                }}>
-                                {t("featuredUntil")}{" "}
-                                {new Date(
-                                  event.featuredExpiry,
-                                ).toLocaleDateString(locale, {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                })}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="ticket-rgt">
-                        <span
-                          className={`status-badge ${event.isDraft ? "pending" : event.status?.toLowerCase() || "upcoming"}`}>
-                          {event.isDraft
-                            ? t("draftLabel") || "Draft"
-                            : t(event.status?.toLowerCase()) ||
-                            event.status ||
-                            t("upcoming")}
-                        </span>
-                        {event.visibility === "PRIVATE" && (
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              background: "rgba(99, 99, 99, 0.15)",
-                              color: "#aaaaaa",
-                              border: "1px solid rgba(150,150,150,0.3)",
-                              borderRadius: "6px",
-                              padding: "3px 8px",
-                              fontSize: "12px",
-                              fontWeight: 500,
-                              marginLeft: "6px",
-                            }}>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="currentColor">
-                              <path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-6 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3.1-9H8.9V6a3.1 3.1 0 0 1 6.2 0v2z" />
-                            </svg>
-                            Private
+                  <div
+                    key={ev._id}
+                    className="og-row"
+                    data-state={activeTab}
+                    data-nav="eventdetail"
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => handleRowClick(ev)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleRowClick(ev);
+                      }
+                    }}
+                    style={{
+                      gridTemplateColumns: "minmax(0, 2.3fr) 138px 171px 132px 80px 84px",
+                      borderBottom: "1px solid var(--bd-border-soft)",
+                    }}
+                  >
+                    {/* 1. Title & Image */}
+                    <span style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                      <span
+                        style={{
+                          width: "44px",
+                          height: "44px",
+                          borderRadius: "12px",
+                          flexShrink: 0,
+                          border: "1px solid var(--bd-border)",
+                          background: `center/cover no-repeat url("${coverImg}")`,
+                        }}
+                      />
+                      <span style={{ display: "flex", flexDirection: "column", gap: "3px", minWidth: 0 }}>
+                        <b
+                          style={{
+                            fontSize: "14px",
+                            fontWeight: 700,
+                            color: "var(--bd-white)",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                          title={ev.eventTitle}
+                        >
+                          {ev.eventTitle}
+                        </b>
+                        {ev.eventCategory?.name && (
+                          <span style={{ fontSize: "11.5px", color: "var(--bd-gray-500)", textTransform: "capitalize" }}>
+                            {ev.eventCategory.name}
                           </span>
                         )}
-                        <p
-                          style={{ maxWidth: "100%", wordBreak: "break-word" }}>
-                          {t("venue")} <span>{event.venueName || "TBD"}</span>
-                        </p>
-                      </div>
-                    </div>
-                    <div className="ticket-bottom">
-                      <p>
-                        {t("createDate")}{" "}
-                        <span>
-                          {new Date(event.createdAt).toLocaleDateString(
-                            locale,
-                            {
-                              day: "numeric",
-                              month: "short",
-                            },
-                          )}
-                        </span>{" "}
-                        <span>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="4"
-                            height="4"
-                            viewBox="0 0 4 4"
-                            fill="none">
-                            <circle cx="2" cy="2" r="2" fill="#999999" />
-                          </svg>
-                        </span>{" "}
-                        <span>
-                          {formatTime(
-                            new Date(event.startDate)
-                              .toTimeString()
-                              .slice(0, 5),
-                            true,
-                            language,
-                          )}
-                        </span>
-                      </p>
-                      <p>
-                        {t("totalBookingRevenue")}{" "}
-                        <span>
-                          ₮{event.totalRevenue?.toLocaleString() || 0}
-                        </span>
-                      </p>
-                      <p>
-                        <span>
-                          <img src="/img/ticket-white.svg" alt="ticket" />
-                        </span>{" "}
-                        <span>
-                          {event.totalTickets || 0} {t("ticketsSuffix")}
-                        </span>
-                      </p>
-                      {!isPastOrEnded && (
-                        <Link href={`/BasicInfo?eventId=${event._id}`}>
-                          {t("edit")}{" "}
-                          <img src="/img/Arrow-Right.svg" alt="arrow" />
-                        </Link>
-                      )}
-                      {!event.isDraft && (
-                        <Link href={`/EventDetailOrganiser?eventId=${event._id}`}>
-                          {t("Info")}{" "}
-                          <img src="/img/Arrow-Right.svg" alt="arrow" />
-                        </Link>
-                      )}
-                      {event.status?.toLowerCase() === "upcoming" && !event.isDraft && event.visibility !== "PRIVATE" &&
-                        (isFeaturedActive(event) ? (
+                      </span>
+                    </span>
+
+                    {/* 2. Date & Time */}
+                    <span style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
+                      <b style={{ fontSize: "13.5px", fontWeight: 700, color: "var(--bd-white)" }}>
+                        {dateInfo.primary}
+                      </b>
+                      <span style={{ fontSize: "12px", color: "var(--bd-gray-600)" }}>
+                        {dateInfo.sub}
+                      </span>
+                    </span>
+
+                    {/* 3. Venue */}
+                    <span
+                      style={{
+                        fontSize: "13.5px",
+                        color: "var(--bd-gray-300)",
+                        minWidth: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                      title={ev.venueName || "—"}
+                    >
+                      {ev.venueName || "—"}
+                    </span>
+
+                    {/* 4. Sales Progress */}
+                    {isDraftRow ? (
+                      <span style={{ fontSize: "13.5px", color: "var(--bd-gray-700)", minWidth: 0 }}>—</span>
+                    ) : (
+                      <span style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
+                        <b style={{ fontSize: "13.5px", fontWeight: 700, color: "var(--bd-white)" }}>
+                          {sold} / {total}
+                        </b>
+                        <span style={{ fontSize: "12px", color: "var(--bd-gray-600)" }}>
                           <span
                             style={{
-                              color: "#fda085",
-                              fontSize: "13px",
-                              fontWeight: 500,
-                            }}>
-                            ⭐ {t("activePromotion") || "Active Promotion"}
+                              display: "block",
+                              width: "100%",
+                              maxWidth: "118px",
+                              height: "6px",
+                              borderRadius: "999px",
+                              background: "var(--bd-ink-700)",
+                              overflow: "hidden",
+                            }}
+                          >
+                            <span
+                              style={{
+                                display: "block",
+                                width: `${pct}%`,
+                                height: "100%",
+                                borderRadius: "999px",
+                                background: activeTab === "past" ? "var(--bd-gray-600)" : "var(--acc)",
+                                transition: "width 260ms ease",
+                              }}
+                            />
                           </span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="custom-btn"
-                            style={{ padding: "8px 16px", fontSize: "13px" }}
-                            onClick={() => openPromoModal(event)}>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 20 20"
-                              fill="none">
-                              <g clip-path="url(#clip0_6054_9586)">
-                                <path
-                                  d="M14.766 8.71912C15.2467 8.39697 15.5914 7.91639 15.7434 7.34924C15.9095 6.72932 15.8253 6.08353 15.5062 5.53084C15.1871 4.97814 14.6699 4.58228 14.05 4.41615C13.4829 4.2642 12.8943 4.3224 12.375 4.57764L11.0369 2.25994C10.752 1.76654 10.2404 1.47896 9.67233 1.48865C9.10276 1.49908 8.60358 1.80584 8.33686 2.30924C8.1496 2.66291 7.9737 3.03029 7.78749 3.41928C7.02854 5.00463 6.16835 6.8015 4.3087 7.87517L1.91913 9.25478C1.09659 9.72967 0.507409 10.4995 0.260065 11.4225C0.0127606 12.3455 0.138073 13.3069 0.612956 14.1294C1.27315 15.2729 2.4751 15.9129 3.70936 15.9129C4.15952 15.9129 4.61393 15.8276 5.048 15.6507L6.7185 18.5441C7.06413 19.1427 7.69319 19.4777 8.33928 19.4777C8.65592 19.4777 8.97671 19.3972 9.2701 19.2278C9.70085 18.9791 10.0094 18.5762 10.1388 18.0932C10.2682 17.6102 10.2025 17.107 9.95378 16.6762L8.31003 13.8292C10.0406 13.0064 11.8571 13.146 13.4744 13.271C13.9048 13.3043 14.3112 13.3357 14.7115 13.3504C15.28 13.3707 15.7961 13.0922 16.0898 12.6041C16.3836 12.116 16.389 11.5301 16.1041 11.0367L14.766 8.719L14.766 8.71912ZM13.7973 5.35943C14.1652 5.45803 14.4718 5.69228 14.6605 6.01912C15.0247 6.65002 14.8482 7.44689 14.2761 7.87041L12.865 5.42639C13.1571 5.29955 13.4825 5.27506 13.7973 5.35943H13.7973ZM3.70776 14.9366C2.81135 14.9365 1.93823 14.4717 1.45874 13.6411C1.11428 13.0445 1.02358 12.3463 1.20342 11.6753C1.38323 11.0042 1.81085 10.445 2.40745 10.1005L4.37436 8.96494L6.96866 13.4529L4.99936 14.5899C4.59217 14.8249 4.14725 14.9366 3.70776 14.9366ZM9.19553 17.8405C9.13366 18.0715 8.98671 18.2638 8.78186 18.3821C8.35624 18.6278 7.81003 18.4815 7.56424 18.0559L5.91046 15.1914L7.45428 14.3001L9.10807 17.1645C9.22635 17.3694 9.25741 17.6095 9.19549 17.8405H9.19553ZM15.2532 12.1006C15.1421 12.2851 14.9631 12.3828 14.7472 12.3745C14.3668 12.3606 13.9699 12.3299 13.5498 12.2974C11.7848 12.1611 9.80038 12.0081 7.8228 12.9791L5.21171 8.46213C7.04358 7.23369 7.90374 5.43814 8.66835 3.84099C8.85014 3.46119 9.0219 3.10244 9.19987 2.76635C9.30069 2.57599 9.47483 2.469 9.69018 2.4651C9.69424 2.46502 9.69831 2.46498 9.70237 2.46498C9.91221 2.46498 10.0855 2.56525 10.1912 2.74826L15.2585 11.5252C15.3662 11.7117 15.3644 11.9161 15.2532 12.1006L15.2532 12.1006ZM13.9848 2.51326L14.9932 0.766698C15.128 0.533143 15.4266 0.453104 15.6601 0.587987C15.8937 0.722831 15.9737 1.02146 15.8389 1.25498L14.8305 3.00154C14.7401 3.15818 14.5759 3.24576 14.4072 3.24576C14.3243 3.24576 14.2404 3.22467 14.1635 3.18025C13.9299 3.04541 13.8499 2.74678 13.9848 2.51326ZM18.5181 4.35568L16.7293 5.38849C16.6524 5.43287 16.5684 5.454 16.4856 5.454C16.3169 5.454 16.1528 5.36642 16.0623 5.20978C15.9274 4.97623 16.0075 4.6776 16.241 4.54279L18.0298 3.50998C18.2633 3.3751 18.562 3.45517 18.6968 3.68869C18.8317 3.92221 18.7516 4.22088 18.5181 4.35568ZM19.8638 7.86889C19.8638 8.13853 19.6452 8.35717 19.3755 8.35717H17.3587C17.0891 8.35717 16.8705 8.13857 16.8705 7.86889C16.8705 7.5992 17.0891 7.3806 17.3587 7.3806H19.3755C19.6452 7.3806 19.8638 7.5992 19.8638 7.86889Z"
-                                  fill="#FFC107"
-                                />
-                              </g>
-                              <defs>
-                                <clipPath id="clip0_6054_9586">
-                                  <rect width="20" height="20" fill="white" />
-                                </clipPath>
-                              </defs>
-                            </svg>{" "}
-                            {t("promote")}
-                          </button>
-                        ))}
-                    </div>
+                        </span>
+                      </span>
+                    )}
+
+                    {/* 5. Revenue */}
+                    {isDraftRow ? (
+                      <span style={{ fontSize: "13.5px", color: "var(--bd-gray-700)", minWidth: 0 }}>—</span>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: "13px",
+                          color: activeTab === "past" ? "var(--bd-gray-500)" : "var(--bd-white)",
+                          minWidth: 0,
+                          whiteSpace: "nowrap",
+                          letterSpacing: "-.01em",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {revenueText}
+                      </span>
+                    )}
+
+                    {/* 6. Actions (3-dots) */}
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
+                      <button
+                        type="button"
+                        className="oe-dots"
+                        data-rowmenu
+                        aria-label={isMn ? "Үйлдэл" : "Actions"}
+                        onClick={(e) => handleOpenMenu(e, ev)}
+                      >
+                        <i />
+                        <i />
+                        <i />
+                      </button>
+                    </span>
                   </div>
                 );
               })
             )}
           </div>
+        </div>
+      </section>
 
-          {totalPages > 1 && (
-            <div
-              className="d-flex justify-content-between align-items-center px-3 py-3 flex-wrap"
-              style={{ borderTop: "1px solid #2a2a2a" }}>
-              <span style={{ color: "#888", fontSize: 13 }}>
-                {t("showingTransactions", {
-                  start: Math.min(
-                    (pagination.page - 1) * pagination.limit + 1,
-                    pagination.total,
-                  ),
-                  end: Math.min(
-                    pagination.page * pagination.limit,
-                    pagination.total,
-                  ),
-                  total: pagination.total,
-                })}
-              </span>
-              <div className="d-flex gap-2">
+      {/* ─── Floating Action Menu (.oe-menu) ─────────────────────────────── */}
+      {activeMenu && (
+        <div className="oe-menuScrim" onClick={() => setActiveMenu(null)}>
+          <div
+            className="oe-menu"
+            data-menu
+            style={{
+              left: `${activeMenu.left}px`,
+              top: `${activeMenu.top}px`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Edit */}
+            <button
+              type="button"
+              className="oe-mi"
+              data-mi="edit"
+              onClick={() => {
+                setActiveMenu(null);
+                router.push(`/BasicInfo?eventId=${activeMenu.event._id}`);
+              }}
+            >
+              {isMn ? "Засах" : "Edit"}
+            </button>
+
+            {/* View */}
+            {!activeMenu.event.isDraft && (
+              <button
+                type="button"
+                className="oe-mi"
+                data-mi="view"
+                onClick={() => {
+                  setActiveMenu(null);
+                  router.push(`/eventbooking?id=${activeMenu.event._id}`);
+                }}
+              >
+                {isMn ? "Үзэх" : "View"}
+              </button>
+            )}
+
+            {/* Share */}
+            {!activeMenu.event.isDraft && (
+              <button
+                type="button"
+                className="oe-mi"
+                data-mi="share"
+                onClick={() => handleShareLink(activeMenu.event)}
+              >
+                {isMn ? "Хуваалцах" : "Share"}
+              </button>
+            )}
+
+            {/* Copy / Duplicate */}
+            <button
+              type="button"
+              className="oe-mi"
+              data-mi="copy"
+              onClick={() => handleDuplicateEvent(activeMenu.event)}
+            >
+              {isMn ? "Хуулбарлах" : "Duplicate"}
+            </button>
+
+            {/* Promote (if published/upcoming) */}
+            {!activeMenu.event.isDraft && activeTab !== "past" && (
+              <button
+                type="button"
+                className="oe-mi"
+                data-mi="promote"
+                onClick={() => openPromoModal(activeMenu.event)}
+              >
+                {isMn ? "Сурталчлах" : "Promote"}
+              </button>
+            )}
+
+            {/* Delete (if draft) */}
+            {activeMenu.event.isDraft && (
+              <button
+                type="button"
+                className="oe-mi oe-del-mi"
+                data-mi="del"
+                style={{ color: "#FF8A8A" }}
+                onClick={() => {
+                  setDeleteDraftModal(activeMenu.event);
+                  setDelDone(false);
+                  setDelErr("");
+                  setActiveMenu(null);
+                }}
+              >
+                {isMn ? "Устгах" : "Delete"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Floating Toast Notification ─────────────────────────────────── */}
+      {toastMessage && (
+        <div className="oe-toast">
+          {toastMessage}
+        </div>
+      )}
+
+      {/* ─── Delete Draft Confirmation Modal (.oe-scrim + .oe-sheet) ─────── */}
+      {deleteDraftModal && (
+        <div
+          className="oe-scrim"
+          onClick={() => {
+            if (!deleting) {
+              setDeleteDraftModal(null);
+              setDelDone(false);
+              setDelErr("");
+            }
+          }}
+        >
+          <div className="oe-sheet" data-sheet onClick={(e) => e.stopPropagation()}>
+            {delDone ? (
+              <div style={{ textAlign: "center" }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "60px",
+                    height: "60px",
+                    borderRadius: "999px",
+                    background: "rgba(35, 173, 164, 0.14)",
+                    color: "var(--acc-bright)",
+                  }}
+                >
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                </span>
+                <b
+                  style={{
+                    display: "block",
+                    marginTop: "14px",
+                    fontFamily: "var(--bd-font-ui)",
+                    fontSize: "19px",
+                    fontWeight: 700,
+                    color: "var(--bd-white)",
+                  }}
+                >
+                  {isMn ? "Ноорог устгагдлаа" : "Draft Deleted"}
+                </b>
+                <p style={{ margin: "8px 0 0", fontSize: "14px", lineHeight: 1.55, color: "var(--bd-gray-400)" }}>
+                  {isMn ? "Жагсаалтаас хасагдлаа." : "Removed from draft listings."}
+                </p>
                 <button
-                  className="common_btn"
-                  style={{ padding: "6px 14px", fontSize: 13 }}
-                  disabled={pagination.page === 1}
-                  onClick={() => handlePageChange(pagination.page - 1)}>
-                  ← {t("previous")}
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter(
-                    (p) =>
-                      p === 1 ||
-                      p === totalPages ||
-                      Math.abs(p - pagination.page) <= 1,
-                  )
-                  .reduce((acc, p, idx, arr) => {
-                    if (idx > 0 && p - arr[idx - 1] > 1) acc.push("...");
-                    acc.push(p);
-                    return acc;
-                  }, [])
-                  .map((p, idx) =>
-                    p === "..." ? (
-                      <span
-                        key={`ellipsis-${idx}`}
-                        style={{ alignSelf: "center", color: "#666" }}>
-                        ...
-                      </span>
-                    ) : (
-                      <button
-                        key={p}
-                        onClick={() => handlePageChange(p)}
-                        className="common_btn"
-                        style={{
-                          padding: "6px 12px",
-                          fontSize: 13,
-                          opacity: pagination.page === p ? 1 : 0.5,
-                        }}>
-                        {p}
-                      </button>
-                    ),
-                  )}
-                <button
-                  className="common_btn"
-                  style={{ padding: "6px 14px", fontSize: 13 }}
-                  disabled={pagination.page === totalPages}
-                  onClick={() => handlePageChange(pagination.page + 1)}>
-                  {t("next")} →
+                  type="button"
+                  data-del="close"
+                  onClick={() => {
+                    setDeleteDraftModal(null);
+                    setDelDone(false);
+                  }}
+                  style={{
+                    marginTop: "18px",
+                    height: "46px",
+                    padding: "0 24px",
+                    border: "none",
+                    borderRadius: "999px",
+                    background: "var(--acc)",
+                    color: "var(--bd-white)",
+                    fontFamily: "var(--bd-font-ui)",
+                    fontSize: "15px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {isMn ? "Хаах" : "Close"}
                 </button>
               </div>
-            </div>
-          )}
+            ) : (
+              <>
+                <b
+                  style={{
+                    display: "block",
+                    fontFamily: "var(--bd-font-ui)",
+                    fontSize: "19px",
+                    fontWeight: 700,
+                    color: "var(--bd-white)",
+                  }}
+                >
+                  {isMn ? "Ноорогийг устгах уу?" : "Delete draft?"}
+                </b>
+                <p style={{ margin: "9px 0 0", fontSize: "14px", lineHeight: 1.6, color: "var(--bd-gray-400)" }}>
+                  {deleteDraftModal.eventTitle || (isMn ? "Энэ ноорог" : "This draft")} —{" "}
+                  {isMn
+                    ? "бөглөсөн мэдээлэл бүрмөсөн устана. Үйлдлийг буцаах боломжгүй."
+                    : "all filled details will be permanently lost. This action cannot be undone."}
+                </p>
+                {delErr && (
+                  <div
+                    style={{
+                      marginTop: "14px",
+                      padding: "12px 14px",
+                      border: "1px solid rgba(255, 90, 90, 0.55)",
+                      borderRadius: "13px",
+                      background: "rgba(255, 90, 90, 0.1)",
+                      fontSize: "13px",
+                      lineHeight: 1.45,
+                      color: "#FFC9C9",
+                    }}
+                  >
+                    {delErr}
+                  </div>
+                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "9px", flexWrap: "wrap", marginTop: "20px" }}>
+                  <button
+                    type="button"
+                    data-del="yes"
+                    disabled={deleting}
+                    onClick={handleDeleteDraft}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "9px",
+                      height: "46px",
+                      padding: "0 24px",
+                      border: "none",
+                      borderRadius: "999px",
+                      background: "#FF5A5A",
+                      color: "#fff",
+                      fontFamily: "var(--bd-font-ui)",
+                      fontSize: "15px",
+                      fontWeight: 700,
+                      cursor: deleting ? "not-allowed" : "pointer",
+                      opacity: deleting ? 0.6 : 1,
+                    }}
+                  >
+                    {deleting && <span className="oe-sp" />}
+                    {isMn ? "Устгах" : "Delete"}
+                  </button>
+                  <button
+                    type="button"
+                    data-del="close"
+                    onClick={() => {
+                      setDeleteDraftModal(null);
+                      setDelErr("");
+                    }}
+                    style={{
+                      height: "46px",
+                      padding: "0 20px",
+                      border: "1px solid var(--bd-border-strong)",
+                      borderRadius: "999px",
+                      background: "transparent",
+                      color: "var(--bd-white)",
+                      fontFamily: "var(--bd-font-ui)",
+                      fontSize: "14.5px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {isMn ? "Болих" : "Cancel"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* ---- Promotion Modal ---- */}
-      <Modal show={showPromoModal} onHide={closePromoModal} centered size="lg">
-        <Modal.Header
-          closeButton
-          style={{ background: "#1a1a1a", border: "1px solid #333" }}>
-          <Modal.Title style={{ color: "#fff" }}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none">
-              <g clip-path="url(#clip0_6054_9586)">
-                <path
-                  d="M14.766 8.71912C15.2467 8.39697 15.5914 7.91639 15.7434 7.34924C15.9095 6.72932 15.8253 6.08353 15.5062 5.53084C15.1871 4.97814 14.6699 4.58228 14.05 4.41615C13.4829 4.2642 12.8943 4.3224 12.375 4.57764L11.0369 2.25994C10.752 1.76654 10.2404 1.47896 9.67233 1.48865C9.10276 1.49908 8.60358 1.80584 8.33686 2.30924C8.1496 2.66291 7.9737 3.03029 7.78749 3.41928C7.02854 5.00463 6.16835 6.8015 4.3087 7.87517L1.91913 9.25478C1.09659 9.72967 0.507409 10.4995 0.260065 11.4225C0.0127606 12.3455 0.138073 13.3069 0.612956 14.1294C1.27315 15.2729 2.4751 15.9129 3.70936 15.9129C4.15952 15.9129 4.61393 15.8276 5.048 15.6507L6.7185 18.5441C7.06413 19.1427 7.69319 19.4777 8.33928 19.4777C8.65592 19.4777 8.97671 19.3972 9.2701 19.2278C9.70085 18.9791 10.0094 18.5762 10.1388 18.0932C10.2682 17.6102 10.2025 17.107 9.95378 16.6762L8.31003 13.8292C10.0406 13.0064 11.8571 13.146 13.4744 13.271C13.9048 13.3043 14.3112 13.3357 14.7115 13.3504C15.28 13.3707 15.7961 13.0922 16.0898 12.6041C16.3836 12.116 16.389 11.5301 16.1041 11.0367L14.766 8.719L14.766 8.71912ZM13.7973 5.35943C14.1652 5.45803 14.4718 5.69228 14.6605 6.01912C15.0247 6.65002 14.8482 7.44689 14.2761 7.87041L12.865 5.42639C13.1571 5.29955 13.4825 5.27506 13.7973 5.35943H13.7973ZM3.70776 14.9366C2.81135 14.9365 1.93823 14.4717 1.45874 13.6411C1.11428 13.0445 1.02358 12.3463 1.20342 11.6753C1.38323 11.0042 1.81085 10.445 2.40745 10.1005L4.37436 8.96494L6.96866 13.4529L4.99936 14.5899C4.59217 14.8249 4.14725 14.9366 3.70776 14.9366ZM9.19553 17.8405C9.13366 18.0715 8.98671 18.2638 8.78186 18.3821C8.35624 18.6278 7.81003 18.4815 7.56424 18.0559L5.91046 15.1914L7.45428 14.3001L9.10807 17.1645C9.22635 17.3694 9.25741 17.6095 9.19549 17.8405H9.19553ZM15.2532 12.1006C15.1421 12.2851 14.9631 12.3828 14.7472 12.3745C14.3668 12.3606 13.9699 12.3299 13.5498 12.2974C11.7848 12.1611 9.80038 12.0081 7.8228 12.9791L5.21171 8.46213C7.04358 7.23369 7.90374 5.43814 8.66835 3.84099C8.85014 3.46119 9.0219 3.10244 9.19987 2.76635C9.30069 2.57599 9.47483 2.469 9.69018 2.4651C9.69424 2.46502 9.69831 2.46498 9.70237 2.46498C9.91221 2.46498 10.0855 2.56525 10.1912 2.74826L15.2585 11.5252C15.3662 11.7117 15.3644 11.9161 15.2532 12.1006L15.2532 12.1006ZM13.9848 2.51326L14.9932 0.766698C15.128 0.533143 15.4266 0.453104 15.6601 0.587987C15.8937 0.722831 15.9737 1.02146 15.8389 1.25498L14.8305 3.00154C14.7401 3.15818 14.5759 3.24576 14.4072 3.24576C14.3243 3.24576 14.2404 3.22467 14.1635 3.18025C13.9299 3.04541 13.8499 2.74678 13.9848 2.51326ZM18.5181 4.35568L16.7293 5.38849C16.6524 5.43287 16.5684 5.454 16.4856 5.454C16.3169 5.454 16.1528 5.36642 16.0623 5.20978C15.9274 4.97623 16.0075 4.6776 16.241 4.54279L18.0298 3.50998C18.2633 3.3751 18.562 3.45517 18.6968 3.68869C18.8317 3.92221 18.7516 4.22088 18.5181 4.35568ZM19.8638 7.86889C19.8638 8.13853 19.6452 8.35717 19.3755 8.35717H17.3587C17.0891 8.35717 16.8705 8.13857 16.8705 7.86889C16.8705 7.5992 17.0891 7.3806 17.3587 7.3806H19.3755C19.6452 7.3806 19.8638 7.5992 19.8638 7.86889Z"
-                  fill="#FFC107"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_6054_9586">
-                  <rect width="20" height="20" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
-            {t("promote")}:{" "}
-            <span
-              className="text-truncate-1"
-              style={{
-                color: "#23ada4",
-                maxWidth: "400px",
-                display: "inline-block",
-                verticalAlign: "bottom",
-              }}>
-              {selectedEvent?.eventTitle}
-            </span>
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ background: "#1a1a1a", padding: "24px" }}>
-          {loadingPackages ? (
-            <div className="text-center py-5">
-              <Spinner animation="border" variant="primary" />
-              <p className="mt-3" style={{ color: "#999" }}>
-                {t("loading") || "Loading packages..."}
-              </p>
+      {/* ─── Promotion Packages Modal ────────────────────────────────────── */}
+      {showPromoModal && (
+        <div className="oe-scrim" onClick={() => setShowPromoModal(false)}>
+          <div
+            className="oe-sheet"
+            style={{ maxWidth: "560px" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+              <b style={{ fontSize: "18px", fontWeight: 700, color: "var(--bd-white)", fontFamily: "var(--bd-font-ui)" }}>
+                ⭐ {isMn ? "Сурталчилгаа идэвхжүүлэх" : "Promote Event"}
+              </b>
+              <button
+                type="button"
+                onClick={() => setShowPromoModal(false)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "999px",
+                  border: "1px solid var(--bd-border)",
+                  background: "transparent",
+                  color: "var(--bd-gray-400)",
+                  cursor: "pointer",
+                }}
+              >
+                ✕
+              </button>
             </div>
-          ) : promoPackages.length === 0 ? (
-            <p className="text-center py-4" style={{ color: "#999" }}>
-              {t("noPackagesAvailable") ||
-                "No active promotion packages available at the moment."}
+
+            <p style={{ margin: "0 0 16px", fontSize: "13.5px", color: "var(--bd-gray-400)", lineHeight: 1.5 }}>
+              {isMn
+                ? "Нүүр хуудас болон Explore хэсэгт илүү олон хүнд харуулах багцаа сонгоно уу."
+                : "Select a plan to boost visibility on the Discover feed and Homepage."}
             </p>
-          ) : (
-            <>
-              <p style={{ color: "#999", marginBottom: "20px" }}>
-                {t("selectPlanBoost") ||
-                  "Select a plan to boost visibility on the Discover Feed and Homepage."}
-              </p>
-              <Row className="gx-3 gy-3">
+
+            {loadingPackages ? (
+              <div style={{ padding: "30px", textAlign: "center", color: "var(--bd-gray-500)" }}>
+                {isMn ? "Уншиж байна..." : "Loading packages..."}
+              </div>
+            ) : promoPackages.length === 0 ? (
+              <div style={{ padding: "30px", textAlign: "center", color: "var(--bd-gray-500)" }}>
+                {isMn ? "Идэвхтэй багц байхгүй байна." : "No promotion packages available."}
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "12px", marginBottom: "20px" }}>
                 {promoPackages.map((pkg) => {
                   const isSelected = selectedPackage?._id === pkg._id;
                   return (
-                    <Col md={4} xs={12} key={pkg._id}>
-                      <div
-                        onClick={() => setSelectedPackage(pkg)}
-                        style={{
-                          background: isSelected
-                            ? "rgba(35,173,164,0.12)"
-                            : "#242424",
-                          border: `2px solid ${isSelected ? "#23ada4" : "#333"}`,
-                          borderRadius: "16px",
-                          padding: "20px",
-                          cursor: "pointer",
-                          transition: "all 0.25s ease",
-                          height: "100%",
-                        }}>
-                        <h5
-                          className="text-truncate-1"
-                          style={{ color: "#fff", marginBottom: "4px", textTransform: "capitalize" }}>
-                          {pkg.name}
-                        </h5>
-                        <h3 style={{ color: "#23ada4", margin: "8px 0" }}>
-                          ₮{pkg.price?.toLocaleString()}
-                        </h3>
-                        <p
-                          style={{
-                            color: "#999",
-                            fontSize: "13px",
-                            marginBottom: "12px",
-                            textTransform: "capitalize"
-                          }}>
-                          {pkg.durationInDays} {t("daysSuffix") || "days"}
-                        </p>
-                        {pkg.placements?.length > 0 && (
-                          <ul style={{ paddingLeft: "16px", margin: 0, textTransform: "capitalize" }}>
-                            {pkg.placements.map((p, i) => (
-                              <li
-                                key={i}
-                                style={{
-                                  color: "#ccc",
-                                  fontSize: "12px",
-                                  marginBottom: "4px",
-                                }}>
-                                {p}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                        {isSelected && (
-                          <div
-                            style={{
-                              marginTop: "12px",
-                              color: "#23ada4",
-                              fontWeight: 600,
-                              fontSize: "13px",
-                            }}>
-                            ✓ {t("selected") || "Selected"}
-                          </div>
-                        )}
-                      </div>
-                    </Col>
+                    <div
+                      key={pkg._id}
+                      onClick={() => setSelectedPackage(pkg)}
+                      style={{
+                        background: isSelected ? "rgba(35, 173, 164, 0.12)" : "var(--bd-ink-800)",
+                        border: `1.5px solid ${isSelected ? "var(--acc)" : "var(--bd-border)"}`,
+                        borderRadius: "16px",
+                        padding: "16px",
+                        cursor: "pointer",
+                        transition: "all 180ms ease",
+                      }}
+                    >
+                      <b style={{ color: "var(--bd-white)", fontSize: "14px", display: "block", marginBottom: "6px" }}>
+                        {pkg.name}
+                      </b>
+                      <h4 style={{ color: "var(--acc-bright)", margin: "0 0 6px", fontSize: "17px", fontWeight: 700 }}>
+                        ₮{pkg.price?.toLocaleString()}
+                      </h4>
+                      <span style={{ fontSize: "12px", color: "var(--bd-gray-500)", display: "block" }}>
+                        {pkg.durationInDays} {isMn ? "хоног" : "days"}
+                      </span>
+                    </div>
                   );
                 })}
-              </Row>
-
-              {selectedPackage && (
-                <div
-                  style={{
-                    background: "#242424",
-                    border: "1px solid #333",
-                    borderRadius: "12px",
-                    padding: "16px 20px",
-                    marginTop: "24px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}>
-                  <div>
-                    <p style={{ color: "#999", margin: 0, fontSize: "13px" }}>
-                      {t("selectedPlan") || "Selected Plan"}
-                    </p>
-                    <p style={{ color: "#fff", margin: 0, fontWeight: 600 }}>
-                      {selectedPackage.name} — {selectedPackage.durationInDays}{" "}
-                      {t("daysSuffix") || "days"}
-                    </p>
-                  </div>
-                  <h4 style={{ color: "#23ada4", margin: 0 }}>
-                    ₮{selectedPackage.price?.toLocaleString()}
-                  </h4>
-                </div>
-              )}
-            </>
-          )}
-        </Modal.Body>
-        <Modal.Footer
-          style={{
-            background: "#1a1a1a",
-            border: "1px solid #333",
-            gap: "12px",
-          }}>
-          <button
-            className="outline-btn"
-            onClick={closePromoModal}
-            style={{ padding: "10px 24px" }}>
-            {t("discard") || "Cancel"}
-          </button>
-          <button
-            className="custom-btn"
-            onClick={handleCheckout}
-            disabled={!selectedPackage || checkingOut}
-            style={{ minWidth: "140px" }}>
-            {checkingOut ? (
-              <>
-                <Spinner animation="border" size="sm" className="me-2" />
-                {t("submitting")}
-              </>
-            ) : (
-              t("confirmPay") || "Confirm & Pay"
+              </div>
             )}
-          </button>
-        </Modal.Footer>
-      </Modal>
-    </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button
+                type="button"
+                onClick={() => setShowPromoModal(false)}
+                style={{
+                  height: "44px",
+                  padding: "0 20px",
+                  border: "1px solid var(--bd-border-strong)",
+                  borderRadius: "999px",
+                  background: "transparent",
+                  color: "var(--bd-white)",
+                  fontFamily: "var(--bd-font-ui)",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {isMn ? "Болих" : "Cancel"}
+              </button>
+              <button
+                type="button"
+                disabled={!selectedPackage || checkingOut}
+                onClick={handleCheckoutPromo}
+                style={{
+                  height: "44px",
+                  padding: "0 24px",
+                  border: "none",
+                  borderRadius: "999px",
+                  background: "var(--acc)",
+                  color: "var(--bd-white)",
+                  fontFamily: "var(--bd-font-ui)",
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  cursor: selectedPackage ? "pointer" : "not-allowed",
+                  opacity: selectedPackage ? 1 : 0.5,
+                }}
+              >
+                {checkingOut ? (isMn ? "Төлж байна..." : "Processing...") : (isMn ? "Баталгаажуулах" : "Confirm & Pay")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
   );
 }
-
-export default page;
