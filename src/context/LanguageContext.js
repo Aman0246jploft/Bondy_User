@@ -52,6 +52,7 @@ export const LanguageProvider = ({ children }) => {
   const changeLanguage = useCallback(async (lang) => {
     setLanguage(lang);
     localStorage.setItem("app_lang", lang);
+    localStorage.setItem("language", lang);
     localStorage.setItem("manual_lang_switch", "true"); // Flag to prevent override by initial sync if it's still pending
 
     // Sync to backend

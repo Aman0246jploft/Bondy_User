@@ -67,6 +67,56 @@ const STEP_TITLES = [
   { mn: "Хянах", en: "Review" },
 ];
 
+const REFUND_POLICY_MAP = {
+  "no refund": { en: "No Refund", mn: "Буцаан олголтгүй" },
+  "буцаан олголтгүй": { en: "No Refund", mn: "Буцаан олголтгүй" },
+  "буцаалтгүй": { en: "No Refund", mn: "Буцаан олголтгүй" },
+  "буцаалт байхгүй": { en: "No Refund", mn: "Буцаан олголтгүй" },
+  "буцаан олголт байхгүй": { en: "No Refund", mn: "Буцаан олголтгүй" },
+  "1 day before": { en: "1 Day Before", mn: "1 хоногийн өмнө" },
+  "1 хоногийн өмнө": { en: "1 Day Before", mn: "1 хоногийн өмнө" },
+  "1 өдрийн өмнө": { en: "1 Day Before", mn: "1 хоногийн өмнө" },
+  "7 days before": { en: "7 Days Before", mn: "7 хоногийн өмнө" },
+  "7 хоногийн өмнө": { en: "7 Days Before", mn: "7 хоногийн өмнө" },
+  "7 өдрийн өмнө": { en: "7 Days Before", mn: "7 хоногийн өмнө" },
+};
+
+const getCanonicalRefundPolicy = (val) => {
+  if (!val) return "";
+  const key = String(val).trim().toLowerCase();
+  const found = REFUND_POLICY_MAP[key];
+  return found ? found.en : String(val).trim();
+};
+
+const getRefundPolicyDisplay = (val, isMn) => {
+  if (!val) return "";
+  const key = String(val).trim().toLowerCase();
+  const found = REFUND_POLICY_MAP[key];
+  if (found) {
+    return isMn ? found.mn : found.en;
+  }
+  return String(val);
+};
+
+const parseRefundPoliciesList = (rawList, isMn) => {
+  if (!Array.isArray(rawList)) return [];
+  return rawList.map((r) => {
+    const rawStr = (typeof r === "object" && r !== null)
+      ? (r.key || r.value || r.policy || r.title || r.name || "")
+      : String(r);
+    const canonical = getCanonicalRefundPolicy(rawStr);
+    const mnText = REFUND_POLICY_MAP[canonical.toLowerCase()]?.mn || (isMn ? rawStr : canonical);
+    const enText = REFUND_POLICY_MAP[canonical.toLowerCase()]?.en || (isMn ? canonical : rawStr);
+    return {
+      val: canonical,
+      mn: mnText,
+      en: enText,
+      label: isMn ? mnText : enText,
+    };
+  });
+};
+
+
 export default function LearningEditorPage() {
   const router = useRouter();
   const { language } = useLanguage();
@@ -376,21 +426,9 @@ export default function LearningEditorPage() {
 
         // 2. Refund policies from backend API ONLY (no static fallback)
         try {
-          const refundRes = await eventApi.getRefundPolicies();
+          const refundRes = await eventApi.getRefundPolicies(language);
           const rawList = refundRes?.data?.data || refundRes?.data;
-          if (Array.isArray(rawList)) {
-            const list = rawList.map((r) => {
-              if (typeof r === "object" && r !== null) {
-                const val = r.key || r.value || r.policy || r.title || r.name || "";
-                const label = r.label || r.title || r.name || r.policy || val;
-                return { val, label };
-              }
-              return { val: String(r), label: String(r) };
-            });
-            setRefundOptions(list);
-          } else {
-            setRefundOptions([]);
-          }
+          setRefundOptions(parseRefundPoliciesList(rawList, isMn));
         } catch (e) {
           console.warn("Failed to fetch refund policies from API:", e);
           setRefundOptions([]);
@@ -446,7 +484,7 @@ export default function LearningEditorPage() {
                 }))
                 : [],
               price: c.price != null ? String(c.price) : "",
-              refundPolicy: c.refundPolicy || "",
+              refundPolicy: getCanonicalRefundPolicy(c.refundPolicy) || "",
               enrollmentType: "fixedStart",
               isDraft: Boolean(c.isDraft),
             });
@@ -466,25 +504,15 @@ export default function LearningEditorPage() {
   useEffect(() => {
     async function refreshPolicies() {
       try {
-        const refundRes = await eventApi.getRefundPolicies();
+        const refundRes = await eventApi.getRefundPolicies(language);
         const rawList = refundRes?.data?.data || refundRes?.data;
-        if (Array.isArray(rawList)) {
-          const list = rawList.map((r) => {
-            if (typeof r === "object" && r !== null) {
-              const val = r.key || r.value || r.policy || r.title || r.name || "";
-              const label = r.label || r.title || r.name || r.policy || val;
-              return { val, label };
-            }
-            return { val: String(r), label: String(r) };
-          });
-          setRefundOptions(list);
-        }
+        setRefundOptions(parseRefundPoliciesList(rawList, isMn));
       } catch (err) {
         console.warn("Failed to refresh refund policies on language change:", err);
       }
     }
     refreshPolicies();
-  }, [language]);
+  }, [language, isMn]);
 
   // Update Page Title
   useEffect(() => {
@@ -547,7 +575,7 @@ export default function LearningEditorPage() {
     if (formData.price === "" || isNaN(Number(formData.price)) || Number(formData.price) < 0) {
       errs.price = isMn ? "Сургалтын үнийг зөв оруулна уу." : "Please enter a valid price.";
     }
-    if (!formData.refundPolicy) {
+    if (!getCanonicalRefundPolicy(formData.refundPolicy)) {
       errs.refundPolicy = isMn ? "Буцаан олголтын нөхцөл сонгоно уу." : "Refund policy is required.";
     }
 
@@ -883,7 +911,7 @@ export default function LearningEditorPage() {
           seats: Number(b.seats),
         })),
         price: Number(formData.price) || 0,
-        refundPolicy: formData.refundPolicy,
+        refundPolicy: getCanonicalRefundPolicy(formData.refundPolicy) || null,
         enrollmentType: "fixedStart",
         isDraft: true,
       };
@@ -946,7 +974,7 @@ export default function LearningEditorPage() {
           seats: Number(b.seats),
         })),
         price: Number(formData.price),
-        refundPolicy: formData.refundPolicy,
+        refundPolicy: getCanonicalRefundPolicy(formData.refundPolicy) || null,
         enrollmentType: "fixedStart",
         isDraft: false,
       };
@@ -1602,7 +1630,7 @@ export default function LearningEditorPage() {
                 <select
                   className="lw-in"
                   aria-invalid={Boolean(touched[3] && errors.refundPolicy)}
-                  value={formData.refundPolicy}
+                  value={getCanonicalRefundPolicy(formData.refundPolicy)}
                   onChange={(e) => {
                     setFormData((prev) => ({ ...prev, refundPolicy: e.target.value }));
                     setDirty(true);
@@ -1613,7 +1641,7 @@ export default function LearningEditorPage() {
                   </option>
                   {refundOptions.map((opt, i) => (
                     <option key={i} value={opt.val}>
-                      {opt.label}
+                      {isMn ? opt.mn : opt.en}
                     </option>
                   ))}
                 </select>
@@ -1786,7 +1814,7 @@ export default function LearningEditorPage() {
                   </span>
                   <span className="lw-kv2">
                     <span>{isMn ? "Буцаан олголт" : "Refund Policy"}</span>
-                    <span>{formData.refundPolicy || "—"}</span>
+                    <span>{getRefundPolicyDisplay(formData.refundPolicy, isMn) || "—"}</span>
                   </span>
                 </div>
               </div>

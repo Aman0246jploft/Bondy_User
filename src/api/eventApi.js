@@ -20,7 +20,14 @@ const eventApi = {
     getAllAttendees: (eventId, params) => apiClient.get(`/event/attendees/${eventId}`, { params, skipToast: true }),
     getOrganizerStats: () => apiClient.get("/event/organizer/stats", { skipToast: true }),
     updateEvent: (eventId, data) => apiClient.post(`/event/edit/${eventId}`, data),
-    getRefundPolicies: () => apiClient.get("/event/refund-policies", { skipToast: true }),
+    getRefundPolicies: (lang) => {
+        const config = { skipToast: true };
+        if (lang) {
+            config.params = { language: lang };
+            config.headers = { "Accept-Language": lang, "language": lang };
+        }
+        return apiClient.get("/event/refund-policies", config);
+    },
     getEventAnalytics: (eventId, params) => apiClient.get(`/event/analytics/${eventId}`, { params, skipToast: true }),
     getEventsAnalyticsSummary: (params) => apiClient.get("/event/analytics/summary", { params, skipToast: true }),
     deleteDraftEvent: (eventId) => apiClient.post(`/event/delete/${eventId}`),

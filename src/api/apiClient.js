@@ -14,7 +14,7 @@ apiClient.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-        const lang = typeof window !== "undefined" ? (localStorage.getItem("language") || "mn") : "mn";
+        const lang = typeof window !== "undefined" ? (localStorage.getItem("app_lang") || localStorage.getItem("language") || "mn") : "mn";
         config.headers["Accept-Language"] = lang;
         config.headers["language"] = lang;
         return config;
