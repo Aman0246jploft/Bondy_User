@@ -1,13 +1,7 @@
 "use client";
 
-import React from "react";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import UnifiedProfile from "@/components/Profile/UnifiedProfile";
+import OrganizerProfilePage from "../OrganizerProfile/page";
 
 export default function OrganizerPersonalInfo() {
-  return (
-    <ProtectedRoute>
-      <UnifiedProfile forcedRole="ORGANIZER" />
-    </ProtectedRoute>
-  );
+  return <OrganizerProfilePage />;
 }

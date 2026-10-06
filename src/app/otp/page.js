@@ -115,17 +115,11 @@ function OTPContent() {
           );
         }
 
-        const isUnverifiedOrganizerWithBusiness = userRole === "ORGANIZER" && !isApproved && hasBusinessDetails;
-
-        if (!isUnverifiedOrganizerWithBusiness) {
-          if (response?.data?.token) localStorage.setItem("token", response?.data?.token);
-        } else {
-          localStorage.removeItem("token");
-          localStorage.removeItem("userProfile");
-        }
+        // Always store token
+        if (response?.data?.token) localStorage.setItem("token", response?.data?.token);
 
         let shouldShowModal = false;
-        let nextPath = "/";
+        let nextPath = userRole === "ORGANIZER" ? "/OrganizerProfile" : "/";
         try {
           const fullProfileRes = await authApi.getSelfProfile();
           const fullProfile = fullProfileRes?.data?.user || profile;
@@ -133,12 +127,7 @@ function OTPContent() {
 
           if (fullProfile) {
             if (userRole === "ORGANIZER") {
-              if (!hasBusinessDetails) {
-                nextPath = "/completeprofile";
-              } else {
-                nextPath = "/";
-                if (!isApproved) shouldShowModal = true;
-              }
+              nextPath = "/OrganizerProfile";
             } else {
               if (!fullProfile?.firstName || !fullProfile?.lastName) {
                 nextPath = "/completeprofile";

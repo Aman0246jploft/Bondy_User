@@ -103,9 +103,8 @@ export default function Page() {
         if (profile) localStorage.setItem("userProfile", JSON.stringify(profile));
         const isOrganizer = profile?.roleId === 2 || profile?.organizerVerificationStatus;
         if (isOrganizer) {
-          if (!profile?.businessName || !profile?.businessCategory) return router.push("/completeprofile");
-          if (!(profile?.hasBeenApproved || profile?.isVerified)) return router.push("/completeprofile");
-          router.push("/");
+          router.push("/OrganizerProfile");
+          return;
         } else {
           if (!profile?.firstName || !profile?.lastName) return router.push("/completeprofile");
           if (!profile?.categories || profile?.categories.length === 0) return router.push("/insterest");
