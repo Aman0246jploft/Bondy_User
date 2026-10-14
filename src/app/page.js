@@ -576,7 +576,8 @@ export default function HomePage() {
                     const isActive = idx === slideIndex;
                     const title = language === "mn" ? (slide.titleMn || slide.title) : slide.title;
                     const date = language === "mn" ? (slide.dateMn || slide.date) : slide.date;
-                    const price = language === "mn" ? slide.price : (slide.priceEn || slide.price);
+                    const rawPrice = language === "mn" ? slide.price : (slide.priceEn || slide.price);
+                    const price = slide.priceNum > 0 ? t("priceFrom", { amount: rawPrice }) : rawPrice;
                     return (
                       <article key={slide.id} className={`bd-hero-slide ${isActive ? "active" : ""}`}>
                         <div className="bd-hero-card">

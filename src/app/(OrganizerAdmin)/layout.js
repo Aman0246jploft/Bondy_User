@@ -13,11 +13,13 @@ import "./organizer-admin.css";
 export default function RootLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [editorQuery, setEditorQuery] = useState("");
   const { language, changeLanguage, t } = useLanguage();
   const isMn = language === "mn";
 
   const [authorized, setAuthorized] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [profile, setProfile] = useState(() => {
     if (typeof window !== "undefined") {
       try {
@@ -27,6 +29,23 @@ export default function RootLayout({ children }) {
     }
     return null;
   });
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userProfile");
+    setUserMenuOpen(false);
+    router.push("/login");
+  };
+
+  useEffect(() => {
+    const handleClose = (e) => {
+      if (!e.target.closest("[data-profile-menuwrap]")) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClose);
+    return () => document.removeEventListener("click", handleClose);
+  }, []);
 
   useEffect(() => {
     document.title = "Bondy - Organizer Portal";
@@ -82,6 +101,9 @@ export default function RootLayout({ children }) {
   // Close mobile drawer on route changes
   useEffect(() => {
     setMobileMenuOpen(false);
+    if (pathname.includes("/BasicInfo")) {
+      setEditorQuery(window.location.search || "");
+    }
   }, [pathname]);
 
   const getPageTitle = () => {
@@ -94,11 +116,23 @@ export default function RootLayout({ children }) {
     if (pathname.includes("/EventsManagement") || pathname.includes("/EventDetailOrganiser")) {
       return isMn ? "Эвент" : "Events";
     }
-    if (pathname.includes("/CoursesManagement") || pathname.includes("/CourseDetailOrganiser")) {
-      return isMn ? "Сургалт" : "Course";
+    if (pathname.includes("/BasicInfo")) {
+      const q = new URLSearchParams(editorQuery);
+      if (q.get("mode") === "draft") return isMn ? "Эвентийн ноорог" : "Event draft";
+      if (q.get("eventId")) return isMn ? "Эвент засах" : "Edit event";
+      return isMn ? "Эвент үүсгэх" : "Create event";
+    }
+    if (pathname.includes("/CoursesManagement")) {
+      return t("learningManagement");
+    }
+    if (pathname.includes("/CourseDetailOrganiser")) {
+      return t("learningManagement");
     }
     if (pathname.includes("/Staff")) {
-      return isMn ? "Ажилтнууд" : "Staff";
+      return t("stTitle");
+    }
+    if (pathname.includes("/OrganizerCustomerBookings") || pathname.includes("/OrganizerBookingDetail")) {
+      return t("obNav");
     }
     if (pathname.includes("/Message")) {
       return isMn ? "Зурвас" : "Messages";
@@ -122,7 +156,7 @@ export default function RootLayout({ children }) {
       return isMn ? "Тохиргоо" : "Settings";
     }
     if (pathname.includes("/SupportTickets")) {
-      return isMn ? "Тусламж" : "Help";
+      return t("hcTitle");
     }
     return isMn ? "Зохион байгуулагч" : "Organizer Portal";
   };
@@ -155,8 +189,8 @@ export default function RootLayout({ children }) {
             position: "sticky",
             top: 0,
             zIndex: 40,
-            background: "rgba(11, 11, 11, 0.92)",
-            backdropFilter: "blur(20px) saturate(140%)",
+            background: "rgba(11, 11, 11, 0.86)",
+            backdropFilter: "blur(22px) saturate(150%)",
             borderBottom: "1px solid var(--bd-border-soft)",
           }}
         >
@@ -165,11 +199,12 @@ export default function RootLayout({ children }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              gap: "16px",
-              padding: "16px clamp(20px, 2.5vw, 36px)",
+              gap: "20px",
+              flexWrap: "wrap",
+              padding: "15px clamp(18px, 2.4vw, 34px)",
             }}
           >
-            {/* Title */}
+            {/* Title & Subtitle */}
             <div style={{ minWidth: 0 }}>
               <h1
                 className="og-h1"
@@ -178,17 +213,32 @@ export default function RootLayout({ children }) {
                   fontFamily: "var(--bd-font-ui)",
                   fontSize: "22px",
                   fontWeight: 700,
-                  lineHeight: 1.2,
+                  lineHeight: 1.15,
                   letterSpacing: "-0.018em",
                   color: "var(--bd-white)",
                 }}
               >
                 {title}
               </h1>
+              {!pathname.includes("/Notifications") && !pathname.includes("/SupportTickets") && !pathname.includes("/Settings") && (
+                <p style={{ margin: "5px 0 0", fontSize: "13px", color: "var(--bd-gray-500)" }}>
+                  {pathname.includes("/Staff")
+                    ? t("stPageSub")
+                    : pathname.includes("/Earnings")
+                      ? t("pyPageSub")
+                      : pathname.includes("/Analytics")
+                        ? t("anPageSub")
+                        : pathname.includes("/Verifiedprofile")
+                          ? t("vfPageSub")
+                          : pathname.includes("/MyTicketsOrganiser") || pathname.includes("/TicketDetailsOrganiser")
+                            ? t("moPageSub")
+                            : `${orgName} · ${isMn ? "ерөнхий тойм" : "overview"}`}
+                </p>
+              )}
             </div>
 
             {/* Right Header Actions */}
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "11px", flexShrink: 0 }}>
               {/* Mobile Burger Toggle */}
               <button
                 type="button"
@@ -201,30 +251,6 @@ export default function RootLayout({ children }) {
                   <path d="M1 1h16M1 7h16M1 13h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </button>
-
-              {/* Bell Icon Notification Button */}
-              <Link
-                href="/Notifications"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "50%",
-                  border: "1px solid var(--bd-border)",
-                  background: "var(--bd-ink-850)",
-                  color: "var(--bd-gray-300)",
-                  textDecoration: "none",
-                  transition: "all 0.2s",
-                }}
-                title={isMn ? "Мэдэгдэл" : "Notifications"}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                </svg>
-              </Link>
 
               {/* Language Switcher Pill */}
               <div
@@ -253,7 +279,7 @@ export default function RootLayout({ children }) {
                     color: isMn ? "var(--bd-white)" : "var(--bd-gray-400)",
                     fontFamily: "var(--bd-font-ui)",
                     fontSize: "12px",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     cursor: "pointer",
                     transition: "all 0.2s",
                   }}
@@ -273,7 +299,7 @@ export default function RootLayout({ children }) {
                     color: !isMn ? "var(--bd-white)" : "var(--bd-gray-400)",
                     fontFamily: "var(--bd-font-ui)",
                     fontSize: "12px",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     cursor: "pointer",
                     transition: "all 0.2s",
                   }}
@@ -282,31 +308,220 @@ export default function RootLayout({ children }) {
                 </button>
               </div>
 
-              {/* Organizer Profile Pill */}
+              {/* Bell Icon Notification Button */}
               <Link
-                href="/OrganizerProfile"
-                className="og-org"
-                style={{ textDecoration: "none" }}
-                title={orgName}
+                href="/Notifications"
+                data-nav="notifications"
+                role="button"
+                tabIndex={0}
+                aria-label="Мэдэгдэл"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "38px",
+                  height: "38px",
+                  borderRadius: "999px",
+                  background: "var(--bd-ink-850)",
+                  border: "1px solid var(--bd-border)",
+                  color: "var(--bd-gray-400)",
+                  position: "relative",
+                  cursor: "pointer",
+                  textDecoration: "none",
+                  transition: "all 0.2s",
+                }}
+                title={isMn ? "Мэдэгдэл" : "Notifications"}
               >
-                <img
-                  src={avatarUrl}
-                  alt={orgName}
-                  className="og-org-avatar"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "/assets/img/b5e94e90c3d8df6c.jpg";
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 16V11a6 6 0 0 0-12 0v5l-1.5 2.2h15Z" />
+                  <path d="M10 19.5a2.2 2.2 0 0 0 4 0" />
+                </svg>
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "9px",
+                    width: "7px",
+                    height: "7px",
+                    borderRadius: "50%",
+                    background: "var(--acc-bright)",
+                    boxShadow: "0 0 0 2px var(--bd-ink-850)",
                   }}
                 />
-                <span className="og-org-txt" style={{ display: "flex", flexDirection: "column", gap: "1px", minWidth: 0 }}>
-                  <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--bd-white)", whiteSpace: "nowrap" }}>
-                    {orgName}
-                  </span>
-                </span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--bd-gray-500)", marginLeft: "2px" }}>
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
               </Link>
+
+              {/* Organizer Profile Pill with Dropdown Menu */}
+              <div style={{ position: "relative" }} data-profile-menuwrap>
+                <button
+                  type="button"
+                  className="og-org"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setUserMenuOpen((prev) => !prev);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "5px 12px 5px 5px",
+                    borderRadius: "999px",
+                    background: "var(--bd-ink-850)",
+                    border: "1px solid var(--bd-border)",
+                    cursor: "pointer",
+                    color: "inherit",
+                    textAlign: "left",
+                  }}
+                  aria-haspopup="true"
+                  aria-expanded={userMenuOpen}
+                  title={orgName}
+                >
+                  <img
+                    src={avatarUrl}
+                    alt={orgName}
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "999px",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/assets/img/b5e94e90c3d8df6c.jpg";
+                    }}
+                  />
+                  <span className="og-org-txt" style={{ display: "flex", flexDirection: "column", gap: "1px", minWidth: 0 }}>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--bd-white)", whiteSpace: "nowrap" }}>
+                      {orgName}
+                    </span>
+                    <span style={{ fontSize: "11px", color: "var(--acc-bright)" }}>
+                      {profile?.organizerVerificationStatus === "APPROVED" || profile?.isVerified
+                        ? (isMn ? "Баталгаажсан" : "Verified")
+                        : (isMn ? "Зохион байгуулагч" : "Organizer")}
+                    </span>
+                  </span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      color: "var(--bd-gray-500)",
+                      marginLeft: "2px",
+                      transform: userMenuOpen ? "rotate(180deg)" : "none",
+                      transition: "transform 180ms ease",
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {/* Dropdown Menu Matching Prototype Image 1 */}
+                {userMenuOpen && (
+                  <div
+                    className="ogn-menu"
+                    data-open="1"
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 8px)",
+                      right: 0,
+                      minWidth: "200px",
+                      boxSizing: "border-box",
+                      padding: "6px",
+                      border: "1px solid var(--bd-border, #303030)",
+                      borderRadius: "16px",
+                      background: "var(--bd-ink-850, #161616)",
+                      boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                      zIndex: 130,
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Link
+                      href="/OrganizerProfile"
+                      className="ogn-mi"
+                      onClick={() => setUserMenuOpen(false)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        width: "100%",
+                        boxSizing: "border-box",
+                        minHeight: "40px",
+                        padding: "0 12px",
+                        borderRadius: "10px",
+                        color: "var(--bd-gray-200, #e6e6e6)",
+                        fontFamily: "var(--bd-font-ui)",
+                        fontSize: "14px",
+                        fontWeight: 500,
+                        textDecoration: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {isMn ? "Профайл" : "Profile"}
+                    </Link>
+                    <Link
+                      href="/Settings"
+                      className="ogn-mi"
+                      onClick={() => setUserMenuOpen(false)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        width: "100%",
+                        boxSizing: "border-box",
+                        minHeight: "40px",
+                        padding: "0 12px",
+                        borderRadius: "10px",
+                        color: "var(--bd-gray-200, #e6e6e6)",
+                        fontFamily: "var(--bd-font-ui)",
+                        fontSize: "14px",
+                        fontWeight: 500,
+                        textDecoration: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {isMn ? "Тохиргоо" : "Settings"}
+                    </Link>
+                    <span
+                      style={{
+                        height: "1px",
+                        flexShrink: 0,
+                        margin: "4px 8px",
+                        background: "var(--bd-border-soft, rgba(255,255,255,0.08))",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="ogn-mi ogn-mi-danger"
+                      onClick={handleLogout}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        width: "100%",
+                        boxSizing: "border-box",
+                        minHeight: "40px",
+                        padding: "0 12px",
+                        border: "none",
+                        borderRadius: "10px",
+                        background: "transparent",
+                        color: "#FF5A5A",
+                        fontFamily: "var(--bd-font-ui)",
+                        fontSize: "14px",
+                        fontWeight: 500,
+                        textAlign: "left",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {isMn ? "Гарах" : "Log out"}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -325,16 +540,19 @@ export default function RootLayout({ children }) {
               { id: "dash", label: isMn ? "Хянах самбар" : "Dashboard", href: "/Dashboard" },
               { id: "events", label: isMn ? "Эвент" : "Event", href: "/EventsManagement" },
               { id: "learning", label: isMn ? "Сургалт" : "Course", href: "/CoursesManagement" },
+              { id: "bookings", label: t("obNav"), href: "/OrganizerCustomerBookings" },
               { id: "staff", label: isMn ? "Ажилтнууд" : "Staff", href: "/Staff" },
               { id: "messages", label: isMn ? "Зурвас" : "Messages", href: "/Message" },
-              { id: "payouts", label: isMn ? "Орлого" : "Earnings & payouts", href: "/Earnings" },
+              { id: "payouts", label: isMn ? "Орлого ба татан авалт" : "Earnings & payouts", href: "/Earnings" },
               { id: "analytics", label: isMn ? "Аналитик" : "Analytics", href: "/Analytics" },
               { id: "verify", label: isMn ? "Баталгаажуулалт" : "Verification", href: "/Verifiedprofile" },
-              { id: "myorders", label: isMn ? "Захиалга" : "My bookings", href: "/MyTicketsOrganiser" },
+              { id: "myorders", label: isMn ? "Миний захиалга" : "My bookings", href: "/MyTicketsOrganiser" },
               { id: "profile", label: isMn ? "Профайл" : "Profile", href: "/OrganizerProfile" },
               { id: "notifications", label: isMn ? "Мэдэгдэл" : "Notifications", href: "/Notifications" },
             ].map((tab) => {
-              const active = pathname === tab.href || pathname.startsWith(tab.href);
+              const active = tab.id === "bookings"
+                ? pathname.startsWith("/OrganizerCustomerBookings") || pathname.startsWith("/OrganizerBookingDetail")
+                : pathname === tab.href || pathname.startsWith(tab.href);
               return (
                 <Link
                   key={tab.id}
@@ -364,17 +582,34 @@ export default function RootLayout({ children }) {
           </div>
         </header>
 
-        {/* Main Content Area: spans full available width, no centered narrow margin */}
+        {/* Main Content Area */}
         <main
           data-screen-label={title}
           style={{
             flex: 1,
-            padding: "20px clamp(20px, 2.5vw, 36px) 60px",
+            padding: "clamp(20px, 2.4vw, 30px) clamp(18px, 2.4vw, 34px) clamp(48px, 4vw, 64px)",
+            background: "radial-gradient(900px 320px at 12% -6%, rgba(35, 173, 164, 0.06), transparent 68%)",
             minWidth: 0,
             width: "100%",
             boxSizing: "border-box",
           }}
         >
+          {/* Mobile Back Bar */}
+          <div className="dh-mobbar">
+            <button
+              type="button"
+              className="dh-mobback"
+              onClick={() => router.back()}
+              aria-label={isMn ? "Буцах" : "Back"}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <span className="dh-mobbarT">{title}</span>
+            <span className="dh-mobbar-sp" />
+          </div>
+
           <EventProvider>{children}</EventProvider>
         </main>
       </div>

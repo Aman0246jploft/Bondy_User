@@ -24,6 +24,7 @@ const authApi = {
     verifyUniversalOtp: (data) => apiClient.post("/user/verify-otp", data),
     resendUniversalOtp: (data) => apiClient.post("/user/resendOtp", data),
     getFaqs: () => apiClient.get("/faq/list", { skipToast: true }),
+    getFaqTopics: () => apiClient.get("/faq/topics", { skipToast: true }),
     getGlobalSetting: (key) => apiClient.get(`/globalsetting/${key}`, { skipToast: true }),
     getUserProfileById: (userId) => apiClient.get(`/user/profile/${userId}`, { skipToast: true }),
     followUser: (data) => apiClient.post("/follow/create", data),

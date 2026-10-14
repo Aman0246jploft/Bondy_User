@@ -1,7 +1,7 @@
 import apiClient from "./apiClient";
 
 const reportUserApi = {
-  reportUser: (data) => apiClient.post("/report/create", data),
+  reportUser: (data, config) => apiClient.post("/report/create", data, config),
 };
 
 export default reportUserApi;

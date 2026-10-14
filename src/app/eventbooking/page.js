@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import PayNow from "@/components/Modal/PayNow";
+import BookingConfirmed from "@/components/BookingConfirmed";
 import { useLanguage } from "@/context/LanguageContext";
 import eventApi from "@/api/eventApi";
 import courseApi from "@/api/courseApi";
@@ -44,6 +44,7 @@ function CheckoutContent() {
   const eventId = searchParams.get("eventId");
   const courseId = searchParams.get("id") || searchParams.get("courseId");
   const scheduleId = searchParams.get("scheduleId");
+  const ticketSelection = searchParams.get("tickets");
 
   const [bookingItem, setBookingItem] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -80,7 +81,7 @@ function CheckoutContent() {
   const [qpayPolling, setQpayPolling] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
-  const [modalShow, setModalShow] = useState(false);
+  const [paidBooking, setPaidBooking] = useState(null);
 
   const { t, language } = useLanguage();
 
@@ -102,6 +103,13 @@ function CheckoutContent() {
             if (evt.tickets && evt.tickets.length > 0) {
               evt.tickets.forEach((tk, idx) => {
                 initial[tk._id || idx] = isFree && idx === 0 ? 1 : 0;
+              });
+            }
+            if (ticketSelection) {
+              ticketSelection.split(",").forEach((pair) => {
+                const [id, qty] = pair.split(":");
+                const n = Number(qty);
+                if (id && n > 0) initial[id] = n;
               });
             }
             setSelectedTickets(initial);
@@ -138,13 +146,13 @@ function CheckoutContent() {
     if (eventId || courseId) {
       fetchData();
     }
-  }, [eventId, courseId, scheduleId]);
+  }, [eventId, courseId, scheduleId, ticketSelection]);
 
   // Set document title
   useEffect(() => {
     if (bookingItem?.eventTitle || bookingItem?.courseTitle || bookingItem?.title) {
       const name = bookingItem.eventTitle || bookingItem.courseTitle || bookingItem.title;
-      document.title = `${name} · ${language === "mn" ? "Захиалга" : "Checkout"} · Bondy`;
+      document.title = `${name} · ${t("ckBooking")} · Bondy`;
     }
   }, [bookingItem, language]);
 
@@ -302,7 +310,7 @@ function CheckoutContent() {
           if (res?.status) {
             if (res.data?.status === "PAID") {
               setQpayPolling(false);
-              setModalShow(true);
+              setPaidBooking(res.data);
               clearInterval(intervalId);
             } else if (res.data?.status === "REFUND_INITIATED") {
               setQpayPolling(false);
@@ -328,7 +336,7 @@ function CheckoutContent() {
       });
       if (res?.status && res.data?.status === "PAID") {
         setQpayPolling(false);
-        setModalShow(true);
+        setPaidBooking(res.data);
       } else {
         toast(language === "mn" ? "Төлбөр хүлээгдэж байна…" : "Waiting for payment confirmation…", { icon: "⏳" });
       }
@@ -405,18 +413,20 @@ function CheckoutContent() {
       setTransactionId(txId);
 
       const isFree = priceBreakdown.totalAmount === 0;
+      const devInstantPay = process.env.NEXT_PUBLIC_DEV_INSTANT_PAY === "true";
 
-      if (isFree) {
-        // Free enrollment confirmation
-        if (Array.isArray(txId)) {
-          for (const subTx of txId) {
-            await bookingApi.confirmPayment({ transactionId: subTx });
+      if (isFree || devInstantPay) {
+        const ids = Array.isArray(txId) ? txId : (txId ? [txId] : []);
+        const tickets = [];
+        let transaction = null;
+        for (const subTx of ids) {
+          const confirmed = await bookingApi.confirmPayment({ transactionId: subTx });
+          if (confirmed?.status) {
+            transaction = confirmed.data?.transaction || transaction;
+            tickets.push(...(confirmed.data?.tickets || []));
           }
-        } else if (txId) {
-          await bookingApi.confirmPayment({ transactionId: txId });
         }
-        setModalShow(true);
-        toast.success(language === "mn" ? "Бүртгэл амжилттай баталгаажлаа!" : "Registration confirmed!");
+        if (transaction) setPaidBooking({ transaction, tickets });
       } else {
         // QPay Payment Flow
         const qp = initRes.data?.qpay || initRes.data?.transaction?.qpayData;
@@ -496,6 +506,26 @@ function CheckoutContent() {
     : (bookingItem.currentSchedule ? `${bookingItem.currentSchedule.days?.join(", ") || ""} · ${bookingItem.currentSchedule.startTime || ""}` : (bookingItem.duration || ""));
   const venueText = bookingItem.venueName || (bookingItem.venueAddress?.city ? `${bookingItem.venueAddress.city}${bookingItem.venueAddress.address ? `, ${bookingItem.venueAddress.address}` : ""}` : (bookingItem.venueAddress?.address || "Улаанбаатар"));
   const backUrl = isEvent ? `/eventDetails?id=${bookingItem._id}` : `/programDetails?id=${bookingItem._id}`;
+
+  if (paidBooking) {
+    const batch = (bookingItem.batches || []).find((b) => String(b._id) === String(selectedBatchId));
+    const place = bookingItem.venueName || bookingItem.venueAddress?.address || "";
+    return (
+      <div style={{ width: "100%", background: "var(--bd-ink-900, #0D0D0D)", minHeight: "100vh", color: "#fff", display: "flex", flexDirection: "column" }}>
+        <Header />
+        <BookingConfirmed
+          item={bookingItem}
+          isEvent={isEvent}
+          whenText={formattedDate}
+          whereText={place}
+          transaction={paidBooking.transaction}
+          tickets={paidBooking.tickets}
+          optionFallback={batch?.batchName || ""}
+        />
+        <Footer />
+      </div>
+    );
+  }
 
   const isFree = priceBreakdown.totalAmount === 0 && (isEvent ? Object.values(selectedTickets).some((q) => q > 0) : true);
   const totalQuantity = isEvent ? Object.values(selectedTickets).reduce((a, b) => a + b, 0) : qty;
@@ -594,7 +624,7 @@ function CheckoutContent() {
             </svg>
           </Link>
           <span className="ck-mobbarT">
-            {isEvent ? (language === "mn" ? "Тасалбар сонгох" : "Select Tickets") : (language === "mn" ? "Төлбөр төлөх" : "Checkout")}
+            {isEvent ? t("ckBookingSummary") : (language === "mn" ? "Төлбөр төлөх" : "Checkout")}
           </span>
           <span className="ck-mobbar-sp" />
         </div>
@@ -617,11 +647,11 @@ function CheckoutContent() {
           </Link>
           <span>/</span>
           <Link href={backUrl} style={{ color: "var(--bd-gray-600, #979797)", textDecoration: "none" }}>
-            {isEvent ? (language === "mn" ? "Эвент" : "Events") : (language === "mn" ? "Сургалт" : "Courses")}
+            {isEvent ? t("ckEvent") : (language === "mn" ? "Сургалт" : "Courses")}
           </Link>
           <span>/</span>
           <span style={{ color: "var(--bd-gray-400, #BCC8C8)" }}>
-            {language === "mn" ? "Захиалга" : "Checkout"}
+            {t("ckBooking")}
           </span>
         </nav>
 
@@ -639,7 +669,7 @@ function CheckoutContent() {
               color: "var(--bd-white, #FFFFFF)",
             }}
           >
-            {isEvent ? (language === "mn" ? "Тасалбар сонгох" : "Select Tickets") : (language === "mn" ? "Төлбөр төлөх" : "Checkout")}
+            {isEvent ? t("ckBookingSummary") : (language === "mn" ? "Төлбөр төлөх" : "Checkout")}
           </h1>
         </div>
 
@@ -710,7 +740,9 @@ function CheckoutContent() {
               </div>
             </section>
 
-            {/* 2. Selection / Tickets Card */}
+            {/* Ticket picker stays in the file and is not shown.
+                Tickets are chosen on the event page, matching the checkout HTML.
+                Inner notes use line comments so this block stays one comment.
             <section
               style={{
                 padding: 20,
@@ -725,7 +757,7 @@ function CheckoutContent() {
                 </h2>
               </div>
 
-              {/* Event Ticket Tiers */}
+              // Event Ticket Tiers
               {isEvent && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {bookingItem.tickets && bookingItem.tickets.length > 0 ? (
@@ -830,7 +862,7 @@ function CheckoutContent() {
                 </div>
               )}
 
-              {/* Course Batch / Passes Options */}
+              // Course Batch / Passes Options
               {!isEvent && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {bookingItem.batches && bookingItem.batches.length > 0 ? (
@@ -891,7 +923,7 @@ function CheckoutContent() {
                     </div>
                   )}
 
-                  {/* Course Quantity Stepper */}
+                  // Course Quantity Stepper
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--bd-border-soft, rgba(255,255,255,.08))" }}>
                     <span style={{ fontSize: 15, fontWeight: 700, color: "var(--bd-white)" }}>
                       {language === "mn" ? "Оролцогчийн тоо" : "Participants"}
@@ -920,6 +952,7 @@ function CheckoutContent() {
                 </div>
               )}
             </section>
+            */}
 
             {/* 3. Coupon Code Section */}
             <section
@@ -931,7 +964,7 @@ function CheckoutContent() {
               }}
             >
               <h2 style={{ margin: "0 0 14px", fontFamily: "var(--bd-font-ui)", fontSize: 20, fontWeight: 700, letterSpacing: "-.01em", color: "var(--bd-white, #FFFFFF)" }}>
-                {isEvent ? (language === "mn" ? "Купон код" : "Coupon code") : (language === "mn" ? "Промо код" : "Promo code")}
+                {isEvent ? t("ckCoupon") : t("ckPromo")}
               </h2>
 
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -993,9 +1026,7 @@ function CheckoutContent() {
                   onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--acc)")}
                   onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--bd-border-strong)")}
                 >
-                  {applyingPromo
-                    ? (language === "mn" ? "Шалгаж байна…" : "Checking…")
-                    : (language === "mn" ? "Ашиглах" : "Apply")}
+                  {applyingPromo ? t("ckChecking") : t("ckApply")}
                 </button>
               </div>
 
@@ -1024,7 +1055,7 @@ function CheckoutContent() {
                 }}
               >
                 <h2 style={{ margin: "0 0 14px", fontFamily: "var(--bd-font-ui)", fontSize: 20, fontWeight: 700, letterSpacing: "-.01em", color: "var(--bd-white, #FFFFFF)" }}>
-                  {language === "mn" ? "Төлбөрийн хэлбэр" : "Payment Method"}
+                  {t("ckPaymentMethod")}
                 </h2>
 
                 <div
@@ -1061,7 +1092,7 @@ function CheckoutContent() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1, minWidth: 0 }}>
                     <b style={{ fontSize: 15, fontWeight: 700, color: "var(--bd-white)" }}>QPay</b>
                     <span style={{ fontSize: 12.5, color: "var(--bd-gray-600)" }}>
-                      {language === "mn" ? "Банкны аппаараа QR уншуулж төлнө" : "Scan QR code via your banking app"}
+                      {t("ckQpayHint")}
                     </span>
                   </div>
                 </div>
@@ -1196,7 +1227,7 @@ function CheckoutContent() {
             }}
           >
             <h2 style={{ margin: 0, fontFamily: "var(--bd-font-ui)", fontSize: 19, fontWeight: 700, color: "var(--bd-white, #FFFFFF)" }}>
-              {language === "mn" ? "Төлбөрийн задаргаа" : "Price breakdown"}
+              {t("ckPriceBreakdown")}
             </h2>
 
             {/* Line Items */}
@@ -1318,10 +1349,6 @@ function CheckoutContent() {
               </b>
             </div>
 
-            <p style={{ margin: 0, fontSize: 12.5, color: "var(--bd-gray-500)" }}>
-              {language === "mn" ? "НӨАТ багтсан болно." : "VAT included."}
-            </p>
-
             {/* Main Action Button */}
             <button
               type="button"
@@ -1334,7 +1361,7 @@ function CheckoutContent() {
                 border: "none",
                 borderRadius: 14,
                 background: canProceed ? "var(--acc)" : "var(--bd-ink-700)",
-                color: canProceed ? "#04211F" : "var(--bd-gray-600)",
+                color: canProceed ? "#fff" : "var(--bd-gray-600)",
                 fontFamily: "var(--bd-font-ui)",
                 fontSize: 15.5,
                 fontWeight: 700,
@@ -1353,19 +1380,15 @@ function CheckoutContent() {
                   <span>{language === "mn" ? "Боловсруулж байна…" : "Processing…"}</span>
                 </>
               ) : isFree ? (
-                language === "mn" ? "Үнэгүй бүртгэлээ баталгаажуулах" : "Confirm Free Registration"
+                t("ckConfirmFree")
               ) : canProceed ? (
-                language === "mn" ? `₮${priceBreakdown.totalAmount.toLocaleString()} төлөх` : `Pay ₮${priceBreakdown.totalAmount.toLocaleString()}`
+                t("ckPayAmount", { amount: priceBreakdown.totalAmount.toLocaleString() })
               ) : (
                 language === "mn" ? "Тасалбар сонгоно уу" : "Select Tickets"
               )}
             </button>
 
-            <p style={{ margin: "2px 0 0", fontSize: 12.5, lineHeight: 1.5, color: "var(--bd-gray-600)" }}>
-              {language === "mn"
-                ? "Төлбөр баталгаажмагц тасалбар «Миний захиалга» хэсэгт үүснэ."
-                : "Your ticket will be available in 'My Tickets' upon confirmation."}
-            </p>
+
           </aside>
         </div>
 
@@ -1395,9 +1418,6 @@ function CheckoutContent() {
           </button>
         </div>
       </main>
-
-      {/* Confirmation Success Modal */}
-      <PayNow show={modalShow} onHide={() => setModalShow(false)} />
 
       {/* Footer */}
       <Footer />

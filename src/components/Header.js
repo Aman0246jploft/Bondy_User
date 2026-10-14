@@ -201,41 +201,44 @@ export default function BondyHeader() {
               </button>
 
               {isProfileOpen && (
-                <div className="bd-profile-dropdown">
-                  <div className="bd-profile-dropdown-header">
-                    <div className="bd-profile-dropdown-name">
-                      {userProfile.businessName ||
-                        userProfile.fullname ||
-                        userProfile.firstName ||
-                        "User"}
-                    </div>
-                    <div className="bd-profile-dropdown-role">
-                      {userProfile.role || (isOrganizer ? "ORGANIZER" : "CUSTOMER")}
-                    </div>
-                  </div>
-
-                  <Link
-                    href={
-                      isOrganizer
-                        ? "/OrganizerPersonalInfo"
-                        : userProfile.role === "CUSTOMER"
-                        ? "/Personalinfo"
-                        : "/completeprofile"
-                    }
-                    onClick={() => setIsProfileOpen(false)}
-                  >
-                    {t("profile") || "Profile"}
-                  </Link>
-
-                  {isOrganizer && (
-                    <Link href="/Dashboard" onClick={() => setIsProfileOpen(false)}>
-                      {t("organizerSection") || "Dashboard"}
-                    </Link>
+                <div className={`bd-profile-dropdown${isOrganizer ? " is-org" : ""}`}>
+                  {isOrganizer ? (
+                    <>
+                      <Link href="/Dashboard" className="bd-menu-org" onClick={() => setIsProfileOpen(false)}>
+                        {t("organizerSection")}
+                      </Link>
+                      <Link href="/Settings" onClick={() => setIsProfileOpen(false)}>
+                        {t("settings")}
+                      </Link>
+                      <span className="bd-menu-rule" />
+                      <button type="button" className="logout-btn" onClick={handleLogout}>
+                        {t("logout")}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bd-profile-dropdown-header">
+                        <div className="bd-profile-dropdown-name">
+                          {userProfile.businessName ||
+                            userProfile.fullname ||
+                            userProfile.firstName ||
+                            "User"}
+                        </div>
+                        <div className="bd-profile-dropdown-role">
+                          {userProfile.role || "CUSTOMER"}
+                        </div>
+                      </div>
+                      <Link
+                        href={userProfile.role === "CUSTOMER" ? "/Personalinfo" : "/completeprofile"}
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        {t("profile")}
+                      </Link>
+                      <button type="button" className="logout-btn" onClick={handleLogout}>
+                        {t("logout")}
+                      </button>
+                    </>
                   )}
-
-                  <button type="button" className="logout-btn" onClick={handleLogout}>
-                    {t("logout") || "Log out"}
-                  </button>
                 </div>
               )}
             </div>
@@ -301,19 +304,24 @@ export default function BondyHeader() {
 
           {userProfile ? (
             <>
-              <Link
-                href={
-                  isOrganizer
-                    ? "/OrganizerPersonalInfo"
-                    : userProfile.role === "CUSTOMER"
-                    ? "/Personalinfo"
-                    : "/completeprofile"
-                }
-                className="bd-mob-link"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {t("profile") || "Profile"}
-              </Link>
+              {isOrganizer ? (
+                <>
+                  <Link href="/Dashboard" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
+                    {t("organizerSection")}
+                  </Link>
+                  <Link href="/Settings" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
+                    {t("settings")}
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  href={userProfile.role === "CUSTOMER" ? "/Personalinfo" : "/completeprofile"}
+                  className="bd-mob-link"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {t("profile")}
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={handleLogout}

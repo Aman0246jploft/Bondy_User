@@ -38,7 +38,8 @@ export default function DateRangeCalendarPopover({
       const p = String(initialFrom).split("-").map(Number);
       return new Date(p[0], p[1] - 1, 1);
     }
-    return new Date(2026, 8, 1); // Sep 2026 as in prototype
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
   });
 
   const [dateA, setDateA] = useState(() => {

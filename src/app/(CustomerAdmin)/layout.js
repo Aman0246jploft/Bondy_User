@@ -57,7 +57,7 @@ export default function RootLayout({ children }) {
     if (pathname.includes("/Messagee")) return t("messages") || "Messages";
     if (pathname.includes("/MyFavorite")) return t("myFavorite") || "Saved & Favorites";
     if (pathname.includes("/CustomerReferral")) return t("referral") || "Referrals & Invites";
-    if (pathname.includes("/SupportTicketsC")) return t("supportTickets") || "Support & Help";
+    if (pathname.includes("/SupportTicketsC")) return t("hcTitle");
     if (pathname.includes("/Notification")) return t("notification") || "Notifications";
     if (pathname.includes("/Security")) return t("security") || "Security";
     if (pathname.includes("/Setting")) return t("settings") || "Settings";
@@ -76,6 +76,7 @@ export default function RootLayout({ children }) {
       {/* Main Centered Account Body */}
       <main id="top" className="bd-acct-container" data-screen-label="Account">
         {/* Breadcrumbs */}
+        {!pathname.includes("/TicketDetails") && (
         <nav className="bd-crumb" aria-label="Breadcrumb">
           <Link href="/" className="bd-crumb-link">
             {t("home") || "Home"}
@@ -83,6 +84,7 @@ export default function RootLayout({ children }) {
           <span className="bd-crumb-sep">/</span>
           <span className="bd-crumb-current">{getPageTitle()}</span>
         </nav>
+        )}
 
         {/* Mobile Accordion Menu Trigger */}
         <button

@@ -9,28 +9,24 @@ import promotionsApi from "@/api/promotionsApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-function formatCourseDate(dateStr, isMn) {
-  if (!dateStr) return isMn ? "Огноо тодорхойгүй" : "Date not set";
+const MONTH_KEYS = ["monthJan", "monthFeb", "monthMar", "monthApr", "monthMay", "monthJun", "monthJul", "monthAug", "monthSep", "monthOct", "monthNov", "monthDec"];
+
+function formatCourseDate(dateStr, t) {
+  if (!dateStr) return t("lmDateUnset");
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return isMn ? "Огноо тодорхойгүй" : "Date not set";
-
-  const mnMonths = ["1-р", "2-р", "3-р", "4-р", "5-р", "6-р", "7-р", "8-р", "9-р", "10-р", "11-р", "12-р"];
-  const enMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-  const m = d.getMonth();
-  const dayNum = d.getDate();
-  return isMn ? `${mnMonths[m]} сарын ${dayNum}` : `${enMonths[m]} ${dayNum}`;
+  if (isNaN(d.getTime())) return t("lmDateUnset");
+  return `${t(MONTH_KEYS[d.getMonth()])} ${d.getDate()}`;
 }
 
-function getCourseBadge(course, tab, isMn) {
+function getCourseBadge(course, tab, t) {
   if (tab === "draft") {
     return { hasStatus: false, status: "", statusColor: "gray" };
   }
   if (tab === "past" || course.status?.toLowerCase() === "past") {
-    return { hasStatus: true, status: isMn ? "Дууссан" : "Completed", statusColor: "gray" };
+    return { hasStatus: true, status: t("lmCompleted"), statusColor: "gray" };
   }
   if (course.status?.toLowerCase() === "cancelled" || course.closed) {
-    return { hasStatus: true, status: isMn ? "Бүртгэл хаагдсан" : "Closed", statusColor: "gray" };
+    return { hasStatus: true, status: t("lmClosed"), statusColor: "gray" };
   }
 
   const taken = Number(course.totalEnrollments ?? course.totalBooked ?? course.acquiredSeats ?? 0);
@@ -38,10 +34,10 @@ function getCourseBadge(course, tab, isMn) {
   const full = cap > 0 && taken >= cap;
 
   if (full) {
-    return { hasStatus: true, status: isMn ? "Дүүрсэн" : "Full", statusColor: "warning" };
+    return { hasStatus: true, status: t("lmFull"), statusColor: "warning" };
   }
 
-  return { hasStatus: true, status: isMn ? "Элсэлт нээлттэй" : "Open", statusColor: "brand" };
+  return { hasStatus: false, status: "", statusColor: "gray" };
 }
 
 function getEnrolledString(course) {
@@ -52,7 +48,7 @@ function getEnrolledString(course) {
 
 export default function CoursesManagementPage() {
   const router = useRouter();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isMn = language === "mn";
 
   // ─── State ─────────────────────────────────────────────────────────────────
@@ -325,13 +321,7 @@ export default function CoursesManagementPage() {
   };
 
   const isPastTab = activeTab === "past";
-  const dateColHeader = isPastTab
-    ? isMn
-      ? "Дууссан огноо"
-      : "End Date"
-    : isMn
-    ? "Эхлэх огноо"
-    : "Start Date";
+  const dateColHeader = isPastTab ? t("lmEndDate") : t("startDate");
 
   return (
     <main
@@ -363,10 +353,9 @@ export default function CoursesManagementPage() {
             <polyline points="12 19 5 12 12 5" />
           </svg>
         </button>
-        <span className="lm-mobbarT">
-          {isMn ? "Миний сургалтууд" : "My Courses"}
-        </span>
+        <span className="lm-mobbarT">{t("lmMyCourses")}</span>
       </div>
+      <div className="lm-wrap">
         {/* ─── Tabs List ────────────────────────────────────────────────────── */}
         <div className="og-tabs bd-scroll" role="tablist">
           <button
@@ -377,7 +366,7 @@ export default function CoursesManagementPage() {
             aria-selected={activeTab === "published"}
             onClick={() => setActiveTab("published")}
           >
-            {isMn ? "Нийтлэгдсэн" : "Published"}
+            {t("lmPublished")}
             <span className="og-tab-n" data-tab-n="published">
               {publishedCourses.length}
             </span>
@@ -391,7 +380,7 @@ export default function CoursesManagementPage() {
             aria-selected={activeTab === "draft"}
             onClick={() => setActiveTab("draft")}
           >
-            {isMn ? "Ноорог" : "Draft"}
+            {t("lmDraft")}
             <span className="og-tab-n" data-tab-n="draft">
               {draftCourses.length}
             </span>
@@ -405,7 +394,7 @@ export default function CoursesManagementPage() {
             aria-selected={activeTab === "past"}
             onClick={() => setActiveTab("past")}
           >
-            {isMn ? "Өнгөрсөн" : "Past"}
+            {t("lmPast")}
             <span className="og-tab-n" data-tab-n="past">
               {pastCourses.length}
             </span>
@@ -457,7 +446,7 @@ export default function CoursesManagementPage() {
             </svg>
             <input
               type="text"
-              placeholder={isMn ? "Сургалт хайх" : "Search courses..."}
+              placeholder={t("lmSearch")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -508,7 +497,7 @@ export default function CoursesManagementPage() {
               <line x1="12" y1="8" x2="12" y2="16" />
               <line x1="8" y1="12" x2="16" y2="12" />
             </svg>
-            <span>{isMn ? "Сургалт үүсгэх" : "Create Course"}</span>
+            <span>{t("lmCreate")}</span>
           </Link>
         </div>
 
@@ -516,9 +505,9 @@ export default function CoursesManagementPage() {
         <section className="lm-panel" data-past={isPastTab ? "1" : "0"}>
           {/* Header Row */}
           <div className="lm-row og-head">
-            <span>{isMn ? "Нэр" : "Name"}</span>
+            <span>{t("lmName")}</span>
             <span>{dateColHeader}</span>
-            <span>{isMn ? "Бүртгүүлсэн" : "Enrolled"}</span>
+            <span>{t("lmEnrolled")}</span>
             <span></span>
             <span></span>
           </div>
@@ -546,13 +535,7 @@ export default function CoursesManagementPage() {
           {/* Empty State */}
           {!loading && currentList.length === 0 && (
             <p style={{ margin: 0, padding: "38px 18px", textAlign: "center", fontSize: "13.5px", color: "var(--bd-gray-600)" }}>
-              {searchQuery.trim()
-                ? isMn
-                  ? "Хайлтад тохирох сургалт олдсонгүй."
-                  : "No courses match your search."
-                : isMn
-                ? "Энэ хэсэгт сургалт байхгүй байна."
-                : "No courses found."}
+              {searchQuery.trim() ? t("lmNoMatch") : t("lmEmpty")}
             </p>
           )}
 
@@ -562,11 +545,11 @@ export default function CoursesManagementPage() {
               const coverUrl = getFullImageUrl(
                 course.coverImage || course.posterImage?.[0] || course.media?.[0]
               );
-              const badge = getCourseBadge(course, activeTab, isMn);
+              const badge = getCourseBadge(course, activeTab, t);
               const enrolledText = getEnrolledString(course);
               const dateVal = isPastTab
-                ? formatCourseDate(course.endDate || course.startDate, isMn)
-                : formatCourseDate(course.startDate, isMn);
+                ? formatCourseDate(course.endDate || course.startDate, t)
+                : formatCourseDate(course.startDate, t);
 
               return (
                 <button
@@ -594,7 +577,7 @@ export default function CoursesManagementPage() {
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {course.courseTitle || course.title || (isMn ? "Гарчиггүй сургалт" : "Untitled Course")}
+                        {course.courseTitle || course.title || t("lmUntitled")}
                       </b>
                     </span>
                   </span>
@@ -677,6 +660,7 @@ export default function CoursesManagementPage() {
               );
             })}
         </section>
+      </div>
 
       {/* ─── Floating Kebab Action Menu ──────────────────────────────────── */}
       {activeMenu && (
@@ -739,7 +723,7 @@ export default function CoursesManagementPage() {
               className="lm-mi"
               onClick={() => handleDuplicateCourse(activeMenu.course)}
             >
-              {isMn ? "Хуулбарлах" : "Duplicate"}
+              {t("lmCopy")}
             </button>
 
             {/* Promote (if not draft & upcoming) */}

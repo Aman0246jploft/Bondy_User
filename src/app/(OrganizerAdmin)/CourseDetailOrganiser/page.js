@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { Col, Row, Spinner } from "react-bootstrap";
 import { useSearchParams } from "next/navigation";
 import courseApi from "@/api/courseApi";
@@ -8,6 +8,8 @@ import bookingApi from "@/api/bookingApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatTime } from "@/utils/timeHelper";
 import { useLanguage } from "@/context/LanguageContext";
+import DateRangeCalendarPopover from "@/components/DateRangeCalendarPopover";
+import PromotionPlanModal from "@/components/Promotion/PromotionPlanModal";
 import toast from "react-hot-toast";
 
 function ExpandableText({ text, limit = 200, className = "" }) {
@@ -78,6 +80,17 @@ function CourseDetailsContent() {
 
   // Tab state
   const [activeTab, setActiveTab] = useState("overview");
+  const [viewMode, setViewMode] = useState("course");
+  const [selectedBatch, setSelectedBatch] = useState(null);
+  const [cohortOpen, setCohortOpen] = useState(false);
+  const [cohortSaving, setCohortSaving] = useState(false);
+  const [cohortErr, setCohortErr] = useState("");
+  const [cohortForm, setCohortForm] = useState({
+    name: "", startDate: "", endDate: "", startTime: "", endTime: "",
+    sessions: "", price: "", days: [], override: false, venue: "", address: "",
+    seats: "", reserved: "0",
+  });
+  const [promoOpen, setPromoOpen] = useState(false);
 
   // Bookings tab state
   const [bookingsList, setBookingsList] = useState([]);
@@ -91,6 +104,20 @@ function CourseDetailsContent() {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [analyticsFilter, setAnalyticsFilter] = useState("thisMonth");
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [anFrom, setAnFrom] = useState("");
+  const [anTo, setAnTo] = useState("");
+  const [anCal, setAnCal] = useState(false);
+  const [anHover, setAnHover] = useState(null);
+  const anRangeRef = useRef(null);
+
+  // Cohort (batch) actions
+  const [editingBatchId, setEditingBatchId] = useState(null);
+  const [extOpen, setExtOpen] = useState(false);
+  const [extDraft, setExtDraft] = useState("0");
+  const [extSaving, setExtSaving] = useState(false);
+  const [cxlOpen, setCxlOpen] = useState(false);
+  const [cxlReason, setCxlReason] = useState("");
+  const [cxlBusy, setCxlBusy] = useState(false);
   const { t, language } = useLanguage();
   const locale = language === "mn" ? "mn-MN" : "en-GB";
 
@@ -211,6 +238,7 @@ function CourseDetailsContent() {
         page: bookingsPage,
         limit: 10,
         search: bookingsSearch,
+        ...(selectedBatch?._id ? { batchId: selectedBatch._id } : {}),
       });
       if (res && res.status && res.data) {
         setBookingsList(res.data.attendees || []);
@@ -228,15 +256,23 @@ function CourseDetailsContent() {
     if (courseId && activeTab === "bookings") {
       fetchBookings();
     }
-  }, [courseId, activeTab, bookingsPage, bookingsSearch]);
+  }, [courseId, activeTab, bookingsPage, bookingsSearch, selectedBatch?._id]);
 
   // Fetch course analytics
   const fetchAnalytics = async () => {
     try {
       setAnalyticsLoading(true);
-      const res = await courseApi.getCourseAnalytics(courseId, {
-        filter: analyticsFilter,
-      });
+      const params = { filter: analyticsFilter };
+      if (analyticsFilter === "custom") {
+        if (!anFrom || !anTo) {
+          setAnalyticsLoading(false);
+          return;
+        }
+        params.startDate = anFrom;
+        params.endDate = `${anTo}T23:59:59.999`;
+      }
+      if (viewMode === "group" && selectedBatch?._id) params.batchId = selectedBatch._id;
+      const res = await courseApi.getCourseAnalytics(courseId, params);
       if (res && res.status && res.data) {
         setAnalyticsData(res.data);
       }
@@ -251,7 +287,82 @@ function CourseDetailsContent() {
     if (courseId && activeTab === "analytics") {
       fetchAnalytics();
     }
-  }, [courseId, activeTab, analyticsFilter]);
+  }, [courseId, activeTab, analyticsFilter, anFrom, anTo, viewMode, selectedBatch?._id]);
+
+  // Reload the course after a cohort change and keep the open cohort in sync,
+  // without blanking the page with the full-screen loader.
+  const reloadCourse = async () => {
+    const fresh = await courseApi.getCourseDetails(courseId);
+    if (fresh?.data) {
+      setCourse(fresh.data);
+      setSelectedBatch((prev) => {
+        if (!prev) return prev;
+        const list = Array.isArray(fresh.data.batches) ? fresh.data.batches : [];
+        return list.find((b) => String(b._id) === String(prev._id)) || prev;
+      });
+    }
+  };
+
+  const openExternal = () => {
+    setExtDraft(String(Number(selectedBatch?.ReservedExternally || 0)));
+    setExtOpen(true);
+  };
+
+  const saveExternal = async () => {
+    if (!selectedBatch) return;
+    const enrolled = Number(selectedBatch.acquiredSeats || 0);
+    const max = Math.max(0, Number(selectedBatch.seats || 0) - enrolled);
+    const value = Math.min(max, Math.max(0, parseInt(extDraft, 10) || 0));
+    try {
+      setExtSaving(true);
+      const res = await bookingApi.adjustCourseReservedSeats({
+        courseId: course._id,
+        batchId: selectedBatch._id,
+        ReservedExternally: value,
+      });
+      if (res?.status) {
+        await reloadCourse();
+        setExtOpen(false);
+        toast.success(t("cdExtSaved"));
+      } else {
+        toast.error(res?.message || t("cdExtFail"));
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || t("cdExtFail"));
+    } finally {
+      setExtSaving(false);
+    }
+  };
+
+  const cancelCohort = async () => {
+    if (!selectedBatch) return;
+    if (!cxlReason.trim()) {
+      toast.error(t("cdCxlNeedReason"));
+      return;
+    }
+    try {
+      setCxlBusy(true);
+      const res = await bookingApi.cancelCourse({
+        courseId: course._id,
+        batchId: selectedBatch._id,
+        reason: cxlReason.trim(),
+      });
+      if (res?.status) {
+        toast.success(t("cdCxlDone"));
+        setCxlOpen(false);
+        setCxlReason("");
+        await reloadCourse();
+        setViewMode("course");
+        setSelectedBatch(null);
+      } else {
+        toast.error(res?.message || t("cdCxlFail"));
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || t("cdCxlFail"));
+    } finally {
+      setCxlBusy(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -284,9 +395,760 @@ function CourseDetailsContent() {
       : 0;
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const orderedSchedule = weekdays.filter((d) => course.weeklySchedule?.[d]);
+  const monthKeys = ["monthJan", "monthFeb", "monthMar", "monthApr", "monthMay", "monthJun", "monthJul", "monthAug", "monthSep", "monthOct", "monthNov", "monthDec"];
+  const parseLocalDate = (value) => {
+    if (!value) return null;
+    const parts = String(value).slice(0, 10).split("-").map(Number);
+    if (parts.length === 3 && parts.every(Boolean)) return new Date(parts[0], parts[1] - 1, parts[2]);
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+  const formatDay = (value) => {
+    const d = parseLocalDate(value);
+    if (!d) return "—";
+    return `${t(monthKeys[d.getMonth()])} ${d.getDate()}`;
+  };
+  const startD = parseLocalDate(course.startDate);
+  const endD = parseLocalDate(course.endDate);
+  const weekCount = !isOngoing && startD && endD ? Math.max(1, Math.round((endD - startD) / 604800000)) : 0;
+  const rawPoster = course.posterImage?.[0] || course.coverImage || "";
+  const cover = rawPoster ? (String(rawPoster).startsWith("http") || String(rawPoster).startsWith("/") ? rawPoster : getFullImageUrl(rawPoster)) : "";
+  const shortText = course.shortdesc || course.shortDescription || course.description || "";
+  const enrolledTotal = Number(course.acquiredSeats ?? course.totalEnrollments ?? course.totalBooked ?? 0);
+  const batches = Array.isArray(course.batches) ? course.batches : [];
+  const listingPlace = [course.venueName, course.venueAddress?.address].filter(Boolean).join(" · ");
+  const capSum = batches.reduce((sum, batch) => sum + Number(batch.seats || 0), 0);
+  const regSum = batches.reduce((sum, batch) => sum + Number(batch.acquiredSeats || 0) + Number(batch.ReservedExternally || 0), 0);
+  const totalRegText = capSum > 0 ? `${regSum} / ${capSum}` : String(enrolledTotal);
+  const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const dayKey = { Mon: "cdDayMon", Tue: "cdDayTue", Wed: "cdDayWed", Thu: "cdDayThu", Fri: "cdDayFri", Sat: "cdDaySat", Sun: "cdDaySun" };
+  const dayLabel = (day) => (dayKey[day] ? t(dayKey[day]) : day);
+  const capPreview = Number(cohortForm.seats || 0);
+  const reservedPreview = Number(cohortForm.reserved || 0);
+  const availablePreview = Math.max(0, capPreview - reservedPreview);
+
+  const openCohortEdit = (batch) => {
+    if (!batch) return;
+    setCohortErr("");
+    setEditingBatchId(batch._id);
+    setCohortForm({
+      name: batch.batchName || "",
+      startDate: String(batch.startDate || course.startDate || "").slice(0, 10),
+      endDate: String(batch.endDate || course.endDate || "").slice(0, 10),
+      startTime: batch.startTime || "",
+      endTime: batch.endTime || "",
+      sessions: batch.sessions ? String(batch.sessions) : "",
+      price: batch.price !== undefined && batch.price !== null && batch.price !== "" ? String(batch.price) : "",
+      days: Array.isArray(batch.days) ? batch.days : [],
+      override: Boolean(batch.overrideLocation),
+      venue: batch.venueName || "",
+      address: typeof batch.venueAddress === "string" ? batch.venueAddress : "",
+      seats: String(batch.seats ?? ""),
+      reserved: String(batch.ReservedExternally ?? 0),
+    });
+    setCohortOpen(true);
+  };
+
+  const openCohort = () => {
+    setEditingBatchId(null);
+    setCohortErr("");
+    setCohortForm({
+      name: "", startDate: "", endDate: "", startTime: "", endTime: "",
+      sessions: "", price: "", days: [], override: false, venue: "", address: "",
+      seats: "", reserved: "0",
+    });
+    setCohortOpen(true);
+  };
+
+  const saveCohort = async () => {
+    const name = cohortForm.name.trim();
+    const seats = Number(cohortForm.seats);
+    const reserved = Number(cohortForm.reserved || 0);
+    const sessions = Number(cohortForm.sessions);
+    if (!name) return setCohortErr(t("cdNeedName"));
+    if (!cohortForm.startDate || !cohortForm.endDate) return setCohortErr(t("cdNeedDates"));
+    if (cohortForm.endDate < cohortForm.startDate) return setCohortErr(t("cdDateOrder"));
+    if (!cohortForm.startTime || !cohortForm.endTime) return setCohortErr(t("cdNeedTime"));
+    if (cohortForm.endTime <= cohortForm.startTime) return setCohortErr(t("cdTimeOrder"));
+    if (!sessions || sessions < 1) return setCohortErr(t("cdNeedSessions"));
+    if (!cohortForm.days.length) return setCohortErr(t("cdPickDay"));
+    if (cohortForm.override && (!cohortForm.venue.trim() || !cohortForm.address.trim())) return setCohortErr(t("cdNeedVenue"));
+    if (!seats || seats < 1) return setCohortErr(t("cdNeedSeats"));
+    if (reserved < 0 || reserved > seats) return setCohortErr(t("cdExtHigh"));
+    if (editingBatchId) {
+      const current = batches.find((b) => String(b._id) === String(editingBatchId));
+      if (seats < Number(current?.acquiredSeats || 0) + reserved) return setCohortErr(t("cdSeatsLow"));
+    }
+
+    const kept = batches.map((batch) => {
+      const row = {
+        _id: batch._id,
+        batchName: batch.batchName,
+        startTime: batch.startTime,
+        endTime: batch.endTime,
+        days: batch.days,
+        seats: Number(batch.seats),
+        ReservedExternally: Number(batch.ReservedExternally || 0),
+        status: batch.status || "Active",
+      };
+      if (batch.startDate) row.startDate = String(batch.startDate).slice(0, 10);
+      if (batch.endDate) row.endDate = String(batch.endDate).slice(0, 10);
+      if (batch.sessions) row.sessions = Number(batch.sessions);
+      if (batch.price !== undefined && batch.price !== null && batch.price !== "") row.price = Number(batch.price);
+      if (batch.overrideLocation) {
+        row.overrideLocation = true;
+        row.venueName = batch.venueName || "";
+        row.venueAddress = typeof batch.venueAddress === "string" ? batch.venueAddress : "";
+      }
+      return row;
+    });
+    const created = {
+      batchName: name.slice(0, 40),
+      startDate: cohortForm.startDate,
+      endDate: cohortForm.endDate,
+      startTime: cohortForm.startTime,
+      endTime: cohortForm.endTime,
+      sessions,
+      days: dayOrder.filter((day) => cohortForm.days.includes(day)),
+      seats,
+      ReservedExternally: reserved,
+      status: "Active",
+    };
+    if (cohortForm.price !== "") created.price = Number(cohortForm.price);
+    if (cohortForm.override) {
+      created.overrideLocation = true;
+      created.venueName = cohortForm.venue.trim().slice(0, 80);
+      created.venueAddress = cohortForm.address.trim().slice(0, 180);
+    }
+
+    let nextBatches = [...kept, created];
+    if (editingBatchId) {
+      // Edit in place: keep the id and status, and send location flags explicitly
+      // so switching the override off actually clears it.
+      const edited = { ...created };
+      delete edited.status;
+      if (!cohortForm.override) {
+        edited.overrideLocation = false;
+        edited.venueName = "";
+        edited.venueAddress = "";
+      }
+      nextBatches = kept.map((row) =>
+        String(row._id) === String(editingBatchId) ? { ...row, ...edited, _id: row._id } : row,
+      );
+    }
+
+    try {
+      setCohortSaving(true);
+      setCohortErr("");
+      const res = await courseApi.updateCourse(course._id, { batches: nextBatches });
+      if (!res?.status) {
+        setCohortErr(res?.message || t(editingBatchId ? "cdCohortEditFail" : "cdCohortFail"));
+        return;
+      }
+      await reloadCourse();
+      setCohortOpen(false);
+      toast.success(t(editingBatchId ? "cdCohortSaved" : "cdCohortAdded"));
+      setEditingBatchId(null);
+    } catch (err) {
+      setCohortErr(err?.response?.data?.message || t(editingBatchId ? "cdCohortEditFail" : "cdCohortFail"));
+    } finally {
+      setCohortSaving(false);
+    }
+  };
 
   return (
     <div className="course-control-center">
+      {viewMode === "course" && (
+        <div className="cd-page">
+          <nav className="cd-crumb">
+            <Link href="/CoursesManagement">{t("cdCrumb")}</Link>
+            <span>/</span>
+            <span>{course.courseTitle || "—"}</span>
+          </nav>
+
+          <section className="cd-card cd-hero">
+            <span className="cd-cover" style={{ backgroundImage: cover ? `url("${cover}")` : "none" }} />
+            <div className="cd-heroT">
+              <h2>{course.courseTitle || "—"}</h2>
+              {shortText ? <p>{shortText}</p> : null}
+              {course.venueName ? (
+                <span className="cd-pin">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                    <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" />
+                    <circle cx="12" cy="10" r="2.4" />
+                  </svg>
+                  {course.venueName}
+                </span>
+              ) : null}
+            </div>
+            <div className="cd-actions">
+              <Link href={`/programDetails?id=${course._id}`} className="cd-cta cd-cta-pri">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>
+                {t("cdViewPublic")}
+              </Link>
+              <Link href={`/AddProgram?courseId=${course._id}`} className="cd-cta cd-cta-out">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z" /></svg>
+                {t("edit")}
+              </Link>
+              <button type="button" className="cd-cta cd-cta-out" onClick={() => setPromoOpen(true)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 10.4v3.2a1.6 1.6 0 0 0 1.6 1.6h1.7L14 19.4V4.6L7.3 8.8H5.6A1.6 1.6 0 0 0 4 10.4Z" /><path d="M17.2 8.6a4.6 4.6 0 0 1 0 6.8" /><path d="M7.6 15.4 8.9 20" /></svg>
+                {t("cdPromote")}
+              </button>
+            </div>
+          </section>
+
+          <section className="cd-card cd-meta">
+            <div className="cd-metaItem">
+              <span className="cd-ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M8 3.5V7M16 3.5V7M3.5 10h17" /></svg></span>
+              <span className="cd-metaCopy">
+                <span className="cd-lab">{t("cdTiming")}</span>
+                <b>{startD ? `${formatDay(course.startDate)}${!isOngoing && endD ? ` – ${formatDay(course.endDate)}` : ""}` : "—"}</b>
+                {!isOngoing && weekCount > 0 ? <span className="cd-sub">{t("cdWeeks", { count: weekCount })}</span> : null}
+              </span>
+            </div>
+            <div className="cd-metaItem">
+              <span className="cd-ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h4" /></svg></span>
+              <span className="cd-metaCopy">
+                <span className="cd-lab">{t("apCoursePrice")}</span>
+                <b>{course.price != null && course.price !== "" ? `₮${Number(course.price).toLocaleString("en-US")}` : "—"}</b>
+              </span>
+            </div>
+            <div className="cd-metaItem">
+              <span className="cd-ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="8" r="3.2" /><path d="M5 19.2c1.2-3 3.6-4.5 7-4.5s5.8 1.5 7 4.5" /></svg></span>
+              <span className="cd-metaCopy">
+                <span className="cd-lab">{t("cdTotalRegistered")}</span>
+                <b>{totalRegText}</b>
+              </span>
+            </div>
+          </section>
+
+          <section className="cd-table">
+            <div className="cd-tableH">
+              <h2>{t("apCohorts")}</h2>
+              <button type="button" className="cd-add" onClick={openCohort}>{t("cdAddPlus")}</button>
+            </div>
+            <div className="cg-row og-head">
+              <span>{t("apCohort")}</span>
+              <span>{t("cdWeekly")}</span>
+              <span>{t("cdRegistrations")}</span>
+              <span />
+            </div>
+            {batches.length === 0 ? (
+              <p className="cd-empty">{t("apNoCohorts")}</p>
+            ) : (
+              batches.map((batch, idx) => {
+                const taken = Number(batch.acquiredSeats || 0) + Number(batch.ReservedExternally || 0);
+                const cap = Number(batch.seats || 0);
+                const pct = cap > 0 ? Math.min(100, Math.round((taken / cap) * 100)) : 0;
+                const days = Array.isArray(batch.days) ? batch.days.map(dayLabel).join(", ") : "";
+                const time = [batch.startTime, batch.endTime].filter(Boolean).join(" – ");
+                return (
+                  <button
+                    key={batch._id || idx}
+                    type="button"
+                    className="cg-row"
+                    onClick={() => {
+                      setSelectedBatch(batch);
+                      setViewMode("group");
+                      setActiveTab("overview");
+                      setBookingsPage(1);
+                      setBookingsSearch("");
+                    }}
+                  >
+                    <b>{batch.batchName || t("apCohort")}</b>
+                    <span className="cg-sched">{[days, time].filter(Boolean).join(" · ") || "—"}</span>
+                    <span className="cg-reg">
+                      <span>{t("cdRegLine", { taken, cap })}</span>
+                      <span className="cg-bar"><i style={{ width: `${pct}%` }} /></span>
+                    </span>
+                    <span className="cg-go" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m9 6 6 6-6 6" /></svg></span>
+                  </button>
+                );
+              })
+            )}
+          </section>
+
+        </div>
+      )}
+
+      {viewMode === "group" && selectedBatch && (
+        <div className="cd-page">
+          <nav className="cd-crumb">
+            <button type="button" onClick={() => setViewMode("course")}>{t("cdCrumb")}</button>
+            <span>/</span>
+            <button type="button" onClick={() => setViewMode("course")}>{course.courseTitle || "—"}</button>
+            <span>/</span>
+            <span>{selectedBatch.batchName || t("apCohort")}</span>
+          </nav>
+          <div className="og-tabs">
+            <button type="button" className="og-tab" aria-selected={activeTab === "overview"} onClick={() => setActiveTab("overview")}>{t("overview")}</button>
+            <button type="button" className="og-tab" aria-selected={activeTab === "bookings"} onClick={() => setActiveTab("bookings")}>
+              {t("cdRegistrations")}
+              <span className="og-tab-n">{Number(selectedBatch.acquiredSeats || 0)}</span>
+            </button>
+            <button type="button" className="og-tab" aria-selected={activeTab === "analytics"} onClick={() => setActiveTab("analytics")}>{t("analyticsTab")}</button>
+          </div>
+          {activeTab === "overview" && (() => {
+            const enrolled = Number(selectedBatch.acquiredSeats || 0);
+            const external = Number(selectedBatch.ReservedExternally || 0);
+            const cap = Number(selectedBatch.seats || 0);
+            const left = Math.max(0, cap - enrolled - external);
+            const cohortOff = String(selectedBatch.status || "").toLowerCase() === "cancelled";
+            const days = Array.isArray(selectedBatch.days) ? selectedBatch.days.map(dayLabel).join(", ") : "";
+            const time = [selectedBatch.startTime, selectedBatch.endTime].filter(Boolean).join(" – ");
+            const schedule = [days, time].filter(Boolean).join(" · ");
+            const bStartRaw = selectedBatch.startDate || course.startDate;
+            const bEndRaw = selectedBatch.endDate || course.endDate;
+            const bStart = parseLocalDate(bStartRaw);
+            const bEnd = parseLocalDate(bEndRaw);
+            const weeks = !isOngoing && bStart && bEnd ? Math.max(1, Math.ceil(((bEnd - bStart) / 86400000 + 1) / 7)) : 0;
+            const period = [formatDay(bStartRaw), !isOngoing && bEnd ? formatDay(bEndRaw) : ""].filter((v) => v && v !== "—").join(" – ");
+            const ownPlace = Boolean(selectedBatch.overrideLocation);
+            const venue = ownPlace ? selectedBatch.venueName : course.venueName;
+            const addressRaw = ownPlace ? selectedBatch.venueAddress : course.venueAddress;
+            const address = typeof addressRaw === "string" ? addressRaw : [addressRaw?.address, addressRaw?.city].filter(Boolean).join(", ");
+            const rawPrice = selectedBatch.price !== undefined && selectedBatch.price !== null && selectedBatch.price !== "" ? selectedBatch.price : course.price;
+            const price = rawPrice !== undefined && rawPrice !== null && rawPrice !== "" ? `₮${Number(rawPrice).toLocaleString("en-US")}` : "—";
+            const svg = (path) => (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
+            );
+            return (
+              <div className="og-2col">
+                <div className="cd-stack">
+                  <section className="cd-card">
+                    <h2 className="cd-start">
+                      {bStart ? t("cdStarts", { date: formatDay(bStartRaw) }) : "—"}
+                      {cohortOff ? <span className="cr-off cd-offpill">{t("obCancelled")}</span> : null}
+                    </h2>
+                    <span className="cd-sub">{schedule || "—"}</span>
+                  </section>
+                  <section className="cd-card">
+                    <div className="cd-metaItem">
+                      <span className="cd-ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="8" r="3.2" /><path d="M5 19.2c1.2-3 3.6-4.5 7-4.5s5.8 1.5 7 4.5" /></svg></span>
+                      <span className="cd-metaCopy">
+                        <span className="cd-lab">{t("cdCapacity")}</span>
+                        <b>{t("cdSeatsTotal", { count: cap })}</b>
+                      </span>
+                    </div>
+                    <div className="cd-trio">
+                      <div><span>{t("cdRegisteredWord")}</span><b>{enrolled}</b></div>
+                      <div><span>{t("cdExternal")}</span><b className="cd-ext">{external}</b></div>
+                      <div><span>{t("cdLeft")}</span><b className="cd-left">{left}</b></div>
+                    </div>
+                    {!cohortOff && (
+                      <button type="button" className="cd-extbtn" onClick={openExternal}>
+                        {external > 0
+                          ? svg(<><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>)
+                          : svg(<><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></>)}
+                        {external > 0 ? t("cdExtEditBtn") : t("cdExtAddBtn")}
+                      </button>
+                    )}
+                  </section>
+                </div>
+                <aside className="cd-stack">
+                  <section className="cd-card cd-facts">
+                    <div className="cd-fact">
+                      <span className="cd-fico">{svg(<><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M8 3v4M16 3v4M3 10h18" /></>)}</span>
+                      <span>
+                        <span className="cd-lab">{t("tdCoursePeriod")}</span>
+                        <b>{period ? `${period}${weeks ? ` (${t("cdWeeksN", { count: weeks })})` : ""}` : "—"}</b>
+                      </span>
+                    </div>
+                    <div className="cd-fact">
+                      <span className="cd-fico">{svg(<><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></>)}</span>
+                      <span>
+                        <span className="cd-lab">{t("tdLocation")}</span>
+                        <b>{venue || "—"}</b>
+                        {address ? <span className="cd-sub">{address}</span> : null}
+                      </span>
+                    </div>
+                    <div className="cd-fact">
+                      <span className="cd-fico">{svg(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>)}</span>
+                      <span>
+                        <span className="cd-lab">{t("cdWeekly")}</span>
+                        <b>{schedule || "—"}</b>
+                      </span>
+                    </div>
+                    <div className="cd-fact">
+                      <span className="cd-fico">{svg(<><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2" /><path d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-3" /><path d="M21 10h-5a2 2 0 0 0 0 4h5z" /></>)}</span>
+                      <span>
+                        <span className="cd-lab">{t("cdPrice")}</span>
+                        <b>{price}</b>
+                      </span>
+                    </div>
+                  </section>
+                  {!cohortOff && (
+                    <>
+                      <button type="button" className="cd-wide" onClick={() => openCohortEdit(selectedBatch)}>{t("cdEditCohort")}</button>
+                      <button type="button" className="cd-wide cd-danger" onClick={() => { setCxlReason(""); setCxlOpen(true); }}>
+                        {t("cdCancelCohort")}
+                      </button>
+                    </>
+                  )}
+                </aside>
+              </div>
+            );
+          })()}
+          {activeTab === "bookings" && (
+            <div>
+              <label className="cd-search">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+                <input
+                  value={bookingsSearch}
+                  placeholder={t("cdRegSearch")}
+                  onChange={(e) => {
+                    setBookingsSearch(e.target.value);
+                    setBookingsPage(1);
+                  }}
+                />
+              </label>
+              <section className="cd-table">
+                <div className="cd-tableH">
+                  <h2>{t("cdRegistrations")} {bookingsTotal}</h2>
+                </div>
+                {bookingsLoading ? (
+                  <p className="cd-empty">{t("loading")}</p>
+                ) : bookingsList.length === 0 ? (
+                  <p className="cd-empty">{bookingsSearch ? t("cdNoRegMatch") : t("cdEmptyRegs")}</p>
+                ) : bookingsList.map((booking) => {
+                  const name = `${booking.user?.firstName || ""} ${booking.user?.lastName || ""}`.trim() || booking.user?.email || "";
+                  const when = booking.bookingDate || booking.createdAt;
+                  const cancelled = ["CANCELLED", "FAILED", "REFUNDED", "REFUND_INITIATED"].includes(booking.status);
+                  return (
+                    <Link key={booking.transactionId || booking.bookingId} href={booking.transactionId ? `/OrganizerBookingDetail?id=${booking.transactionId}` : "#"} className="cr-row">
+                      <span className="cr-who">
+                        <img src={getFullImageUrl(booking.user?.profileImage) || "/img/default-user.png"} alt="" onError={(e) => { e.currentTarget.src = "/img/default-user.png"; }} />
+                        <span>
+                          <b>{name}</b>
+                          <span>{when ? new Date(when).toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" }) : booking.bookingId}</span>
+                        </span>
+                      </span>
+                      {cancelled ? <span className="cr-off">{t("obCancelled")}</span> : <span />}
+                      <span className="cg-go" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m9 6 6 6-6 6" /></svg></span>
+                    </Link>
+                  );
+                })}
+                {bookingsTotalPages > 1 && (
+                  <div className="cr-pager">
+                    <button type="button" className="cd-gh" disabled={bookingsPage <= 1 || bookingsLoading} onClick={() => setBookingsPage((p) => Math.max(1, p - 1))}>{t("previous")}</button>
+                    <span>{bookingsPage} / {bookingsTotalPages}</span>
+                    <button type="button" className="cd-gh" disabled={bookingsPage >= bookingsTotalPages || bookingsLoading} onClick={() => setBookingsPage((p) => p + 1)}>{t("next")}</button>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
+          {activeTab === "analytics" && (() => {
+            const DAY = 86400000;
+            const keyOf = (d) => d.toISOString().slice(0, 10);
+            const utc = (key) => new Date(`${key}T00:00:00Z`);
+            const todayKey = keyOf(new Date());
+            const series = Array.isArray(analyticsData?.series) ? analyticsData.series : [];
+            let fromKey;
+            let toKey = todayKey;
+            if (analyticsFilter === "7d") fromKey = keyOf(new Date(Date.now() - 6 * DAY));
+            else if (analyticsFilter === "30d") fromKey = keyOf(new Date(Date.now() - 29 * DAY));
+            else if (analyticsFilter === "thisMonth") fromKey = `${todayKey.slice(0, 8)}01`;
+            else if (analyticsFilter === "custom" && anFrom && anTo) { fromKey = anFrom; toKey = anTo; }
+            else fromKey = series.length ? series[0].date : keyOf(new Date(Date.now() - 29 * DAY));
+            if (fromKey > toKey) fromKey = toKey;
+            const spanDays = Math.round((utc(toKey) - utc(fromKey)) / DAY) + 1;
+            const monthly = spanDays > 62;
+            const buckets = [];
+            if (monthly) {
+              const cur = utc(`${fromKey.slice(0, 7)}-01`);
+              const stop = utc(`${toKey.slice(0, 7)}-01`);
+              while (cur <= stop) {
+                buckets.push({ key: keyOf(cur).slice(0, 7), date: new Date(cur), count: 0 });
+                cur.setUTCMonth(cur.getUTCMonth() + 1);
+              }
+            } else {
+              for (let i = 0; i < spanDays; i += 1) {
+                const d = new Date(utc(fromKey).getTime() + i * DAY);
+                buckets.push({ key: keyOf(d), date: d, count: 0 });
+              }
+            }
+            const byKey = {};
+            buckets.forEach((b) => { byKey[b.key] = b; });
+            series.forEach((row) => {
+              const hit = byKey[monthly ? String(row.date).slice(0, 7) : row.date];
+              if (hit) hit.count += Number(row.count || 0);
+            });
+            const counts = buckets.map((b) => b.count);
+            const top = Math.max(3, Math.ceil(Math.max(1, ...counts) / 3) * 3);
+            const pts = (counts.length > 1 ? counts : [counts[0] || 0, counts[0] || 0]).map((v, i, arr) => [8 + i * (584 / (arr.length - 1)), 150 - (v / top) * 128]);
+            const line = `M${pts.map((p) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" L")}`;
+            const dateText = (d) => (monthly
+              ? `${t(monthKeys[d.getUTCMonth()])} ${d.getUTCFullYear()}`
+              : `${t(monthKeys[d.getUTCMonth()])} ${d.getUTCDate()}`);
+            const axisLabel = (d) => (monthly ? t(monthKeys[d.getUTCMonth()]) : String(d.getUTCDate()));
+            const labelCount = Math.min(6, buckets.length);
+            const labels = Array.from({ length: labelCount }, (_, i) => buckets[labelCount === 1 ? 0 : Math.round((i * (buckets.length - 1)) / (labelCount - 1))]);
+            const hoverOn = anHover !== null && anHover >= 0 && anHover < buckets.length && counts.length > 1;
+            const hx = hoverOn ? pts[anHover][0] : 0;
+            const hPct = hoverOn ? (hx / 600) * 100 : 0;
+            const registered = Number(analyticsData?.totalBookings || 0);
+            const rangeBtn = (id, key) => (
+              <button key={id || "all"} type="button" className="og-range" aria-selected={analyticsFilter === id} onClick={() => { setAnalyticsFilter(id); setAnCal(false); }}>{t(key)}</button>
+            );
+            const customLabel = analyticsFilter === "custom" && anFrom && anTo ? `${anFrom} – ${anTo}` : t("obCustom");
+            const statIcon = (path) => (
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
+            );
+            return (
+              <div>
+                <div className="og-ranges">
+                  {rangeBtn("", "obAllTime")}
+                  {rangeBtn("7d", "obWeek")}
+                  {rangeBtn("30d", "obDays30")}
+                  {rangeBtn("thisMonth", "obThisMonth")}
+                  <span ref={anRangeRef} className="og-range-wrap">
+                    <button type="button" className="og-range" aria-selected={analyticsFilter === "custom"} onClick={() => setAnCal(true)}>{customLabel}</button>
+                  </span>
+                </div>
+                {anCal && (
+                  <DateRangeCalendarPopover
+                    anchorRef={anRangeRef}
+                    initialFrom={anFrom}
+                    initialTo={anTo}
+                    language={language}
+                    t={t}
+                    onApply={(from, to) => {
+                      setAnFrom(from);
+                      setAnTo(to);
+                      setAnalyticsFilter("custom");
+                      setAnCal(false);
+                    }}
+                    onCancel={() => setAnCal(false)}
+                  />
+                )}
+                {analyticsLoading ? <p className="cd-empty">{t("loading")}</p> : (
+                  <>
+                    <div className="og-stats">
+                      <div><span className="og-ico">{statIcon(<><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>)}</span><span>{t("cdViews")}</span><b>{Number(analyticsData?.viewCount || 0).toLocaleString("en-US")}</b></div>
+                      <div><span className="og-ico">{statIcon(<><circle cx="12" cy="8" r="3.2" /><path d="M5 19.2c1.2-3 3.6-4.5 7-4.5s5.8 1.5 7 4.5" /></>)}</span><span>{t("cdRegisteredWord")}</span><b>{registered.toLocaleString("en-US")}</b></div>
+                      <div><span className="og-ico">{statIcon(<><path d="M19 5 5 19" /><circle cx="7" cy="7" r="2.2" /><circle cx="17" cy="17" r="2.2" /></>)}</span><span>{t("cdConv")}</span><b>{analyticsData?.bookingRate || 0}%</b></div>
+                      <div><span className="og-ico og-ico-o">{statIcon(<><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2" /><path d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-3" /><path d="M21 10h-5a2 2 0 0 0 0 4h5z" /></>)}</span><span>{t("cdRevenue")}</span><b>₮{Number(analyticsData?.organizerRevenue || analyticsData?.grossRevenue || 0).toLocaleString("en-US")}</b></div>
+                    </div>
+                    <section className="cd-card og-chart">
+                      <h2>{t("cdChartTitle")}</h2>
+                      {registered === 0 ? (
+                        <p className="cd-empty cd-emptyflat">{t("cdChartEmpty")}</p>
+                      ) : (
+                        <div className="og-plotRow">
+                          <div className="og-axis">
+                            {[1, 2 / 3, 1 / 3, 0].map((f) => <span key={f}>{Math.round(top * f)}</span>)}
+                          </div>
+                          <div
+                            className="og-plot"
+                            onPointerMove={(e) => {
+                              const box = e.currentTarget.getBoundingClientRect();
+                              if (!box.width || counts.length < 2) return;
+                              const ratio = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
+                              const idx = Math.round(ratio * (counts.length - 1));
+                              if (anHover !== idx) setAnHover(idx);
+                            }}
+                            onPointerLeave={() => setAnHover(null)}
+                          >
+                            <svg viewBox="0 0 600 170" preserveAspectRatio="none" aria-hidden="true">
+                              {[22, 65, 107, 150].map((y) => <line key={y} x1="0" y1={y} x2="600" y2={y} stroke="rgba(255,255,255,.06)" strokeWidth="1" />)}
+                              <defs><linearGradient id="ogFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#23ada4" stopOpacity=".26" /><stop offset="100%" stopColor="#23ada4" stopOpacity="0" /></linearGradient></defs>
+                              <path d={`${line} L592 158 L8 158 Z`} fill="url(#ogFill)" />
+                              <path d={line} fill="none" stroke="#23ada4" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                            </svg>
+                            {hoverOn && (
+                              <>
+                                <span className="og-rule" style={{ left: `${hPct}%` }} />
+                                <span className="og-dot" style={{ left: `${hPct}%`, top: `${pts[anHover][1]}px` }} />
+                                <span className="og-tip" style={{ left: `${hPct}%`, top: `${pts[anHover][1]}px`, transform: `translate(${hPct < 13 ? "0%" : hPct > 87 ? "-100%" : "-50%"},-100%)` }}>
+                                  {t("cdChartTip", { date: dateText(buckets[anHover].date), count: counts[anHover] })}
+                                </span>
+                              </>
+                            )}
+                            <div className="og-xl">
+                              {labels.map((b, i) => <span key={`${b.key}-${i}`}>{axisLabel(b.date)}</span>)}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </section>
+                  </>
+                )}
+              </div>
+            );
+          })()}
+
+          {extOpen && (() => {
+            const enrolled = Number(selectedBatch.acquiredSeats || 0);
+            const cap = Number(selectedBatch.seats || 0);
+            const max = Math.max(0, cap - enrolled);
+            const draft = Math.min(max, Math.max(0, parseInt(extDraft, 10) || 0));
+            return (
+              <div className="cd-scrim" onClick={() => !extSaving && setExtOpen(false)}>
+                <div className="cd-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+                  <b className="cd-mT">{t("cdUpdateExternal")}</b>
+                  <p className="cd-mP">{t("cdExtBody", { max })}</p>
+                  <div className="cd-step">
+                    <button type="button" className="cd-stepB" disabled={draft <= 0 || extSaving} aria-label={t("cdMinus")} onClick={() => setExtDraft(String(Math.max(0, draft - 1)))}>−</button>
+                    <input
+                      className="cd-stepI"
+                      type="text"
+                      inputMode="numeric"
+                      value={extDraft}
+                      aria-label={t("cdExternal")}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "");
+                        setExtDraft(digits === "" ? "" : String(Math.min(max, parseInt(digits, 10))));
+                      }}
+                    />
+                    <button type="button" className="cd-stepB" disabled={draft >= max || extSaving} aria-label={t("cdPlus")} onClick={() => setExtDraft(String(Math.min(max, draft + 1)))}>+</button>
+                  </div>
+                  <div className="cd-sums">
+                    <span><i>{t("cdRegisteredWord")}</i><b>{enrolled}</b></span>
+                    <span><i>{t("cdExternal")}</i><b className="cd-ext">{draft}</b></span>
+                    <span><i>{t("cdLeft")}</i><b className="cd-left">{cap - enrolled - draft}</b></span>
+                    <span><i>{t("cdCapacity")}</i><b>{cap}</b></span>
+                  </div>
+                  <div className="cd-mActs">
+                    <button type="button" className="cd-mGhost" disabled={extSaving} onClick={() => setExtOpen(false)}>{t("cancel")}</button>
+                    <button type="button" className="cd-mGo" disabled={extSaving} onClick={saveExternal}>{extSaving ? t("saving") : t("save")}</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {cxlOpen && (
+            <div className="cd-scrim" onClick={() => !cxlBusy && setCxlOpen(false)}>
+              <div className="cd-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+                <b className="cd-mT">{t("cdCancelCohort")}</b>
+                <p className="cd-mP">{t("cdCxlBody", { name: selectedBatch.batchName || t("apCohort") })}</p>
+                <label>
+                  <span className="cd-lb">{t("reasonCancellation")} <i>*</i></span>
+                  <textarea className="cd-ta" value={cxlReason} maxLength={300} placeholder={t("enterReasonPlaceholder")} onChange={(e) => setCxlReason(e.target.value)} />
+                </label>
+                <div className="cd-mActs">
+                  <button type="button" className="cd-mGhost" disabled={cxlBusy} onClick={() => setCxlOpen(false)}>{t("cdKeepCohort")}</button>
+                  <button type="button" className="cd-mGo cd-mDanger" disabled={cxlBusy || !cxlReason.trim()} onClick={cancelCohort}>{cxlBusy ? t("saving") : t("confirmCancel")}</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {cohortOpen && (
+        <div className="cd-scrim" onClick={() => !cohortSaving && setCohortOpen(false)}>
+          <div className="cd-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="cd-sheetH">
+              <div>
+                <b>{editingBatchId ? t("cdEditCohort") : t("apAddCohort")}</b>
+                <span>{course.courseTitle || ""}</span>
+              </div>
+              <button type="button" className="cd-x" onClick={() => setCohortOpen(false)} aria-label={t("cancel")}>×</button>
+            </div>
+            <label>
+              <span className="cd-lb">{t("apCohortName")} <i>*</i></span>
+              <input className="cd-in" maxLength={40} value={cohortForm.name} placeholder={t("cdCohortPh")} onChange={(e) => setCohortForm((prev) => ({ ...prev, name: e.target.value }))} />
+            </label>
+            <div className="cd-2">
+              <label>
+                <span className="cd-lb">{t("startDate")} <i>*</i></span>
+                <input type="date" className="cd-in" value={cohortForm.startDate} onChange={(e) => setCohortForm((prev) => ({ ...prev, startDate: e.target.value }))} />
+              </label>
+              <label>
+                <span className="cd-lb">{t("endDate")} <i>*</i></span>
+                <input type="date" className="cd-in" value={cohortForm.endDate} onChange={(e) => setCohortForm((prev) => ({ ...prev, endDate: e.target.value }))} />
+              </label>
+              <label>
+                <span className="cd-lb">{t("apStartTime")} <i>*</i></span>
+                <input type="time" className="cd-in" value={cohortForm.startTime} onChange={(e) => setCohortForm((prev) => ({ ...prev, startTime: e.target.value }))} />
+              </label>
+              <label>
+                <span className="cd-lb">{t("apEndTime")} <i>*</i></span>
+                <input type="time" className="cd-in" value={cohortForm.endTime} onChange={(e) => setCohortForm((prev) => ({ ...prev, endTime: e.target.value }))} />
+              </label>
+              <label>
+                <span className="cd-lb">{t("cdSessions")} <i>*</i></span>
+                <input className="cd-in" inputMode="numeric" maxLength={3} placeholder="16" value={cohortForm.sessions} onChange={(e) => setCohortForm((prev) => ({ ...prev, sessions: e.target.value.replace(/\D/g, "").slice(0, 3) }))} />
+              </label>
+              <label>
+                <span className="cd-lb">{t("cdFee")}</span>
+                <input className="cd-in" inputMode="numeric" maxLength={10} placeholder="680000" value={cohortForm.price} onChange={(e) => setCohortForm((prev) => ({ ...prev, price: e.target.value.replace(/\D/g, "").slice(0, 10) }))} />
+                <span className="cd-hint">{t("cdFeeHint")}</span>
+              </label>
+            </div>
+            <div>
+              <span className="cd-lb">{t("cdSessionDays")} <i>*</i></span>
+              <div className="cd-chips">
+                {dayOrder.map((day) => (
+                  <button key={day} type="button" className="cd-chip" aria-selected={cohortForm.days.includes(day)} onClick={() => setCohortForm((prev) => ({ ...prev, days: prev.days.includes(day) ? prev.days.filter((item) => item !== day) : [...prev.days, day] }))}>
+                    {dayLabel(day)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="cd-check">
+              <input type="checkbox" checked={cohortForm.override} onChange={(e) => setCohortForm((prev) => ({ ...prev, override: e.target.checked }))} />
+              <span>{t("cdOverrideLoc")}</span>
+            </label>
+            {cohortForm.override ? (
+              <div className="cd-2">
+                <label>
+                  <span className="cd-lb">{t("cdVenue")} <i>*</i></span>
+                  <input className="cd-in" maxLength={80} value={cohortForm.venue} onChange={(e) => setCohortForm((prev) => ({ ...prev, venue: e.target.value }))} />
+                </label>
+                <label>
+                  <span className="cd-lb">{t("apAddress")} <i>*</i></span>
+                  <input className="cd-in" maxLength={180} value={cohortForm.address} onChange={(e) => setCohortForm((prev) => ({ ...prev, address: e.target.value }))} />
+                </label>
+              </div>
+            ) : (
+              listingPlace ? <p className="cd-hint">{t("cdLocFrom", { place: listingPlace })}</p> : null
+            )}
+            <div className="cd-2">
+              <label>
+                <span className="cd-lb">{t("cdTotalCap")} <i>*</i></span>
+                <input className="cd-in" inputMode="numeric" maxLength={4} value={cohortForm.seats} onChange={(e) => setCohortForm((prev) => ({ ...prev, seats: e.target.value.replace(/\D/g, "").slice(0, 4) }))} />
+              </label>
+              <label>
+                <span className="cd-lb">{t("cdExternal")}</span>
+                <input className="cd-in" inputMode="numeric" maxLength={4} value={cohortForm.reserved} onChange={(e) => setCohortForm((prev) => ({ ...prev, reserved: e.target.value.replace(/\D/g, "").slice(0, 4) }))} />
+              </label>
+            </div>
+            <div className="cd-inv">
+              <span><small>{t("cdTotalCap")}</small><b>{capPreview}</b></span>
+              <span><small>{t("cdRegisteredWord")}</small><b>0</b></span>
+              <span><small>{t("cdExternal")}</small><b>{reservedPreview}</b></span>
+              <span><small>{t("cdAvailable")}</small><b>{availablePreview}</b></span>
+            </div>
+            {cohortErr ? <span className="cd-er">{cohortErr}</span> : null}
+            <div className="cd-acts">
+              <button type="button" className="cd-go" disabled={cohortSaving} onClick={saveCohort}>{editingBatchId ? t("save") : t("cdAdd")}</button>
+              <button type="button" className="cd-gh" onClick={() => setCohortOpen(false)}>{t("cancel")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <PromotionPlanModal
+        open={promoOpen}
+        kind="course"
+        listingId={course._id}
+        title={course.courseTitle}
+        viewHref={`/programDetails?id=${course._id}`}
+        running={Boolean(course.isFeatured && course.featuredExpiry && new Date(course.featuredExpiry) > new Date())}
+        ineligible={isCancelled || isPastOrEnded}
+        onClose={() => setPromoOpen(false)}
+        onPurchased={reloadCourse}
+      />
+
+      {false && viewMode === "group" && (
+      <>
+      <button type="button" className="cd-back" onClick={() => setViewMode("course")}>
+        ← {t("cdBackCourse")}
+      </button>
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 gap-4">
         <Link href="/CoursesManagement" className="back-btn-dashboard">
@@ -2770,6 +3632,9 @@ function CourseDetailsContent() {
       )}
 
       {/* Cancel Modal */}
+      </>
+      )}
+
       {cancelModalOpen && (
         <div
           style={{

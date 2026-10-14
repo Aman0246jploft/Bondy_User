@@ -64,6 +64,51 @@ function getCardPrice(item, lang) {
 }
 
 // ─── Carousel Rail Component ──────────────────────────────────────────────────
+// Round avatar with initials fallback, like the design system Avatar.
+function RoundAvatar({ src, name, size }) {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => {
+    setBroken(false);
+  }, [src]);
+  const initials = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0] || "")
+    .join("")
+    .toUpperCase();
+  return (
+    <span
+      style={{
+        width: size,
+        height: size,
+        flexShrink: 0,
+        borderRadius: "50%",
+        overflow: "hidden",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--bd-ink-600, #2A2A2A)",
+        color: "var(--bd-gray-300, #CFCFCF)",
+        fontFamily: "var(--bd-font-ui)",
+        fontSize: Math.round(size * 0.36),
+        fontWeight: 700,
+      }}
+    >
+      {src && !broken ? (
+        <img
+          src={src}
+          alt={name || ""}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        initials
+      )}
+    </span>
+  );
+}
+
 function CarouselRail({ items, isPast = false, language, onFavToggle, favorites = {} }) {
   const railRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -435,7 +480,7 @@ function FollowListSheet({ show, onClose, userId, initialTab = "followers", orgN
             {people.map((p, idx) => {
               const pId = p._id || p.id;
               const pName = `${p.firstName || ""} ${p.lastName || ""}`.trim() || p.name || "User";
-              const pImg = p.profileImage ? getFullImageUrl(p.profileImage) : "/img/sidebar-logo.svg";
+              const pImg = p.profileImage ? getFullImageUrl(p.profileImage) : "";
               const pMeta = p.role === "ORGANIZER"
                 ? (language === "mn" ? "Зохион байгуулагч" : "Organizer")
                 : (p.bio ? p.bio.slice(0, 36) : (language === "mn" ? "Хэрэглэгч" : "User"));
@@ -459,22 +504,7 @@ function FollowListSheet({ show, onClose, userId, initialTab = "followers", orgN
                     cursor: "pointer",
                   }}
                 >
-                  <img
-                    src={pImg}
-                    alt={pName}
-                    style={{
-                      width: 42,
-                      height: 42,
-                      flexShrink: 0,
-                      borderRadius: 999,
-                      objectFit: "cover",
-                      background: "var(--bd-ink-850)",
-                    }}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/img/sidebar-logo.svg";
-                    }}
-                  />
+                  <RoundAvatar src={pImg} name={pName} size={42} />
                   <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
                     <b style={{ fontSize: 14.5, fontWeight: 600, color: "var(--bd-white)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {pName}
@@ -694,6 +724,23 @@ function ProfileContent() {
     }
   };
 
+  // Organizers chat in the organizer portal, everyone else in the customer one.
+  // The role may still be loading when the button is pressed, so resolve it first.
+  const openChat = async () => {
+    if (!userId) return;
+    let role = currentUserRole;
+    if (!role) {
+      try {
+        const response = await authApi.getSelfProfile();
+        role = response?.data?.user?.role || null;
+        if (role) setCurrentUserRole(role);
+      } catch {
+        return;
+      }
+    }
+    router.push(role === "ORGANIZER" ? `/Message?userId=${userId}` : `/Messagee?userId=${userId}`);
+  };
+
   // Block/Unblock Confirm Action
   const handleAction = (type) => {
     setActionType(type);
@@ -800,7 +847,7 @@ function ProfileContent() {
   }
 
   const orgName = `${userProfile.firstName || ""} ${userProfile.lastName || ""}`.trim() || userProfile.name || userProfile.organizerName || "Organizer";
-  const avatarUrl = userProfile.profileImage ? getFullImageUrl(userProfile.profileImage) : "/img/sidebar-logo.svg";
+  const avatarUrl = userProfile.profileImage ? getFullImageUrl(userProfile.profileImage) : "";
   const coverUrl = userProfile.backgroundImage ? getFullImageUrl(userProfile.backgroundImage) : "";
   const isVerified = Boolean(
     userProfile.role === "ORGANIZER" && (userProfile.organizerVerificationStatus === "approved" || userProfile.isVerified)
@@ -1150,22 +1197,7 @@ function ProfileContent() {
                 flexShrink: 0,
               }}
             >
-              <img
-                src={avatarUrl}
-                alt={orgName}
-                style={{
-                  width: 88,
-                  height: 88,
-                  borderRadius: 22,
-                  objectFit: "cover",
-                  background: "var(--bd-ink-800, #1A1A1A)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                }}
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "/img/sidebar-logo.svg";
-                }}
-              />
+              <RoundAvatar src={avatarUrl} name={orgName} size={88} />
             </span>
 
             <div style={{ minWidth: 0, paddingBottom: 6 }}>
@@ -1358,25 +1390,14 @@ function ProfileContent() {
                       }
                   }
                 >
-                  {followBusy ? (
-                    <span className="op-spin" />
-                  ) : isFollowing ? (
-                    t("followed") || "Дагаж байна"
-                  ) : (
-                    t("follow") || "Дагах"
-                  )}
+                  {followBusy && <span className="op-spin" />}
+                  {followBusy ? t("opSaving") : isFollowing ? t("opFollowing") : t("follow")}
                 </button>
 
                 {/* Chat / Message Button */}
                 <button
                   type="button"
-                  onClick={() => {
-                    if (currentUserRole === "ORGANIZER") {
-                      router.push(`/Message?userId=${userId}`);
-                    } else {
-                      router.push(`/Messagee?userId=${userId}`);
-                    }
-                  }}
+                  onClick={openChat}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -1404,7 +1425,7 @@ function ProfileContent() {
                     e.currentTarget.style.background = "transparent";
                   }}
                 >
-                  {t("messages") || "Чат"}
+                  {t("opChat")}
                 </button>
 
                 {/* More Menu (three dots) */}

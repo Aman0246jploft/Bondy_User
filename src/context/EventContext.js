@@ -76,7 +76,7 @@ export const EventProvider = ({ children }) => {
     const updateEventData = (newData) => {
         setEventData((prev) => {
             const updated = { ...prev, ...newData };
-            localStorage.setItem("eventCreationData", JSON.stringify(updated));
+            try { localStorage.setItem("eventCreationData", JSON.stringify(updated)); } catch (e) { /* storage full */ }
             return updated;
         });
     };
@@ -175,7 +175,7 @@ export const EventProvider = ({ children }) => {
         transformedEvent._id = eventDetails._id;
 
         setEventData(transformedEvent);
-        localStorage.setItem("eventCreationData", JSON.stringify(transformedEvent));
+        try { localStorage.setItem("eventCreationData", JSON.stringify(transformedEvent)); } catch (e) { /* storage full */ }
     };
 
     return (

@@ -8,7 +8,7 @@ export default function OrganizerMessagePage() {
   return (
     <ProtectedRoute>
       <Suspense fallback={<div className="text-center p-5 text-muted">Loading messages...</div>}>
-        <UnifiedMessages />
+        <UnifiedMessages organizerMode />
       </Suspense>
     </ProtectedRoute>
   );

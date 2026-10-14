@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSocket } from "@/context/SocketContext";
 import { toast } from "react-hot-toast";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import authApi from "@/api/authApi";
+import bookingApi from "@/api/bookingApi";
 import { Modal } from "react-bootstrap";
 import blockUserApi from "@/api/blockUser";
 import reportUserApi from "@/api/reportUser";
@@ -15,6 +16,21 @@ import "./messages-unified.css";
 
 const CHAT_LIMIT = 20;
 const MSG_LIMIT = 50;
+
+function sameId(a, b) {
+  return String(a || "") === String(b || "");
+}
+
+function mediaKind(fileType, fileUrl) {
+  const type = String(fileType || "").toLowerCase();
+  if (type === "image" || type === "video" || type === "audio") return type;
+  if (type === "document" || type === "file") return "file";
+  const path = String(fileUrl || "").split("?")[0].toLowerCase();
+  if (/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(path)) return "image";
+  if (/\.(mp4|webm|mov|m4v)$/.test(path)) return "video";
+  if (/\.(mp3|wav|ogg|m4a)$/.test(path)) return "audio";
+  return fileUrl ? "file" : "";
+}
 
 function parseJwt(token) {
   if (!token) return null;
@@ -98,8 +114,32 @@ const VideoPlayer = ({ url }) => {
   );
 };
 
-export default function UnifiedMessages() {
-  const { t, language } = useLanguage();
+function ChatImage({ src, label }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <a href={src} target="_blank" rel="noopener noreferrer" className="ms-file-card">
+        <span className="ms-file-icon">
+          <FileIcon size={16} />
+        </span>
+        <span style={{ fontSize: "13px", fontWeight: 600 }}>{label}</span>
+      </a>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt=""
+      className="ms-img-preview"
+      onClick={() => window.open(src, "_blank")}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+export default function UnifiedMessages({ organizerMode = false }) {
+  const { t } = useLanguage();
+  const router = useRouter();
   const { socket, isSocketConnected, onlineUsers } = useSocket();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("userId");
@@ -108,12 +148,14 @@ export default function UnifiedMessages() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [message, setMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [buyerRefs, setBuyerRefs] = useState({});
 
   // ─── Chat List state ───────────────────────────────────────
   const [chats, setChats] = useState([]);
   const [chatPage, setChatPage] = useState(1);
   const [chatHasMore, setChatHasMore] = useState(true);
   const [chatListLoading, setChatListLoading] = useState(false);
+  const [chatListReady, setChatListReady] = useState(false);
 
   // ─── Message List state ────────────────────────────────────
   const [messages, setMessages] = useState([]);
@@ -123,6 +165,9 @@ export default function UnifiedMessages() {
 
   // ─── Refs ──────────────────────────────────────────────────
   const messagesAreaRef = useRef(null);
+  const stickToBottomRef = useRef(true);
+  const [showJump, setShowJump] = useState(false);
+  const composerRef = useRef(null);
   const chatListRef = useRef(null);
   const fileInputRef = useRef(null);
   const hasAutoSelected = useRef(false);
@@ -159,6 +204,7 @@ export default function UnifiedMessages() {
   const [showUnblockModal, setShowUnblockModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState("");
+  const actionLock = useRef(false);
   const [reportDescription, setReportDescription] = useState("");
   const [reportError, setReportError] = useState("");
   const [myBlockedUsers, setMyBlockedUsers] = useState([]);
@@ -173,7 +219,7 @@ export default function UnifiedMessages() {
       if (!chat) return {};
       if (chat.otherUser) return chat.otherUser;
       const myId = getMyId();
-      return chat.participants?.find((p) => p._id !== myId) || {};
+      return chat.participants?.find((p) => !sameId(p._id, myId)) || {};
     },
     [getMyId]
   );
@@ -201,51 +247,69 @@ export default function UnifiedMessages() {
   useEffect(() => {
     if (!socket) return;
 
+    chatsLoaded.current = false;
+    setChatListReady(false);
     setChatListLoading(true);
     socket.emit("get_chat_list", { page: 1, limit: CHAT_LIMIT }, (response) => {
       setChatListLoading(false);
+      chatsLoaded.current = true;
       if (response?.status === "ok") {
-        setChats(response.data || []);
+        const list = response.data || [];
+        setChats(list);
         setChatPage(1);
-        setChatHasMore((response.data || []).length === CHAT_LIMIT);
-        chatsLoaded.current = true;
+        setChatHasMore(list.length === CHAT_LIMIT);
+        list.forEach((c) => {
+          if (c?._id) socket.emit("join_chat", { chatId: c._id });
+        });
       }
+      setChatListReady(true);
     });
 
     const handleChatListUpdate = (newChat) => {
+      if (!newChat?._id) return;
+      socket.emit("join_chat", { chatId: newChat._id });
+      const active = activeChatRef.current;
+      const isOpen = active && !active.isVirtual && sameId(active._id, newChat._id);
+      const nextChat = isOpen ? { ...newChat, unreadCount: 0 } : newChat;
+      if (isOpen) socket.emit("mark_messages_read", { chatId: newChat._id });
       setChats((prev) => {
-        const exists = prev.find((c) => c._id === newChat._id);
+        const exists = prev.some((c) => sameId(c._id, nextChat._id));
         if (exists) {
-          return [newChat, ...prev.filter((c) => c._id !== newChat._id)];
+          return [nextChat, ...prev.filter((c) => !sameId(c._id, nextChat._id))];
         }
-        return [newChat, ...prev];
+        return [nextChat, ...prev];
       });
     };
 
     socket.on("chat_list_update", handleChatListUpdate);
+    socket.on("update_chat_list", handleChatListUpdate);
     return () => {
       socket.off("chat_list_update", handleChatListUpdate);
+      socket.off("update_chat_list", handleChatListUpdate);
     };
   }, [socket]);
 
   // Handle URL ?userId= parameter to auto-select or create chat
   useEffect(() => {
-    if (!targetUserId || !socket || hasAutoSelected.current) return;
+    if (!targetUserId || !socket || !chatListReady || !chatsLoaded.current || hasAutoSelected.current) return;
 
+    let cancelled = false;
     const findOrCreateChat = async () => {
       const existing = chats.find((c) => {
         const other = getOtherUser(c);
-        return other?._id === targetUserId;
+        return String(other?._id || "") === String(targetUserId);
       });
 
       if (existing) {
+        if (cancelled) return;
         setActiveChat(existing);
         hasAutoSelected.current = true;
         return;
       }
 
       try {
-        const res = await authApi.getUserProfile(targetUserId);
+        const res = await authApi.getUserProfileById(targetUserId);
+        if (cancelled || hasAutoSelected.current) return;
         if (res?.status && res?.data?.user) {
           const user = res.data.user;
           const virtualChat = {
@@ -266,7 +330,10 @@ export default function UnifiedMessages() {
     };
 
     findOrCreateChat();
-  }, [targetUserId, socket, chats, getOtherUser]);
+    return () => {
+      cancelled = true;
+    };
+  }, [targetUserId, socket, chats, chatListReady, getOtherUser]);
 
   // Load messages when activeChat changes
   useEffect(() => {
@@ -276,25 +343,45 @@ export default function UnifiedMessages() {
       setMessages([]);
       setMsgLoading(false);
       setMsgHasMore(false);
+      setTypingUsers({});
       return;
     }
 
+    stickToBottomRef.current = true;
+    setShowJump(false);
+    socket.emit("join_chat", { chatId: activeChat._id });
+    socket.emit("mark_messages_read", { chatId: activeChat._id });
+    setChats((prev) => prev.map((c) => (sameId(c._id, activeChat._id) ? { ...c, unreadCount: 0 } : c)));
+    setTypingUsers({});
+
+    setMessages([]);
     setMsgLoading(true);
     setMsgPage(1);
     setMsgHasMore(true);
 
-    socket.emit("get_messages", { chatId: activeChat._id, page: 1, limit: MSG_LIMIT }, (response) => {
+    let ignore = false;
+    socket.emit("get_message_list", { chatId: activeChat._id, page: 1, limit: MSG_LIMIT }, (response) => {
+      if (ignore) return;
       setMsgLoading(false);
       if (response?.status === "ok") {
-        setMessages(response.data || []);
-        setMsgHasMore((response.data || []).length === MSG_LIMIT);
+        const rows = Array.isArray(response.data) ? response.data : [];
+        const onlyMessages = rows.filter((row) => row && !row.isDateSeparator && (row._id || row.content || row.fileUrl));
+        setMessages(onlyMessages.reverse());
+        setMsgHasMore(typeof response.hasMore === "boolean" ? response.hasMore : onlyMessages.length === MSG_LIMIT);
         setTimeout(() => {
-          if (messagesAreaRef.current) {
-            messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
-          }
+          const el = messagesAreaRef.current;
+          if (!el) return;
+          el.scrollTop = el.scrollHeight;
+          stickToBottomRef.current = true;
+          setShowJump(false);
         }, 80);
+      } else {
+        setMessages([]);
       }
     });
+    return () => {
+      ignore = true;
+    };
   }, [socket, activeChat?._id]);
 
   // Socket event listeners
@@ -303,28 +390,42 @@ export default function UnifiedMessages() {
 
     const handleReceiveMessage = (newMsg) => {
       const chat = activeChatRef.current;
-      if (chat && (newMsg.chatId === chat._id || newMsg.chat === chat._id)) {
+      const incomingChatId = newMsg?.chatId || newMsg?.chat;
+      const isOpen = chat && !chat.isVirtual && sameId(incomingChatId, chat._id);
+      const fromMe = sameId(newMsg?.senderId || newMsg?.sender?._id || newMsg?.sender, getMyId());
+      if (isOpen) {
         setMessages((prev) => {
-          if (prev.some((m) => m._id === newMsg._id)) return prev;
+          if (prev.some((m) => sameId(m._id, newMsg._id))) return prev;
           return [...prev, newMsg];
         });
+        setTypingUsers((prev) => {
+          const next = { ...prev };
+          delete next[String(newMsg?.sender?._id || newMsg?.senderId || newMsg?.sender || "")];
+          return next;
+        });
         setTimeout(() => {
-          if (messagesAreaRef.current) {
-            messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
+          const el = messagesAreaRef.current;
+          if (!el || !stickToBottomRef.current) {
+            if (el) setShowJump(true);
+            return;
           }
+          el.scrollTop = el.scrollHeight;
         }, 60);
-
-        socket.emit("mark_messages_read", { chatId: chat._id });
+        if (!fromMe) socket.emit("mark_messages_read", { chatId: chat._id });
       }
 
       setChats((prev) =>
         prev.map((c) => {
-          if (c._id === newMsg.chatId || c._id === newMsg.chat) {
-            const isCurrentlyActive = chat && chat._id === c._id;
+          if (sameId(c._id, incomingChatId)) {
             return {
               ...c,
-              lastMessage: newMsg,
-              unreadCount: isCurrentlyActive ? 0 : (c.unreadCount || 0) + 1,
+              lastMessage: {
+                content: newMsg.content || (newMsg.fileType ? newMsg.fileType : c.lastMessage?.content),
+                fileType: newMsg.fileType,
+                sender: newMsg.sender,
+                createdAt: newMsg.createdAt || new Date().toISOString(),
+              },
+              unreadCount: isOpen || fromMe ? 0 : c.unreadCount,
             };
           }
           return c;
@@ -334,42 +435,52 @@ export default function UnifiedMessages() {
 
     const handleReadUpdate = ({ chatId, userId }) => {
       const chat = activeChatRef.current;
-      if (chat && chatId === chat._id) {
-        setMessages((prev) =>
-          prev.map((m) => {
-            if (!m.readBy?.includes(userId)) {
-              return { ...m, readBy: [...(m.readBy || []), userId] };
-            }
-            return m;
-          })
-        );
-      }
+      if (!chat || !sameId(chatId, chat._id) || !userId) return;
+      const reader = String(userId);
+      setMessages((prev) =>
+        prev.map((m) => {
+          const readIds = (m.readBy || []).map((id) => String(id?._id || id));
+          if (readIds.includes(reader)) return m;
+          return { ...m, readBy: [...(m.readBy || []), reader] };
+        })
+      );
     };
 
     const handleTyping = ({ chatId, userId, userName }) => {
+      if (!chatId || !userId || sameId(userId, getMyId())) return;
+      const key = String(chatId);
+      const person = String(userId);
       const chat = activeChatRef.current;
-      if (chat && chatId === chat._id) {
-        setTypingUsers((prev) => ({ ...prev, [userId]: userName }));
+      if (chat && sameId(key, chat._id)) {
+        setTypingUsers((prev) => ({ ...prev, [person]: userName || true }));
+        setTimeout(() => {
+          const el = messagesAreaRef.current;
+          if (!el || !stickToBottomRef.current) return;
+          el.scrollTop = el.scrollHeight;
+        }, 30);
       }
       setSidebarTyping((prev) => ({
         ...prev,
-        [chatId]: { ...(prev[chatId] || {}), [userId]: true },
+        [key]: { ...(prev[key] || {}), [person]: true },
       }));
     };
 
     const handleStopTyping = ({ chatId, userId }) => {
+      if (!chatId || !userId) return;
+      const key = String(chatId);
+      const person = String(userId);
       const chat = activeChatRef.current;
-      if (chat && chatId === chat._id) {
+      if (chat && sameId(key, chat._id)) {
         setTypingUsers((prev) => {
           const next = { ...prev };
-          delete next[userId];
+          delete next[person];
           return next;
         });
       }
       setSidebarTyping((prev) => {
-        const nextChat = { ...(prev[chatId] || {}) };
-        delete nextChat[userId];
-        return { ...prev, [chatId]: nextChat };
+        const nextChat = { ...(prev[key] || {}) };
+        delete nextChat[person];
+        return { ...prev, [key]: nextChat };
       });
     };
 
@@ -398,7 +509,7 @@ export default function UnifiedMessages() {
 
     if (stagedFile) {
       payload.fileUrl = stagedFile.fileUrl;
-      payload.fileType = stagedFile.fileType;
+      payload.fileType = stagedFile.fileType === "file" ? "document" : stagedFile.fileType;
     }
 
     socket.emit("send_message", payload, (response) => {
@@ -414,10 +525,12 @@ export default function UnifiedMessages() {
         setMessages((prev) => [...prev, response.data]);
         setMessage("");
         setStagedFile(null);
+        stickToBottomRef.current = true;
+        setShowJump(false);
         setTimeout(() => {
-          if (messagesAreaRef.current) {
-            messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
-          }
+          const el = messagesAreaRef.current;
+          if (!el) return;
+          el.scrollTop = el.scrollHeight;
         }, 80);
 
         if (activeChat.isVirtual && response.chatId) {
@@ -451,6 +564,30 @@ export default function UnifiedMessages() {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  useEffect(() => {
+    const el = composerRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const next = Math.min(el.scrollHeight, 120);
+    el.style.height = `${Math.max(next, 44)}px`;
+  }, [message, activeChat?._id]);
+
+  const handleMsgsScroll = () => {
+    const el = messagesAreaRef.current;
+    if (!el) return;
+    const away = el.scrollHeight - el.scrollTop - el.clientHeight > 80;
+    stickToBottomRef.current = !away;
+    setShowJump(away);
+  };
+
+  const jumpToBottom = () => {
+    const el = messagesAreaRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    stickToBottomRef.current = true;
+    setShowJump(false);
   };
 
   // Handle file select
@@ -498,32 +635,44 @@ export default function UnifiedMessages() {
     });
   };
 
+  const apiNotice = (message, fallbackKey) => (message ? t(message) : t(fallbackKey));
+
   // Block / Unblock action
   const confirmBlockUser = async () => {
-    if (!otherUserId) return;
+    if (!otherUserId || actionLock.current) return;
+    actionLock.current = true;
     try {
-      const res = await blockUserApi.blockUser(otherUserId);
+      const res = await blockUserApi.blockUser({ toUser: otherUserId }, { skipToast: true });
       if (res?.status) {
-        toast.success(t("userBlocked") || "User blocked");
+        toast.success(t("userBlockedSuccessfully"), { id: "chat-block" });
         setMyBlockedUsers((prev) => [...prev, otherUserId]);
         setShowBlockModal(false);
+      } else {
+        toast.error(apiNotice(res?.message, "failedToBlockUser"), { id: "chat-block" });
       }
     } catch (err) {
-      toast.error("Failed to block user");
+      toast.error(apiNotice(err?.response?.data?.message, "failedToBlockUser"), { id: "chat-block" });
+    } finally {
+      actionLock.current = false;
     }
   };
 
   const confirmUnblockUser = async () => {
-    if (!otherUserId) return;
+    if (!otherUserId || actionLock.current) return;
+    actionLock.current = true;
     try {
-      const res = await blockUserApi.unblockUser(otherUserId);
+      const res = await blockUserApi.unblockUser({ toUser: otherUserId }, { skipToast: true });
       if (res?.status) {
-        toast.success(t("userUnblocked") || "User unblocked");
+        toast.success(t("userUnblockedSuccessfully"), { id: "chat-block" });
         setMyBlockedUsers((prev) => prev.filter((id) => id !== otherUserId));
         setShowUnblockModal(false);
+      } else {
+        toast.error(apiNotice(res?.message, "failedToUnblockUser"), { id: "chat-block" });
       }
     } catch (err) {
-      toast.error("Failed to unblock user");
+      toast.error(apiNotice(err?.response?.data?.message, "failedToUnblockUser"), { id: "chat-block" });
+    } finally {
+      actionLock.current = false;
     }
   };
 
@@ -533,34 +682,67 @@ export default function UnifiedMessages() {
       setReportError(t("pleaseSelectReason") || "Please select a reason");
       return;
     }
+    if (actionLock.current) return;
+    actionLock.current = true;
     try {
-      const res = await reportUserApi.reportUser({
-        targetUserId: otherUserId,
-        reason: reportReason,
-        description: reportDescription,
-      });
+      const res = await reportUserApi.reportUser(
+        {
+          toUser: otherUserId,
+          reason: reportReason,
+          description: reportDescription,
+        },
+        { skipToast: true },
+      );
       if (res?.status) {
-        toast.success(t("reportSubmitted") || "Report submitted successfully");
+        toast.success(t("userReportedSuccessfully"), { id: "chat-report" });
         setShowReportModal(false);
         setReportReason("");
         setReportDescription("");
+      } else {
+        toast.error(apiNotice(res?.message, "failedToReportUser"), { id: "chat-report" });
       }
     } catch (err) {
-      toast.error("Failed to submit report");
+      toast.error(apiNotice(err?.response?.data?.message, "failedToReportUser"), { id: "chat-report" });
+    } finally {
+      actionLock.current = false;
     }
   };
+
+  useEffect(() => {
+    if (!organizerMode) return undefined;
+    let cancelled = false;
+    bookingApi.getOrganizerBuyerRefs().then((res) => {
+      if (cancelled || !res?.status) return;
+      const next = {};
+      (res.data?.buyers || []).forEach((row) => {
+        if (row?.userId) next[String(row.userId)] = row;
+      });
+      setBuyerRefs(next);
+    }).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [organizerMode]);
+
+  const refsFor = (userId) => buyerRefs[String(userId || "")] || null;
 
   // Filter chats by search
   const filteredChats = chats.filter((c) => {
     if (!searchTerm.trim()) return true;
     const other = getOtherUser(c);
+    const q = searchTerm.trim().toLowerCase();
     const name = `${other.firstName || ""} ${other.lastName || ""} ${other.email || ""}`.toLowerCase();
-    return name.includes(searchTerm.toLowerCase());
+    if (name.includes(q)) return true;
+    if (!organizerMode) return false;
+    const refs = refsFor(other._id);
+    return Boolean(refs?.bookingIds?.some((id) => String(id).toLowerCase().includes(q)));
   });
 
   const totalUnreadCount = chats.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
   const activeOtherUser = getOtherUser(activeChat);
-  const isOtherOnline = otherUserId && onlineUsers?.includes(otherUserId);
+  const isOnline = (id) => Boolean(id && onlineUsers && typeof onlineUsers.has === "function" && onlineUsers.has(id));
+  const isOtherOnline = isOnline(otherUserId);
+  const threadTyping = Object.keys(typingUsers).length > 0;
 
   const myId = getMyId();
 
@@ -588,7 +770,7 @@ export default function UnifiedMessages() {
             <input
               type="text"
               className="ms-search-input"
-              placeholder={t("searchPlaceholder") || "Search conversations..."}
+              placeholder={organizerMode ? t("searchByNameOrBooking") : (t("searchPlaceholder") || "Search conversations...")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -610,11 +792,16 @@ export default function UnifiedMessages() {
             ) : (
               filteredChats.map((c) => {
                 const other = getOtherUser(c);
-                const isSelected = activeChat?._id === c._id;
-                const isUserOnline = other._id && onlineUsers?.includes(other._id);
-                const isTyping = sidebarTyping[c._id] && Object.keys(sidebarTyping[c._id]).length > 0;
+                const isSelected = sameId(activeChat?._id, c._id);
+                const isUserOnline = isOnline(other._id);
+                const typingForRow = sidebarTyping[String(c._id)];
+                const isTyping = typingForRow && Object.keys(typingForRow).length > 0;
                 const name = `${other.firstName || ""} ${other.lastName || ""}`.trim() || other.email || "User";
                 const lastMsg = c.lastMessage?.content || (c.lastMessage?.fileType ? "📎 Attachment" : "");
+                const refs = organizerMode ? refsFor(other._id) : null;
+                const about = refs?.latestTitle
+                  ? `${refs.latestTitle}${refs.latestBookingId ? ` · ${refs.latestBookingId}` : ""}`
+                  : "";
 
                 return (
                   <button
@@ -650,17 +837,18 @@ export default function UnifiedMessages() {
                       <div className="ms-row-preview">
                         <span className="ms-row-text">
                           {isTyping ? (
-                            <span style={{ color: "var(--acc-bright)" }}>
-                              {language === "en" ? "typing..." : "бичиж байна..."}
+                            <span style={{ color: "var(--acc-bright, #2dd4bf)" }}>
+                              {t("typing")}
                             </span>
                           ) : (
-                            lastMsg || (language === "en" ? "Start conversation" : "Зурвас илгээх")
+                            lastMsg || t("startConversation")
                           )}
                         </span>
                         {c.unreadCount > 0 && !isSelected && (
                           <span className="ms-row-unread">{c.unreadCount}</span>
                         )}
                       </div>
+                      {about && <span className="ms-row-about">{about}</span>}
                     </div>
                   </button>
                 );
@@ -717,8 +905,8 @@ export default function UnifiedMessages() {
                     <h4 className="ms-thread-name">
                       {`${activeOtherUser.firstName || ""} ${activeOtherUser.lastName || ""}`.trim() || activeOtherUser.email || "User"}
                     </h4>
-                    <span className={`ms-thread-status ${isOtherOnline ? "online" : ""}`}>
-                      {isOtherOnline ? (language === "en" ? "Online" : "Идэвхтэй байна") : (language === "en" ? "Offline" : "Офлайн")}
+                    <span className={`ms-thread-status ${threadTyping || isOtherOnline ? "online" : ""}`}>
+                      {threadTyping ? t("typing") : isOtherOnline ? t("online") : t("offline")}
                     </span>
                   </div>
                 </div>
@@ -740,6 +928,21 @@ export default function UnifiedMessages() {
 
                   {showDropdown && (
                     <div className="ms-dropdown-menu">
+                      {organizerMode && otherUserId && (
+                        <button
+                          type="button"
+                          className="ms-dropdown-item"
+                          onClick={() => {
+                            setShowDropdown(false);
+                            router.push(`/OrganizerCustomerBookings?userId=${String(otherUserId)}`);
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 7h16M4 12h16M4 17h10" />
+                          </svg>
+                          <span>{t("viewBooking")}</span>
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="ms-dropdown-item"
@@ -806,8 +1009,9 @@ export default function UnifiedMessages() {
                 </div>
               </div>
 
+              <div className="ms-msgs-wrap">
               {/* Messages History */}
-              <div className="ms-msgs bd-scroll" ref={messagesAreaRef}>
+              <div className="ms-msgs bd-scroll" ref={messagesAreaRef} onScroll={handleMsgsScroll}>
                 {msgLoading ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "16px" }}>
                     <div className="ac-skel-book" style={{ height: "48px", width: "60%" }} />
@@ -817,48 +1021,43 @@ export default function UnifiedMessages() {
                 ) : messages.length === 0 ? (
                   <div style={{ margin: "auto", textAlign: "center", color: "var(--bd-gray-500)", padding: "20px" }}>
                     <p style={{ margin: 0, fontSize: "14px" }}>
-                      {language === "en" ? "No messages yet. Say hello!" : "Одоогоор зурвас байхгүй байна."}
+                      {t("emptyChatHello")}
                     </p>
                   </div>
                 ) : (
                   messages.map((m, idx) => {
-                    const isOutgoing = m.senderId === myId || m.sender?._id === myId;
+                    const senderId = m.senderId || m.sender?._id || (typeof m.sender === "string" ? m.sender : "");
+                    const isOutgoing = sameId(senderId, myId);
                     const timeStr = m.createdAt
                       ? new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                       : "";
+                    const kind = m.fileUrl ? mediaKind(m.fileType, m.fileUrl) : "";
+                    const fileSrc = m.fileUrl ? getFullImageUrl(m.fileUrl) : "";
+                    const readIds = (m.readBy || []).map((id) => String(id?._id || id));
+                    const seenByOther = readIds.some((id) => id && !sameId(id, myId));
 
                     return (
                       <div key={m._id || idx} className={`ms-msg-wrap ${isOutgoing ? "out" : "in"}`}>
                         <div className="ms-bubble">
-                          {/* File / Media Preview */}
-                          {m.fileUrl && (
-                            <>
-                              {m.fileType === "image" && (
-                                <img
-                                  src={m.fileUrl}
-                                  alt="Attachment"
-                                  className="ms-img-preview"
-                                  onClick={() => window.open(m.fileUrl, "_blank")}
-                                />
-                              )}
-                              {m.fileType === "video" && <VideoPlayer url={m.fileUrl} />}
-                              {m.fileType === "audio" && (
-                                <audio controls src={m.fileUrl} style={{ maxWidth: "260px", marginBottom: "6px" }} />
-                              )}
-                              {m.fileType === "file" && (
-                                <a
-                                  href={m.fileUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="ms-file-card"
-                                >
-                                  <span className="ms-file-icon">
-                                    <FileIcon size={16} />
-                                  </span>
-                                  <span style={{ fontSize: "13px", fontWeight: 600 }}>Download File</span>
-                                </a>
-                              )}
-                            </>
+                          {fileSrc && kind === "image" && (
+                            <ChatImage src={fileSrc} label={t("downloadFile")} />
+                          )}
+                          {fileSrc && kind === "video" && <VideoPlayer url={fileSrc} />}
+                          {fileSrc && kind === "audio" && (
+                            <audio controls src={fileSrc} style={{ maxWidth: "260px", marginBottom: "6px" }} />
+                          )}
+                          {fileSrc && kind === "file" && (
+                            <a
+                              href={fileSrc}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ms-file-card"
+                            >
+                              <span className="ms-file-icon">
+                                <FileIcon size={16} />
+                              </span>
+                              <span style={{ fontSize: "13px", fontWeight: 600 }}>{t("downloadFile")}</span>
+                            </a>
                           )}
 
                           {m.content && <span>{m.content}</span>}
@@ -868,7 +1067,7 @@ export default function UnifiedMessages() {
                           <span>{timeStr}</span>
                           {isOutgoing && (
                             <span>
-                              {m.readBy?.length > 1 ? "✓✓" : "✓"}
+                              {seenByOther ? "✓✓" : "✓"}
                             </span>
                           )}
                         </div>
@@ -881,10 +1080,24 @@ export default function UnifiedMessages() {
                 {Object.keys(typingUsers).length > 0 && (
                   <div className="ms-msg-wrap in">
                     <span className="ms-typing-indicator">
-                      {language === "en" ? "typing..." : "бичиж байна..."}
+                      {t("typing")}
                     </span>
                   </div>
                 )}
+              </div>
+
+              {showJump && (
+                <button
+                  type="button"
+                  className="ms-jump"
+                  onClick={jumpToBottom}
+                  aria-label={t("jumpToLatest")}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+              )}
               </div>
 
               {/* Staged File Banner */}
@@ -905,11 +1118,11 @@ export default function UnifiedMessages() {
               {/* Blocked Notifications */}
               {isBlockedByMe ? (
                 <div className="ms-blocked-banner">
-                  {t("youBlockedThisUser") || "You have blocked this user. Unblock to send messages."}
+                  {t("youBlockedThisUser")}
                 </div>
               ) : isBlockedByOther ? (
                 <div className="ms-blocked-banner">
-                  {t("youAreBlocked") || "You cannot reply to this conversation."}
+                  {t("youAreBlocked")}
                 </div>
               ) : (
                 /* Composer */
@@ -932,10 +1145,11 @@ export default function UnifiedMessages() {
                     </svg>
                   </button>
 
-                  <input
-                    type="text"
-                    className="ms-in"
-                    placeholder={t("typeAMessage") || "Type a message..."}
+                  <textarea
+                    ref={composerRef}
+                    rows={1}
+                    className="ms-in ms-composer"
+                    placeholder={t("typeAMessage")}
                     value={message}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyPress}
@@ -960,130 +1174,94 @@ export default function UnifiedMessages() {
         </div>
       </div>
 
-      {/* Clear Chat Confirmation Modal */}
-      <Modal show={showClearChatModal} onHide={() => setShowClearChatModal(false)} centered>
-        <div style={{ padding: "24px", background: "var(--bd-ink-850, #131b2e)", color: "#fff", borderRadius: "20px", border: "1px solid var(--bd-border)" }}>
-          <h4 style={{ margin: "0 0 10px", fontWeight: 700 }}>{t("clearChat") || "Clear Chat"}</h4>
-          <p style={{ margin: "0 0 20px", color: "var(--bd-gray-400)", fontSize: "14px" }}>
-            {t("clearChatConfirm") || "Are you sure you want to clear this conversation? This will delete messages for you."}
-          </p>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-            <button
-              type="button"
-              className="ac-pg-btn"
-              onClick={() => setShowClearChatModal(false)}
-            >
-              {t("cancel") || "Cancel"}
+      <Modal show={showClearChatModal} onHide={() => setShowClearChatModal(false)} centered className="ms-dialog">
+        <Modal.Header closeButton closeVariant="white">
+          <Modal.Title>{t("clearChat")}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="ms-dialog-copy">{t("clearChatConfirmMessage")}</p>
+          <div className="ms-dialog-actions">
+            <button type="button" className="ms-dialog-btn cancel" onClick={() => setShowClearChatModal(false)}>
+              {t("cancel")}
             </button>
-            <button
-              type="button"
-              className="ac-cta"
-              style={{ background: "#ff3b30", borderColor: "#ff3b30" }}
-              onClick={confirmClearChat}
-            >
-              {t("clear") || "Clear"}
+            <button type="button" className="ms-dialog-btn danger" onClick={confirmClearChat}>
+              {t("clearChat")}
             </button>
           </div>
-        </div>
+        </Modal.Body>
       </Modal>
 
-      {/* Block Confirmation Modal */}
-      <Modal show={showBlockModal} onHide={() => setShowBlockModal(false)} centered>
-        <div style={{ padding: "24px", background: "var(--bd-ink-850, #131b2e)", color: "#fff", borderRadius: "20px", border: "1px solid var(--bd-border)" }}>
-          <h4 style={{ margin: "0 0 10px", fontWeight: 700 }}>{t("blockUser") || "Block User"}</h4>
-          <p style={{ margin: "0 0 20px", color: "var(--bd-gray-400)", fontSize: "14px" }}>
-            {t("blockUserConfirm") || "Are you sure you want to block this user? They will not be able to message you."}
-          </p>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-            <button
-              type="button"
-              className="ac-pg-btn"
-              onClick={() => setShowBlockModal(false)}
-            >
-              {t("cancel") || "Cancel"}
+      <Modal show={showBlockModal} onHide={() => setShowBlockModal(false)} centered className="ms-dialog">
+        <Modal.Header closeButton closeVariant="white">
+          <Modal.Title>{t("blockUser")}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="ms-dialog-copy">{t("blockUserConfirmMessage")}</p>
+          <div className="ms-dialog-actions">
+            <button type="button" className="ms-dialog-btn cancel" onClick={() => setShowBlockModal(false)}>
+              {t("cancel")}
             </button>
-            <button
-              type="button"
-              className="ac-cta"
-              style={{ background: "#ff3b30", borderColor: "#ff3b30" }}
-              onClick={confirmBlockUser}
-            >
-              {t("block") || "Block"}
+            <button type="button" className="ms-dialog-btn danger" onClick={confirmBlockUser}>
+              {t("block")}
             </button>
           </div>
-        </div>
+        </Modal.Body>
       </Modal>
 
-      {/* Unblock Confirmation Modal */}
-      <Modal show={showUnblockModal} onHide={() => setShowUnblockModal(false)} centered>
-        <div style={{ padding: "24px", background: "var(--bd-ink-850, #131b2e)", color: "#fff", borderRadius: "20px", border: "1px solid var(--bd-border)" }}>
-          <h4 style={{ margin: "0 0 10px", fontWeight: 700 }}>{t("unblockUser") || "Unblock User"}</h4>
-          <p style={{ margin: "0 0 20px", color: "var(--bd-gray-400)", fontSize: "14px" }}>
-            {t("unblockUserConfirm") || "Do you want to unblock this user?"}
-          </p>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-            <button
-              type="button"
-              className="ac-pg-btn"
-              onClick={() => setShowUnblockModal(false)}
-            >
-              {t("cancel") || "Cancel"}
+      <Modal show={showUnblockModal} onHide={() => setShowUnblockModal(false)} centered className="ms-dialog">
+        <Modal.Header closeButton closeVariant="white">
+          <Modal.Title>{t("unblockUser")}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="ms-dialog-copy">{t("unblockUserConfirmMessage")}</p>
+          <div className="ms-dialog-actions">
+            <button type="button" className="ms-dialog-btn cancel" onClick={() => setShowUnblockModal(false)}>
+              {t("cancel")}
             </button>
-            <button
-              type="button"
-              className="ac-cta"
-              onClick={confirmUnblockUser}
-            >
-              {t("unblock") || "Unblock"}
+            <button type="button" className="ms-dialog-btn confirm" onClick={confirmUnblockUser}>
+              {t("unblock")}
             </button>
           </div>
-        </div>
+        </Modal.Body>
       </Modal>
 
-      {/* Report Modal */}
-      <Modal show={showReportModal} onHide={() => setShowReportModal(false)} centered>
-        <div style={{ padding: "24px", background: "var(--bd-ink-850, #131b2e)", color: "#fff", borderRadius: "20px", border: "1px solid var(--bd-border)" }}>
-          <h4 style={{ margin: "0 0 10px", fontWeight: 700 }}>{t("reportUser") || "Report User"}</h4>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", margin: "14px 0" }}>
-            <select
-              className="ms-in"
-              style={{ height: "40px", borderRadius: "10px" }}
-              value={reportReason}
-              onChange={(e) => setReportReason(e.target.value)}
-            >
-              <option value="">{t("selectReason") || "Select a reason..."}</option>
-              <option value="SPAM">Spam or unwanted messages</option>
-              <option value="HARASSMENT">Harassment or hate speech</option>
-              <option value="INAPPROPRIATE">Inappropriate content</option>
-              <option value="FRAUD">Fraud or scam</option>
-              <option value="OTHER">Other</option>
-            </select>
-
-            <textarea
-              className="ac-textarea"
-              placeholder={t("optionalDescription") || "Additional details (optional)..."}
-              value={reportDescription}
-              onChange={(e) => setReportDescription(e.target.value)}
-            />
-            {reportError && <span style={{ fontSize: "12px", color: "#ff5a5a" }}>{reportError}</span>}
-          </div>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-            <button
-              type="button"
-              className="ac-pg-btn"
-              onClick={() => setShowReportModal(false)}
-            >
-              {t("cancel") || "Cancel"}
+      <Modal show={showReportModal} onHide={() => setShowReportModal(false)} centered className="ms-dialog">
+        <Modal.Header closeButton closeVariant="white">
+          <Modal.Title>{t("reportUser")}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="ms-dialog-copy">{t("reportUserDescription")}</p>
+          <select
+            className="ms-dialog-field"
+            value={reportReason}
+            onChange={(e) => {
+              setReportReason(e.target.value);
+              setReportError("");
+            }}
+          >
+            <option value="">{t("selectReason")}</option>
+            <option value="SPAM">{t("reportReasonSpam")}</option>
+            <option value="HARASSMENT">{t("reportReasonHarassment")}</option>
+            <option value="INAPPROPRIATE">{t("reportReasonInappropriate")}</option>
+            <option value="FRAUD">{t("reportReasonFraud")}</option>
+            <option value="OTHER">{t("reportReasonOther")}</option>
+          </select>
+          <textarea
+            className="ms-dialog-field ms-dialog-note"
+            placeholder={t("optionalDescription")}
+            value={reportDescription}
+            onChange={(e) => setReportDescription(e.target.value)}
+          />
+          {reportError && <span className="ms-dialog-error">{reportError}</span>}
+          <div className="ms-dialog-actions">
+            <button type="button" className="ms-dialog-btn cancel" onClick={() => setShowReportModal(false)}>
+              {t("cancel")}
             </button>
-            <button
-              type="button"
-              className="ac-cta"
-              onClick={confirmReportUser}
-            >
-              {t("submitReport") || "Submit Report"}
+            <button type="button" className="ms-dialog-btn confirm" onClick={confirmReportUser}>
+              {t("submitReport")}
             </button>
           </div>
-        </div>
+        </Modal.Body>
       </Modal>
     </div>
   );

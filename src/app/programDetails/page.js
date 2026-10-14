@@ -13,6 +13,7 @@ import { formatTime } from "@/utils/timeHelper";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FAQ from "@/components/FAQ";
+import ShareSheet from "@/components/ShareSheet";
 
 const FALLBACK_IMG = "/img/sidebar-logo.svg";
 
@@ -487,7 +488,7 @@ function ProgramDetailsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { checkAuth } = useAuthGuard();
 
   const [courseDetails, setCourseDetails] = useState(null);
@@ -499,6 +500,8 @@ function ProgramDetailsContent() {
   const [galleryInitialIdx, setGalleryInitialIdx] = useState(0);
   const [galleryInitialMode, setGalleryInitialMode] = useState("carousel");
   const [favorites, setFavorites] = useState({});
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   const [selectedBatchId, setSelectedBatchId] = useState("");
   const [selectedPassType, setSelectedPassType] = useState(""); // "" | "1month" | "3month"
   const [expandedAbout, setExpandedAbout] = useState(false);
@@ -629,26 +632,9 @@ function ProgramDetailsContent() {
     } catch (_) { }
   };
 
-  const handleShare = async () => {
-    const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-    try {
-      if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = shareUrl;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-      }
-      toast.success(language === "en" ? "Link copied to clipboard!" : "Холбоос хуулагдлаа!");
-    } catch (error) {
-      toast.error(language === "en" ? "Failed to copy link" : "Холбоос хуулахад алдаа гарлаа");
-    }
+  const handleShare = () => {
+    setShareUrl(typeof window !== "undefined" ? window.location.href : "");
+    setShareOpen(true);
   };
 
   // Collect all media items: poster images + media links + videos (with deduplication)
@@ -933,7 +919,7 @@ function ProgramDetailsContent() {
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(8,8,8,.42) 0%, transparent 38%, rgba(10,10,10,.86) 100%)" }} />
 
           {/* Hero Top Controls */}
-          <div className="bd-hero-ctl" style={{ position: "absolute", left: 16, right: 16, top: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <div className="bd-hero-ctl">
             <Link
               href="/Programs-Listing"
               aria-label={language === "en" ? "Back" : "Буцах"}
@@ -956,56 +942,6 @@ function ProgramDetailsContent() {
               </svg>
             </Link>
 
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-              <button
-                type="button"
-                onClick={handleWishlistToggle}
-                aria-label={language === "en" ? "Save" : "Хадгалах"}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 44,
-                  height: 44,
-                  padding: 0,
-                  border: isWishlisted ? "1px solid var(--acc)" : "none",
-                  borderRadius: 999,
-                  background: isWishlisted ? "rgba(35, 173, 164, 0.4)" : "rgba(0,0,0,.45)",
-                  backdropFilter: "blur(8px)",
-                  color: isWishlisted ? "var(--acc-bright)" : "var(--bd-white)",
-                  cursor: "pointer",
-                }}
-              >
-                <svg className="bd-hero-heart" width="22" height="22" viewBox="0 0 24 24" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 20.9C12 20.9 2.7 15.4 2.7 9.4C2.7 6.4 5 4.1 7.9 4.1C9.8 4.1 11.3 5.2 12 6.7C12.7 5.2 14.2 4.1 16.1 4.1C19 4.1 21.3 6.4 21.3 9.4C21.3 15.4 12 20.9 12 20.9Z" />
-                </svg>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleShare}
-                aria-label={language === "en" ? "Share" : "Хуваалцах"}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 44,
-                  height: 44,
-                  padding: 0,
-                  border: "none",
-                  borderRadius: 999,
-                  background: "rgba(0,0,0,.45)",
-                  backdropFilter: "blur(8px)",
-                  color: "var(--bd-white)",
-                  cursor: "pointer",
-                }}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-                  <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
-                </svg>
-              </button>
-            </span>
           </div>
 
           {/* Mobile title overlay */}
@@ -1031,7 +967,7 @@ function ProgramDetailsContent() {
                 <button
                   type="button"
                   onClick={handleShare}
-                  aria-label={language === "en" ? "Share" : "Хуваалцах"}
+                  aria-label={t("share")}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -1046,7 +982,7 @@ function ProgramDetailsContent() {
                     cursor: "pointer",
                     transition: "border-color 200ms ease, color 200ms ease",
                   }}
-                  title={language === "en" ? "Share course" : "Хуваалцах"}
+                  title={t("share")}
                 >
                   <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
@@ -1081,11 +1017,11 @@ function ProgramDetailsContent() {
             </div>
 
             {/* 2-Column Info Card */}
-            <div className="bd-info">
+            <div className="pd-info">
               {/* Card 1: Course Duration */}
               <div className="bd-card" style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <span className="bd-tile">
-                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                     <line x1="16" y1="2" x2="16" y2="6" />
                     <line x1="8" y1="2" x2="8" y2="6" />
@@ -1094,7 +1030,7 @@ function ProgramDetailsContent() {
                 </span>
                 <span style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
                   <b style={{ fontSize: 15, fontWeight: 700, color: "var(--bd-white)" }}>
-                    {language === "en" ? "Course Duration" : "Сургалтын хугацаа"}
+                    {t("pdCourseDuration")}
                   </b>
                   <span style={{ fontSize: 14, lineHeight: 1.45, color: "var(--bd-gray-400)" }}>
                     {durationText}
@@ -1105,14 +1041,14 @@ function ProgramDetailsContent() {
               {/* Card 2: Schedule */}
               <div className="bd-card" style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <span className="bd-tile">
-                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
                 </span>
                 <span style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
                   <b style={{ fontSize: 15, fontWeight: 700, color: "var(--bd-white)" }}>
-                    {language === "en" ? "Schedule" : "Хуваарь"}
+                    {t("pdSchedule")}
                   </b>
                   <span style={{ fontSize: 14, lineHeight: 1.45, color: "var(--bd-gray-400)" }}>
                     {scheduleText}
@@ -1124,7 +1060,7 @@ function ProgramDetailsContent() {
             {/* Short Description */}
             {shortdesc && (
               <section>
-                <h2 className="bd-h3">{language === "en" ? "Brief Summary" : "Товч танилцуулга"}</h2>
+                <h2 className="bd-h3">{t("pdOverview")}</h2>
                 <div className="bd-card">
                   <p className="bd-body">{shortdesc}</p>
                 </div>
@@ -1134,7 +1070,7 @@ function ProgramDetailsContent() {
             {/* About the Course (Expandable longdesc) */}
             {longdesc && (
               <section>
-                <h2 className="bd-h3">{language === "en" ? "About the Course" : "Сургалтын тухай"}</h2>
+                <h2 className="bd-h3">{t("pdAbout")}</h2>
                 <div className="bd-card">
                   <p
                     className="bd-body bd-more"
@@ -1164,9 +1100,7 @@ function ProgramDetailsContent() {
                         cursor: "pointer",
                       }}
                     >
-                      {expandedAbout
-                        ? (language === "en" ? "Show less" : "Хураах")
-                        : (language === "en" ? "Read more" : "Цааш унших")}
+                      {expandedAbout ? t("pdShowLess") : t("pdReadMore")}
                     </button>
                   )}
                 </div>
@@ -1176,7 +1110,7 @@ function ProgramDetailsContent() {
             {/* What you will learn */}
             {whatYouWillLearn && (
               <section>
-                <h2 className="bd-h3">{language === "en" ? "What You Will Learn" : "Юу сурах вэ?"}</h2>
+                <h2 className="bd-h3">{t("pdLearn")}</h2>
                 <div className="bd-card">
                   <div className="bd-body" style={{ whiteSpace: "pre-line", lineHeight: 1.75 }}>
                     {whatYouWillLearn}
@@ -1189,7 +1123,7 @@ function ProgramDetailsContent() {
             {mediaItems.length > 0 && (
               <section>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-                  <h2 className="bd-h3">{language === "en" ? "Photo Gallery" : "Зургийн цомог"}</h2>
+                  <h2 className="bd-h3">{t("pdGallery")}</h2>
                   <button
                     type="button"
                     onClick={() => openGalleryModal(0, "grid")}
@@ -1207,7 +1141,7 @@ function ProgramDetailsContent() {
                       padding: 0,
                     }}
                   >
-                    {language === "en" ? "View all" : "Бүгдийг харах"} ({mediaItems.length})
+                    {t("pdSeeAll")} ({mediaItems.length})
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="9 18 15 12 9 6" />
                     </svg>
@@ -1320,7 +1254,7 @@ function ProgramDetailsContent() {
                         </span>
                       )}
                       <span style={{ fontSize: 12, fontWeight: 600, textAlign: "center", lineHeight: 1.25 }}>
-                        {language === "en" ? "View all" : "Бүгдийг харах"}
+                        {t("pdSeeAll")}
                       </span>
                     </div>
                   </button>
@@ -1330,7 +1264,7 @@ function ProgramDetailsContent() {
 
             {/* Location Section */}
             <section>
-              <h2 className="bd-h3">{language === "en" ? "Location" : "Байршил"}</h2>
+              <h2 className="bd-h3">{t("location")}</h2>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 200, display: "flex", flexDirection: "column", gap: 6 }}>
                   <b style={{ fontSize: 16, fontWeight: 700, color: "var(--bd-white)" }}>
@@ -1367,7 +1301,7 @@ function ProgramDetailsContent() {
                       <line x1="2" y1="12" x2="22" y2="12" />
                       <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                     </svg>
-                    {language === "en" ? "Open Google Maps" : "Google Maps нээх"}
+                    {t("pdMaps")}
                   </a>
                 </div>
 
@@ -1387,7 +1321,7 @@ function ProgramDetailsContent() {
 
             {/* Organizer Card */}
             <section>
-              <h2 className="bd-h3">{language === "en" ? "Organizer" : "Зохион байгуулагч"}</h2>
+              <h2 className="bd-h3">{t("organizer")}</h2>
               <div className="bd-card" style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <img
                   src={getFullImageUrl(createdBy?.profileImage) || FALLBACK_IMG}
@@ -1410,18 +1344,7 @@ function ProgramDetailsContent() {
                     {createdBy ? `${createdBy.firstName || ""} ${createdBy.lastName || ""}`.trim() : (language === "en" ? "Bondy Academy" : "Бонди Академи")}
                   </b>
                   {createdBy?.isVerified && (
-                    <span
-                      style={{
-                        padding: "2px 8px",
-                        borderRadius: 999,
-                        background: "rgba(35, 173, 164, 0.16)",
-                        color: "var(--acc-bright)",
-                        fontSize: 12,
-                        fontWeight: 700,
-                      }}
-                    >
-                      ✓ {language === "en" ? "Verified" : "Баталгаажсан"}
-                    </span>
+                    <span className="bd-verified">{t("organizersVerified")}</span>
                   )}
                 </span>
                 {createdBy?._id && (
@@ -1452,12 +1375,10 @@ function ProgramDetailsContent() {
                 </span>
                 <span style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
                   <b style={{ fontSize: 15, fontWeight: 700, color: "var(--bd-white)" }}>
-                    {language === "en" ? "Course Terms" : "Сургалтын нөхцөл"}
+                    {t("pdPolicy")}
                   </b>
-                  <span style={{ fontSize: 13, color: "var(--bd-gray-400)", lineHeight: 1.5 }}>
-                    {refundPolicy || (language === "en"
-                      ? "Full refund available up to 14 days before start date. Non-refundable once the course commences."
-                      : "Сургалт эхлэхээс 14 хоногийн өмнө цуцалбал бүрэн буцаалттай. Эхэлсний дараа буцаалтгүй.")}
+                  <span style={{ fontSize: 13, color: "var(--bd-gray-500)", lineHeight: 1.5 }}>
+                    {refundPolicy || t("pdPolicyFallback")}
                   </span>
                 </span>
               </div>
@@ -1465,19 +1386,19 @@ function ProgramDetailsContent() {
           </div>
 
           {/* ════ RIGHT COLUMN: STICKY BOOKING SIDEBAR ═════════════════════════ */}
-          <aside className="bd-book" style={{ position: "sticky", top: 88, display: "flex", flexDirection: "column", gap: 14, padding: "22px 22px 18px", borderRadius: 24, background: "var(--bd-ink-850)", border: "1px solid var(--bd-border)", boxShadow: "0 24px 60px rgba(0,0,0,.32)" }}>
+          <aside className="bd-book" style={{ position: "sticky", top: 88, display: "flex", flexDirection: "column", gap: 10, padding: "22px 22px 16px", borderRadius: 24, background: "var(--bd-ink-850)", border: "1px solid var(--bd-border)", boxShadow: "0 24px 60px rgba(0,0,0,.32)" }}>
 
             {/* Price Header */}
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontSize: 13, color: "var(--bd-gray-500)" }}>
-                {language === "en" ? "Course Tuition" : "Сургалтын үнэ"}
+              <span style={{ fontSize: 13, color: "var(--bd-gray-600)" }}>
+                {t("apCoursePrice")}
               </span>
               <b style={{ fontFamily: "var(--bd-font-ui)", fontSize: 27, fontWeight: 700, letterSpacing: "-.02em", color: "var(--bd-white)" }}>
                 {formatPrice(price)}
               </b>
             </div>
 
-            {/* Batches / Schedule Selection with Validations and Checks */}
+            {/* Batches / Schedule Selection with Validations and Checks
             {batches && batches.length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: "var(--bd-gray-400)" }}>
@@ -1542,6 +1463,7 @@ function ProgramDetailsContent() {
                 </div>
               </div>
             )}
+            */}
 
             {/* Passes for Ongoing courses */}
             {enrollmentType === "Ongoing" && (oneMonthPassEnabled || threeMonthPassEnabled) && (
@@ -1649,7 +1571,7 @@ function ProgramDetailsContent() {
             >
               {isBookingClosed
                 ? (language === "en" ? "Registration Closed" : "Бүртгэл хаагдсан")
-                : (language === "en" ? "Register Now" : "Бүртгүүлэх")}
+                : t("pdEnroll")}
             </button>
           </aside>
         </div>
@@ -1659,7 +1581,7 @@ function ProgramDetailsContent() {
           <section className="bd-similar" style={{ marginTop: "clamp(44px, 4.4vw, 64px)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap", marginBottom: 20 }}>
               <h2 className="bd-h2" style={{ margin: 0, fontFamily: "var(--bd-font-ui)", fontSize: 26, fontWeight: 700, lineHeight: 1.2, letterSpacing: "-.016em", color: "var(--bd-white)" }}>
-                {language === "en" ? "Similar Courses" : "Төстэй сургалтууд"}
+                {t("pdSimilar")}
               </h2>
               <Link
                 href="/Programs-Listing"
@@ -1679,7 +1601,7 @@ function ProgramDetailsContent() {
                   transition: "border-color 200ms ease, color 200ms ease",
                 }}
               >
-                {language === "en" ? "View all" : "Бүгдийг харах"}
+                {t("pdSeeAll")}
               </Link>
             </div>
 
@@ -1746,7 +1668,7 @@ function ProgramDetailsContent() {
       {/* ─── Mobile Bottom Floating CTA Bar ──────────────────────────────────── */}
       <div className="bd-cta-bar">
         <span className="bd-cta-price">
-          <small>{language === "en" ? "Course Price" : "Сургалтын үнэ"}</small>
+          <small>{t("apCoursePrice")}</small>
           <b>{formatPrice(courseDetails.price)}</b>
         </span>
         <button
@@ -1768,7 +1690,7 @@ function ProgramDetailsContent() {
         >
           {isBookingClosed
             ? (language === "en" ? "Closed" : "Хаагдсан")
-            : (language === "en" ? "Register" : "Бүртгүүлэх")}
+            : t("pdEnroll")}
         </button>
       </div>
 
@@ -1783,6 +1705,7 @@ function ProgramDetailsContent() {
       />
 
       <FAQ />
+      <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={shareUrl} />
       <Footer />
     </div>
   );

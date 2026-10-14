@@ -12,23 +12,21 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatTime } from "@/utils/timeHelper";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ShareSheet from "@/components/ShareSheet";
 
 const FALLBACK_IMG = "/img/sidebar-logo.svg";
 
-function formatDateBilingual(dateStr, startTime, endTime, lang) {
-  if (!dateStr) return lang === "mn" ? "Тун удахгүй" : "Coming soon";
+const MONTH_KEYS = ["monthJan", "monthFeb", "monthMar", "monthApr", "monthMay", "monthJun", "monthJul", "monthAug", "monthSep", "monthOct", "monthNov", "monthDec"];
+const WEEKDAY_KEYS = ["weekdaySun", "weekdayMon", "weekdayTue", "weekdayWed", "weekdayThu", "weekdayFri", "weekdaySat"];
+
+function formatDateBilingual(dateStr, startTime, endTime, lang, t) {
+  if (!dateStr) return t("comingSoon");
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return lang === "mn" ? "Тун удахгүй" : "Coming soon";
+  if (isNaN(d.getTime())) return t("comingSoon");
 
-  const mnMonths = ["1-р", "2-р", "3-р", "4-р", "5-р", "6-р", "7-р", "8-р", "9-р", "10-р", "11-р", "12-р"];
-  const enMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const mnDays = ["Ням", "Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба"];
-  const enDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  const m = d.getMonth();
   const dayNum = d.getDate();
-  const dayName = lang === "mn" ? mnDays[d.getDay()] : enDays[d.getDay()];
-  const monthName = lang === "mn" ? `${mnMonths[m]} сарын ${dayNum}` : `${enMonths[m]} ${dayNum}`;
+  const dayName = t(WEEKDAY_KEYS[d.getDay()]);
+  const monthName = `${t(MONTH_KEYS[d.getMonth()])} ${dayNum}`;
 
   let timePart = "";
   if (startTime) {
@@ -48,7 +46,8 @@ function getMinTicketPrice(tickets) {
 }
 
 // ─── Photo Gallery Lightbox & Grid Modal ───────────────────────────────────────
-function GalleryModal({ isOpen, onClose, items, initialIndex = 0, initialMode = "carousel", language }) {
+function GalleryModal({ isOpen, onClose, items, initialIndex = 0, initialMode = "carousel" }) {
+  const { t } = useLanguage();
   const [index, setIndex] = useState(initialIndex);
   const [mode, setMode] = useState(initialMode);
 
@@ -118,7 +117,7 @@ function GalleryModal({ isOpen, onClose, items, initialIndex = 0, initialMode = 
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <b style={{ fontSize: 18, color: "var(--bd-white)", fontWeight: 700 }}>
-            {language === "en" ? "Photo Gallery" : "Зургийн цомог"}
+            {t("photoGallery")}
           </b>
           <span
             style={{
@@ -130,7 +129,7 @@ function GalleryModal({ isOpen, onClose, items, initialIndex = 0, initialMode = 
               color: "var(--acc-bright)",
             }}
           >
-            {mode === "carousel" ? `${index + 1} / ${items.length}` : `${items.length} ${language === "en" ? "items" : "зураг"}`}
+            {mode === "carousel" ? `${index + 1} / ${items.length}` : `${items.length} ${t("galleryItems")}`}
           </span>
         </div>
 
@@ -160,7 +159,7 @@ function GalleryModal({ isOpen, onClose, items, initialIndex = 0, initialMode = 
                   <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
                   <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
                 </svg>
-                <span>{language === "en" ? "All Photos" : "Бүгд"}</span>
+                <span>{t("allPhotos")}</span>
               </>
             ) : (
               <>
@@ -168,7 +167,7 @@ function GalleryModal({ isOpen, onClose, items, initialIndex = 0, initialMode = 
                   <rect x="3" y="3" width="18" height="18" rx="2" />
                   <circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
                 </svg>
-                <span>{language === "en" ? "Slideshow" : "Слайд"}</span>
+                <span>{t("slideshow")}</span>
               </>
             )}
           </button>
@@ -322,7 +321,7 @@ function GalleryModal({ isOpen, onClose, items, initialIndex = 0, initialMode = 
                   setMode("carousel");
                 }}
                 className="gallery-grid-thumb"
-                title={language === "en" ? `View photo #${i + 1}` : `Зураг #${i + 1} томруулж харах`}
+                title={t("viewPhoto", { n: i + 1 })}
                 style={{
                   aspectRatio: "4/3",
                   borderRadius: 14,
@@ -405,7 +404,7 @@ function GalleryModal({ isOpen, onClose, items, initialIndex = 0, initialMode = 
                         fontWeight: 600,
                       }}
                     >
-                      {language === "en" ? "Expand" : "Томруулах"}
+                      {t("expand")}
                     </span>
                   </div>
                 )}
@@ -476,7 +475,7 @@ function EventDetailsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const eventId = searchParams.get("id");
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { checkAuth } = useAuthGuard();
 
   const [event, setEvent] = useState(null);
@@ -490,6 +489,8 @@ function EventDetailsContent() {
   const [galleryInitialIdx, setGalleryInitialIdx] = useState(0);
   const [galleryInitialMode, setGalleryInitialMode] = useState("carousel");
   const [favorites, setFavorites] = useState({});
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   const [ticketQtys, setTicketQtys] = useState({});
 
   useEffect(() => {
@@ -552,7 +553,7 @@ function EventDetailsContent() {
         if (isWishlisted) {
           const response = await wishlistApi.removeFromWishlist({ entityId: eventId });
           if (response?.status === true) {
-            toast.success(response?.message || (language === "en" ? "Removed from saved" : "Хадгалснаас хасагдлаа"));
+            toast.success(response?.message || (t("removedFromSaved")));
             setIsWishlisted(false);
           }
         } else {
@@ -562,7 +563,7 @@ function EventDetailsContent() {
           });
           if (response?.status === true) {
             setIsWishlisted(true);
-            toast.success(response?.message || (language === "en" ? "Saved to favorites" : "Амжилттай хадгалагдлаа"));
+            toast.success(response?.message || (t("savedToFavorites")));
           }
         }
       } catch (error) {
@@ -580,8 +581,8 @@ function EventDetailsContent() {
       const next = { ...prev, [id]: !prev[id] };
       localStorage.setItem("bondy_favorites", JSON.stringify(next));
       toast.success(next[id]
-        ? (language === "en" ? "Saved to favorites" : "Хадгалагдлаа")
-        : (language === "en" ? "Removed from favorites" : "Хасагдлаа"));
+        ? (t("savedFavoritesShort"))
+        : (t("removedFromFavorites")));
       return next;
     });
     try {
@@ -596,26 +597,9 @@ function EventDetailsContent() {
     } catch (_) { }
   };
 
-  const handleShare = async () => {
-    const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-    try {
-      if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = shareUrl;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-      }
-      toast.success(language === "en" ? "Link copied to clipboard!" : "Холбоос хуулагдлаа!");
-    } catch (error) {
-      toast.error(language === "en" ? "Failed to copy link" : "Холбоос хуулахад алдаа гарлаа");
-    }
+  const handleShare = () => {
+    setShareUrl(typeof window !== "undefined" ? window.location.href : "");
+    setShareOpen(true);
   };
 
   // Collect all media items: poster images + media links + videos (with deduplication)
@@ -667,24 +651,24 @@ function EventDetailsContent() {
 
   const formattedMinPrice = useMemo(() => {
     if (minPrice === 0 || event?.isFreeEvent) {
-      return language === "en" ? "Free" : "Үнэгүй";
+      return t("freePrice");
     }
     if (minPrice != null && minPrice > 0) {
       return `₮${minPrice.toLocaleString()}`;
     }
-    return language === "en" ? "Free" : "Үнэгүй";
+    return t("freePrice");
   }, [minPrice, event, language]);
 
   const formattedDateTime = useMemo(() => {
-    return formatDateBilingual(event?.startDate, event?.startTime, event?.endTime, language);
-  }, [event, language]);
+    return formatDateBilingual(event?.startDate, event?.startTime, event?.endTime, language, t);
+  }, [event, language, t]);
 
   const fullVenue = useMemo(() => {
     const parts = [];
     if (event?.venueName) parts.push(event.venueName);
     if (event?.venueAddress?.address) parts.push(event.venueAddress.address);
     if (event?.venueAddress?.city) parts.push(event.venueAddress.city);
-    return parts.join(", ") || (language === "en" ? "Ulaanbaatar, Mongolia" : "Улаанбаатар, Монгол Улс");
+    return parts.join(", ") || (t("defaultVenueCity"));
   }, [event, language]);
 
   // ─── Event Date & Past Status Validation ─────────────────────────────────
@@ -775,7 +759,7 @@ function EventDetailsContent() {
       }
 
       if (totalAvail > 0 && totalAvail <= 10) {
-        const text = language === "en" ? `Only ${totalAvail} seats left` : `Ердөө ${totalAvail} суудал үлдсэн`;
+        const text = t("onlySeatsLeft", { count: totalAvail });
         return { isSoldOut: false, totalAvailableSeats: totalAvail, remainingSeatsText: text };
       }
 
@@ -815,18 +799,22 @@ function EventDetailsContent() {
   const handleGoToBooking = () => {
     if (!eventId) return;
     if (isPastEvent) {
-      toast.error(language === "en" ? "This event has already ended." : "Энэ эвент өндөрлөсөн тул захиалах боломжгүй.");
+      toast.error(t("eventAlreadyEnded"));
       return;
     }
     if (isSoldOut) {
-      toast.error(language === "en" ? "All tickets are sold out." : "Бүх тасалбар дууссан байна.");
+      toast.error(t("allTicketsSoldOut"));
       return;
     }
     if (event?.tickets && event.tickets.length > 0 && ticketTotals.qty <= 0) {
-      toast.error(language === "en" ? "Please select at least one ticket." : "Ядаж нэг тасалбар сонгоно уу.");
+      toast.error(t("selectAtLeastOneTicket"));
       return;
     }
-    router.push(`/eventbooking?eventId=${eventId}`);
+    const picked = Object.entries(ticketQtys)
+      .filter(([, q]) => Number(q) > 0)
+      .map(([id, q]) => `${id}:${q}`)
+      .join(",");
+    router.push(`/eventbooking?eventId=${eventId}${picked ? `&tickets=${encodeURIComponent(picked)}` : ""}`);
   };
 
   const openGalleryModal = (startIdx = 0, startMode = "carousel") => {
@@ -841,12 +829,12 @@ function EventDetailsContent() {
     if (event?.ageRestriction) {
       list.push({
         key: "age",
-        label: language === "en" ? "Age restriction" : "Насны хязгаар",
+        label: t("ageLimit"),
         value: event.ageRestriction,
         icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v4" /><path d="M12 16h.01" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="8" r="3.4" />
+            <path d="M4.6 19.6c0-3.2 3.3-4.9 7.4-4.9s7.4 1.7 7.4 4.9" />
           </svg>
         ),
       });
@@ -854,11 +842,12 @@ function EventDetailsContent() {
     if (event?.dressCode) {
       list.push({
         key: "dress",
-        label: language === "en" ? "Dress code" : "Хувцаслалт",
+        label: t("evtDressCode"),
         value: event.dressCode,
         icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 3.6 5.1 5.3a1 1 0 0 0-.55.62L3.3 9.55a.6.6 0 0 0 .37.75l2.1.72a.6.6 0 0 0 .76-.38l.32-.95V20.4h10.3V9.69l.32.95a.6.6 0 0 0 .76.38l2.1-.72a.6.6 0 0 0 .37-.75l-1.25-3.63a1 1 0 0 0-.55-.62L15 3.6" />
+            <path d="M9 3.6a3 3 0 0 0 6 0" />
           </svg>
         ),
       });
@@ -866,12 +855,14 @@ function EventDetailsContent() {
     if (event?.notes) {
       list.push({
         key: "entry",
-        label: language === "en" ? "Entry info" : "Нэвтрэх мэдээлэл",
+        label: t("entryLabel"),
         value: event.notes,
         icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="18" height="18" x="3" y="3" rx="2" />
-            <path d="M9 12h6" /><path d="M12 9v6" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2.6" y="5" width="18.8" height="14" rx="3.2" />
+            <circle cx="8.6" cy="10.7" r="2" />
+            <path d="M5.5 15.9c.5-1.4 1.7-2.1 3.1-2.1s2.6.7 3.1 2.1" />
+            <path d="M14.9 10h4.1M14.9 13.4h4.1" />
           </svg>
         ),
       });
@@ -880,7 +871,7 @@ function EventDetailsContent() {
     if (ref) {
       list.push({
         key: "refund",
-        label: language === "en" ? "Refund policy" : "Буцаан олголт",
+        label: t("evtRefundLabel"),
         value: ref,
         icon: (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -919,10 +910,10 @@ function EventDetailsContent() {
         <Header />
         <main style={{ maxWidth: 1224, margin: "0 auto", padding: "100px 24px", textAlign: "center" }}>
           <h2 style={{ color: "var(--bd-white)", fontSize: 24, fontWeight: 700 }}>
-            {language === "en" ? "Event not found" : "Эвент олдсонгүй"}
+            {t("eventNotFound")}
           </h2>
           <p style={{ color: "var(--bd-gray-400)", marginTop: 12 }}>
-            {language === "en" ? "The event may have expired or been removed." : "Уг эвент хугацаа нь дууссан эсвэл устгагдсан байж болзошгүй."}
+            {t("eventNotFoundHint")}
           </p>
           <Link
             href="/Explore"
@@ -939,7 +930,7 @@ function EventDetailsContent() {
               fontSize: 14,
             }}
           >
-            {language === "en" ? "Browse other events" : "Бусад эвент харах"}
+            {t("browseOtherEvents")}
           </Link>
         </main>
         <Footer />
@@ -970,11 +961,11 @@ function EventDetailsContent() {
         {/* ─── Breadcrumb ──────────────────────────────────────────────────────── */}
         <nav className="bd-crumb" aria-label="Breadcrumb" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--bd-gray-600)", marginBottom: 16, flexWrap: "wrap" }}>
           <Link href="/" style={{ color: "var(--bd-gray-600)" }}>
-            {language === "en" ? "Home" : "Нүүр"}
+            {t("home")}
           </Link>
           <span>/</span>
           <Link href="/Explore" style={{ color: "var(--bd-gray-600)" }}>
-            {language === "en" ? "Events" : "Эвент"}
+            {t("eventCrumb")}
           </Link>
           <span>/</span>
           <span style={{ color: "var(--bd-gray-400)" }}>
@@ -1014,7 +1005,7 @@ function EventDetailsContent() {
           <div className="bd-hero-ctl" style={{ position: "absolute", left: 16, right: 16, top: 16, alignItems: "center", justifyContent: "space-between", gap: 10 }}>
             <Link
               href="/Explore"
-              aria-label={language === "en" ? "Back" : "Буцах"}
+              aria-label={t("back")}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -1035,7 +1026,7 @@ function EventDetailsContent() {
               <button
                 type="button"
                 onClick={handleWishlistToggle}
-                aria-label={language === "en" ? "Save" : "Хадгалах"}
+                aria-label={t("save")}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -1058,7 +1049,7 @@ function EventDetailsContent() {
               <button
                 type="button"
                 onClick={handleShare}
-                aria-label={language === "en" ? "Share" : "Хуваалцах"}
+                aria-label={t("share")}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -1105,12 +1096,12 @@ function EventDetailsContent() {
                   </h1>
                   {isPastEvent && (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 11px", borderRadius: 999, background: "rgba(255, 90, 90, 0.15)", border: "1px solid rgba(255, 90, 90, 0.3)", color: "#FF6B6B", fontSize: 12, fontWeight: 700 }}>
-                      {language === "en" ? "Event Ended" : "Өнгөрсөн эвент"}
+                      {t("eventEndedPast")}
                     </span>
                   )}
                   {!isPastEvent && isSoldOut && (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 11px", borderRadius: 999, background: "rgba(255, 140, 0, 0.15)", border: "1px solid rgba(255, 140, 0, 0.3)", color: "#FF9A3C", fontSize: 12, fontWeight: 700 }}>
-                      {language === "en" ? "Sold Out" : "Суудал дүүрсэн"}
+                      {t("seatsFull")}
                     </span>
                   )}
                 </div>
@@ -1119,7 +1110,7 @@ function EventDetailsContent() {
                 <button
                   type="button"
                   onClick={handleShare}
-                  aria-label={language === "en" ? "Share" : "Хуваалцах"}
+                  aria-label={t("share")}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -1134,7 +1125,7 @@ function EventDetailsContent() {
                     cursor: "pointer",
                     transition: "border-color 200ms ease, color 200ms ease",
                   }}
-                  title={language === "en" ? "Share event" : "Хуваалцах"}
+                  title={t("share")}
                 >
                   <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
@@ -1144,7 +1135,7 @@ function EventDetailsContent() {
                 <button
                   type="button"
                   onClick={handleWishlistToggle}
-                  aria-label={language === "en" ? "Save to favorites" : "Хадгалах"}
+                  aria-label={t("saveToFavorites")}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -1159,7 +1150,7 @@ function EventDetailsContent() {
                     cursor: "pointer",
                     transition: "border-color 200ms ease, color 200ms ease",
                   }}
-                  title={isWishlisted ? (language === "en" ? "Saved" : "Хадгалсан") : (language === "en" ? "Save to favorites" : "Хадгалах")}
+                  title={isWishlisted ? (t("saved")) : (t("saveToFavorites"))}
                 >
                   <svg width="22" height="22" viewBox="0 0 24 24" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 20.9C12 20.9 2.7 15.4 2.7 9.4C2.7 6.4 5 4.1 7.9 4.1C9.8 4.1 11.3 5.2 12 6.7C12.7 5.2 14.2 4.1 16.1 4.1C19 4.1 21.3 6.4 21.3 9.4C21.3 15.4 12 20.9 12 20.9Z" />
@@ -1179,7 +1170,7 @@ function EventDetailsContent() {
                 </span>
                 <span style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
                   <b style={{ fontSize: 15, fontWeight: 700, color: "var(--bd-white)" }}>
-                    {language === "en" ? "Date & Time" : "Огноо, цаг"}
+                    {t("evtDateTime")}
                   </b>
                   <span style={{ fontSize: 14, lineHeight: 1.45, color: "var(--bd-gray-400)" }}>
                     {formattedDateTime}
@@ -1195,7 +1186,7 @@ function EventDetailsContent() {
                 </span>
                 <span style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
                   <b style={{ fontSize: 15, fontWeight: 700, color: "var(--bd-white)" }}>
-                    {language === "en" ? "Location" : "Байршил"}
+                    {t("location")}
                   </b>
                   <span style={{ fontSize: 14, lineHeight: 1.45, color: "var(--bd-gray-400)" }}>
                     {fullVenue}
@@ -1208,7 +1199,7 @@ function EventDetailsContent() {
             {mediaItems.length > 0 && (
               <section>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-                  <h2 className="bd-h3">{language === "en" ? "Photo Gallery" : "Зургийн цомог"}</h2>
+                  <h2 className="bd-h3">{t("photoGallery")}</h2>
                   <button
                     type="button"
                     onClick={() => openGalleryModal(0, "grid")}
@@ -1226,7 +1217,7 @@ function EventDetailsContent() {
                       padding: 0,
                     }}
                   >
-                    {language === "en" ? "View all" : "Бүгдийг харах"} ({mediaItems.length})
+                    {t("seeAll")} ({mediaItems.length})
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="9 18 15 12 9 6" />
                     </svg>
@@ -1238,7 +1229,7 @@ function EventDetailsContent() {
                   {mediaItems[0] && (
                     <div
                       onClick={() => openGalleryModal(0, "carousel")}
-                      title={language === "en" ? "Click to view photo" : "Томруулж харах"}
+                      title={t("clickToViewPhoto")}
                       style={{
                         gridColumn: "span 2",
                         gridRow: "span 2",
@@ -1270,7 +1261,7 @@ function EventDetailsContent() {
                     <div
                       key={idx}
                       onClick={() => openGalleryModal(idx + 1, "carousel")}
-                      title={language === "en" ? "Click to view photo" : "Томруулж харах"}
+                      title={t("clickToViewPhoto")}
                       style={{
                         borderRadius: 16,
                         overflow: "hidden",
@@ -1297,7 +1288,7 @@ function EventDetailsContent() {
                   <button
                     type="button"
                     onClick={() => openGalleryModal(0, "grid")}
-                    title={language === "en" ? "View all photos" : "Бүх зургийг харах"}
+                    title={t("viewAllPhotos")}
                     style={{
                       display: "flex",
                       flexDirection: "column",
@@ -1339,7 +1330,7 @@ function EventDetailsContent() {
                         </span>
                       )}
                       <span style={{ fontSize: 12, fontWeight: 600, textAlign: "center", lineHeight: 1.25 }}>
-                        {language === "en" ? "View all" : "Бүгдийг харах"}
+                        {t("seeAll")}
                       </span>
                     </div>
                   </button>
@@ -1350,7 +1341,7 @@ function EventDetailsContent() {
             {/* Short Description */}
             {event.shortdesc && (
               <section>
-                <h2 className="bd-h3">{language === "en" ? "Brief Summary" : "Товч танилцуулга"}</h2>
+                <h2 className="bd-h3">{t("evtOverview")}</h2>
                 <div className="bd-card">
                   <p className="bd-body">{event.shortdesc}</p>
                 </div>
@@ -1360,9 +1351,9 @@ function EventDetailsContent() {
             {/* Detailed Information */}
             {event.longdesc && (
               <section>
-                <h2 className="bd-h3">{language === "en" ? "Detailed Overview" : "Дэлгэрэнгүй мэдээлэл"}</h2>
-                <div className="bd-card">
-                  <p className="bd-body" style={{ whiteSpace: "pre-line" }}>
+                <h2 className="bd-h3">{t("evtDetails")}</h2>
+                <div className="bd-card" style={{ minWidth: 0, maxWidth: "100%" }}>
+                  <p className="bd-body" style={{ whiteSpace: "pre-line", overflowWrap: "anywhere", wordBreak: "break-word" }}>
                     {event.longdesc}
                   </p>
                 </div>
@@ -1372,52 +1363,28 @@ function EventDetailsContent() {
             {/* Things to Know (Мэдэх зүйлс) */}
             {knowRows.length > 0 && (
               <section>
-                <h2 className="bd-h3">{language === "en" ? "Things to Know" : "Мэдэх зүйлс"}</h2>
-                <div style={{ borderRadius: 18, background: "var(--bd-ink-850)", border: "1px solid var(--bd-border)", overflow: "hidden" }}>
-                  {knowRows.map((k, i) => (
-                    <div
-                      key={k.key}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 16,
-                        padding: "15px 18px",
-                        borderBottom: i === knowRows.length - 1 ? "none" : "1px solid var(--bd-border-soft)",
-                      }}
-                    >
-                      <span style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            width: 38,
-                            height: 38,
-                            flexShrink: 0,
-                            borderRadius: 12,
-                            background: "rgba(35, 173, 164, 0.13)",
-                            color: "var(--acc-bright)",
-                          }}
-                        >
-                          {k.icon}
+                <h2 className="bd-h3">{t("goodToKnow")}</h2>
+                <div className="bd-know">
+                  {knowRows.map((k, i) => {
+                    const value = String(k.value || "").trim();
+                    const isLong = value.length > 28;
+                    return (
+                      <div className={`bd-knowRow${isLong ? " is-long" : ""}`} key={k.key} style={{ borderBottom: i === knowRows.length - 1 ? "none" : undefined }}>
+                        <span className="bd-knowL">
+                          <span className="bd-knowI">{k.icon}</span>
+                          <b>{k.label}</b>
                         </span>
-                        <b style={{ fontSize: 15, fontWeight: 600, color: "var(--bd-white)" }}>
-                          {k.label}
-                        </b>
-                      </span>
-                      <span style={{ fontSize: 14.5, color: "var(--bd-gray-400)", textAlign: "right" }}>
-                        {k.value}
-                      </span>
-                    </div>
-                  ))}
+                        <span className="bd-knowV">{value}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}
 
             {/* Location & Map Section */}
             <section>
-              <h2 className="bd-h3">{language === "en" ? "Location" : "Байршил"}</h2>
+              <h2 className="bd-h3">{t("location")}</h2>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 200, display: "flex", flexDirection: "column", gap: 6 }}>
                   <b style={{ fontSize: 16, fontWeight: 700, color: "var(--bd-white)" }}>
@@ -1428,7 +1395,7 @@ function EventDetailsContent() {
                     {event.venueAddress?.city ? `${event.venueAddress.city}, ` : ""}Монгол Улс
                   </span>
                   <span style={{ fontSize: 14, fontWeight: 600, color: "var(--acc-bright)" }}>
-                    {language === "en" ? "5.2 km from you" : "Танаас 5.2 км"}
+                    {t("kmFromYou", { km: "5.2" })}
                   </span>
                   <a
                     href={googleMapsUrl}
@@ -1457,7 +1424,7 @@ function EventDetailsContent() {
                       <line x1="2" y1="12" x2="22" y2="12" />
                       <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                     </svg>
-                    {language === "en" ? "Open Google Maps" : "Google Maps нээх"}
+                    {t("openGoogleMaps")}
                   </a>
                 </div>
 
@@ -1504,7 +1471,7 @@ function EventDetailsContent() {
             {/* Attendees Info (Оролцогчдын мэдээлэл) */}
             <div className="bd-two">
               <section>
-                <h2 className="bd-h3">{language === "en" ? "Attendees" : "Оролцогчдын мэдээлэл"}</h2>
+                <h2 className="bd-h3">{t("evtAttendees")}</h2>
                 <div className="bd-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div className="stack">
@@ -1531,7 +1498,7 @@ function EventDetailsContent() {
                       )}
                     </div>
                     <span style={{ fontSize: 15, fontWeight: 700, color: "var(--bd-white)" }}>
-                      {attendees?.total || 0} {language === "en" ? "people going" : "хүн оролцоно"}
+                      {t("peopleGoing", { count: attendees?.total || 0 })}
                     </span>
                   </div>
 
@@ -1541,7 +1508,7 @@ function EventDetailsContent() {
                       className="all-btn"
                       onClick={() => router.push(`/eventAttendees?id=${event._id}`)}
                     >
-                      {language === "en" ? "View all" : "Бүгдийг харах"}
+                      {t("seeAll")}
                     </button>
                   )}
                 </div>
@@ -1550,7 +1517,7 @@ function EventDetailsContent() {
 
             {/* Organizer Profile Card (Зохион байгуулагч) */}
             <section>
-              <h2 className="bd-h3">{language === "en" ? "Organizer" : "Зохион байгуулагч"}</h2>
+              <h2 className="bd-h3">{t("organizer")}</h2>
               <div className="bd-card" style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <div style={{ width: 48, height: 48, borderRadius: 999, overflow: "hidden", flexShrink: 0, background: "var(--bd-ink-800)", border: "1px solid var(--bd-border)" }}>
                   <img
@@ -1574,24 +1541,7 @@ function EventDetailsContent() {
                     {organizerName}
                   </b>
                   {isVerifiedOrganizer && (
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 4,
-                        padding: "2px 8px",
-                        borderRadius: 999,
-                        background: "rgba(35, 173, 164, 0.15)",
-                        color: "var(--acc-bright)",
-                        fontSize: 11.5,
-                        fontWeight: 600,
-                      }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      {language === "en" ? "Verified" : "Баталгаажсан"}
-                    </span>
+                    <span className="bd-verified">{t("organizersVerified")}</span>
                   )}
                 </span>
                 {event.createdBy?._id && (
@@ -1604,7 +1554,7 @@ function EventDetailsContent() {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {language === "en" ? "View" : "Үзэх"}
+                    {t("viewProfile")}
                   </Link>
                 )}
               </div>
@@ -1621,10 +1571,10 @@ function EventDetailsContent() {
                 </span>
                 <span style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
                   <b style={{ fontSize: 15, fontWeight: 700, color: "var(--bd-white)" }}>
-                    {language === "en" ? "Terms & Conditions" : "Нөхцөл, журам"}
+                    {t("termsAndConditions")}
                   </b>
                   <span style={{ fontSize: 13, color: "var(--bd-gray-500)" }}>
-                    {refundPolicy || event.refundPolicy || (language === "en" ? "Non-refundable" : "Буцаан олголтгүй")}
+                    {refundPolicy || event.refundPolicy || (t("nonRefundable"))}
                   </span>
                 </span>
               </div>
@@ -1651,10 +1601,10 @@ function EventDetailsContent() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
                 <h2 style={{ margin: 0, fontFamily: "var(--bd-font-ui)", fontSize: 19, fontWeight: 700, letterSpacing: "-.014em", color: "var(--bd-white)" }}>
                   {isPastEvent
-                    ? (language === "en" ? "Event Ended" : "Эвент өндөрлөсөн")
+                    ? (t("eventEndedTitle"))
                     : isSoldOut
-                      ? (language === "en" ? "Sold Out" : "Суудал дүүрсэн")
-                      : (language === "en" ? "Select Tickets" : "Тасалбар сонгох")}
+                      ? (t("seatsFull"))
+                      : (t("selectTickets"))}
                 </h2>
                 {!isPastEvent && remainingSeatsText && (
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#FFA143", background: "rgba(255, 140, 0, 0.12)", padding: "2px 8px", borderRadius: 6 }}>
@@ -1667,11 +1617,9 @@ function EventDetailsContent() {
               {isPastEvent && (
                 <div style={{ padding: "16px", borderRadius: 16, background: "rgba(255, 90, 90, 0.08)", border: "1px solid rgba(255, 90, 90, 0.22)", color: "#FF8A8A", fontSize: 14, lineHeight: 1.5, marginTop: 14 }}>
                   <b style={{ display: "block", marginBottom: 4, color: "#FF6B6B" }}>
-                    {language === "en" ? "Event has ended" : "Эвент өндөрлөсөн байна"}
+                    {t("eventHasEnded")}
                   </b>
-                  {language === "en"
-                    ? "This event has already taken place. Ticket booking is no longer available."
-                    : "Уг эвент хугацаа нь өнгөрсөн тул тасалбар захиалах боломжгүй."}
+                  {t("eventEndedBody")}
                 </div>
               )}
 
@@ -1679,11 +1627,9 @@ function EventDetailsContent() {
               {!isPastEvent && isSoldOut && (
                 <div style={{ padding: "16px", borderRadius: 16, background: "rgba(255, 140, 0, 0.08)", border: "1px solid rgba(255, 140, 0, 0.22)", color: "#FFB067", fontSize: 14, lineHeight: 1.5, marginTop: 14 }}>
                   <b style={{ display: "block", marginBottom: 4, color: "#FFA143" }}>
-                    {language === "en" ? "All seats are booked" : "Бүх тасалбар дууссан байна"}
+                    {t("allSeatsBooked")}
                   </b>
-                  {language === "en"
-                    ? "All available tickets have been purchased. No more seats left for this event."
-                    : "Энэхүү арга хэмжээний бүх суудал дүүрсэн тул тасалбар дууссан байна."}
+                  {t("soldOutBody")}
                 </div>
               )}
 
@@ -1700,17 +1646,20 @@ function EventDetailsContent() {
                         const isTierSoldOut = available <= 0;
                         const tPrice = Number(ticket.price) || 0;
 
+                        const shortDesc = String(ticket.ticketShortDesc || "").trim();
+
                         return (
-                          <div key={tkId} className="bs-tk">
+                          <div key={tkId} className={`bs-tk${q > 0 ? " is-on" : ""}${isTierSoldOut ? " is-off" : ""}`}>
                             <div className="bs-tk-l">
                               <span className="bs-tk-nm">{ticket.ticketName}</span>
-                              <span className="bs-tk-sub">
-                                {ticket.ticketShortDesc || (isTierSoldOut ? (language === "en" ? "Sold out" : "Дууссан") : (language === "en" ? "Free seating" : "Суудал чөлөөтэй"))}
+                              {shortDesc ? <span className="bs-tk-nt">{shortDesc}</span> : null}
+                              <span className={`bs-tk-flag${isTierSoldOut ? " is-sold" : available <= 6 ? " is-low" : ""}`}>
+                                {isTierSoldOut ? t("soldOut") : `${Number(available).toLocaleString()} ${t("left")}`}
                               </span>
                             </div>
                             <div className="bs-tk-r">
                               <span className="bs-tk-pr">
-                                {tPrice === 0 ? (language === "en" ? "Free" : "Үнэгүй") : `₮${tPrice.toLocaleString()}`}
+                                {tPrice === 0 ? (t("freePrice")) : `₮${tPrice.toLocaleString()}`}
                               </span>
                               <span className="bs-stp">
                                 <button
@@ -1735,31 +1684,16 @@ function EventDetailsContent() {
                           </div>
                         );
                       })
-                    ) : (
-                      <div className="bs-tk">
-                        <div className="bs-tk-l">
-                          <span className="bs-tk-nm">{language === "en" ? "Standard Entry" : "Энгийн тасалбар"}</span>
-                          <span className="bs-tk-sub">{language === "en" ? "General admission" : "Ерөнхий нэвтрэх эрх"}</span>
-                        </div>
-                        <div className="bs-tk-r">
-                          <span className="bs-tk-pr">{formattedMinPrice}</span>
-                          <span className="bs-stp">
-                            <button type="button" disabled>−</button>
-                            <b>1</b>
-                            <button type="button" disabled>+</button>
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Running Total */}
                   <div className="bs-tkfoot">
                     <span>
-                      <small>{language === "en" ? "Total" : "Нийт"}</small>
+                      <small>{t("total")}</small>
                       <b style={{ color: ticketTotals.qty ? "var(--acc-bright, #36CEC2)" : "var(--bd-white, #fff)" }}>
                         {ticketTotals.subtotal === 0 && ticketTotals.qty > 0
-                          ? (language === "en" ? "Free" : "Үнэгүй")
+                          ? (t("freePrice"))
                           : `₮${ticketTotals.subtotal.toLocaleString()}`}
                       </b>
                     </span>
@@ -1784,12 +1718,12 @@ function EventDetailsContent() {
                 }}
               >
                 {isPastEvent
-                  ? (language === "en" ? "Event Ended" : "Өндөрлөсөн")
+                  ? (t("endedShort"))
                   : isSoldOut
-                    ? (language === "en" ? "Sold Out" : "Суудал дүүрсэн")
+                    ? (t("seatsFull"))
                     : ticketTotals.qty > 0 && ticketTotals.subtotal === 0
-                      ? (language === "en" ? "Register for Free" : "Үнэгүй бүртгүүлэх")
-                      : (language === "en" ? "Get Tickets" : "Тасалбар авах")}
+                      ? (t("registerForFree"))
+                      : (t("getTickets"))}
               </button>
             </div>
           </aside>
@@ -1800,7 +1734,7 @@ function EventDetailsContent() {
           <section className="bd-similar" style={{ marginTop: "clamp(44px, 4.4vw, 64px)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap", marginBottom: 20 }}>
               <h2 className="bd-h2" style={{ margin: 0, fontFamily: "var(--bd-font-ui)", fontSize: 26, fontWeight: 700, lineHeight: 1.2, letterSpacing: "-.016em", color: "var(--bd-white)" }}>
-                {language === "en" ? "Similar Events" : "Төстэй эвентүүд"}
+                {t("similarEvents")}
               </h2>
               <Link
                 href="/Explore"
@@ -1819,7 +1753,7 @@ function EventDetailsContent() {
                   transition: "border-color 200ms cubic-bezier(.2,.8,.2,1), color 200ms cubic-bezier(.2,.8,.2,1)",
                 }}
               >
-                {language === "en" ? "View all" : "Бүгдийг харах"}
+                {t("seeAll")}
               </Link>
             </div>
 
@@ -1828,8 +1762,8 @@ function EventDetailsContent() {
                 const isFav = !!favorites[sim._id];
                 const simPoster = sim.posterImage?.[0] ? getFullImageUrl(sim.posterImage[0]) : FALLBACK_IMG;
                 const simPrice = getMinTicketPrice(sim.tickets);
-                const simPriceText = simPrice === 0 ? (language === "en" ? "Free" : "Үнэгүй") : (simPrice ? `₮${simPrice.toLocaleString()}` : (language === "en" ? "Free" : "Үнэгүй"));
-                const simDate = formatDateBilingual(sim.startDate, sim.startTime, null, language);
+                const simPriceText = simPrice === 0 ? (t("freePrice")) : (simPrice ? `₮${simPrice.toLocaleString()}` : (t("freePrice")));
+                const simDate = formatDateBilingual(sim.startDate, sim.startTime, null, language, t);
                 const simVenue = sim.venueName || sim.venueAddress?.address || "Ulaanbaatar";
 
                 return (
@@ -1856,7 +1790,7 @@ function EventDetailsContent() {
                       <button
                         type="button"
                         className={`bd-c-fav ${isFav ? "active" : ""}`}
-                        aria-label={language === "en" ? "Save" : "Хадгалах"}
+                        aria-label={t("save")}
                         onClick={(e) => handleSimilarFavoriteToggle(sim._id, e)}
                       >
                         <svg viewBox="0 0 24 24" width="21" height="21" fill={isFav ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round">
@@ -1866,7 +1800,7 @@ function EventDetailsContent() {
                     </span>
 
                     {sim.isFeatured && (
-                      <span className="bd-c-promo">{language === "en" ? "Featured" : "Онцлох"}</span>
+                      <span className="bd-c-promo">{t("featuredBadge")}</span>
                     )}
 
                     <span className="bd-c-b">
@@ -1886,12 +1820,12 @@ function EventDetailsContent() {
       {/* ─── Mobile Bottom Floating CTA Bar ──────────────────────────────────── */}
       <div className="bd-cta-bar">
         <span className="bd-cta-price">
-          <small>{language === "en" ? "Starting price" : "Эхлэх үнэ"}</small>
+          <small>{t("startingPrice")}</small>
           <b>
             {isPastEvent
-              ? (language === "en" ? "Ended" : "Өндөрлөсөн")
+              ? (t("endedShort"))
               : isSoldOut
-                ? (language === "en" ? "Sold Out" : "Дууссан")
+                ? (t("soldShort"))
                 : formattedMinPrice}
           </b>
         </span>
@@ -1915,10 +1849,10 @@ function EventDetailsContent() {
           }}
         >
           {isPastEvent
-            ? (language === "en" ? "Event Ended" : "Өндөрлөсөн")
+            ? (t("endedShort"))
             : isSoldOut
-              ? (language === "en" ? "Sold Out" : "Суудал дүүрсэн")
-              : (language === "en" ? "Get Tickets" : "Тасалбар авах")}
+              ? (t("seatsFull"))
+              : (t("getTickets"))}
         </button>
       </div>
 
@@ -1929,8 +1863,9 @@ function EventDetailsContent() {
         items={mediaItems}
         initialIndex={galleryInitialIdx}
         initialMode={galleryInitialMode}
-        language={language}
       />
+
+      <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={shareUrl} />
 
       <Footer />
     </div>

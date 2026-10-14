@@ -12,6 +12,7 @@ const VenueAutocomplete = ({
   defaultValue,
   onPlaceSelected,
   placeholder = null,
+  maxLength,
   className = "form-control",
   disabled = false,
   minLength = 3,
@@ -300,6 +301,7 @@ const VenueAutocomplete = ({
           onChange={handleInputChange}
           placeholder={effectivePlaceholder}
           className={className}
+          maxLength={maxLength}
           disabled={disabled}
         />
         <small className="text-danger">{error}</small>
@@ -316,6 +318,7 @@ const VenueAutocomplete = ({
         onChange={handleInputChange}
         placeholder={effectivePlaceholder}
         className={className}
+        maxLength={maxLength}
         disabled={disabled || !isLoaded}
         style={{ paddingRight: (inputValue && !hideClearButton) ? "40px" : "12px" }}
       />
