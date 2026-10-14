@@ -35,6 +35,9 @@ const bookingApi = {
     adjustCourseReservedSeats: (data) => apiClient.post("/booking/adjust-course-reserved-seats", data),
     getCancellationReasons: () => apiClient.get("/booking/cancellation-reasons"),
     getEventAttendees: (eventId, params) => apiClient.get(`/booking/event/${eventId}/attendees`, { params, skipToast: true }),
+    getOrganizerBuyerRefs: () => apiClient.get("/booking/organizer/buyer-refs", { skipToast: true }),
+    getOrganizerCustomerBookings: (params) =>
+        apiClient.get("/booking/organizer/customer-bookings", { params, skipToast: true }),
 };
 
 export default bookingApi;

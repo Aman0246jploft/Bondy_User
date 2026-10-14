@@ -21,7 +21,159 @@ const FALLBACK_CATS = [
 ];
 
 const STEPS_MN = ["Үндсэн мэдээлэл", "Огноо ба байршил", "Тасалбарууд", "Тохиргоо", "Хянах"];
-const STEPS_EN = ["Basic Info", "Date & Location", "Tickets & Pricing", "Settings", "Review"];
+const STEPS_EN = ["Basic info", "Date and location", "Tickets", "Settings", "Review"];
+
+const MAPBOX = { lng0: 106.855, lng1: 106.995, lat0: 47.95, lat1: 47.878 };
+
+function nearestAddr(lat, lng) {
+  let best = null;
+  let bestDist = Infinity;
+  ADDRS.forEach((row) => {
+    const dist = (row[2] - lat) ** 2 + ((row[3] - lng) * 0.67) ** 2;
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = row;
+    }
+  });
+  return bestDist < 0.00008 ? best : null;
+}
+
+function pinPercents(lat, lng) {
+  const x = ((lng - MAPBOX.lng0) / (MAPBOX.lng1 - MAPBOX.lng0)) * 100;
+  const y = ((lat - MAPBOX.lat0) / (MAPBOX.lat1 - MAPBOX.lat0)) * 100;
+  return {
+    left: `${Math.min(96, Math.max(4, x))}%`,
+    top: `${Math.min(92, Math.max(8, y))}%`,
+  };
+}
+
+function nextMinute(hhmm) {
+  const [h, m] = String(hhmm || "").split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return "";
+  const d = new Date(2000, 0, 1, h, m + 1);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function todayISO() {
+  const d = new Date();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function nowStamp() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function toDateInput(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value).slice(0, 10);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function toDatetimeLocal(value) {
+  if (!value) return "";
+  const raw = String(value);
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw) && !/[zZ+]/.test(raw.slice(16))) {
+    return raw.slice(0, 16);
+  }
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return raw.slice(0, 16);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function blankTicket() {
+  return { name: "", desc: "", price: "", cap: "", ss: "", se: "" };
+}
+
+function digitsOf(value) {
+  const raw = String(value ?? "").trim();
+  if (!/^\d+$/.test(raw)) return null;
+  return raw.replace(/^0+/, "") || "0";
+}
+
+function validDigitAmount(value) {
+  const digits = digitsOf(value);
+  return Boolean(digits && digits !== "0" && digits.length <= 10);
+}
+
+function titleCaseWords(value) {
+  return String(value || "").replace(/(^|[\s]+)(\p{L})/gu, (_, space, letter) => space + letter.toLocaleUpperCase());
+}
+
+function sentenceCaseText(value) {
+  return String(value || "").replace(/(^|[.!?]\s+|\n\s*)(\p{L})/gu, (_, lead, letter) => lead + letter.toLocaleUpperCase());
+}
+
+function formatReviewWhen(value, mn, extraTime) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const parts = raw.slice(0, 10).split("-");
+  if (parts.length < 3) return raw;
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+  const embedded = raw.includes("T") ? raw.slice(raw.indexOf("T") + 1, raw.indexOf("T") + 6) : "";
+  const clock = extraTime || embedded;
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const label = mn ? `${month}-р сарын ${day}` : `${months[month - 1] || parts[1]} ${day}`;
+  return clock ? `${label} · ${clock}` : label;
+}
+
+const REFUND_POLICY_CANONICAL = {
+  "no refund": "No Refund",
+  "буцаан олголтгүй": "No Refund",
+  "буцаалтгүй": "No Refund",
+  "буцаалт байхгүй": "No Refund",
+  "буцаан олголт байхгүй": "No Refund",
+  "1 day before": "1 Day Before",
+  "1 хоногийн өмнө": "1 Day Before",
+  "1 өдрийн өмнө": "1 Day Before",
+  "7 days before": "7 Days Before",
+  "7 хоногийн өмнө": "7 Days Before",
+  "7 өдрийн өмнө": "7 Days Before",
+};
+
+function canonicalRefundPolicy(value) {
+  if (!value) return "";
+  const key = String(value).trim().toLowerCase();
+  return REFUND_POLICY_CANONICAL[key] || String(value).trim();
+}
+
+function parseRefundPolicyOptions(rawList) {
+  if (!Array.isArray(rawList)) return [];
+  const seen = new Set();
+  const options = [];
+  rawList.forEach((item) => {
+    const raw = typeof item === "object" && item !== null
+      ? (item.title || item.name || item.policy || item.value || item.label || "")
+      : item;
+    const label = String(raw ?? "").trim();
+    if (!label) return;
+    const value = canonicalRefundPolicy(label);
+    if (seen.has(value)) return;
+    seen.add(value);
+    options.push({ value, label });
+  });
+  return options;
+}
+
+function openNativePicker(input) {
+  if (!input) return;
+  input.focus();
+  if (typeof input.showPicker === "function") {
+    try {
+      input.showPicker();
+    } catch {
+      /* showPicker can throw if the input is not eligible yet */
+    }
+  }
+}
 
 const ADDRS = [
   ["Сүхбаатарын талбай, Сүхбаатар дүүрэг", "Улаанбаатар, 14200", 47.9186, 106.9176],
@@ -92,7 +244,7 @@ function fmtMnDate(iso) {
 function EventEditorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isMn = language === "mn";
   const { clearEventData } = useEventContext();
 
@@ -132,10 +284,9 @@ function EventEditorContent() {
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
   const [venueName, setVenueName] = useState("");
-  const [availableDistricts, setAvailableDistricts] = useState(DEFAULT_DISTRICTS);
   const [district, setDistrict] = useState(DEFAULT_DISTRICTS[0]);
-  const [districtAutoFilled, setDistrictAutoFilled] = useState(false);
-  const [address, setAddress] = useState("");
+  const [address, setAddressState] = useState("");
+  const setAddress = (value) => setAddressState(String(value ?? "").slice(0, 180));
   const [addrQuery, setAddrQuery] = useState("");
   const [showAddrAc, setShowAddrAc] = useState(false);
   const [lat, setLat] = useState(47.9186);
@@ -144,18 +295,21 @@ function EventEditorContent() {
 
   // Google Maps & Places Integration
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
+  const [mapsFailed, setMapsFailed] = useState(false);
   const mapContainerRef = useRef(null);
   const googleMapRef = useRef(null);
   const markerRef = useRef(null);
+  const latRef = useRef(lat);
+  const lngRef = useRef(lng);
+  const updateLocationRef = useRef(null);
+  latRef.current = lat;
+  lngRef.current = lng;
   const addressInputRef = useRef(null);
-  const venueInputRef = useRef(null);
 
   // Tickets & Pricing
   const [isFree, setIsFree] = useState(false);
-  const [tickets, setTickets] = useState([
-    { name: "Энгийн суудал", desc: "Танхимын үндсэн суудал.", price: 30000, cap: 100, ss: "", se: "" },
-  ]);
-  const [freeCap, setFreeCap] = useState("100");
+  const [tickets, setTickets] = useState([blankTicket()]);
+  const [freeCap, setFreeCap] = useState("");
   const [freeSs, setFreeSs] = useState("");
   const [freeSe, setFreeSe] = useState("");
   const [policy, setPolicy] = useState("");
@@ -165,8 +319,8 @@ function EventEditorContent() {
   const [visibility, setVisibility] = useState("public"); // 'public' | 'private'
   const [ageRestriction, setAgeRestriction] = useState("18"); // 'all' | '18' | '21'
   const [showAttendees, setShowAttendees] = useState(true);
-  const [entryNotes, setEntryNotes] = useState("Иргэний үнэмлэх үүдэн дээр шалгана.");
-  const [dressCode, setDressCode] = useState("Энгийн, тухтай хувцас.");
+  const [entryNotes, setEntryNotes] = useState("");
+  const [dressCode, setDressCode] = useState("");
 
   // Validation Errors
   const [errors, setErrors] = useState({});
@@ -202,19 +356,16 @@ function EventEditorContent() {
   useEffect(() => {
     async function loadPolicies() {
       try {
-        const polRes = await eventApi.getRefundPolicies();
-        const rawList = polRes?.data?.data;
-        if (Array.isArray(rawList) && rawList.length > 0) {
-          const list = rawList.map((p) => (typeof p === "object" ? p.title || p.name || p.policy : p));
-          setDbPolicies(list);
-          setPolicy((curr) => (curr && list.includes(curr) ? curr : list[0] || ""));
-        }
+        const polRes = await eventApi.getRefundPolicies(isMn ? "mn" : "en");
+        const rawList = polRes?.data?.data || polRes?.data;
+        setDbPolicies(parseRefundPolicyOptions(rawList));
       } catch (e) {
         console.warn("Failed to load refund policies from backend API:", e);
+        setDbPolicies([]);
       }
     }
     loadPolicies();
-  }, [language]);
+  }, [isMn]);
 
   // ─── Load Existing Event for Edit Mode ────────────────────────────────────
   useEffect(() => {
@@ -267,9 +418,6 @@ function EventEditorContent() {
           if (ev.venueAddress.longitude) setLng(Number(ev.venueAddress.longitude));
           if (ev.venueAddress.city) {
             setDistrict(ev.venueAddress.city);
-            setAvailableDistricts((prev) =>
-              prev.includes(ev.venueAddress.city) ? prev : [ev.venueAddress.city, ...prev]
-            );
           }
         }
 
@@ -277,30 +425,38 @@ function EventEditorContent() {
           const isFreeEv = ev.tickets.every((t) => Number(t.price) === 0 || t.isFreeTicket);
           setIsFree(isFreeEv);
           if (isFreeEv) {
-            setFreeCap(String(ev.tickets[0]?.qty || ev.totalTickets || 100));
+            const t0 = ev.tickets[0] || {};
+            const cap = t0.qty != null ? t0.qty : ev.totalTickets;
+            setFreeCap(cap != null && cap !== "" ? String(cap) : "");
+            setFreeSs(toDatetimeLocal(t0.salesStart || t0.ticketSelesStartDate));
+            setFreeSe(toDatetimeLocal(t0.salesEnd || t0.ticketSelesEndDate));
           } else {
             setTickets(
               ev.tickets.map((t) => ({
                 name: t.ticketName || "",
                 desc: t.ticketShortDesc || "",
-                price: Number(t.price) || 0,
-                cap: Number(t.qty) || 100,
-                ss: t.ticketSelesStartDate ? t.ticketSelesStartDate.slice(0, 10) : "",
-                se: t.ticketSelesEndDate ? t.ticketSelesEndDate.slice(0, 10) : "",
+                price: t.price != null && t.price !== "" ? String(t.price) : "",
+                cap: t.qty != null ? String(t.qty) : "",
+                ss: toDateInput(t.salesStart || t.ticketSelesStartDate),
+                se: toDateInput(t.salesEnd || t.ticketSelesEndDate),
               }))
             );
           }
         }
 
         if (ev.refundPolicy) {
-          setPolicy(ev.refundPolicy);
+          setPolicy(canonicalRefundPolicy(ev.refundPolicy));
         }
         if (ev.accessAndPrivacy !== undefined) {
           setVisibility(ev.accessAndPrivacy ? "public" : "private");
         }
         if (ev.ageRestriction) setAgeRestriction(String(ev.ageRestriction).replace("+", ""));
         if (ev.dressCode) setDressCode(ev.dressCode);
-        if (ev.tags && ev.tags.length > 0) setEntryNotes(ev.tags.join(", "));
+        if (typeof ev.notes === "string" && ev.notes.trim()) {
+          setEntryNotes(ev.notes);
+        } else if (ev.tags && ev.tags.length > 0) {
+          setEntryNotes(ev.tags.join(", "));
+        }
       } catch (err) {
         console.error("Failed to load event for edit:", err);
         flashToast(isMn ? "Эвент олдсонгүй" : "Failed to load event");
@@ -542,277 +698,305 @@ function EventEditorContent() {
 
       const applyLocationData = (parsed) => {
         if (!parsed) return;
-        if (parsed.address) {
-          setAddress(parsed.address);
-          setAddrQuery(parsed.address);
-          if (addressInputRef.current) {
-            addressInputRef.current.value = parsed.address;
-          }
+        const nextAddress = String(parsed.address || "").trim();
+        if (nextAddress) {
+          setAddress(nextAddress);
+          setAddrQuery(nextAddress);
+          if (addressInputRef.current) addressInputRef.current.value = nextAddress;
         }
         if (parsed.district) {
           setDistrict(parsed.district);
-          setDistrictAutoFilled(true);
-          setAvailableDistricts((prev) =>
-            prev.includes(parsed.district) ? prev : [parsed.district, ...prev]
-          );
         }
-        if (parsed.venue) {
-          setVenueName(parsed.venue);
-          if (venueInputRef.current) {
-            venueInputRef.current.value = parsed.venue;
-          }
+        setErrors((prev) => ({ ...prev, address: "" }));
+        flashToast(isMn ? "Байршил шинэчлэгдлээ" : "Location updated from the map");
+      };
+
+      const applyFallback = async () => {
+        const fallbackData = await reverseGeocodeFallback(roundedLat, roundedLng);
+        if (fallbackData?.address) {
+          applyLocationData(fallbackData);
+          return;
         }
-        setErrors((prev) => ({ ...prev, address: "", venueName: "" }));
-        flashToast(
-          isMn
-            ? `Байршил ба ${parsed.district ? `дүүрэг (${parsed.district}) ` : ""}шинэчлэгдлээ`
-            : `Location & District auto-updated from map`
-        );
+        const districtName = detectDistrictFromCoords(roundedLat, roundedLng);
+        applyLocationData({
+          address: districtName ? `${districtName}, Улаанбаатар` : `${roundedLat}, ${roundedLng}`,
+          district: districtName,
+          venue: "",
+        });
       };
 
       if (window.google?.maps?.Geocoder) {
         const geocoder = new window.google.maps.Geocoder();
-        geocoder.geocode({ location: { lat: roundedLat, lng: roundedLng } }, async (results, status) => {
+        geocoder.geocode({ location: { lat: roundedLat, lng: roundedLng } }, (results, status) => {
           if (status === "OK" && results && results.length > 0) {
             const poiResult = results.find((r) =>
               r.types?.some((t) => ["point_of_interest", "establishment", "premise", "subpremise"].includes(t))
             );
-            const parsed = parseGeocodeLocation(poiResult || results[0]);
-            applyLocationData(parsed);
+            const hit = poiResult || results[0];
+            const parsed = parseGeocodeLocation(hit) || {};
+            applyLocationData({
+              ...parsed,
+              address: hit.formatted_address || parsed.address || "",
+            });
           } else {
-            // Google Geocoding API is not activated on this project or failed -> use resilient reverse geocoder fallback
-            const fallbackData = await reverseGeocodeFallback(roundedLat, roundedLng);
-            applyLocationData(fallbackData);
+            applyFallback();
           }
         });
       } else {
-        reverseGeocodeFallback(roundedLat, roundedLng).then(applyLocationData);
+        applyFallback();
       }
     },
-    [isMn, parseGeocodeLocation, reverseGeocodeFallback]
+    [isMn, parseGeocodeLocation, reverseGeocodeFallback, detectDistrictFromCoords]
   );
 
-  // Handle map click to place pin (fallback grid)
+  // Drop a pin on the grid map and fill the address from that point.
   const handleMapClick = (e) => {
-    if (!pinMode) return;
+    if (e.target.closest("button")) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const pctX = Math.max(0, Math.min(1, x / rect.width));
-    const pctY = Math.max(0, Math.min(1, y / rect.height));
+    const pctX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const pctY = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+    const newLng = Number((MAPBOX.lng0 + pctX * (MAPBOX.lng1 - MAPBOX.lng0)).toFixed(4));
+    const newLat = Number((MAPBOX.lat0 + pctY * (MAPBOX.lat1 - MAPBOX.lat0)).toFixed(4));
 
-    const newLng = Number((106.855 + pctX * (106.995 - 106.855)).toFixed(4));
-    const newLat = Number((47.950 - pctY * (47.950 - 47.878)).toFixed(4));
+    const near = nearestAddr(newLat, newLng);
+    if (near) {
+      setAddress(near[0]);
+      setAddrQuery(near[0]);
+      if (addressInputRef.current) addressInputRef.current.value = near[0];
+    } else {
+      const districtName = detectDistrictFromCoords(newLat, newLng);
+      const rough = districtName ? `${districtName}, Улаанбаатар` : `${newLat}, ${newLng}`;
+      setAddress(rough);
+      setAddrQuery(rough);
+      if (addressInputRef.current) addressInputRef.current.value = rough;
+      if (districtName) setDistrict(districtName);
+    }
+    setErrors((prev) => ({ ...prev, address: "" }));
     updateLocationFromCoords(newLat, newLng);
     setPinMode(false);
   };
 
-  // ─── Load Google Maps & Places JavaScript API ─────────────────────────────
+  // ─── Load Google Maps in the active organizer language ────────────────────
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
-    if (!apiKey) return;
+    if (!apiKey) {
+      setMapsFailed(true);
+      setGoogleMapsLoaded(false);
+      return;
+    }
 
-    if (typeof window !== "undefined" && window.google && window.google.maps && window.google.maps.places) {
+    let cancelled = false;
+    const lang = isMn ? "mn" : "en";
+    const callbackName = `__bondyMapsReady_${lang}`;
+    const existing = document.getElementById("google-maps-script");
+
+    if (existing?.dataset.lang === lang && window.google?.maps?.places) {
+      setMapsFailed(false);
       setGoogleMapsLoaded(true);
       return;
     }
 
-    const scriptId = "google-maps-script";
-    let script = document.getElementById(scriptId);
-    if (!script) {
-      script = document.createElement("script");
-      script.id = scriptId;
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    setGoogleMapsLoaded(false);
+
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      googleMapRef.current = null;
+      markerRef.current = null;
+
+      document.querySelectorAll('script[src*="maps.googleapis.com"], script[src*="maps.gstatic.com"]').forEach((node) => node.remove());
+      try {
+        delete window.google;
+      } catch (e) {
+        window.google = undefined;
+      }
+
+      window[callbackName] = () => {
+        if (cancelled) return;
+        setMapsFailed(false);
+        setGoogleMapsLoaded(true);
+      };
+
+      const script = document.createElement("script");
+      script.id = "google-maps-script";
+      script.dataset.lang = lang;
       script.async = true;
-      script.defer = true;
-      script.onload = () => setGoogleMapsLoaded(true);
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=${lang}&callback=${callbackName}`;
+      script.onerror = () => {
+        if (cancelled) return;
+        setMapsFailed(true);
+        setGoogleMapsLoaded(false);
+      };
       document.head.appendChild(script);
-    } else {
-      const interval = setInterval(() => {
-        if (window.google && window.google.maps && window.google.maps.places) {
-          setGoogleMapsLoaded(true);
-          clearInterval(interval);
+
+      const poll = setInterval(() => {
+        if (cancelled) {
+          clearInterval(poll);
+          return;
         }
-      }, 100);
-      return () => clearInterval(interval);
+        if (window.google?.maps?.places) {
+          clearInterval(poll);
+          setMapsFailed(false);
+          setGoogleMapsLoaded(true);
+        }
+      }, 150);
+      setTimeout(() => clearInterval(poll), 8000);
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [isMn]);
+
+  const moveMapTo = useCallback((pLat, pLng, zoom = 16) => {
+    const pos = {
+      lat: Number(Number(pLat).toFixed(4)),
+      lng: Number(Number(pLng).toFixed(4)),
+    };
+    if (!Number.isFinite(pos.lat) || !Number.isFinite(pos.lng)) return;
+    setLat(pos.lat);
+    setLng(pos.lng);
+    if (markerRef.current) markerRef.current.setPosition(pos);
+    if (googleMapRef.current) {
+      googleMapRef.current.panTo(pos);
+      if (zoom) googleMapRef.current.setZoom(zoom);
     }
   }, []);
 
+  const applySelectedPlace = useCallback((place) => {
+    if (!place) return;
+    const parsed = parseGeocodeLocation(place) || {};
+    const nextAddress = place.formatted_address || parsed.address || place.name || "";
+    if (nextAddress) {
+      setAddress(nextAddress);
+      setAddrQuery(nextAddress);
+      if (addressInputRef.current) addressInputRef.current.value = nextAddress;
+    }
+    if (parsed.district) setDistrict(parsed.district);
+    if (place.geometry?.location) {
+      moveMapTo(place.geometry.location.lat(), place.geometry.location.lng());
+    }
+    setErrors((prev) => ({ ...prev, address: "", venueName: "" }));
+    setPinMode(false);
+    flashToast(isMn ? "Байршил бөглөгдлөө" : "Location updated");
+  }, [parseGeocodeLocation, moveMapTo, isMn]);
+
   // ─── Attach Google Places Autocomplete to Inputs ─────────────────────────
   useEffect(() => {
-    if (!googleMapsLoaded || typeof window === "undefined" || !window.google?.maps?.places) return;
+    if (step !== 2 || !googleMapsLoaded || typeof window === "undefined" || !window.google?.maps?.places) return;
 
-    // 1. Full Address Autocomplete
+    const placeFields = ["place_id", "name", "formatted_address", "geometry", "address_components"];
     let addrAc;
+
+    const resolvePlace = (autocomplete) => {
+      const place = autocomplete.getPlace();
+      if (!place) return;
+      if (place.geometry?.location) {
+        applySelectedPlace(place);
+        return;
+      }
+      const typed = addressInputRef.current?.value || place.name || "";
+      if (place.place_id && window.google.maps.places.PlacesService) {
+        const host = googleMapRef.current || document.createElement("div");
+        const service = new window.google.maps.places.PlacesService(host);
+        service.getDetails({ placeId: place.place_id, fields: placeFields }, (detail, status) => {
+          if (status === "OK" && detail?.geometry?.location) {
+            applySelectedPlace(detail);
+          } else if (typed && window.google.maps.Geocoder) {
+            new window.google.maps.Geocoder().geocode({ address: typed }, (results, geoStatus) => {
+              if (geoStatus === "OK" && results?.[0]) applySelectedPlace(results[0]);
+            });
+          }
+        });
+        return;
+      }
+      if (typed && window.google.maps.Geocoder) {
+        new window.google.maps.Geocoder().geocode({ address: typed }, (results, geoStatus) => {
+          if (geoStatus === "OK" && results?.[0]) applySelectedPlace(results[0]);
+        });
+      }
+    };
+
     if (addressInputRef.current) {
       try {
         addrAc = new window.google.maps.places.Autocomplete(addressInputRef.current, {
-          fields: ["name", "formatted_address", "geometry", "address_components"],
+          fields: placeFields,
         });
-        addrAc.addListener("place_changed", () => {
-          const place = addrAc.getPlace();
-          if (!place) return;
-          const parsed = parseGeocodeLocation(place);
-
-          if (parsed?.address) {
-            setAddress(parsed.address);
-            setAddrQuery(parsed.address);
-            if (addressInputRef.current) addressInputRef.current.value = parsed.address;
-          }
-          if (parsed?.venue && (!venueName || venueName.trim() === "")) {
-            setVenueName(parsed.venue);
-            if (venueInputRef.current) venueInputRef.current.value = parsed.venue;
-          }
-          if (parsed?.district) {
-            setDistrict(parsed.district);
-            setDistrictAutoFilled(true);
-            setAvailableDistricts((prev) =>
-              prev.includes(parsed.district) ? prev : [parsed.district, ...prev]
-            );
-          }
-
-          if (place.geometry?.location) {
-            const pLat = place.geometry.location.lat();
-            const pLng = place.geometry.location.lng();
-            setLat(Number(pLat.toFixed(4)));
-            setLng(Number(pLng.toFixed(4)));
-            if (googleMapRef.current) {
-              googleMapRef.current.panTo({ lat: pLat, lng: pLng });
-              googleMapRef.current.setZoom(16);
-            }
-            if (markerRef.current) {
-              markerRef.current.setPosition({ lat: pLat, lng: pLng });
-            }
-          }
-
-          setErrors((prev) => ({ ...prev, address: "", venueName: "" }));
-          flashToast(
-            isMn
-              ? `Google Places: Байршил ба ${parsed?.district ? `дүүрэг (${parsed.district}) ` : ""}бөглөгдлөө`
-              : `Google Places: Location & District auto-filled`
-          );
-        });
+        addrAc.addListener("place_changed", () => resolvePlace(addrAc));
       } catch (e) {
         console.warn("Error setting up address autocomplete:", e);
       }
     }
 
-    // 2. Venue Name Autocomplete
-    let venueAc;
-    if (venueInputRef.current) {
-      try {
-        venueAc = new window.google.maps.places.Autocomplete(venueInputRef.current, {
-          types: ["establishment"],
-          fields: ["name", "formatted_address", "geometry", "address_components"],
-        });
-        venueAc.addListener("place_changed", () => {
-          const place = venueAc.getPlace();
-          if (!place) return;
-          const parsed = parseGeocodeLocation(place);
-
-          if (place.name) {
-            setVenueName(place.name);
-            if (venueInputRef.current) venueInputRef.current.value = place.name;
-          }
-          if (parsed?.address) {
-            setAddress(parsed.address);
-            setAddrQuery(parsed.address);
-            if (addressInputRef.current) addressInputRef.current.value = parsed.address;
-          }
-          if (parsed?.district) {
-            setDistrict(parsed.district);
-            setDistrictAutoFilled(true);
-            setAvailableDistricts((prev) =>
-              prev.includes(parsed.district) ? prev : [parsed.district, ...prev]
-            );
-          }
-
-          if (place.geometry?.location) {
-            const pLat = place.geometry.location.lat();
-            const pLng = place.geometry.location.lng();
-            setLat(Number(pLat.toFixed(4)));
-            setLng(Number(pLng.toFixed(4)));
-            if (googleMapRef.current) {
-              googleMapRef.current.panTo({ lat: pLat, lng: pLng });
-              googleMapRef.current.setZoom(16);
-            }
-            if (markerRef.current) {
-              markerRef.current.setPosition({ lat: pLat, lng: pLng });
-            }
-          }
-
-          setErrors((prev) => ({ ...prev, address: "", venueName: "" }));
-          flashToast(
-            isMn
-              ? `Google Places: Байршил ба ${parsed?.district ? `дүүрэг (${parsed.district}) ` : ""}бөглөгдлөө`
-              : `Google Places: Location & District auto-filled`
-          );
-        });
-      } catch (e) {
-        console.warn("Error setting up venue autocomplete:", e);
-      }
-    }
-
     return () => {
-      if (window.google?.maps?.event) {
-        if (addrAc) window.google.maps.event.clearInstanceListeners(addrAc);
-        if (venueAc) window.google.maps.event.clearInstanceListeners(venueAc);
+      if (window.google?.maps?.event && addrAc) {
+        window.google.maps.event.clearInstanceListeners(addrAc);
       }
     };
-  }, [googleMapsLoaded, step, isMn, parseGeocodeLocation, venueName]);
+  }, [googleMapsLoaded, step, applySelectedPlace]);
+
+  updateLocationRef.current = updateLocationFromCoords;
 
   // ─── Initialize Interactive Google Map in Step 2 ──────────────────────────
   useEffect(() => {
     if (step !== 2 || !googleMapsLoaded || !mapContainerRef.current || typeof window === "undefined" || !window.google?.maps) return;
 
     const initialPos = {
-      lat: typeof lat === "number" && !isNaN(lat) ? lat : 47.9186,
-      lng: typeof lng === "number" && !isNaN(lng) ? lng : 106.9176,
+      lat: typeof latRef.current === "number" && !isNaN(latRef.current) ? latRef.current : 47.9186,
+      lng: typeof lngRef.current === "number" && !isNaN(lngRef.current) ? lngRef.current : 106.9176,
     };
 
-    if (!googleMapRef.current) {
-      const map = new window.google.maps.Map(mapContainerRef.current, {
-        center: initialPos,
-        zoom: 15,
-        styles: BONDY_DARK_MAP_STYLE,
-        disableDefaultUI: true,
-        zoomControl: true,
-        gestureHandling: "greedy",
-        backgroundColor: "#141414",
-      });
+    const map = new window.google.maps.Map(mapContainerRef.current, {
+      center: initialPos,
+      zoom: 15,
+      styles: BONDY_DARK_MAP_STYLE,
+      disableDefaultUI: true,
+      zoomControl: true,
+      zoomControlOptions: {
+        position: window.google.maps.ControlPosition.RIGHT_TOP,
+      },
+      gestureHandling: "greedy",
+      scrollwheel: true,
+      clickableIcons: false,
+      backgroundColor: "#141414",
+    });
 
-      const marker = new window.google.maps.Marker({
-        position: initialPos,
-        map,
-        draggable: true,
-        icon: {
-          path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
-          fillColor: "#23ada4",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 1.5,
-          scale: 1.6,
-          anchor: new window.google.maps.Point(12, 22),
-        },
-      });
+    const marker = new window.google.maps.Marker({
+      position: initialPos,
+      map,
+      draggable: true,
+      icon: {
+        path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+        fillColor: "#23ada4",
+        fillOpacity: 1,
+        strokeColor: "#ffffff",
+        strokeWeight: 1.5,
+        scale: 1.6,
+        anchor: new window.google.maps.Point(12, 22),
+      },
+    });
 
-      map.addListener("click", (e) => {
-        updateLocationFromCoords(e.latLng.lat(), e.latLng.lng());
-      });
+    const dropPin = (latLng) => {
+      if (!latLng || !updateLocationRef.current) return;
+      updateLocationRef.current(latLng.lat(), latLng.lng());
+      setPinMode(false);
+    };
 
-      marker.addListener("dragend", (e) => {
-        updateLocationFromCoords(e.latLng.lat(), e.latLng.lng());
-      });
+    const clickListener = map.addListener("click", (e) => dropPin(e.latLng));
+    const dragListener = marker.addListener("dragend", (e) => dropPin(e.latLng));
 
-      googleMapRef.current = map;
-      markerRef.current = marker;
-    } else {
-      googleMapRef.current.setCenter(initialPos);
-      if (markerRef.current) {
-        markerRef.current.setPosition(initialPos);
+    googleMapRef.current = map;
+    markerRef.current = marker;
+
+    return () => {
+      if (window.google?.maps?.event) {
+        window.google.maps.event.removeListener(clickListener);
+        window.google.maps.event.removeListener(dragListener);
       }
-    }
-  }, [step, googleMapsLoaded, updateLocationFromCoords]);
+      googleMapRef.current = null;
+      markerRef.current = null;
+    };
+  }, [step, googleMapsLoaded]);
 
   // Keep Google Map synced when coordinates change
   useEffect(() => {
@@ -822,6 +1006,13 @@ function EventEditorContent() {
       googleMapRef.current.panTo(pos);
     }
   }, [lat, lng]);
+
+  useEffect(() => {
+    if (!googleMapRef.current || !window.google?.maps) return;
+    googleMapRef.current.setOptions({
+      draggableCursor: pinMode ? "crosshair" : null,
+    });
+  }, [pinMode, googleMapsLoaded, step]);
 
   // ─── File Uploads ─────────────────────────────────────────────────────────
   const handlePosterUpload = async (e) => {
@@ -855,13 +1046,27 @@ function EventEditorContent() {
   };
 
   const handleGalleryUpload = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
+    const picked = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!picked.length) return;
 
-    if (gallery.length + files.length > 5) {
-      flashToast(isMn ? "Цомогт хамгийн ихдээ 5 зураг оруулна" : "Max 5 gallery images allowed");
+    const room = 5 - gallery.length;
+    if (room <= 0) {
+      flashToast(t("apGalleryTooMany"));
       return;
     }
+    const files = [];
+    let tooBig = false;
+    picked.forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        tooBig = true;
+        return;
+      }
+      if (files.length < room) files.push(file);
+    });
+    if (tooBig) flashToast(t("apGalleryTooBig"));
+    if (picked.filter((file) => file.size <= 5 * 1024 * 1024).length > room) flashToast(t("apGalleryTooMany"));
+    if (!files.length) return;
 
     setUploadingGallery(true);
     try {
@@ -874,7 +1079,7 @@ function EventEditorContent() {
           newLinks.push(res.data.files[0]);
         }
       }
-      setGallery((prev) => [...prev, ...newLinks]);
+      setGallery((prev) => [...prev, ...newLinks].slice(0, 5));
       flashToast(isMn ? "Цомгийн зураг нэмэгдлээ" : "Gallery images added");
     } catch (err) {
       console.error("Gallery upload failed:", err);
@@ -927,26 +1132,118 @@ function EventEditorContent() {
 
     if (s === 2) {
       if (!startDate) errs.startDate = isMn ? "Эхлэх огноог сонгоно уу." : "Start date is required.";
+      else if (startDate < todayISO()) {
+        errs.startDate = isMn ? "Эхлэх огноо өнөөдрөөс өмнө байж болохгүй." : "Start date cannot be before today.";
+      }
       if (!startTime) errs.startTime = isMn ? "Эхлэх цагийг оруулна уу." : "Start time is required.";
-      if (!venueName.trim()) errs.venueName = isMn ? "Байршлын нэрээ оруулна уу." : "Venue name is required.";
-      if (!address.trim()) errs.address = isMn ? "Хаягаа оруулна уу." : "Address is required.";
+      if (!endDate) errs.endDate = isMn ? "Дуусах огноог сонгоно уу." : "End date is required.";
+      if (!endTime) errs.endTime = isMn ? "Дуусах цагийг оруулна уу." : "End time is required.";
+      if (startDate && endDate && endDate < startDate) {
+        errs.endDate = isMn ? "Дуусах огноо эхлэх огнооноос өмнө байж болохгүй." : "End date cannot be before the start date.";
+      }
+      if (startDate && endDate && startDate === endDate && startTime && endTime && endTime <= startTime) {
+        errs.endTime = isMn ? "Дуусах цаг эхлэх цагаас өмнө байж болохгүй." : "End time cannot be before the start time.";
+      }
+      const venue = venueName.trim();
+      if (venue.length < 2 || venue.length > 150) {
+        errs.venueName = isMn
+          ? "Байршлын нэр 2–150 тэмдэгт байна."
+          : "Venue name must be 2 to 150 characters.";
+      }
+      if (!address.trim() || address.trim().length > 180) errs.address = t("apAddressLen");
     }
 
     if (s === 3) {
       if (isFree) {
-        if (!freeCap || Number(freeCap) <= 0) {
-          errs.freeCap = isMn ? "Багтаамжийг 0-ээс их тоогоор оруулна уу." : "Capacity must be greater than 0.";
+        if (!validDigitAmount(freeCap)) {
+          errs.freeCap = isMn
+            ? "Тоо ширхэг 1–10 оронтой тоо байна."
+            : "Quantity must be 1 to 10 digits.";
+        }
+        const ss = String(freeSs || "").trim();
+        const se = String(freeSe || "").trim();
+        const now = nowStamp();
+        if (ss && ss < now) {
+          errs.freeSs = true;
+          errs.freeSales = isMn
+            ? "Бүртгэл эхлэх хугацаа өнгөрсөн байж болохгүй."
+            : "The registration start cannot be in the past.";
+        } else if (se && se < now) {
+          errs.freeSe = true;
+          errs.freeSales = isMn
+            ? "Бүртгэл дуусах хугацаа өнгөрсөн байж болохгүй."
+            : "The registration end cannot be in the past.";
+        } else if (ss && se && se <= ss) {
+          errs.freeSe = true;
+          errs.freeSales = isMn
+            ? "Бүртгэл дуусах хугацаа эхлэхээс хойш байх ёстой."
+            : "Registration must close after it opens.";
+        } else if (se && (endDate || startDate) && se.slice(0, 10) > (endDate || startDate)) {
+          errs.freeSe = true;
+          errs.freeSales = isMn
+            ? "Бүртгэл эвентийн өдрөөс хожуу дуусах боломжгүй."
+            : "Registration cannot close after the event date.";
         }
       } else {
         if (!tickets || tickets.length === 0) {
-          errs.tickets = isMn ? "Дор хаяж 1 тасалбар нэмнэ үү." : "At least 1 ticket required.";
+          errs.tickets = isMn
+            ? "Хамгийн багадаа нэг бүрэн тасалбарын төрөл шаардлагатай."
+            : "You need at least one complete ticket type.";
         } else {
+          const names = {};
           tickets.forEach((t, i) => {
-            if (!t.name.trim()) errs[`tkName_${i}`] = isMn ? "Нэр оруулна уу." : "Ticket name required.";
-            if (t.price === "" || Number(t.price) < 0) errs[`tkPrice_${i}`] = isMn ? "Үнэ зөв оруулна уу." : "Valid price required.";
-            if (!t.cap || Number(t.cap) <= 0) errs[`tkCap_${i}`] = isMn ? "Тоо ширхэг оруулна уу." : "Quantity required.";
+            const nm = String(t.name || "").trim();
+            if (nm.length < 2 || nm.length > 150) {
+              errs[`tkName_${i}`] = isMn
+                ? "Тасалбарын нэр 2–150 тэмдэгт байна."
+                : "Ticket name must be 2 to 150 characters.";
+            } else if (names[nm.toLowerCase()]) {
+              errs[`tkName_${i}`] = isMn ? "Ижил нэр давхардаж байна." : "That name is already used.";
+            }
+            if (nm) names[nm.toLowerCase()] = true;
+            const desc = String(t.desc || "").trim();
+            if (desc.length > 200) {
+              errs[`tkDesc_${i}`] = isMn
+                ? "Товч тайлбар хамгийн ихдээ 200 тэмдэгт байна."
+                : "Short description must be at most 200 characters.";
+            }
+            if (!validDigitAmount(t.price)) {
+              errs[`tkPrice_${i}`] = isMn
+                ? "Үнэ 1–10 оронтой тоо байна."
+                : "Price must be 1 to 10 digits.";
+            }
+            if (!validDigitAmount(t.cap)) {
+              errs[`tkCap_${i}`] = isMn
+                ? "Тоо ширхэг 1–10 оронтой тоо байна."
+                : "Quantity must be 1 to 10 digits.";
+            }
+            if (t.ss && t.se && t.se < t.ss) {
+              errs[`tkSales_${i}`] = isMn
+                ? "Борлуулалт дуусах огноо эхлэхээс хойш байх ёстой."
+                : "Sales must end after they start.";
+            } else if (t.se && (endDate || startDate) && t.se > (endDate || startDate)) {
+              errs[`tkSales_${i}`] = isMn
+                ? "Борлуулалт эвентийн өдрөөс хожуу дуусах боломжгүй."
+                : "Sales cannot end after the event date.";
+            }
           });
         }
+        if (!policy) {
+          errs.policy = isMn ? "Буцаан олголтын нөхцөлөө сонгоно уу." : "Choose a refund policy.";
+        }
+      }
+    }
+
+    if (s === 4) {
+      if (String(entryNotes || "").trim().length > 500) {
+        errs.entryNotes = isMn
+          ? "Нэвтрэх тэмдэглэл хамгийн ихдээ 500 тэмдэгт байна."
+          : "Entry requirements must be at most 500 characters.";
+      }
+      if (String(dressCode || "").trim().length > 300) {
+        errs.dressCode = isMn
+          ? "Хувцаслалтын дүрэм хамгийн ихдээ 300 тэмдэгт байна."
+          : "Dress code must be at most 300 characters.";
       }
     }
 
@@ -978,26 +1275,30 @@ function EventEditorContent() {
   // ─── Build Submission Payload ─────────────────────────────────────────────
   const buildPayload = (asDraft = false) => {
     const formattedTickets = isFree
-      ? [
-        {
-          ticketName: "Үнэгүй тасалбар",
-          ticketShortDesc: "Энэхүү эвентийн үнэгүй нэвтрэх тасалбар",
-          price: 0,
-          qty: Number(freeCap) || 100,
-          isFreeTicket: true,
-          ticketSelesStartDate: freeSs ? freeSs.slice(0, 10) : startDate || "",
-          ticketSelesEndDate: freeSe ? freeSe.slice(0, 10) : endDate || startDate || "",
-        },
-      ]
-      : tickets.map((t) => ({
-        ticketName: t.name,
-        ticketShortDesc: t.desc || "",
-        price: Number(t.price) || 0,
-        qty: Number(t.cap) || 100,
-        isFreeTicket: false,
-        ticketSelesStartDate: t.ss || startDate || "",
-        ticketSelesEndDate: t.se || endDate || startDate || "",
-      }));
+      ? (Number(freeCap) > 0
+        ? [
+          {
+            ticketName: isMn ? "Бүртгэл" : "Registrations",
+            ticketShortDesc: "",
+            price: 0,
+            qty: Number(freeCap),
+            isFreeTicket: true,
+            ...(freeSs ? { salesStart: freeSs } : {}),
+            ...(freeSe ? { salesEnd: freeSe } : {}),
+          },
+        ]
+        : [])
+      : tickets
+        .filter((t) => String(t.name || "").trim() && Number(t.cap) > 0)
+        .map((t) => ({
+          ticketName: t.name.trim(),
+          ticketShortDesc: t.desc || "",
+          price: Number(t.price) || 0,
+          qty: Number(t.cap),
+          isFreeTicket: false,
+          ...(t.ss ? { salesStart: t.ss } : {}),
+          ...(t.se ? { salesEnd: t.se } : {}),
+        }));
 
     const totalTicketsCount = formattedTickets.reduce((sum, t) => sum + (t.qty || 0), 0);
 
@@ -1023,11 +1324,12 @@ function EventEditorContent() {
       },
       tickets: formattedTickets,
       totalTickets: totalTicketsCount,
-      refundPolicy: isFree ? (dbPolicies[0] || "") : (policy || dbPolicies[0] || ""),
+      refundPolicy: isFree ? "" : (policy || ""),
       accessAndPrivacy: visibility === "public",
       ageRestriction: `${ageRestriction}+`,
-      dressCode: dressCode || "Энгийн",
-      tags: entryNotes ? [entryNotes] : [],
+      dressCode: dressCode.trim(),
+      notes: entryNotes.trim(),
+      tags: entryNotes.trim() ? [entryNotes.trim()] : [],
       isDraft: asDraft,
     };
   };
@@ -1189,7 +1491,7 @@ function EventEditorContent() {
     if (key === "view") {
       setDone(null);
       if (createdEventId) {
-        router.push(`/eventbooking?id=${createdEventId}`);
+        router.push(`/EventDetailOrganiser?eventId=${createdEventId}`);
       } else {
         router.push("/EventsManagement");
       }
@@ -1216,8 +1518,11 @@ function EventEditorContent() {
   // ─── Publish / Save Changes (Step 5) ──────────────────────────────────────
   const handlePublish = async () => {
     // Final check across all steps
-    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) {
+    const failedStep = [1, 2, 3, 4].find((n) => !validateStep(n));
+    if (failedStep) {
+      setStep(failedStep);
       flashToast(isMn ? "Дутуу бөглөсөн талбар байна" : "Please complete required fields");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
@@ -1232,6 +1537,11 @@ function EventEditorContent() {
       } else {
         res = await eventApi.createEvent(payload);
         targetId = res?.data?.data?._id || res?.data?.event?._id || res?.data?._id;
+      }
+
+      if (!res || res.status === false) {
+        flashToast(res?.message || (isMn ? "Хадгалж чадсангүй." : "Could not save the event."));
+        return;
       }
 
       if (targetId) {
@@ -1278,6 +1588,25 @@ function EventEditorContent() {
   const categoriesList = dbCategories.length > 0
     ? dbCategories.map((c) => ({ id: c._id, label: c.name, en: c.name }))
     : FALLBACK_CATS;
+
+  const startInPast = Boolean(startDate && startDate < todayISO());
+  const startDateError = errors.startDate || (startInPast
+    ? (isMn ? "Эхлэх огноо өнөөдрөөс өмнө байж болохгүй." : "Start date cannot be before today.")
+    : "");
+  const endBeforeStart = Boolean(startDate && endDate && endDate < startDate);
+  const endTimeBeforeStart = Boolean(
+    startDate && endDate && startDate === endDate && startTime && endTime && endTime <= startTime
+  );
+  const endDateError = errors.endDate || (endBeforeStart
+    ? (isMn ? "Дуусах огноо эхлэх огнооноос өмнө байж болохгүй." : "End date cannot be before the start date.")
+    : "");
+  const endTimeError = errors.endTime || (endTimeBeforeStart
+    ? (isMn ? "Дуусах цаг эхлэх цагаас өмнө байж болохгүй." : "End time cannot be before the start time.")
+    : "");
+  const endTimeMin = startDate && endDate && startDate === endDate && startTime && nextMinute(startTime) > startTime
+    ? nextMinute(startTime)
+    : undefined;
+  const pinAt = pinPercents(lat, lng);
 
   if (initialLoading) {
     return (
@@ -1348,7 +1677,9 @@ function EventEditorContent() {
           <span className="ew-fill" style={{ width: `${progressPct}%` }} />
         </div>
         <p className="ew-of">
-          {isMn ? `АЛХАМ ${step} / 5` : `STEP ${step} OF 5`}
+          {isMn
+            ? `Алхам ${step}/5 · ${STEPS_MN[step - 1]}`
+            : `Step ${step}/5 · ${STEPS_EN[step - 1]}`}
         </p>
 
         {/* Draft Notice Banner */}
@@ -1559,7 +1890,7 @@ function EventEditorContent() {
                   )}
                 </div>
                 <span className="ew-hint">
-                  {isMn ? "Эвентээ танилцуулах 5 хүртэлх зураг" : "Up to 5 event showcase images"}
+                  {t("apGalleryMax")}
                 </span>
               </div>
 
@@ -1594,222 +1925,266 @@ function EventEditorContent() {
             STEP 2: Огноо ба байршил (Date & Location)
             ═════════════════════════════════════════════════════════════════════ */}
         {step === 2 && (
-          <div className="ew-grid3" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px", alignItems: "start", marginTop: "18px" }}>
-            {/* Column 1: Date & Time */}
+          <div className="ew-grid2">
             <section className="ew-cardIn">
-              <h2 className="ew-h2">{isMn ? "Огноо ба цаг" : "Date & Time"}</h2>
-              <label className="ew-f">
-                <span className="ew-lb">{isMn ? "Эхлэх огноо" : "Start Date"} <i>*</i></span>
-                <input
-                  type="date"
-                  className="ew-in"
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    if (errors.startDate) setErrors((prev) => ({ ...prev, startDate: "" }));
-                  }}
-                  aria-invalid={Boolean(errors.startDate)}
-                />
-                {errors.startDate && <span className="ew-er">{errors.startDate}</span>}
-              </label>
-              <label className="ew-f">
-                <span className="ew-lb">{isMn ? "Эхлэх цаг" : "Start Time"} <i>*</i></span>
-                <input
-                  type="time"
-                  className="ew-in"
-                  value={startTime}
-                  onChange={(e) => {
-                    setStartTime(e.target.value);
-                    if (errors.startTime) setErrors((prev) => ({ ...prev, startTime: "" }));
-                  }}
-                  aria-invalid={Boolean(errors.startTime)}
-                />
-                {errors.startTime && <span className="ew-er">{errors.startTime}</span>}
-              </label>
-              <label className="ew-f">
-                <span className="ew-lb">{isMn ? "Дуусах огноо" : "End Date"}</span>
-                <input
-                  type="date"
-                  className="ew-in"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </label>
-              <label className="ew-f">
-                <span className="ew-lb">{isMn ? "Дуусах цаг" : "End Time"}</span>
-                <input
-                  type="time"
-                  className="ew-in"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                />
-              </label>
+              <h2 className="ew-h2">{isMn ? "Огноо, цаг" : "Date and time"}</h2>
+              <div className="ew-2">
+                <label className="ew-f">
+                  <span className="ew-lb">{isMn ? "Эхлэх огноо" : "Start date"} <i>*</i></span>
+                  <div className="ew-dt">
+                    <input
+                      type="date"
+                      className="ew-in"
+                      value={startDate}
+                      min={todayISO()}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value && value < todayISO()) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            startDate: isMn
+                              ? "Эхлэх огноо өнөөдрөөс өмнө байж болохгүй."
+                              : "Start date cannot be before today.",
+                          }));
+                          return;
+                        }
+                        if (endDate && value && value > endDate) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            startDate: isMn
+                              ? "Эхлэх огноо дуусах огнооноос хойш байж болохгүй."
+                              : "Start date cannot be after the end date.",
+                          }));
+                          return;
+                        }
+                        setStartDate(value);
+                        if (errors.startDate) setErrors((prev) => ({ ...prev, startDate: "" }));
+                      }}
+                      aria-invalid={Boolean(errors.startDate || startInPast)}
+                    />
+                    <button type="button" className="ew-dtBtn" aria-label={isMn ? "Огноо сонгох" : "Open date picker"} onClick={(e) => openNativePicker(e.currentTarget.previousElementSibling)}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+                        <path d="M3.5 10h17M8 3.5v4M16 3.5v4" />
+                      </svg>
+                    </button>
+                  </div>
+                  {startDateError && <span className="ew-er">{startDateError}</span>}
+                </label>
+                <label className="ew-f">
+                  <span className="ew-lb">{isMn ? "Эхлэх цаг" : "Start time"} <i>*</i></span>
+                  <div className="ew-dt">
+                    <input
+                      type="time"
+                      className="ew-in"
+                      value={startTime}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (startDate && endDate && startDate === endDate && endTime && value && value >= endTime) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            startTime: isMn
+                              ? "Эхлэх цаг дуусах цагаас хойш байж болохгүй."
+                              : "Start time cannot be after the end time.",
+                          }));
+                          return;
+                        }
+                        setStartTime(value);
+                        if (errors.startTime) setErrors((prev) => ({ ...prev, startTime: "" }));
+                      }}
+                      aria-invalid={Boolean(errors.startTime)}
+                    />
+                    <button type="button" className="ew-dtBtn" aria-label={isMn ? "Цаг сонгох" : "Open time picker"} onClick={(e) => openNativePicker(e.currentTarget.previousElementSibling)}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="8.25" />
+                        <path d="M12 7.5V12l3 2" />
+                      </svg>
+                    </button>
+                  </div>
+                  {errors.startTime && <span className="ew-er">{errors.startTime}</span>}
+                </label>
+                <label className="ew-f">
+                  <span className="ew-lb">{isMn ? "Дуусах огноо" : "End date"} <i>*</i></span>
+                  <div className="ew-dt">
+                    <input
+                      type="date"
+                      className="ew-in"
+                      value={endDate}
+                      min={startDate || undefined}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (startDate && value && value < startDate) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            endDate: isMn
+                              ? "Дуусах огноо эхлэх огнооноос өмнө байж болохгүй."
+                              : "End date cannot be before the start date.",
+                          }));
+                          return;
+                        }
+                        setEndDate(value);
+                        if (errors.endDate) setErrors((prev) => ({ ...prev, endDate: "" }));
+                      }}
+                      aria-invalid={Boolean(errors.endDate || endBeforeStart)}
+                    />
+                    <button type="button" className="ew-dtBtn" aria-label={isMn ? "Огноо сонгох" : "Open date picker"} onClick={(e) => openNativePicker(e.currentTarget.previousElementSibling)}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+                        <path d="M3.5 10h17M8 3.5v4M16 3.5v4" />
+                      </svg>
+                    </button>
+                  </div>
+                  {endDateError && <span className="ew-er">{endDateError}</span>}
+                </label>
+                <label className="ew-f">
+                  <span className="ew-lb">{isMn ? "Дуусах цаг" : "End time"} <i>*</i></span>
+                  <div className="ew-dt">
+                    <input
+                      type="time"
+                      className="ew-in"
+                      value={endTime}
+                      min={endTimeMin}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (startDate && endDate && startDate === endDate && startTime && value && value <= startTime) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            endTime: isMn
+                              ? "Дуусах цаг эхлэх цагаас өмнө байж болохгүй."
+                              : "End time cannot be before the start time.",
+                          }));
+                          return;
+                        }
+                        setEndTime(value);
+                        if (errors.endTime) setErrors((prev) => ({ ...prev, endTime: "" }));
+                      }}
+                      aria-invalid={Boolean(errors.endTime || endTimeBeforeStart)}
+                    />
+                    <button type="button" className="ew-dtBtn" aria-label={isMn ? "Цаг сонгох" : "Open time picker"} onClick={(e) => openNativePicker(e.currentTarget.previousElementSibling)}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="8.25" />
+                        <path d="M12 7.5V12l3 2" />
+                      </svg>
+                    </button>
+                  </div>
+                  {endTimeError && <span className="ew-er">{endTimeError}</span>}
+                </label>
+              </div>
             </section>
 
-            {/* Column 2: Venue & Address */}
             <section className="ew-cardIn">
               <h2 className="ew-h2">{isMn ? "Байршил" : "Location"}</h2>
               <label className="ew-f">
-                <span className="ew-lb">{isMn ? "Байршлын нэр" : "Venue Name"} <i>*</i></span>
+                <span className="ew-lb">{isMn ? "Байршлын нэр" : "Venue name"} <i>*</i></span>
                 <input
-                  ref={venueInputRef}
                   type="text"
                   className="ew-in"
                   value={venueName}
+                  autoComplete="off"
+                  maxLength={150}
                   onChange={(e) => {
-                    setVenueName(e.target.value);
+                    setVenueName(e.target.value.slice(0, 150));
                     if (errors.venueName) setErrors((prev) => ({ ...prev, venueName: "" }));
                   }}
                   aria-invalid={Boolean(errors.venueName)}
-                  placeholder="Жишээ: UB Palace, Steppe Arena"
+                  placeholder={isMn ? "Байршлын нэр оруулна уу" : "Enter the venue name"}
                 />
+                <span className="ew-count">{venueName.trim().length} / 150</span>
                 {errors.venueName && <span className="ew-er">{errors.venueName}</span>}
               </label>
 
-              <div className="ew-f">
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                  <span className="ew-lb" style={{ margin: 0 }}>{isMn ? "Дүүрэг" : "District"}</span>
-                  {districtAutoFilled && (
-                    <span style={{ fontSize: "11px", color: "#10b981", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "3px" }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
-                      {isMn ? "Автомат" : "Auto-filled"}
-                    </span>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  className="ew-in"
-                  value={district}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setDistrict(val);
-                    setDistrictAutoFilled(false);
-                    if (val.trim() && !availableDistricts.includes(val.trim())) {
-                      setAvailableDistricts((prev) => [val.trim(), ...prev]);
-                    }
-                  }}
-                  placeholder={isMn ? "Google Places-аас автоматаар бөглөгдөнө" : "Auto-filled from Google Places or map"}
-                  list="districts-datalist"
-                  autoComplete="off"
-                />
-                <datalist id="districts-datalist">
-                  {availableDistricts.map((d) => (
-                    <option key={d} value={d} />
-                  ))}
-                </datalist>
-              </div>
-
-              <div className="ew-f" style={{ position: "relative" }}>
-                <span className="ew-lb">{isMn ? "Дэлгэрэнгүй хаяг" : "Full Address"} <i>*</i></span>
+              <label className="ew-f" style={{ position: "relative" }}>
+                <span className="ew-lb">{isMn ? "Хаяг" : "Address"} <i>*</i></span>
                 <input
                   ref={addressInputRef}
                   type="text"
                   className="ew-in"
                   value={address}
+                  maxLength={180}
                   onChange={(e) => {
-                    setAddress(e.target.value);
-                    setAddrQuery(e.target.value);
+                    const next = e.target.value.slice(0, 180);
+                    setAddress(next);
+                    setAddrQuery(next);
                     if (errors.address) setErrors((prev) => ({ ...prev, address: "" }));
                   }}
                   aria-invalid={Boolean(errors.address)}
-                  placeholder={isMn ? "Google Places хаяг хайх..." : "Search Google Places address..."}
+                  autoComplete="off"
+                  placeholder={isMn ? "Дүүрэг, хороо, барилга" : "District, khoroo, building"}
                 />
                 {errors.address && <span className="ew-er">{errors.address}</span>}
-              </div>
+              </label>
 
-              {/* Selected Venue summary */}
-              {(venueName || address) && (
-                <div className="ew-loc" style={{ padding: "12px 14px" }}>
-                  <span className="ew-locI">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </span>
-                  <div className="ew-locT">
-                    <b>{venueName || "—"}</b>
-                    <span>{address || "—"}</span>
-                  </div>
-                </div>
-              )}
-            </section>
-
-            {/* Column 3: Google Map */}
-            <section className="ew-cardIn">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <h2 className="ew-h2" style={{ margin: 0 }}>{isMn ? "Газрын зураг" : "Map"}</h2>
-                {googleMapsLoaded && (
-                  <span style={{ fontSize: "12px", color: "var(--acc-bright)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--acc-bright)" }} />
-                    Google Maps
-                  </span>
-                )}
-              </div>
-
-              <div
-                style={{
-                  position: "relative",
-                  height: "280px",
-                  borderRadius: "16px",
-                  overflow: "hidden",
-                  border: "1px solid var(--bd-border-strong)",
-                  background: "#141414",
-                }}
-              >
-                <div
-                  ref={mapContainerRef}
-                  style={{ width: "100%", height: "100%", display: googleMapsLoaded ? "block" : "none" }}
-                />
-                {!googleMapsLoaded && (
+              <div style={{ position: "relative", height: 260, borderRadius: 16, overflow: "hidden", border: "1px solid var(--bd-border, rgba(255,255,255,0.1))" }}>
+                {googleMapsLoaded && !mapsFailed ? (
+                  <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} />
+                ) : (
                   <div
                     className="ew-map"
                     data-pinmode={pinMode ? "1" : "0"}
                     onClick={handleMapClick}
-                    style={{ height: "100%", width: "100%" }}
+                    style={{ height: "100%", cursor: pinMode ? "crosshair" : "pointer" }}
                   >
-                    <span className="ew-pin">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                        <circle cx="12" cy="10" r="3" />
+                    <span
+                      className="ew-pin"
+                      style={{
+                        position: "absolute",
+                        left: pinAt.left,
+                        top: pinAt.top,
+                        transform: "translate(-50%, -86%)",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z" />
+                        <circle cx="12" cy="10" r="2.4" />
                       </svg>
                     </span>
-                    <p className="ew-mapT">
-                      {pinMode
-                        ? isMn ? "Байршил дээр дарна уу" : "Click to drop pin"
-                        : `${lat.toFixed(4)}, ${lng.toFixed(4)}`}
-                    </p>
                   </div>
                 )}
-                {/* Floating overlays */}
-                <div style={{ position: "absolute", bottom: "10px", left: "10px", right: "10px", display: "flex", alignItems: "center", justifyContent: "space-between", pointerEvents: "none", zIndex: 5 }}>
-                  <span style={{ background: "rgba(18,18,18,0.9)", backdropFilter: "blur(6px)", padding: "4px 10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.14)", fontSize: "11px", color: "var(--bd-gray-200)" }}>
-                    {lat.toFixed(4)}, {lng.toFixed(4)}
-                  </span>
+                {pinMode && googleMapsLoaded && !mapsFailed && (
+                  <div
+                    role="presentation"
+                    onClick={(e) => {
+                      const map = googleMapRef.current;
+                      const bounds = map?.getBounds?.();
+                      if (!map || !bounds) return;
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                      const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+                      const ne = bounds.getNorthEast();
+                      const sw = bounds.getSouthWest();
+                      const nextLat = ne.lat() - y * (ne.lat() - sw.lat());
+                      const nextLng = sw.lng() + x * (ne.lng() - sw.lng());
+                      moveMapTo(nextLat, nextLng, map.getZoom());
+                      updateLocationFromCoords(nextLat, nextLng);
+                      setPinMode(false);
+                    }}
+                    style={{ position: "absolute", inset: 0, zIndex: 1, cursor: "crosshair", background: "transparent" }}
+                  />
+                )}
+                <span style={{ position: "absolute", left: "50%", bottom: 10, transform: "translateX(-50%)", zIndex: 2 }}>
                   <button
                     type="button"
                     className="ew-gh ew-sm"
+                    aria-pressed={pinMode}
                     onClick={() => {
+                      setPinMode(true);
                       if (googleMapRef.current) {
-                        googleMapRef.current.panTo({ lat, lng });
-                        googleMapRef.current.setZoom(16);
-                        flashToast(isMn ? "Байршилд төвлөрлөө" : "Centered on pin");
-                      } else {
-                        setPinMode((prev) => !prev);
+                        googleMapRef.current.setOptions({ draggableCursor: "crosshair" });
                       }
+                      updateLocationFromCoords(latRef.current, lngRef.current);
+                      flashToast(isMn ? "Газрын зураг дээр дарж зүүг тавина уу." : "Click the map to place the pin.");
                     }}
-                    style={{ pointerEvents: "auto", background: "rgba(18,18,18,0.9)", borderColor: "rgba(255,255,255,0.2)", color: "var(--bd-white)" }}
                   >
-                    {isMn ? "Төвлөрөх" : "Center"}
+                    {isMn ? "Газрын зураг дээр сонгох" : "Pick on the map"}
                   </button>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", padding: "10px 12px", background: "var(--bd-ink-800)", borderRadius: "12px", border: "1px solid var(--bd-border-soft)" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-bright)" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                <span style={{ fontSize: "12px", color: "var(--bd-gray-400)" }}>
-                  {isMn ? "Газрын зураг дээр дарж эсвэл маркер чирж байршлаа тохируулна" : "Click map or drag marker to update location"}
                 </span>
               </div>
+              {pinMode && (
+                <span className="ew-hint" style={{ textAlign: "center" }}>
+                  {isMn ? "Газрын зураг дээр дарж зүүг тавина уу." : "Click the map to place the pin."}
+                </span>
+              )}
             </section>
           </div>
         )}
@@ -1822,11 +2197,11 @@ function EventEditorContent() {
             {/* Free Event Toggle */}
             <label className="ew-tog">
               <span className="ew-togT">
-                <b>{isMn ? "Үнэгүй эвент" : "Free Event"}</b>
+                <b>{isMn ? "Үнэгүй эвент" : "Free event"}</b>
                 <span>
                   {isMn
                     ? "Эвент үнэ төлбөргүй бол идэвхжүүлнэ үү."
-                    : "Toggle on if admission to this event is free of charge."}
+                    : "Turn this on if the event is free."}
                 </span>
               </span>
               <input
@@ -1845,7 +2220,7 @@ function EventEditorContent() {
                     <div key={idx} className="ew-tk">
                       <div className="ew-tkH">
                         <b>
-                          {isMn ? `Тасалбар ${idx + 1}` : `Ticket ${idx + 1}`}
+                          {isMn ? `Тасалбарын төрөл ${idx + 1}` : `Ticket type ${idx + 1}`}
                         </b>
                         {tickets.length > 1 && (
                           <button
@@ -1860,39 +2235,45 @@ function EventEditorContent() {
 
                       <label className="ew-f">
                         <span className="ew-lb">
-                          {isMn ? "Тасалбарын нэр" : "Ticket Tier Name"} <i>*</i>
+                          {isMn ? "Тасалбарын нэр" : "Ticket name"} <i>*</i>
                         </span>
                         <input
                           type="text"
                           className="ew-in"
                           value={t.name}
+                          maxLength={150}
                           onChange={(e) => {
-                            const val = e.target.value;
+                            const val = e.target.value.slice(0, 150);
                             setTickets((prev) => prev.map((item, i) => (i === idx ? { ...item, name: val } : item)));
                             if (errors[`tkName_${idx}`]) {
                               setErrors((prev) => ({ ...prev, [`tkName_${idx}`]: "" }));
                             }
                           }}
                           aria-invalid={Boolean(errors[`tkName_${idx}`])}
-                          placeholder="Жишээ: VIP суудал, Энгийн суудал"
+                          placeholder={isMn ? "Жишээ: Энгийн суудал" : "Example: Standard seat"}
                         />
+                        <span className="ew-count">{String(t.name || "").trim().length} / 150</span>
                         {errors[`tkName_${idx}`] && <span className="ew-er">{errors[`tkName_${idx}`]}</span>}
                       </label>
 
                       <label className="ew-f">
                         <span className="ew-lb">
-                          {isMn ? "Товч тайлбар" : "Short Description"}{" "}
+                          {isMn ? "Товч тайлбар" : "Short description"}{" "}
                           <span className="ew-opt-b">({isMn ? "заавал биш" : "optional"})</span>
                         </span>
                         <textarea
                           className="ew-ta"
                           value={t.desc}
+                          maxLength={200}
                           onChange={(e) => {
-                            const val = e.target.value;
+                            const val = e.target.value.slice(0, 200);
                             setTickets((prev) => prev.map((item, i) => (i === idx ? { ...item, desc: val } : item)));
+                            if (errors[`tkDesc_${idx}`]) setErrors((prev) => ({ ...prev, [`tkDesc_${idx}`]: "" }));
                           }}
-                          placeholder={isMn ? "Энэ тасалбарт юу багтахыг тайлбарлана уу" : "What is included with this ticket?"}
+                          placeholder={isMn ? "Энэ тасалбарт юу багтахыг тайлбарлана уу" : "Describe what this ticket includes"}
                         />
+                        <span className="ew-count">{String(t.desc || "").trim().length} / 200</span>
+                        {errors[`tkDesc_${idx}`] && <span className="ew-er">{errors[`tkDesc_${idx}`]}</span>}
                       </label>
 
                       <div className="ew-2">
@@ -1901,12 +2282,13 @@ function EventEditorContent() {
                             {isMn ? "Үнэ (₮)" : "Price (₮)"} <i>*</i>
                           </span>
                           <input
-                            type="number"
-                            min="0"
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={10}
                             className="ew-in"
                             value={t.price}
                             onChange={(e) => {
-                              const val = e.target.value;
+                              const val = e.target.value.replace(/\D/g, "").slice(0, 10);
                               setTickets((prev) => prev.map((item, i) => (i === idx ? { ...item, price: val } : item)));
                               if (errors[`tkPrice_${idx}`]) {
                                 setErrors((prev) => ({ ...prev, [`tkPrice_${idx}`]: "" }));
@@ -1915,20 +2297,22 @@ function EventEditorContent() {
                             aria-invalid={Boolean(errors[`tkPrice_${idx}`])}
                             placeholder="30000"
                           />
+                          <span className="ew-count">{digitsOf(t.price)?.replace(/^0$/, "").length || 0} / 10</span>
                           {errors[`tkPrice_${idx}`] && <span className="ew-er">{errors[`tkPrice_${idx}`]}</span>}
                         </label>
 
                         <label className="ew-f">
                           <span className="ew-lb">
-                            {isMn ? "Тоо ширхэг" : "Quantity / Capacity"} <i>*</i>
+                            {isMn ? "Тоо ширхэг" : "Quantity"} <i>*</i>
                           </span>
                           <input
-                            type="number"
-                            min="1"
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={10}
                             className="ew-in"
                             value={t.cap}
                             onChange={(e) => {
-                              const val = e.target.value;
+                              const val = e.target.value.replace(/\D/g, "").slice(0, 10);
                               setTickets((prev) => prev.map((item, i) => (i === idx ? { ...item, cap: val } : item)));
                               if (errors[`tkCap_${idx}`]) {
                                 setErrors((prev) => ({ ...prev, [`tkCap_${idx}`]: "" }));
@@ -1937,35 +2321,59 @@ function EventEditorContent() {
                             aria-invalid={Boolean(errors[`tkCap_${idx}`])}
                             placeholder="100"
                           />
+                          <span className="ew-count">{digitsOf(t.cap)?.replace(/^0$/, "").length || 0} / 10</span>
                           {errors[`tkCap_${idx}`] && <span className="ew-er">{errors[`tkCap_${idx}`]}</span>}
                         </label>
 
                         <label className="ew-f">
-                          <span className="ew-lb">{isMn ? "Борлуулалт эхлэх" : "Sales Start"}</span>
-                          <input
-                            type="date"
-                            className="ew-in"
-                            value={t.ss}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setTickets((prev) => prev.map((item, i) => (i === idx ? { ...item, ss: val } : item)));
-                            }}
-                          />
+                          <span className="ew-lb">{isMn ? "Борлуулалт эхлэх" : "Sales start"}</span>
+                          <div className="ew-dt">
+                            <input
+                              type="date"
+                              className="ew-in"
+                              value={t.ss}
+                              max={t.se || endDate || startDate || undefined}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setTickets((prev) => prev.map((item, i) => (i === idx ? { ...item, ss: val } : item)));
+                                if (errors[`tkSales_${idx}`]) setErrors((prev) => ({ ...prev, [`tkSales_${idx}`]: "" }));
+                              }}
+                            />
+                            <button type="button" className="ew-dtBtn" aria-label={isMn ? "Огноо сонгох" : "Open date picker"} onClick={(e) => openNativePicker(e.currentTarget.previousElementSibling)}>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+                                <path d="M3.5 10h17M8 3.5v4M16 3.5v4" />
+                              </svg>
+                            </button>
+                          </div>
                         </label>
 
                         <label className="ew-f">
-                          <span className="ew-lb">{isMn ? "Борлуулалт дуусах" : "Sales End"}</span>
-                          <input
-                            type="date"
-                            className="ew-in"
-                            value={t.se}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setTickets((prev) => prev.map((item, i) => (i === idx ? { ...item, se: val } : item)));
-                            }}
-                          />
+                          <span className="ew-lb">{isMn ? "Борлуулалт дуусах" : "Sales end"}</span>
+                          <div className="ew-dt">
+                            <input
+                              type="date"
+                              className="ew-in"
+                              value={t.se}
+                              min={t.ss || undefined}
+                              max={endDate || startDate || undefined}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setTickets((prev) => prev.map((item, i) => (i === idx ? { ...item, se: val } : item)));
+                                if (errors[`tkSales_${idx}`]) setErrors((prev) => ({ ...prev, [`tkSales_${idx}`]: "" }));
+                              }}
+                              aria-invalid={Boolean(errors[`tkSales_${idx}`])}
+                            />
+                            <button type="button" className="ew-dtBtn" aria-label={isMn ? "Огноо сонгох" : "Open date picker"} onClick={(e) => openNativePicker(e.currentTarget.previousElementSibling)}>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+                                <path d="M3.5 10h17M8 3.5v4M16 3.5v4" />
+                              </svg>
+                            </button>
+                          </div>
                         </label>
                       </div>
+                      {errors[`tkSales_${idx}`] && <span className="ew-er">{errors[`tkSales_${idx}`]}</span>}
                     </div>
                   ))}
                 </div>
@@ -1976,14 +2384,9 @@ function EventEditorContent() {
                   type="button"
                   className="ew-gh"
                   style={{ alignSelf: "flex-start", marginTop: "4px" }}
-                  onClick={() =>
-                    setTickets((prev) => [
-                      ...prev,
-                      { name: "", desc: "", price: 0, cap: 50, ss: "", se: "" },
-                    ])
-                  }
+                  onClick={() => setTickets((prev) => [...prev, blankTicket()])}
                 >
-                  {isMn ? "+ Өөр тасалбарын төрөл нэмэх" : "+ Add Ticket Tier"}
+                  {isMn ? "Өөр тасалбарын төрөл нэмэх" : "Add another ticket type"}
                 </button>
 
                 <div style={{ height: "1px", background: "var(--bd-border-soft)", margin: "8px 0" }} />
@@ -1992,82 +2395,123 @@ function EventEditorContent() {
                 <label className="ew-f">
                   <span className="ew-row1">
                     <span className="ew-lb" style={{ margin: 0 }}>
-                      {isMn ? "Буцаан олголтын нөхцөл" : "Refund Policy"} <i>*</i>
+                      {isMn ? "Буцаан олголтын нөхцөл" : "Refund policy"} <i>*</i>
                     </span>
                     <select
                       className="ew-in"
                       value={policy}
-                      onChange={(e) => setPolicy(e.target.value)}
-                      style={{ flex: "0 1 auto", width: "300px", maxWidth: "100%" }}
+                      onChange={(e) => {
+                        setPolicy(e.target.value);
+                        if (errors.policy) setErrors((prev) => ({ ...prev, policy: "" }));
+                      }}
+                      aria-invalid={Boolean(errors.policy)}
+                      style={{ flex: "0 1 auto", width: "280px", minWidth: 0, maxWidth: "100%" }}
                     >
-                      {dbPolicies.length === 0 ? (
-                        <option value="">{isMn ? "Уншиж байна..." : "Loading..."}</option>
-                      ) : (
-                        dbPolicies.map((pol) => (
-                          <option key={pol} value={pol}>
-                            {pol}
-                          </option>
-                        ))
-                      )}
+                      <option value="">{isMn ? "Буцаан олгох журмыг сонгох" : "Choose a refund policy"}</option>
+                      {dbPolicies.map((pol) => (
+                        <option key={pol.value} value={pol.value}>
+                          {pol.label}
+                        </option>
+                      ))}
                     </select>
                   </span>
+                  {errors.policy && <span className="ew-er">{errors.policy}</span>}
                 </label>
               </>
             ) : (
               /* Free Event Details */
               <div className="ew-tk">
                 <div className="ew-tkH">
-                  <b>{isMn ? "Бүртгэл ба багтаамж" : "Registration & Capacity"}</b>
+                  <b>{isMn ? "Бүртгэл ба багтаамж" : "Registration and capacity"}</b>
                 </div>
                 <label className="ew-f">
                   <span className="ew-lb">
-                    {isMn ? "Нийт багтаамж" : "Total Capacity"} <i>*</i>
+                    {isMn ? "Нийт багтаамж" : "Total capacity"} <i>*</i>
                   </span>
                   <input
-                    type="number"
-                    min="1"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={10}
                     className="ew-in"
                     value={freeCap}
                     onChange={(e) => {
-                      setFreeCap(e.target.value);
+                      setFreeCap(e.target.value.replace(/\D/g, "").slice(0, 10));
                       if (errors.freeCap) setErrors((prev) => ({ ...prev, freeCap: "" }));
                     }}
                     aria-invalid={Boolean(errors.freeCap)}
-                    placeholder="Жишээ: 120"
+                    placeholder={isMn ? "Жишээ: 120" : "Example: 120"}
                   />
+                  <span className="ew-count">{digitsOf(freeCap)?.replace(/^0$/, "").length || 0} / 10</span>
                   {errors.freeCap && <span className="ew-er">{errors.freeCap}</span>}
                   <span className="ew-hint">
                     {isMn
                       ? "Бүртгэл багтаамжаас хэтрэхгүй. Бүртгүүлсэн хүн бүрт QR тасалбар үүсч, үүдэн дээр шалгагдана."
-                      : "Each registered attendee receives a unique QR code ticket for entry check-in."}
+                      : "Registrations never exceed capacity. Everyone who registers gets a QR ticket that is checked at the door."}
                   </span>
                 </label>
                 <div className="ew-2">
                   <label className="ew-f">
                     <span className="ew-lb">
-                      {isMn ? "Бүртгэл эхлэх" : "Registration Opens"}{" "}
+                      {isMn ? "Бүртгэл эхлэх" : "Registration opens"}{" "}
                       <span className="ew-opt-b">({isMn ? "заавал биш" : "optional"})</span>
                     </span>
-                    <input
-                      type="datetime-local"
-                      className="ew-in"
-                      value={freeSs}
-                      onChange={(e) => setFreeSs(e.target.value)}
-                    />
+                    <div className="ew-dt">
+                      <input
+                        type="datetime-local"
+                        className="ew-in"
+                        min={nowStamp()}
+                        value={freeSs}
+                        onChange={(e) => {
+                          setFreeSs(e.target.value);
+                          if (errors.freeSales || errors.freeSs) {
+                            setErrors((prev) => ({ ...prev, freeSales: "", freeSs: "" }));
+                          }
+                        }}
+                        aria-invalid={Boolean(errors.freeSs)}
+                      />
+                      <button type="button" className="ew-dtBtn" aria-label={isMn ? "Огноо сонгох" : "Open date picker"} onClick={(e) => openNativePicker(e.currentTarget.previousElementSibling)}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+                          <path d="M3.5 10h17M8 3.5v4M16 3.5v4" />
+                        </svg>
+                      </button>
+                    </div>
                   </label>
                   <label className="ew-f">
                     <span className="ew-lb">
-                      {isMn ? "Бүртгэл дуусах" : "Registration Closes"}{" "}
+                      {isMn ? "Бүртгэл дуусах" : "Registration closes"}{" "}
                       <span className="ew-opt-b">({isMn ? "заавал биш" : "optional"})</span>
                     </span>
-                    <input
-                      type="datetime-local"
-                      className="ew-in"
-                      value={freeSe}
-                      onChange={(e) => setFreeSe(e.target.value)}
-                    />
+                    <div className="ew-dt">
+                      <input
+                        type="datetime-local"
+                        className="ew-in"
+                        min={freeSs || nowStamp()}
+                        max={endDate ? `${endDate}T23:59` : undefined}
+                        value={freeSe}
+                        onChange={(e) => {
+                          setFreeSe(e.target.value);
+                          if (errors.freeSales || errors.freeSe) {
+                            setErrors((prev) => ({ ...prev, freeSales: "", freeSe: "" }));
+                          }
+                        }}
+                        aria-invalid={Boolean(errors.freeSe)}
+                      />
+                      <button type="button" className="ew-dtBtn" aria-label={isMn ? "Огноо сонгох" : "Open date picker"} onClick={(e) => openNativePicker(e.currentTarget.previousElementSibling)}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+                          <path d="M3.5 10h17M8 3.5v4M16 3.5v4" />
+                        </svg>
+                      </button>
+                    </div>
                   </label>
                 </div>
+                <span className="ew-hint">
+                  {isMn
+                    ? "Хоосон орхивол бүртгэл эвент нийтлэгдсэн даруй эхэлж, эвент эхлэх үед хаагдана."
+                    : "Leave these empty and registration opens as soon as the event is published, then closes when it starts."}
+                </span>
+                {errors.freeSales && <span className="ew-er">{errors.freeSales}</span>}
               </div>
             )}
           </section>
@@ -2168,9 +2612,16 @@ function EventEditorContent() {
                 <textarea
                   className="ew-ta"
                   value={entryNotes}
-                  onChange={(e) => setEntryNotes(e.target.value)}
+                  maxLength={500}
+                  onChange={(e) => {
+                    setEntryNotes(e.target.value.slice(0, 500));
+                    if (errors.entryNotes) setErrors((prev) => ({ ...prev, entryNotes: "" }));
+                  }}
+                  aria-invalid={Boolean(errors.entryNotes)}
                   placeholder={isMn ? "Жишээ: Иргэний үнэмлэх үүдэн дээр шалгана." : "e.g. ID verification required at entrance."}
                 />
+                <span className="ew-count">{entryNotes.trim().length} / 500</span>
+                {errors.entryNotes && <span className="ew-er">{errors.entryNotes}</span>}
               </label>
 
               {/* Dress Code */}
@@ -2180,9 +2631,16 @@ function EventEditorContent() {
                   type="text"
                   className="ew-in"
                   value={dressCode}
-                  onChange={(e) => setDressCode(e.target.value)}
+                  maxLength={300}
+                  onChange={(e) => {
+                    setDressCode(e.target.value.slice(0, 300));
+                    if (errors.dressCode) setErrors((prev) => ({ ...prev, dressCode: "" }));
+                  }}
+                  aria-invalid={Boolean(errors.dressCode)}
                   placeholder={isMn ? "Жишээ: Энгийн, тухтай хувцас" : "e.g. Casual, Formal"}
                 />
+                <span className="ew-count">{dressCode.trim().length} / 300</span>
+                {errors.dressCode && <span className="ew-er">{errors.dressCode}</span>}
               </label>
             </section>
           </div>
@@ -2192,11 +2650,17 @@ function EventEditorContent() {
             STEP 5: Хянах (Review & Confirm)
             ═════════════════════════════════════════════════════════════════════ */}
         {step === 5 && (
-          <div className="ew-r4" style={{ marginTop: "18px" }}>
-            {/* Card 1: Эвент ба байршил */}
+          <>
+            <p className="ew-note2">
+              <span style={{ color: "var(--acc-bright)" }}>ⓘ</span>
+              {isMn
+                ? "Илгээсний дараа Bondy эвентийн мэдээллийг хянаж, баталгаажуулсны дараа нийтлэгдэнэ."
+                : "After you submit, Bondy reviews the event and publishes it once it is approved."}
+            </p>
+            <div className="ew-r4">
             <div className="ew-rcard">
               <div className="ew-rcH">
-                <b>{isMn ? "Эвент ба байршил" : "Event & Venue"}</b>
+                <b>{isMn ? "Үндсэн мэдээлэл" : "Basic info"}</b>
                 <button type="button" className="ew-edit" onClick={() => handleGotoStep(1)}>
                   {isMn ? "Засах" : "Edit"}
                 </button>
@@ -2211,45 +2675,125 @@ function EventEditorContent() {
                 ) : (
                   <span className="ew-poster ew-posterR" />
                 )}
-                <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                  <b style={{ fontSize: "16px", color: "var(--bd-white)", display: "block", marginBottom: "4px" }}>
-                    {title || "—"}
-                  </b>
-                  <span style={{ fontSize: "12.5px", color: "var(--acc-bright)", display: "block", marginBottom: "10px" }}>
-                    {categoryName || (isMn ? "Ангилал сонгогдоогүй" : "No category")}
+                <div style={{ flex: "1 1 230px", minWidth: 0 }}>
+                  <span className="ew-kv2">
+                    <span>{isMn ? "Эвентийн нэр" : "Event name"}</span>
+                    <span>{title.trim() ? titleCaseWords(title.trim()) : "—"}</span>
                   </span>
-                  <p style={{ margin: 0, fontSize: "13px", color: "var(--bd-gray-400)", lineHeight: 1.45 }}>
-                    {shortDesc || "—"}
-                  </p>
+                  <span className="ew-kv2">
+                    <span>{isMn ? "Ангилал" : "Category"}</span>
+                    <span>{categoryName || "—"}</span>
+                  </span>
+                  <span className="ew-kv2 ew-clamp">
+                    <span>{isMn ? "Товч танилцуулга" : "Overview"}</span>
+                    <span>{shortDesc.trim() ? sentenceCaseText(shortDesc.trim()) : "—"}</span>
+                  </span>
+                  <span className="ew-kv2 ew-clamp">
+                    <span>{isMn ? "Дэлгэрэнгүй тайлбар" : "Description"}</span>
+                    <span>{longDesc.trim() ? sentenceCaseText(longDesc.trim()) : "—"}</span>
+                  </span>
                 </div>
               </div>
 
-              <div style={{ height: "1px", background: "var(--bd-border-soft)", margin: "14px 0" }} />
+              <div className="ew-media">
+                <b>{isMn ? "Медиа" : "Media"}</b>
+                <span className="ew-mrow">
+                  <span>{isMn ? "Постер" : "Poster"}</span>
+                  <b>{poster ? (isMn ? "Оруулсан" : "Added") : "—"}</b>
+                </span>
+                {/* {poster && (
+                  <span
+                    className="ew-poster ew-posterR ew-reviewPoster"
+                    style={{ backgroundImage: `url("${getFullImageUrl(poster)}")` }}
+                  />
+                )} */}
+                <span className="ew-mrow">
+                  <span>{isMn ? "Зургийн цомог" : "Photo gallery"}</span>
+                  <b>
+                    {gallery.length
+                      ? (isMn ? `${gallery.length} зураг` : (gallery.length === 1 ? "1 image" : `${gallery.length} images`))
+                      : "—"}
+                  </b>
+                </span>
+                {gallery.length > 0 && (
+                  <div className="ew-gal ew-reviewGal">
+                    {gallery.map((imgUrl, idx) => (
+                      <span
+                        key={`${imgUrl}-${idx}`}
+                        className="ew-gi"
+                        role="img"
+                        aria-label={isMn ? `Зураг ${idx + 1}` : `Gallery image ${idx + 1}`}
+                        style={{ backgroundImage: `url("${getFullImageUrl(imgUrl)}")` }}
+                      />
+                    ))}
+                  </div>
+                )}
+                <span className="ew-mrow">
+                  <span>{isMn ? "Тизер видео" : "Teaser video"}</span>
+                  <b>{teaserVideo ? (teaserName || (isMn ? "Оруулсан" : "Added")) : "—"}</b>
+                </span>
+                {teaserVideo && (
+                  <video
+                    className="ew-reviewVideo"
+                    controls
+                    playsInline
+                    preload="metadata"
+                    src={getFullImageUrl(teaserVideo)}
+                  />
+                )}
+              </div>
+            </div>
 
-              <span className="ew-kv2">
-                <span>{isMn ? "Байршлын нэр" : "Venue"}</span>
-                <span>{venueName || "—"}</span>
-              </span>
-              <span className="ew-kv2">
-                <span>{isMn ? "Хаяг" : "Address"}</span>
-                <span>{address || "—"}</span>
-              </span>
+            <div className="ew-rcard">
+              <div className="ew-rcH">
+                <b>{isMn ? "Огноо ба байршил" : "Date and location"}</b>
+                <button type="button" className="ew-edit" onClick={() => handleGotoStep(2)}>
+                  {isMn ? "Засах" : "Edit"}
+                </button>
+              </div>
+              <div className="ew-topRow">
+                {address ? (
+                  <span className="ew-mapS ew-mapP">
+                    <span className="ew-pin" style={{ left: pinAt.left, top: pinAt.top }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" stroke="currentColor" strokeWidth="1.6" />
+                        <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.6" />
+                      </svg>
+                    </span>
+                  </span>
+                ) : (
+                  <span className="ew-mapS">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" stroke="currentColor" strokeWidth="1.6" />
+                      <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.6" />
+                    </svg>
+                  </span>
+                )}
+                <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                  <span className="ew-kv2">
+                    <span>{isMn ? "Байршлын нэр" : "Venue name"}</span>
+                    <span>{venueName || "—"}</span>
+                  </span>
+                  <span className="ew-kv2">
+                    <span>{isMn ? "Хаяг" : "Address"}</span>
+                    <span>{address || "—"}</span>
+                  </span>
+                </div>
+              </div>
               <span className="ew-kv2">
                 <span>{isMn ? "Эхлэх" : "Starts"}</span>
-                <span>{startDate ? `${startDate} · ${startTime || "00:00"}` : "—"}</span>
+                <span>{startDate ? formatReviewWhen(startDate, isMn, startTime) : "—"}</span>
               </span>
               <span className="ew-kv2">
                 <span>{isMn ? "Дуусах" : "Ends"}</span>
-                <span>{endDate ? `${endDate} · ${endTime || "00:00"}` : startDate || "—"}</span>
+                <span>{endDate ? formatReviewWhen(endDate, isMn, endTime) : "—"}</span>
               </span>
             </div>
 
-            {/* Right Column: Cards 2 & 3 */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-              {/* Card 2: Тасалбар */}
+            {/* Tickets */}
               <div className="ew-rcard">
                 <div className="ew-rcH">
-                  <b>{isFree ? (isMn ? "Үнэгүй бүртгэл" : "Free Registration") : (isMn ? "Тасалбарууд" : "Tickets")}</b>
+                  <b>{isFree ? (isMn ? "Бүртгэл" : "Registrations") : (isMn ? "Тасалбарууд" : "Tickets")}</b>
                   <button type="button" className="ew-edit" onClick={() => handleGotoStep(3)}>
                     {isMn ? "Засах" : "Edit"}
                   </button>
@@ -2258,27 +2802,45 @@ function EventEditorContent() {
                 {isFree ? (
                   <div className="ew-tkRow">
                     <span className="ew-tkRowT">
-                      <b>{isMn ? "Үнэгүй тасалбар" : "Free Admission"}</b>
-                      <small>{isMn ? `Багтаамж: ${freeCap}` : `Capacity: ${freeCap}`}</small>
+                      <b>{isMn ? "Бүртгэл" : "Registrations"}</b>
+                      <small>
+                        {`${freeCap || 0} ${isMn ? "орон" : "spots"} · ${
+                          freeSs
+                            ? formatReviewWhen(freeSs, isMn)
+                            : (isMn ? "Нийтлэгдсэн даруй" : "As soon as it is published")
+                        } – ${
+                          freeSe
+                            ? formatReviewWhen(freeSe, isMn)
+                            : (isMn ? "Эвент эхлэх хүртэл" : "Until the event starts")
+                        }`}
+                      </small>
                     </span>
-                    <span className="ew-tkRowV">₮0</span>
+                    <span className="ew-tkRowV">{isMn ? "Үнэгүй" : "Free"}</span>
                   </div>
                 ) : (
                   tickets.map((t, idx) => (
                     <div key={idx} className="ew-tkRow">
                       <span className="ew-tkRowT">
-                        <b>{t.name || `Тасалбар ${idx + 1}`}</b>
-                        <small>{isMn ? `Тоо: ${t.cap}` : `Qty: ${t.cap}`}</small>
+                        <b>{t.name || (isMn ? "Нэргүй тасалбар" : "Untitled ticket")}</b>
+                        <small>
+                          {`${t.cap || 0} ${isMn ? "ширхэг" : "tickets"}${
+                            t.ss ? ` · ${formatReviewWhen(t.ss, isMn)} – ${t.se ? formatReviewWhen(t.se, isMn) : "—"}` : ""
+                          }`}
+                        </small>
                       </span>
-                      <span className="ew-tkRowV">₮{Number(t.price || 0).toLocaleString()}</span>
+                      <span className="ew-tkRowV">
+                        {Number(t.price) > 0
+                          ? `₮${Number(t.price).toLocaleString("en-US")}`
+                          : (isMn ? "Үнэгүй" : "Free")}
+                      </span>
                     </div>
                   ))
                 )}
 
                 {!isFree && (
                   <span className="ew-kv2" style={{ borderTop: "1px solid var(--bd-border-soft)", marginTop: "6px" }}>
-                    <span>{isMn ? "Буцаан олголт" : "Refund Policy"}</span>
-                    <span>{policy}</span>
+                    <span>{isMn ? "Буцаан олголтын нөхцөл" : "Refund policy"}</span>
+                    <span>{dbPolicies.find((p) => p.value === policy)?.label || policy || "—"}</span>
                   </span>
                 )}
               </div>
@@ -2296,28 +2858,24 @@ function EventEditorContent() {
                   <span>{visibility === "public" ? (isMn ? "Нийтийн" : "Public") : (isMn ? "Хувийн" : "Private")}</span>
                 </span>
                 <span className="ew-kv2">
-                  <span>{isMn ? "Насны хязгаар" : "Age Restriction"}</span>
-                  <span>{ageRestriction === "all" ? (isMn ? "Бүх насныханд" : "All Ages") : `${ageRestriction}+`}</span>
+                  <span>{isMn ? "Насны хязгаарлалт" : "Age restriction"}</span>
+                  <span>{ageRestriction === "all" ? (isMn ? "Бүх насныханд" : "All ages") : `${ageRestriction}+`}</span>
                 </span>
                 <span className="ew-kv2">
-                  <span>{isMn ? "Оролцогчдыг харуулах" : "Show Attendees"}</span>
-                  <span>{showAttendees ? (isMn ? "Тийм" : "Yes") : (isMn ? "Үгүй" : "No")}</span>
+                  <span>{isMn ? "Оролцогчдыг харуулах" : "Show attendees"}</span>
+                  <span>{showAttendees ? (isMn ? "Идэвхтэй" : "Active") : (isMn ? "Идэвхгүй" : "Inactive")}</span>
                 </span>
-                {entryNotes && (
-                  <span className="ew-kv2 ew-clamp">
-                    <span>{isMn ? "Нэвтрэх заавар" : "Entry Notes"}</span>
-                    <span>{entryNotes}</span>
-                  </span>
-                )}
-                {dressCode && (
-                  <span className="ew-kv2 ew-clamp">
-                    <span>{isMn ? "Хувцаслалт" : "Dress Code"}</span>
-                    <span>{dressCode}</span>
-                  </span>
-                )}
+                <span className="ew-kv2">
+                  <span>{isMn ? "Нэвтрэх тэмдэглэл" : "Entry notes"}</span>
+                  <span>{entryNotes || "—"}</span>
+                </span>
+                <span className="ew-kv2">
+                  <span>{isMn ? "Хувцаслалтын дүрэм" : "Dress code"}</span>
+                  <span>{dressCode || "—"}</span>
+                </span>
               </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* ═════════════════════════════════════════════════════════════════════
@@ -2341,7 +2899,7 @@ function EventEditorContent() {
             disabled={draftBusy}
           >
             {draftBusy && <span className="ew-sp" />}
-            {isMn ? "Ноорог хадгалах" : "Save Draft"}
+            {isMn ? "Ноорог хадгалах" : "Save draft"}
           </button>
 
           {/* Continue (Steps 1-4) */}
@@ -2361,8 +2919,10 @@ function EventEditorContent() {
             >
               {pubBusy && <span className="ew-sp" />}
               {isEditMode && !isDraftMode
-                ? (isMn ? "Өөрчлөлтийг хадгалах" : "Save Changes")
-                : (isMn ? "Эвент нийтлэх" : "Publish Event")}
+                ? (isMn ? "Өөрчлөлтийг хадгалах" : "Save changes")
+                : (pubBusy
+                  ? (isMn ? "Илгээж байна…" : "Sending…")
+                  : (isMn ? "Илгээх" : "Send"))}
             </button>
           )}
         </div>

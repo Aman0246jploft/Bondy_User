@@ -15,22 +15,22 @@ function formatMoney(amount) {
   return `₮${num.toLocaleString("en-US")}`;
 }
 
-function formatDateBilingual(dateStr, timeStr, isMn, isDraft, updatedAtStr) {
-  const mnMonths = ["1-р", "2-р", "3-р", "4-р", "5-р", "6-р", "7-р", "8-р", "9-р", "10-р", "11-р", "12-р"];
-  const enMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const mnDays = ["Ням", "Дав", "Мяг", "Лха", "Пүр", "Баа", "Бям"];
-  const enDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_KEYS = ["monthJan", "monthFeb", "monthMar", "monthApr", "monthMay", "monthJun", "monthJul", "monthAug", "monthSep", "monthOct", "monthNov", "monthDec"];
+const WEEKDAY_KEYS = ["weekdaySun", "weekdayMon", "weekdayTue", "weekdayWed", "weekdayThu", "weekdayFri", "weekdaySat"];
+
+function formatDateBilingual(dateStr, timeStr, isMn, isDraft, updatedAtStr, t) {
+  const monthLabel = (date) => `${t(MONTH_KEYS[date.getMonth()])} ${date.getDate()}`;
 
   if (isDraft && updatedAtStr) {
     const d = new Date(dateStr || updatedAtStr);
     const u = new Date(updatedAtStr);
 
     const primary = !isNaN(d.getTime())
-      ? (isMn ? `${mnMonths[d.getMonth()]} сарын ${d.getDate()}` : `${enMonths[d.getMonth()]} ${d.getDate()}`)
+      ? monthLabel(d)
       : (isMn ? "Товлогдоогүй" : "Not set");
 
     const sub = !isNaN(u.getTime())
-      ? (isMn ? `Зассан: ${mnMonths[u.getMonth()]} сарын ${u.getDate()}` : `Edited: ${enMonths[u.getMonth()]} ${u.getDate()}`)
+      ? (isMn ? `Зассан: ${monthLabel(u)}` : `Edited: ${monthLabel(u)}`)
       : "";
 
     return { primary, sub };
@@ -40,10 +40,8 @@ function formatDateBilingual(dateStr, timeStr, isMn, isDraft, updatedAtStr) {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return { primary: isMn ? "Тун удахгүй" : "Coming soon", sub: "" };
 
-  const m = d.getMonth();
-  const dayNum = d.getDate();
-  const dayName = isMn ? mnDays[d.getDay()] : enDays[d.getDay()];
-  const primary = isMn ? `${mnMonths[m]} сарын ${dayNum}` : `${enMonths[m]} ${dayNum}`;
+  const dayName = t(WEEKDAY_KEYS[d.getDay()]);
+  const primary = monthLabel(d);
 
   let timePart = "";
   if (timeStr) {
@@ -58,7 +56,7 @@ function formatDateBilingual(dateStr, timeStr, isMn, isDraft, updatedAtStr) {
 
 export default function EventsManagementPage() {
   const router = useRouter();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isMn = language === "mn";
   const { clearEventData } = useEventContext();
 
@@ -196,14 +194,14 @@ export default function EventsManagementPage() {
     if (ev.isDraft || activeTab === "draft") {
       router.push(`/BasicInfo?eventId=${ev._id}`);
     } else {
-      router.push(`/eventbooking?id=${ev._id}`);
+      router.push(`/EventDetailOrganiser?eventId=${ev._id}`);
     }
   };
 
   // Share Link Action
   const handleShareLink = (event) => {
     setActiveMenu(null);
-    const url = `${window.location.origin}/eventbooking?id=${event._id}`;
+    const url = `${window.location.origin}/eventDetails?id=${event._id}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).catch(() => { });
     }
@@ -576,7 +574,7 @@ export default function EventsManagementPage() {
               currentList.map((ev) => {
                 const coverImg = ev.posterImage?.[0] ? getFullImageUrl(ev.posterImage[0]) : "/img/sidebar-logo.svg";
                 const isDraftRow = Boolean(ev.isDraft || activeTab === "draft");
-                const dateInfo = formatDateBilingual(ev.startDate, ev.startTime, isMn, isDraftRow, ev.updatedAt);
+                const dateInfo = formatDateBilingual(ev.startDate, ev.startTime, isMn, isDraftRow, ev.updatedAt, t);
                 const sold = (ev.totalBooked !== undefined && ev.totalBooked !== null)
                   ? Number(ev.totalBooked)
                   : Math.max(0, (Number(ev.totalTickets) || 0) - (Number(ev.ticketQtyAvailable) || 0));
@@ -771,7 +769,7 @@ export default function EventsManagementPage() {
                 data-mi="view"
                 onClick={() => {
                   setActiveMenu(null);
-                  router.push(`/eventbooking?id=${activeMenu.event._id}`);
+                  router.push(`/EventDetailOrganiser?eventId=${activeMenu.event._id}`);
                 }}
               >
                 {isMn ? "Үзэх" : "View"}

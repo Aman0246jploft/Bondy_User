@@ -1,8 +1,8 @@
 import apiClient from "./apiClient";
 
 const blockUserApi = {
-  blockUser: (data) => apiClient.post("/block/create", data),
-  unblockUser: (data) => apiClient.post("/block/delete", data),
+  blockUser: (data, config) => apiClient.post("/block/create", data, config),
+  unblockUser: (data, config) => apiClient.post("/block/delete", data, config),
   getBlockedUsers: (params) => apiClient.get("/block/list", { params }),
 };
 

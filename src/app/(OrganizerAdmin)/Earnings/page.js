@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import React from "react";
-import { Col, Row, Spinner, Modal, Button, Form } from "react-bootstrap";
-import { MoreVertical } from "lucide-react";
+import Link from "next/link";
 import organizerApi from "@/api/organizerApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
+import DateRangeCalendarPopover from "@/components/DateRangeCalendarPopover";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 function Page() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const TYPE_LABEL = {
     TICKET_SALE: t("ticketSale"),
@@ -164,19 +164,37 @@ function Page() {
     walletHistory: [],
     payoutHistory: [],
   });
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("ALL");
-  const [open, setOpen] = useState(null);
-  const dropdownRef = useRef(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const [summary, setSummary] = useState({ available: 0, pending: 0, total: 0 });
+  const [analytics, setAnalytics] = useState({ earnings: 0, deductions: 0, netEarnings: 0 });
+  const [bankAccounts, setBankAccounts] = useState([]);
+  const [txKind, setTxKind] = useState("all");
+  const [range, setRange] = useState("month");
+  const [pickOpen, setPickOpen] = useState(false);
+  const [rangeMenu, setRangeMenu] = useState(false);
+  const rangeBoxRef = useRef(null);
 
-  // Payout Modal
+  useEffect(() => {
+    if (!rangeMenu) return undefined;
+    const close = (event) => {
+      if (rangeBoxRef.current && !rangeBoxRef.current.contains(event.target)) setRangeMenu(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [rangeMenu]);
+  const [pickStart, setPickStart] = useState("");
+  const [pickEnd, setPickEnd] = useState("");
+  const [perfLoading, setPerfLoading] = useState(false);
+  const [perfError, setPerfError] = useState(false);
+
   const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [wStage, setWStage] = useState("form");
   const [payoutAmount, setPayoutAmount] = useState("");
-  const [payoutReference, setPayoutReference] = useState("");
+  const [amtErr, setAmtErr] = useState("");
   const [payoutLoading, setPayoutLoading] = useState(false);
-  const [minPayout, setMinPayout] = useState(1000); // Default fallback
+  const [payoutResult, setPayoutResult] = useState(null);
+  const [bankOpen, setBankOpen] = useState(false);
+  const [txOpen, setTxOpen] = useState(null);
+  const [minPayout, setMinPayout] = useState(1000);
 
   const fetchEarnings = useCallback(async () => {
     try {
@@ -189,7 +207,13 @@ function Page() {
           walletHistory: res.data.walletHistory || [],
           payoutHistory: res.data.payoutHistory || [],
         });
-        if (res.data.minPayout) setMinPayout(res.data.minPayout);
+        setSummary({
+          available: Number(res.data.availableBalance ?? res.data.payoutBalance ?? 0),
+          pending: Number(res.data.pending || 0),
+          total: Number(res.data.totalBalance ?? res.data.payoutBalance ?? 0),
+        });
+        setBankAccounts(res.data.bankAccounts || []);
+        if (res.data.minPayout) setMinPayout(Number(res.data.minPayout));
       }
     } catch (err) {
       toast.error(t("failedToLoadEarnings") || "Failed to load earnings");
@@ -202,481 +226,511 @@ function Page() {
     fetchEarnings();
   }, [fetchEarnings]);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOpen(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   useEffect(() => {
     document.title = "Earnings - Bondy";
   }, []);
 
-  const handleRequestPayout = async (e) => {
-    e.preventDefault();
-    const amount = Number(payoutAmount);
-    if (!amount || amount <= 0) {
-      toast.error(t("enterValidAmount") || "Enter a valid amount");
-      return;
+  const money = (n) => {
+    const v = Number(n) || 0;
+    const sign = v < 0 ? "−" : "";
+    return `${sign}₮${Math.abs(v).toLocaleString("en-US")}`;
+  };
+
+  const ymd = (d) => {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+  const dot = (d) => {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${p(d.getMonth() + 1)}.${p(d.getDate())}.${d.getFullYear()}`;
+  };
+
+  const rangeQuery = (key, start, end) => {
+    const now = new Date();
+    if (key === "month") return { filterType: "this_month" };
+    if (key === "d7") return { filterType: "last_7_days" };
+    if (key === "prev") {
+      const s = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const e = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { startDate: ymd(s), endDate: ymd(e) };
     }
-    if (amount < minPayout) {
-      toast.error(
-        t("minPayoutAmount", { amount: minPayout.toLocaleString() }) ||
-        `Minimum payout amount is ₮${minPayout.toLocaleString()}`,
-      );
-      return;
+    if (key === "m6") {
+      const s = new Date(now);
+      s.setMonth(s.getMonth() - 6);
+      return { startDate: ymd(s), endDate: ymd(now) };
     }
-    if (amount > earnings.payoutBalance) {
-      toast.error(
-        t("amountExceedsBalance") || "Amount exceeds available balance",
-      );
-      return;
+    if (key === "y1") {
+      const s = new Date(now);
+      s.setFullYear(s.getFullYear() - 1);
+      return { startDate: ymd(s), endDate: ymd(now) };
     }
-    if (!payoutReference.trim()) {
-      toast.error(
-        t("paymentRefRequired") ||
-        "Payment reference / bank account details are required",
-      );
+    if (key === "custom" && start && end) return { startDate: start, endDate: end };
+    return {};
+  };
+
+  const rangeLabel = () => {
+    const now = new Date();
+    if (range === "month") {
+      const p = (n) => String(n).padStart(2, "0");
+      const m = p(now.getMonth() + 1);
+      return `${m}.01.${now.getFullYear()} – ${m}.${p(now.getDate())}.${now.getFullYear()}`;
+    }
+    if (range === "prev") {
+      const s = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const e = new Date(now.getFullYear(), now.getMonth(), 0);
+      return `${dot(s)} – ${dot(e)}`;
+    }
+    if (range === "d7") {
+      const s = new Date(now);
+      s.setDate(s.getDate() - 6);
+      return `${dot(s)} – ${dot(now)}`;
+    }
+    if (range === "m6") {
+      const s = new Date(now);
+      s.setMonth(s.getMonth() - 6);
+      return `${dot(s)} – ${dot(now)}`;
+    }
+    if (range === "y1") {
+      const s = new Date(now);
+      s.setFullYear(s.getFullYear() - 1);
+      return `${dot(s)} – ${dot(now)}`;
+    }
+    if (range === "custom" && pickStart && pickEnd) {
+      return `${pickStart.replace(/-/g, ".")} – ${pickEnd.replace(/-/g, ".")}`;
+    }
+    return t("pyAllTime");
+  };
+
+  const loadPerf = useCallback(async (key, start, end) => {
+    if (key === "custom" && (!start || !end)) return;
+    try {
+      setPerfLoading(true);
+      setPerfError(false);
+      const res = await organizerApi.getEarnings(rangeQuery(key, start, end));
+      if (res?.status && res.data?.analytics) {
+        setAnalytics({
+          earnings: Number(res.data.analytics.earnings || 0),
+          deductions: Number(res.data.analytics.deductions || 0),
+          netEarnings: Number(res.data.analytics.netEarnings || 0),
+        });
+      } else {
+        setPerfError(true);
+      }
+    } catch (err) {
+      setPerfError(true);
+    } finally {
+      setPerfLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPerf(range, pickStart, pickEnd);
+  }, [range, loadPerf]);
+
+  const bank = bankAccounts.find((b) => b.isPrimary) || bankAccounts[0] || null;
+  const bankDetail = bank
+    ? `${bank.bankName || t("pyBank")} •••• ${String(bank.accountNumber || "").slice(-4)}`
+    : t("pyNoBank");
+  const available = summary.available;
+  const canWithdraw = Boolean(bank) && available >= minPayout;
+  const minText = money(minPayout);
+
+  const SALE = ["TICKET_SALE", "COURSE_SALE", "Ticket Sale", "Course Sale", "Тасалбар борлуулалт", "Сургалт борлуулалт"];
+  const PAYOUT = ["PAYOUT_REQUEST", "PAYOUT_REJECTED", "Payout Request", "Payout Refunded", "Payout Rejected", "Төлбөрийн хүсэлт", "Төлбөр буцаагдсан"];
+  const REFUND = ["REFUND", "Refund", "Буцаан олголт"];
+  const FEE = ["CANCELLATION_DEDUCTION", "ADJUSTMENT", "Cancellation Deduction", "Adjustment", "Цуцлалтын суутгал", "Зохицуулалт"];
+  const kindOf = (item) => {
+    const type = item.type || "";
+    const desc = `${item.description || ""}`.toLowerCase();
+    if (desc.includes("promo") || desc.includes("promotion") || desc.includes("сурталчил")) return "promo";
+    if (SALE.includes(type)) return "sale";
+    if (PAYOUT.includes(type)) return "payout";
+    if (REFUND.includes(type)) return "refund";
+    if (FEE.includes(type)) return "fee";
+    return "other";
+  };
+  const statusOf = (item) => {
+    const type = item.type || "";
+    if (["PAYOUT_REQUEST", "Payout Request", "Төлбөрийн хүсэлт"].includes(type)) return "pending";
+    if (["PAYOUT_REJECTED", "Payout Refunded", "Payout Rejected", "Төлбөр буцаагдсан"].includes(type)) return "failed";
+    return "paid";
+  };
+
+  const rangeOptions = [
+    { value: "month", label: t("pyThisMonth") },
+    { value: "prev", label: t("pyLastMonth") },
+    { value: "d7", label: t("pyLast7") },
+    { value: "m6", label: t("pyLast6") },
+    { value: "y1", label: t("pyLastYear") },
+    { value: "all", label: t("pyAllTime") },
+    { value: "custom", label: t("pyChooseDate") },
+  ];
+  const txs = earnings.walletHistory.filter((item) => txKind === "all" || kindOf(item) === txKind);
+  const perfZero = !perfLoading && !perfError && analytics.earnings === 0 && analytics.deductions === 0 && analytics.netEarnings === 0;
+
+  const amountError = (raw) => {
+    const s = String(raw || "").trim().replace(/[\s,]/g, "");
+    if (!s) return t("pyAmountNeed");
+    if (!/^\d+(\.\d{1,2})?$/.test(s)) return t("pyAmountNum");
+    const n = Number(s);
+    if (!(n > 0)) return t("pyAmountPos");
+    if (n < minPayout) return t("pyAmountMin", { min: minText });
+    if (n > available) return t("pyAmountMax", { available: money(available) });
+    return "";
+  };
+
+  const openWithdraw = () => {
+    setWStage("form");
+    setPayoutAmount("");
+    setAmtErr("");
+    setPayoutResult(null);
+    setShowPayoutModal(true);
+  };
+
+  const reviewWithdraw = () => {
+    const err = amountError(payoutAmount);
+    setAmtErr(err);
+    if (!err) setWStage("confirm");
+  };
+
+  const submitWithdraw = async () => {
+    const err = amountError(payoutAmount);
+    if (err) {
+      setAmtErr(err);
+      setWStage("form");
       return;
     }
     setPayoutLoading(true);
     try {
-      const res = await organizerApi.requestPayout(
-        amount,
-        payoutReference.trim(),
-      );
+      const res = await organizerApi.requestPayout(Number(String(payoutAmount).replace(/[\s,]/g, "")), bankDetail);
       if (res?.status) {
-        toast.success(
-          t("payoutRequestSubmitted") || "Payout request submitted!",
-        );
-        setShowPayoutModal(false);
-        setPayoutAmount("");
-        setPayoutReference("");
+        setPayoutResult(res.data?.payout || res.data || {});
+        setWStage("result");
         fetchEarnings();
+        loadPerf(range, pickStart, pickEnd);
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Payout request failed");
+      toast.error(err?.response?.data?.message || t("pyTxFail"));
     } finally {
       setPayoutLoading(false);
     }
   };
 
-  // Derived stats from wallet history
-  const totalPaidOut = earnings.payoutHistory
-    .filter((p) => p.status === "PAID")
-    .reduce((sum, p) => sum + p.amount, 0);
-
-  const pendingPayouts = earnings.payoutHistory
-    .filter((p) => p.status === "PENDING")
-    .reduce((sum, p) => sum + p.amount, 0);
-
-  const FILTER_OPTIONS = [
-    { value: "ALL", label: t("allTypes") || "All Types" },
-    { value: "TICKET_SALE", label: t("ticketSale") || "Ticket Sale" },
-    { value: "COURSE_SALE", label: t("courseSale") || "Course Sale" },
-    { value: "PURCHASE", label: t("purchase") || "Purchase" },
-    { value: "PAYOUT_REQUEST", label: t("payoutRequest") || "Payout Request" },
-    { value: "PAYOUT_REJECTED", label: t("payoutRejected") || "Payout Refunded" },
-    { value: "REFUND", label: t("refund") || "Refund" },
-    { value: "CANCELLATION_DEDUCTION", label: t("cancellationDeduction") || "Cancellation Deduction" },
-    { value: "ADJUSTMENT", label: t("adjustment") || "Adjustment" },
-    { value: "REFERRAL", label: t("referralReward") || "Referral Reward" },
-  ];
-
-  // Filter wallet history
-  const filteredHistory = earnings.walletHistory.filter((item) => {
-    const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      item.description?.toLowerCase().includes(q) ||
-      item.type?.toLowerCase().includes(q) ||
-      item._id?.toLowerCase().includes(q);
-    const matchType =
-      typeFilter === "ALL" ||
-      item.type === typeFilter ||
-      (typeFilter === "TICKET_SALE" && (item.type === "Ticket Sale" || item.type === "Тасалбар борлуулалт")) ||
-      (typeFilter === "COURSE_SALE" && (item.type === "Course Sale" || item.type === "Сургалт борлуулалт")) ||
-      (typeFilter === "PURCHASE" && (item.type === "Purchase" || item.type === "Худалдан авалт")) ||
-      (typeFilter === "PAYOUT_REQUEST" && (item.type === "Payout Request" || item.type === "Төлбөрийн хүсэлт")) ||
-      (typeFilter === "PAYOUT_REJECTED" && (item.type === "Payout Refunded" || item.type === "Payout Rejected" || item.type === "Төлбөр буцаагдсан")) ||
-      (typeFilter === "REFUND" && (item.type === "Refund" || item.type === "Буцаан олголт")) ||
-      (typeFilter === "CANCELLATION_DEDUCTION" && (item.type === "Cancellation Deduction" || item.type === "Цуцлалтын суутгал")) ||
-      (typeFilter === "ADJUSTMENT" && (item.type === "Adjustment" || item.type === "Зохицуулалт")) ||
-      (typeFilter === "REFERRAL" && (item.type === "Referral" || item.type === "Referral Reward" || item.type === "Урилгын шагнал"));
-    return matchSearch && matchType;
-  });
-
-  const totalPages = Math.max(1, Math.ceil(filteredHistory.length / PAGE_SIZE));
-  const paginatedHistory = filteredHistory.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
+  const WalletIcon = () => (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="6" width="18" height="13" rx="3.4" />
+      <path d="M3 10.6h12.4a2.4 2.4 0 0 0 0 4.8H3" />
+      <circle cx="17.6" cy="13" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+  const ClockIcon = () => (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="8.4" />
+      <path d="M12 7.6V12l3.2 1.9" />
+    </svg>
+  );
+  const LayersIcon = () => (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3.4 20.4 7.6 12 11.8 3.6 7.6Z" />
+      <path d="M3.6 12.2 12 16.4l8.4-4.2" />
+      <path d="M3.6 16.6 12 20.8l8.4-4.2" />
+    </svg>
+  );
+  const BankIcon = () => (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3.6 9.8 12 4.4l8.4 5.4" />
+      <path d="M5.4 9.8v9.8M18.6 9.8v9.8M9.6 12.6v5.2M14.4 12.6v5.2" />
+      <path d="M3.4 19.6h17.2" />
+    </svg>
   );
 
-  // Reset to page 1 when filters change
-  const handleSearch = (val) => {
-    setSearch(val);
-    setCurrentPage(1);
-  };
-  const handleTypeFilter = (val) => {
-    setTypeFilter(val);
-    setCurrentPage(1);
-  };
+  const chips = [
+    ["all", "pyAll"],
+    ["sale", "pySale"],
+    ["payout", "pyPayout"],
+    ["fee", "pyFee"],
+    ["refund", "pyRefund"],
+    ["promo", "pyPromo"],
+  ];
 
   return (
-    <div>
-      <div className="cards">
-        {/* Header */}
-        <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-          <div>
-            <h2 className="card-title">{t("earnings")}</h2>
-            <p className="card-desc">{t("trackIncome")}</p>
-          </div>
-          <button
-            className="common_btn"
-            onClick={() => setShowPayoutModal(true)}
-            disabled={earnings.payoutBalance <= 0}>
-            {t("requestPayout")}
-          </button>
-        </div>
+    <div className="py-page">
+      <nav className="py-crumb">
+        <Link href="/Dashboard">{t("pyDash")}</Link>
+        <span>/</span>
+        <span>{t("pyTitle")}</span>
+      </nav>
 
-        {/* Summary Cards */}
-        {loading ? (
-          <div className="text-center py-4">
-            <Spinner animation="border" size="sm" /> {t("loading")}...
+      {loading ? (
+        <div className="py-bal">
+          <div className="py-skel" style={{ height: 108 }} />
+          <div className="py-skel" style={{ height: 108 }} />
+          <div className="py-skel" style={{ height: 108 }} />
+        </div>
+      ) : (
+        <div className="py-bal">
+          <div className="py-balC py-balC-hi">
+            <span className="py-balI"><WalletIcon /></span>
+            <span className="py-balT"><span>{t("pyAvailable")}</span><b>{money(available)}</b></span>
+          </div>
+          <div className="py-balC py-balC-pend">
+            <span className="py-balI"><ClockIcon /></span>
+            <span className="py-balT"><span>{t("pyPending")}</span><b>{money(summary.pending)}</b></span>
+          </div>
+          <div className="py-balC">
+            <span className="py-balI"><LayersIcon /></span>
+            <span className="py-balT"><span>{t("pyTotal")}</span><b>{money(summary.total)}</b></span>
+          </div>
+        </div>
+      )}
+
+      <p className="py-info"><i className="py-infoI">i</i>{t("pyReviewNote")}</p>
+
+      <section className="py-card">
+        <div className="py-cardHead"><h2 className="py-h2">{t("pyAccount")}</h2></div>
+        <div className="py-method">
+          <span className="py-methodI"><BankIcon /></span>
+          <span className="py-methodTxt">
+            <b>{bank ? (bank.bankName || t("pyBank")) : t("pyBank")}</b>
+            <i>{bankDetail}</i>
+            <span className={`py-pill ${bank ? "is-ok" : "is-muted"}`}>{bank ? t("organizersVerified") : t("pyNoBank")}</span>
+          </span>
+          <button type="button" className="py-gh" onClick={() => setBankOpen(true)}>{t("pyChange")}</button>
+        </div>
+        <p className="py-hint">{t("pyMinHint", { min: minText })}</p>
+        <div className="py-acts">
+          <button type="button" className="py-go" disabled={!canWithdraw} onClick={openWithdraw}>{t("pyRequest")}</button>
+        </div>
+        {!canWithdraw && (
+          <p className="py-hint py-warn">
+            {bank ? t("pyLow", { min: minText }) : t("pyNeedBank")}
+          </p>
+        )}
+      </section>
+
+      <section className="py-card">
+        <div className="py-cardHead">
+          <h2 className="py-h2">{t("pySummary")}</h2>
+          <span className="py-sel" ref={rangeBoxRef}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
+            <button
+              type="button"
+              className="py-selBtn"
+              aria-haspopup="listbox"
+              aria-expanded={rangeMenu}
+              aria-label={t("pyChooseDate")}
+              onClick={() => setRangeMenu((open) => !open)}
+            >
+              {rangeOptions.find((item) => item.value === range)?.label}
+            </button>
+            {rangeMenu && (
+              <span className="py-menu" role="listbox">
+                {rangeOptions.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    role="option"
+                    aria-selected={item.value === range}
+                    onClick={() => {
+                      setRange(item.value);
+                      setPickOpen(item.value === "custom");
+                      setRangeMenu(false);
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </span>
+            )}
+            {pickOpen && (
+              <DateRangeCalendarPopover
+                anchorRef={rangeBoxRef}
+                initialFrom={pickStart}
+                initialTo={pickEnd}
+                language={language}
+                t={t}
+                onApply={(from, to) => {
+                  setPickStart(from);
+                  setPickEnd(to);
+                  setPickOpen(false);
+                  loadPerf("custom", from, to);
+                }}
+                onCancel={() => {
+                  setPickOpen(false);
+                  if (!pickStart || !pickEnd) setRange("month");
+                }}
+              />
+            )}
+          </span>
+        </div>
+        <p className="py-range">{rangeLabel()}</p>
+        {perfLoading ? (
+          <div className="py-3"><div className="py-skel" /><div className="py-skel" /><div className="py-skel" /></div>
+        ) : perfError ? (
+          <div className="py-state">
+            <b>{t("pySumFail")}</b>
+            <button type="button" className="py-go" onClick={() => loadPerf(range, pickStart, pickEnd)}>{t("pyRetry")}</button>
+          </div>
+        ) : perfZero ? (
+          <div className="py-state">
+            <b>{t("pyNoPeriod")}</b>
+            <p>{t("pyNoPeriodBody")}</p>
           </div>
         ) : (
-          <div className="dashbord-card-grid">
-            <div className="earning-cards">
-              <h5>{t("totalEarnings")}</h5>
-              <h4>₮{earnings.totalEarnings.toLocaleString()}</h4>
-            </div>
-            <div className="earning-cards">
-              <h5>{t("availableBalance")}</h5>
-              <h4>₮{earnings.payoutBalance.toLocaleString()}</h4>
-            </div>
-            <div className="earning-cards">
-              <h5>{t("totalPaidOut")}</h5>
-              <h4>₮{totalPaidOut.toLocaleString()}</h4>
-            </div>
-            <div className="earning-cards">
-              <h5>{t("pendingPayout")}</h5>
-              <h4>₮{pendingPayouts.toLocaleString()}</h4>
-            </div>
-            <div className="earning-cards">
-              <h5>{t("referralCredits")}</h5>
-              <h4>
-                ₮
-                {earnings.walletHistory
-                  .filter((w) => w.type === "REFERRAL" || w.type === "Referral Reward" || w.type === "Урилгын шагнал")
-                  .reduce((s, w) => s + (w.amount || 0), 0)
-                  .toLocaleString()}
-              </h4>
-            </div>
+          <div className="py-3">
+            <div className="py-met py-met-rev"><small>{t("revenue") || t("pyFromBookings")}</small><b>{money(analytics.earnings)}</b><span>{t("pyFromBookings")}</span></div>
+            <div className="py-met py-met-ded"><small>{t("pyDeductions")}</small><b>{money(analytics.deductions)}</b><span>{t("pyFeesRefunds")}</span></div>
+            <div className="py-met py-met-net"><small>{t("pyNet")}</small><b>{money(analytics.netEarnings)}</b><span>{t("pyAfterDed")}</span></div>
           </div>
         )}
+      </section>
 
-        {/* Transaction History Table */}
-        <div className="custom-table-cards transaction-history mt-4">
-          <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-            <div>
-              <h5 className="table-title">{t("transactionHistory")}</h5>
-            </div>
-            <div className="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-start justify-content-md-end">
-              {/* Type filter */}
-              <select
-                className="form-control filter-select"
-                style={{ maxWidth: 180 }}
-                value={typeFilter}
-                onChange={(e) => handleTypeFilter(e.target.value)}>
-                {FILTER_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              {/* Search */}
-              <div className="table-search filter-search position-relative">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder={t("searchTransactions")}
-                  value={search}
-                  onChange={(e) => handleSearch(e.target.value)}
-                />
-                <button type="button" className="position-absolute end-0 top-50 translate-middle-y border-0 bg-transparent pe-2">
-                  <img
-                    src="/img/org-img/search-white.svg"
-                    width={16}
-                    alt="search"
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="table-responsive custom-table-wrapper">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>{t("orderDate")}</th>
-                  <th>{t("description")}</th>
-                  <th>{t("transactionID")}</th>
-                  <th>{t("transactionType")}</th>
-                  <th>{t("amount")}</th>
-                  <th>{t("balanceAfter")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-4">
-                      <Spinner animation="border" size="sm" /> {t("loading")}...
-                    </td>
-                  </tr>
-                ) : paginatedHistory.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="text-center py-4"
-                      style={{ color: "#999" }}>
-                      {search || typeFilter !== "ALL"
-                        ? t("noMatchingTransactions")
-                        : t("noTransactionsYet")}
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedHistory.map((item, i) => (
-                    <tr key={item._id || i}>
-                      <td>{formatDate(item.createdAt)}</td>
-                      <td>
-                        <div className="title">
-                          {formatDescription(item.description) ||
-                            TYPE_LABEL[item.type] ||
-                            item.type}
-                        </div>
-                        <div className="sub">
-                          {TYPE_LABEL[item.type] || item.type}
-                        </div>
-                      </td>
-                      <td
-                        className="trx"
-                        style={{ fontSize: 12, color: "#888" }}>
-                        #{String(item._id).slice(-8).toUpperCase()}
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${TYPE_BADGE[item.type] || "pending"}`}>
-                          {TYPE_LABEL[item.type] || item.type}
-                        </span>
-                      </td>
-                      <td
-                        className="amount"
-                        style={{
-                          color: item.amount < 0 ? "#e74c3c" : "#27ae60",
-                          fontWeight: 600,
-                        }}>
-                        {formatAmount(item.amount)}
-                      </td>
-                      <td>₮{(item.balanceAfter || 0).toLocaleString()}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* ─── Pagination ─── */}
-          {!loading && filteredHistory.length > PAGE_SIZE && (
-            <div
-              className="d-flex justify-content-between align-items-center px-3 py-3 flex-wrap"
-              style={{ borderTop: "1px solid #2a2a2a" }}>
-              <span style={{ color: "#888", fontSize: 13 }}>
-                {t("showingTransactions", {
-                  start: Math.min(
-                    (currentPage - 1) * PAGE_SIZE + 1,
-                    filteredHistory.length,
-                  ),
-                  end: Math.min(
-                    currentPage * PAGE_SIZE,
-                    filteredHistory.length,
-                  ),
-                  total: filteredHistory.length,
-                })}
-              </span>
-              <div className="d-flex gap-2">
-                <button
-                  className="common_btn"
-                  style={{ padding: "6px 14px", fontSize: 13 }}
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => p - 1)}>
-                  ← {t("previous")}
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter(
-                    (p) =>
-                      p === 1 ||
-                      p === totalPages ||
-                      Math.abs(p - currentPage) <= 1,
-                  )
-                  .reduce((acc, p, idx, arr) => {
-                    if (idx > 0 && p - arr[idx - 1] > 1) acc.push("...");
-                    acc.push(p);
-                    return acc;
-                  }, [])
-                  .map((p, idx) =>
-                    p === "..." ? (
-                      <span
-                        key={`ellipsis-${idx}`}
-                        style={{ alignSelf: "center", color: "#666" }}>
-                        ...
-                      </span>
-                    ) : (
-                      <button
-                        key={p}
-                        onClick={() => setCurrentPage(p)}
-                        className="common_btn"
-                        style={{
-                          padding: "6px 12px",
-                          fontSize: 13,
-                          opacity: currentPage === p ? 1 : 0.5,
-                        }}>
-                        {p}
-                      </button>
-                    ),
-                  )}
-                <button
-                  className="common_btn"
-                  style={{ padding: "6px 14px", fontSize: 13 }}
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => p + 1)}>
-                  {t("next")} →
-                </button>
-              </div>
-            </div>
-          )}
+      <section className="py-card">
+        <div className="py-cardHead">
+          <h2 className="py-h2">{t("pyRecent")}</h2>
+          <span className="py-hint">{loading ? "…" : t("pyTxCount", { count: txs.length })}</span>
         </div>
-      </div>
-
-      {/* ─── Payout Request Modal ──────────────────────────────────────────── */}
-      <Modal
-        show={showPayoutModal}
-        onHide={() => {
-          setShowPayoutModal(false);
-          setPayoutAmount("");
-          setPayoutReference("");
-        }}
-        centered>
-        <Modal.Header className="p-0 mb-4 pb-3" closeButton>
-          <Modal.Title>{t("requestPayout")}</Modal.Title>
-        </Modal.Header>
-        <Form onSubmit={handleRequestPayout}>
-          <Modal.Body className="p-0">
-            <p style={{ color: "#999", fontSize: 14 }}>
-              {t("availableBalance")}:{" "}
-              <strong style={{ color: "#fff" }}>
-                ₮{earnings.payoutBalance.toLocaleString()}
-              </strong>
-              <span style={{ marginLeft: 12, color: "#aaa" }}>
-                {t("min") || "Minimum"}:{" "}
-                <strong style={{ color: "#fff" }}>
-                  ₮{minPayout.toLocaleString()}
-                </strong>
-              </span>
-            </p>
-
-            {/* Amount */}
-            <Form.Group className="mb-3">
-              <Form.Label>{t("payoutAmountLabel")}</Form.Label>
-              <Form.Control
-                type="number"
-                min={minPayout}
-                max={earnings.payoutBalance}
-                placeholder={t("minPayoutAmount", {
-                  amount: minPayout.toLocaleString(),
-                })}
-                value={payoutAmount}
-                onChange={(e) => setPayoutAmount(e.target.value)}
-                required
-              />
-              {Number(payoutAmount) > 0 && Number(payoutAmount) < minPayout && (
-                <Form.Text style={{ color: "#e74c3c" }}>
-                  {t("minPayoutAmount", { amount: minPayout.toLocaleString() })}
-                </Form.Text>
-              )}
-              {Number(payoutAmount) > earnings.payoutBalance && (
-                <Form.Text style={{ color: "#e74c3c" }}>
-                  {t("amountExceedsBalance")}
-                </Form.Text>
-              )}
-            </Form.Group>
-
-            {/* Payment Reference */}
-            <Form.Group className="mb-3">
-              <Form.Label>
-                {t("payoutRefLabel")}{" "}
-                <span style={{ color: "#e74c3c" }}>*</span>
-              </Form.Label>
-              <Form.Control
-                type="text"
-                placeholder={t("payoutRefPlaceholder")}
-                value={payoutReference}
-                onChange={(e) => setPayoutReference(e.target.value)}
-                required
-              />
-              <Form.Text style={{ color: "#888" }}>
-                {t("payoutRefDesc")}
-              </Form.Text>
-            </Form.Group>
-          </Modal.Body>
-          <Modal.Footer>
-            <button
-              className="outline-btn py-2 px-4"
-              onClick={() => {
-                setShowPayoutModal(false);
-                setPayoutAmount("");
-                setPayoutReference("");
-              }}>
-              {t("discard")}
+        <div className="py-chips">
+          {chips.map(([id, key]) => (
+            <button key={id} type="button" className="py-chip" aria-selected={txKind === id ? "true" : "false"} onClick={() => setTxKind(id)}>
+              {t(key)}
             </button>
-            <button
-              type="submit"
-              className="common_btn py-2"
-              disabled={
-                payoutLoading ||
-                !payoutAmount ||
-                !payoutReference.trim() ||
-                Number(payoutAmount) < minPayout ||
-                Number(payoutAmount) > earnings.payoutBalance
-              }>
-              {payoutLoading ? (
-                <Spinner animation="border" size="sm" />
-              ) : (
-                (t("payoutRequestSubmitted") &&
-                  t(
-                    "submitTicket",
-                  )) /** Reusing submitTicket as Submit Request fallback */ ||
-                "Submit Request"
-              )}
-            </button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
-      <style jsx>{`
-        @media (max-width: 767px) {
-          .filter-select {
-            width: 100% !important;
-            max-width: 100% !important;
-          }
-          .filter-search {
-            width: 100% !important;
-          }
-        }
-      `}</style>
+          ))}
+        </div>
+        {loading ? (
+          <div className="py-txlist"><div className="py-skel" style={{ height: 62 }} /><div className="py-skel" style={{ height: 62 }} /></div>
+        ) : txs.length === 0 ? (
+          <div className="py-state">
+            <b>{txKind === "all" ? t("pyNoTx") : t("pyNoKind")}</b>
+            <p>{txKind === "all" ? t("pyNoTxBody") : t("pyClearFilters")}</p>
+            {txKind !== "all" && <button type="button" className="py-gh" onClick={() => setTxKind("all")}>{t("pyClear")}</button>}
+          </div>
+        ) : (
+          <div className="py-txlist">
+            {txs.map((item) => {
+              const kind = kindOf(item);
+              const status = statusOf(item);
+              const negative = Number(item.amount) < 0;
+              const color = kind === "refund" ? "#FF6B60" : negative ? "#d0d0d0" : "#36CEC2";
+              return (
+                <button type="button" className="py-tx" key={item._id} onClick={() => setTxOpen(item)}>
+                  <span className={`py-txI is-${kind}`}>{negative ? "−" : "+"}</span>
+                  <span className="py-txTxt">
+                    <b>{TYPE_LABEL[item.type] || item.type}</b>
+                    <i>{formatDescription(item.description) || TYPE_LABEL[item.type] || item.type}</i>
+                  </span>
+                  <span className="py-txAmt">
+                    <b style={{ color }}>{money(item.amount)}</b>
+                    {(status === "pending" || status === "failed") && (
+                      <span className={`py-pill ${status === "failed" ? "is-bad" : "is-wait"}`}>
+                        {status === "failed" ? t("pyFailed") : t("pyWaiting")}
+                      </span>
+                    )}
+                    <i>{formatDate(item.createdAt)}</i>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {showPayoutModal && (
+        <div className="py-scrim" onClick={(e) => { if (e.target === e.currentTarget) setShowPayoutModal(false); }}>
+          <div className="py-sheet">
+            <div className="py-sheetHead">
+              <div><b>{t("pyWithdrawTitle")}</b><span>{t("pyWithdrawSub")}</span></div>
+              <button type="button" className="py-x" aria-label={t("close")} onClick={() => setShowPayoutModal(false)}>×</button>
+            </div>
+            {wStage === "form" && (
+              <>
+                <div className="py-method">
+                  <span className="py-methodI"><WalletIcon /></span>
+                  <span className="py-methodTxt"><b>{t("pyCanWithdraw")}</b><i>{money(available)}</i></span>
+                </div>
+                <label className="py-f">
+                  <span className="py-lb">{t("pyAmount")} <i>*</i></span>
+                  <input className="py-in" inputMode="decimal" maxLength={12} value={payoutAmount} placeholder={t("pyAmountPh")} aria-invalid={amtErr ? "true" : "false"} onChange={(e) => { setPayoutAmount(e.target.value); setAmtErr(""); }} />
+                  {amtErr ? <span className="py-er">{amtErr}</span> : null}
+                  <span className="py-hint">{t("pyAmountHint", { min: minText, available: money(available) })}</span>
+                </label>
+                <div className="py-f">
+                  <span className="py-lb">{t("pyMethod")} <i>*</i></span>
+                  <div className="py-method">
+                    <span className="py-methodI"><BankIcon /></span>
+                    <span className="py-methodTxt"><b>{bank?.bankName || t("pyBank")}</b><i>{bankDetail}</i></span>
+                  </div>
+                  <button type="button" className="py-gh" onClick={() => setBankOpen(true)}>{t("pyChange")}</button>
+                </div>
+                <p className="py-info"><i className="py-infoI">i</i>{t("pyReviewNote")}</p>
+                <div className="py-acts">
+                  <button type="button" className="py-go" onClick={reviewWithdraw}>{t("pyWithdrawTitle")}</button>
+                  <button type="button" className="py-gh" onClick={() => setShowPayoutModal(false)}>{t("cancel")}</button>
+                </div>
+              </>
+            )}
+            {wStage === "confirm" && (
+              <>
+                <div className="py-kv"><span>{t("pyAmount")}</span><span>{money(payoutAmount)}</span></div>
+                <div className="py-kv"><span>{t("pyMethod")}</span><span>{bankDetail}</span></div>
+                <div className="py-kv"><span>{t("pyWait")}</span><span>{t("pyWaitVal")}</span></div>
+                <div className="py-kv"><span>{t("pyAfter")}</span><span>{money(Math.max(0, available - Number(payoutAmount || 0)))}</span></div>
+                <p className="py-hint">{t("pyConfirmNote")}</p>
+                <div className="py-acts">
+                  <button type="button" className="py-go" disabled={payoutLoading} onClick={submitWithdraw}>{payoutLoading ? "…" : t("pyConfirm")}</button>
+                  <button type="button" className="py-gh" onClick={() => setWStage("form")}>{t("cancel")}</button>
+                </div>
+              </>
+            )}
+            {wStage === "result" && (
+              <>
+                <div className="py-res">
+                  <b>{t("pyReceived")}</b>
+                  <p>{t("pyReceivedNote")}</p>
+                </div>
+                <div className="py-kv"><span>{t("pyAmountWord")}</span><span>{money(payoutAmount)}</span></div>
+                <div className="py-kv"><span>{t("pyMethodWord")}</span><span>{bankDetail}</span></div>
+                <div className="py-kv"><span>{t("pyRequestNo")}</span><span>{payoutResult?._id || "—"}</span></div>
+                <button type="button" className="py-go" onClick={() => setShowPayoutModal(false)}>{t("pyDone")}</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {bankOpen && (
+        <div className="py-scrim" onClick={(e) => { if (e.target === e.currentTarget) setBankOpen(false); }}>
+          <div className="py-sheet py-sheet-sm">
+            <div className="py-sheetHead">
+              <div><b>{t("pyChange")}</b><span>{t("pySoonSub")}</span></div>
+              <button type="button" className="py-x" aria-label={t("close")} onClick={() => setBankOpen(false)}>×</button>
+            </div>
+            <div className="py-res is-muted"><b>{t("pySoon")}</b><p>{t("pySoonBody")}</p></div>
+            <Link href="/Verifiedprofile" className="py-gh">{t("pyViewBank")}</Link>
+            <button type="button" className="py-gh" onClick={() => setBankOpen(false)}>{t("close")}</button>
+          </div>
+        </div>
+      )}
+
+      {txOpen && (
+        <div className="py-scrim" onClick={(e) => { if (e.target === e.currentTarget) setTxOpen(null); }}>
+          <div className="py-sheet py-sheet-sm">
+            <div className="py-sheetHead">
+              <div>
+                <b>{TYPE_LABEL[txOpen.type] || txOpen.type}</b>
+                <span>{formatDescription(txOpen.description)}</span>
+              </div>
+              <button type="button" className="py-x" aria-label={t("close")} onClick={() => setTxOpen(null)}>×</button>
+            </div>
+            <div className="py-kv"><span>{t("pyAmountWord")}</span><span>{money(txOpen.amount)}</span></div>
+            <div className="py-kv"><span>{t("pyKind")}</span><span>{t(chips.find(([id]) => id === kindOf(txOpen))?.[1] || "pySale")}</span></div>
+            <div className="py-kv"><span>{t("pyStatus")}</span><span>{statusOf(txOpen) === "pending" ? t("pyWaiting") : statusOf(txOpen) === "failed" ? t("pyFailed") : t("pyPaid")}</span></div>
+            <div className="py-kv"><span>{t("pyDate")}</span><span>{formatDate(txOpen.createdAt)}</span></div>
+            <p className="py-hint">{t("pyViewOnly")}</p>
+            <button type="button" className="py-gh" onClick={() => setTxOpen(null)}>{t("close")}</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

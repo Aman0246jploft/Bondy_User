@@ -60,12 +60,11 @@ const BONDY_DARK_MAP_STYLE = [
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#2b4c59" }] },
 ];
 
-const STEP_TITLES = [
-  { mn: "Үндсэн мэдээлэл", en: "Basic Info" },
-  { mn: "Байршил, хуваарь", en: "Location & Schedule" },
-  { mn: "Үнэ", en: "Pricing & Capacity" },
-  { mn: "Хянах", en: "Review" },
-];
+const STEP_KEYS = ["apBasic", "apLocation", "apPrice", "apReview"];
+
+function clipDigits(value, maxDigits) {
+  return String(value ?? "").replace(/\D/g, "").slice(0, maxDigits);
+}
 
 const REFUND_POLICY_MAP = {
   "no refund": { en: "No Refund", mn: "Буцаан олголтгүй" },
@@ -119,7 +118,7 @@ const parseRefundPoliciesList = (rawList, isMn) => {
 
 export default function LearningEditorPage() {
   const router = useRouter();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isMn = language === "mn";
 
   // ─── Core State ────────────────────────────────────────────────────────────
@@ -553,8 +552,9 @@ export default function LearningEditorPage() {
     if (!formData.venueName.trim()) {
       errs.venueName = isMn ? "Талбайн нэрээ оруулна уу." : "Venue name is required.";
     }
-    if (!formData.venueAddress?.address?.trim()) {
-      errs.address = isMn ? "Байршлын хаягаа оруулна уу." : "Address is required.";
+    const courseAddress = formData.venueAddress?.address?.trim() || "";
+    if (!courseAddress || courseAddress.length > 180) {
+      errs.address = t("apAddressLen");
     }
     if (!formData.startDate) {
       errs.startDate = isMn ? "Эхлэх огноогоо сонгоно уу." : "Start date is required.";
@@ -572,15 +572,16 @@ export default function LearningEditorPage() {
     }
 
     // Step 3 Validation
-    if (formData.price === "" || isNaN(Number(formData.price)) || Number(formData.price) < 0) {
-      errs.price = isMn ? "Сургалтын үнийг зөв оруулна уу." : "Please enter a valid price.";
+    const priceDigits = String(formData.price ?? "").replace(/\D/g, "");
+    if (priceDigits.length < 1 || priceDigits.length > 10 || Number(formData.price) < 0) {
+      errs.price = t("apPriceLen");
     }
     if (!getCanonicalRefundPolicy(formData.refundPolicy)) {
       errs.refundPolicy = isMn ? "Буцаан олголтын нөхцөл сонгоно уу." : "Refund policy is required.";
     }
 
     return errs;
-  }, [formData, isMn]);
+  }, [formData, isMn, t]);
 
   // Check if a specific step has errors
   const isStepInvalid = useCallback(
@@ -715,7 +716,25 @@ export default function LearningEditorPage() {
   };
 
   const handleGalleryUpload = async (e) => {
-    const files = Array.from(e.target.files || []);
+    const picked = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!picked.length) return;
+    const room = 5 - (formData.mediaLinks?.length || 0);
+    if (room <= 0) {
+      flashToast(t("apGalleryTooMany"));
+      return;
+    }
+    const files = [];
+    let tooBig = false;
+    picked.forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        tooBig = true;
+        return;
+      }
+      if (files.length < room) files.push(file);
+    });
+    if (tooBig) flashToast(t("apGalleryTooBig"));
+    if (picked.filter((file) => file.size <= 5 * 1024 * 1024).length > room) flashToast(t("apGalleryTooMany"));
     if (!files.length) return;
     setUploadingGallery(true);
     try {
@@ -726,7 +745,7 @@ export default function LearningEditorPage() {
       if (uploadedPaths.length > 0) {
         setFormData((prev) => ({
           ...prev,
-          mediaLinks: [...(prev.mediaLinks || []), ...uploadedPaths],
+          mediaLinks: [...(prev.mediaLinks || []), ...uploadedPaths].slice(0, 5),
         }));
         setDirty(true);
         flashToast(isMn ? "Зургийн цомог нэмэгдлээ" : "Gallery images added");
@@ -870,15 +889,6 @@ export default function LearningEditorPage() {
     return `${weeksStr}${sessionsStr}`;
   }, [durationWeeks, formData.totalSessions, isMn]);
 
-  const perSessionPriceText = useMemo(() => {
-    const p = Number(formData.price) || 0;
-    const s = Number(formData.totalSessions) || 0;
-    if (p > 0 && s > 0) {
-      return `₮${Math.round(p / s).toLocaleString("en-US")}`;
-    }
-    return isMn ? "Тооцоолоогүй" : "Not calculated";
-  }, [formData.price, formData.totalSessions, isMn]);
-
   const selectedCategoryObj = useMemo(() => {
     return categories.find((c) => c._id === formData.courseCategory);
   }, [categories, formData.courseCategory]);
@@ -987,14 +997,15 @@ export default function LearningEditorPage() {
       }
 
       setDirty(false);
+      const publishedId =
+        res?.data?._id || res?.data?.course?._id || res?.data?.data?._id || courseId;
+      if (publishedId) setCourseId(publishedId);
+      const updated = mode === "published";
       setDoneModal({
-        type: mode === "published" ? "updated" : "published",
-        title: isMn
-          ? mode === "published" ? "Сургалт шинэчлэгдлээ" : "Сургалт нийтлэгдлээ"
-          : mode === "published" ? "Course Updated" : "Course Published",
-        msg: isMn
-          ? "Нийтийн сайт дээр амжилттай байршиж, бүртгэл нээгдлээ."
-          : "Your course is now live and accepting enrollments.",
+        type: updated ? "updated" : "published",
+        courseId: publishedId || "",
+        title: updated ? t("apUpdatedTitle") : t("apPublishedTitle"),
+        msg: updated ? t("apUpdatedBody") : t("apPublishedBody"),
       });
     } catch (err) {
       console.error("Failed to publish course:", err);
@@ -1029,7 +1040,7 @@ export default function LearningEditorPage() {
           </svg>
         </button>
         <span className="lw-mobbarT">
-          <b>{isMn ? (courseId ? "Сургалт засах" : "Сургалт үүсгэх") : (courseId ? "Edit Course" : "Create Course")}</b>
+          <b>{courseId ? t("apEditCourse") : t("apCreateCourse")}</b>
         </span>
         <button
           type="button"
@@ -1044,7 +1055,7 @@ export default function LearningEditorPage() {
       <div className="lw-page">
         {/* ─── Top Steps Navigation Bar ───────────────────────────────────── */}
         <div className="lw-steps bd-scroll" role="tablist">
-          {STEP_TITLES.map((st, i) => {
+          {STEP_KEYS.map((key, i) => {
             const stepNum = i + 1;
             const isSelected = step === stepNum;
             const isInvalid = Boolean(touched[stepNum] && isStepInvalid(stepNum));
@@ -1060,7 +1071,7 @@ export default function LearningEditorPage() {
                 onClick={() => handleGoToStep(stepNum)}
               >
                 <span className="lw-num">{stepNum}</span>
-                <span className="lw-lbl">{isMn ? st.mn : st.en}</span>
+                <span className="lw-lbl">{t(key)}</span>
               </button>
             );
           })}
@@ -1071,7 +1082,7 @@ export default function LearningEditorPage() {
           <span className="lw-fill" style={{ width: `${(step / 4) * 100}%` }} />
         </div>
         <p className="lw-of-acc">
-          {isMn ? `Алхам ${step}/4 · ${STEP_TITLES[step - 1].mn}` : `Step ${step}/4 · ${STEP_TITLES[step - 1].en}`}
+          {t("apStepOf", { step, label: t(STEP_KEYS[step - 1]) })}
         </p>
 
         {/* Draft Notice Banner */}
@@ -1084,9 +1095,7 @@ export default function LearningEditorPage() {
               color: "#FFD9BC",
             }}
           >
-            {isMn
-              ? "Ноорог хэвээр байна. Дутуу талбаруудыг бөглөж нийтэлнэ үү."
-              : "This course is currently a draft. Complete all required fields to publish."}
+            {t("apDraftNote")}
           </div>
         )}
 
@@ -1099,14 +1108,14 @@ export default function LearningEditorPage() {
             <section className="lw-cardIn">
               <label className="lw-f">
                 <span className="lw-lb">
-                  {isMn ? "Сургалтын нэр" : "Course Title"} <i>*</i>
+                  {t("apCourseName")} <i>*</i>
                 </span>
                 <input
                   type="text"
                   className="lw-in"
                   maxLength={80}
                   aria-invalid={Boolean(touched[1] && errors.courseTitle)}
-                  placeholder={isMn ? "Сургалтын нэрээ оруулна уу" : "e.g. Masterclass Web Development"}
+                  placeholder={t("apCourseNamePh")}
                   value={formData.courseTitle}
                   onChange={(e) => {
                     setFormData((prev) => ({ ...prev, courseTitle: e.target.value }));
@@ -1119,13 +1128,13 @@ export default function LearningEditorPage() {
 
               <label className="lw-f">
                 <span className="lw-lb">
-                  {isMn ? "Товч танилцуулга" : "Short Description"} <i>*</i>
+                  {t("apShort")} <i>*</i>
                 </span>
                 <textarea
                   className="lw-ta"
                   maxLength={150}
                   aria-invalid={Boolean(touched[1] && errors.shortdesc)}
-                  placeholder={isMn ? "Сургалтаа товчхон танилцуулна уу (дор хаяж 20 тэмдэгт)" : "Brief summary (at least 20 chars)"}
+                  placeholder={t("apShortPh")}
                   value={formData.shortdesc}
                   onChange={(e) => {
                     setFormData((prev) => ({ ...prev, shortdesc: e.target.value }));
@@ -1138,14 +1147,14 @@ export default function LearningEditorPage() {
 
               <label className="lw-f">
                 <span className="lw-lb">
-                  {isMn ? "Сургалтын дэлгэрэнгүй тайлбар" : "Detailed Description"} <i>*</i>
+                  {t("apLong")} <i>*</i>
                 </span>
                 <textarea
                   className="lw-ta"
-                  style={{ minHeight: "220px" }}
+                  style={{ minHeight: "230px" }}
                   maxLength={800}
                   aria-invalid={Boolean(touched[1] && errors.longdesc)}
-                  placeholder={isMn ? "Хөтөлбөр, агуулга, зохион байгуулалтыг дэлгэрэнгүй бичнэ үү (дор хаяж 40 тэмдэгт)" : "Detailed syllabus and requirements (at least 40 chars)"}
+                  placeholder={t("apLongPh")}
                   value={formData.longdesc}
                   onChange={(e) => {
                     setFormData((prev) => ({ ...prev, longdesc: e.target.value }));
@@ -1161,14 +1170,14 @@ export default function LearningEditorPage() {
             <section className="lw-cardIn">
               <label className="lw-f">
                 <span className="lw-lb">
-                  {isMn ? "Суралцах үр дүн" : "Learning Outcomes"} <i>*</i>
+                  {t("apLearn")} <i>*</i>
                 </span>
                 <textarea
                   className="lw-ta"
                   style={{ minHeight: "150px" }}
                   maxLength={500}
                   aria-invalid={Boolean(touched[1] && errors.whatYouWillLearn)}
-                  placeholder={isMn ? "Суралцагчид оролцсоноор юу сурахыг бичнэ үү (мөр бүрт нэг чадвар)" : "Key takeaways or skills acquired (one per line)"}
+                  placeholder={t("apLearnPh")}
                   value={formData.whatYouWillLearn}
                   onChange={(e) => {
                     setFormData((prev) => ({ ...prev, whatYouWillLearn: e.target.value }));
@@ -1181,7 +1190,7 @@ export default function LearningEditorPage() {
 
               <div className="lw-f">
                 <span className="lw-lb">
-                  {isMn ? "Сургалтын ангилал" : "Category"} <i>*</i>
+                  {t("apCategory")} <i>*</i>
                 </span>
                 <div className="lw-cats">
                   {categories.map((c) => {
@@ -1207,7 +1216,7 @@ export default function LearningEditorPage() {
 
               <div className="lw-f">
                 <span className="lw-lb">
-                  {isMn ? "Постер зураг" : "Poster Image"} <i>*</i>
+                  {t("apPoster")} <i>*</i>
                 </span>
                 {posterPreviewUrl ? (
                   <div className="lw-up">
@@ -1216,8 +1225,8 @@ export default function LearningEditorPage() {
                       style={{ backgroundImage: `url("${posterPreviewUrl}")` }}
                     />
                     <span className="lw-upT">
-                      <b>{isMn ? "Постер зураг хавсаргагдсан" : "Poster Attached"}</b>
-                      <span>{isMn ? "PNG, JPG, WEBP" : "PNG, JPG, WEBP"}</span>
+                      <b>{t("apPosterAttached")}</b>
+                      <span>{t("apPosterHint")}</span>
                       {uploadingPoster && (
                         <span className="lw-pbar">
                           <span style={{ width: "80%" }} />
@@ -1225,7 +1234,7 @@ export default function LearningEditorPage() {
                       )}
                     </span>
                     <label className="lw-gh lw-sm" style={{ position: "relative", overflow: "hidden", cursor: "pointer" }}>
-                      {isMn ? "Зураг солих" : "Change Image"}
+                      {t("apChangeImage")}
                       <input
                         type="file"
                         accept="image/*"
@@ -1235,31 +1244,23 @@ export default function LearningEditorPage() {
                     </label>
                   </div>
                 ) : (
-                  <label
+                  <div
                     className="lw-drop"
-                    style={{ position: "relative", cursor: "pointer" }}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={handlePosterDrop}
                   >
-                    <span className="lw-dropI">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <circle cx="8.5" cy="8.5" r="1.5" />
-                        <polyline points="21 15 16 10 5 21" />
-                      </svg>
-                    </span>
-                    <b className="lw-dropT">{isMn ? "Зураг оруулах" : "Upload Poster Image"}</b>
-                    <span className="lw-dropS">{isMn ? "PNG, JPG, WEBP · 5 MB хүртэл" : "PNG, JPG, WEBP · up to 5MB"}</span>
-                    <span className="lw-gh lw-sm" style={{ pointerEvents: "none", marginTop: "10px" }}>
-                      {uploadingPoster ? (isMn ? "Хуулж байна..." : "Uploading...") : isMn ? "Файл сонгох" : "Browse File"}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePosterUpload}
-                      style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
-                    />
-                  </label>
+                    <span className="lw-dropT">{t("apPosterDrop")}</span>
+                    <span className="lw-dropS">{t("apPosterHint")}</span>
+                    <label className="lw-gh lw-sm" style={{ position: "relative", overflow: "hidden", cursor: "pointer" }}>
+                      {uploadingPoster ? (isMn ? "Хуулж байна..." : "Uploading...") : t("apChooseImage")}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePosterUpload}
+                        style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                      />
+                    </label>
+                  </div>
                 )}
                 {touched[1] && errors.posterImage && <span className="lw-er">{errors.posterImage}</span>}
               </div>
@@ -1268,19 +1269,19 @@ export default function LearningEditorPage() {
               <div className="lw-2">
                 <div className="lw-f">
                   <span className="lw-lb">
-                    {isMn ? "Зургийн цомог" : "Photo Gallery"} <span className="lw-opt-b">({isMn ? "заавал биш" : "optional"})</span>
+                    {t("apGallery")} <span className="lw-opt-b">{t("apOptional")}</span>
                   </span>
                   <div className="lw-drop" style={{ padding: "16px 12px" }}>
                     <span className="lw-dropT">
                       {formData.mediaLinks?.length
-                        ? (isMn ? `${formData.mediaLinks.length} зураг нэмэгдсэн` : `${formData.mediaLinks.length} images added`)
-                        : (isMn ? "Зураг нэмээгүй" : "No images yet")}
+                        ? t("apGalleryCount", { count: formData.mediaLinks.length })
+                        : t("apGalleryEmpty")}
                     </span>
                     <span className="lw-dropS" style={{ fontSize: "11.5px" }}>
-                      {isMn ? "Сургалтын орчин, үйл ажиллагаа" : "Activities & venue pictures"}
+                      {t("apGalleryMax")}
                     </span>
                     <label className="lw-gh lw-sm" style={{ position: "relative", overflow: "hidden", cursor: "pointer", marginTop: "8px" }}>
-                      {uploadingGallery ? (isMn ? "Хуулж байна..." : "Uploading...") : isMn ? "Зураг нэмэх" : "Add Photos"}
+                      {uploadingGallery ? (isMn ? "Хуулж байна..." : "Uploading...") : t("apAddPhotos")}
                       <input
                         type="file"
                         accept="image/*"
@@ -1294,19 +1295,19 @@ export default function LearningEditorPage() {
 
                 <div className="lw-f">
                   <span className="lw-lb">
-                    {isMn ? "Танилцуулга видео" : "Teaser Video"} <span className="lw-opt-b">({isMn ? "заавал биш" : "optional"})</span>
+                    {t("apTeaser")} <span className="lw-opt-b">{t("apOptional")}</span>
                   </span>
                   <div className="lw-drop" style={{ padding: "16px 12px" }}>
                     <span className="lw-dropT">
                       {formData.shortTeaserVideo?.length
-                        ? (isMn ? "Видео хавсаргасан" : "Video attached")
-                        : (isMn ? "Видео нэмээгүй" : "No video yet")}
+                        ? t("apTeaserAttached")
+                        : t("apTeaserEmpty")}
                     </span>
                     <span className="lw-dropS" style={{ fontSize: "11.5px" }}>
-                      {isMn ? "MP4, WEBM · 30 сек хүртэл" : "MP4, WEBM · up to 30s"}
+                      {t("apTeaserHint")}
                     </span>
                     <label className="lw-gh lw-sm" style={{ position: "relative", overflow: "hidden", cursor: "pointer", marginTop: "8px" }}>
-                      {uploadingTeaser ? (isMn ? "Хуулж байна..." : "Uploading...") : isMn ? "Видео нэмэх" : "Add Video"}
+                      {uploadingTeaser ? (isMn ? "Хуулж байна..." : "Uploading...") : t("apAddVideo")}
                       <input
                         type="file"
                         accept="video/*"
@@ -1329,16 +1330,17 @@ export default function LearningEditorPage() {
             <div className="lw-grid2">
               {/* Left Card: Venue & Address */}
               <section className="lw-cardIn">
-                <h2 className="lw-h2">{isMn ? "Байршлын мэдээлэл" : "Venue Information"}</h2>
+                <h2 className="lw-h2">{t("apVenue")}</h2>
 
                 <label className="lw-f">
                   <span className="lw-lb">
-                    {isMn ? "Талбайн нэр" : "Venue Name"} <i>*</i>
+                    {t("apVenueName")} <i>*</i>
                   </span>
                   <input
                     type="text"
                     className="lw-in"
-                    placeholder={isMn ? "Жишээ нь: UB Sound Lab, Hub Innovation Center" : "e.g. UB Sound Lab, Hub Innovation Center"}
+                    maxLength={80}
+                    placeholder={t("apVenuePh")}
                     aria-invalid={Boolean(touched[2] && errors.venueName)}
                     value={formData.venueName}
                     onChange={(e) => {
@@ -1351,7 +1353,7 @@ export default function LearningEditorPage() {
 
                 <div className="lw-f">
                   <span className="lw-lb">
-                    {isMn ? "Хаяг" : "Address"} <i>*</i>
+                    {t("apAddress")} <i>*</i>
                   </span>
                   <VenueAutocomplete
                     defaultValue={formData.venueAddress?.address}
@@ -1371,6 +1373,7 @@ export default function LearningEditorPage() {
                         venueAddress: {
                           ...prev.venueAddress,
                           ...venueData,
+                          address: String(venueData?.address || "").slice(0, 180),
                           latitude: lat,
                           longitude: lng,
                           district: matchedDistrict || prev.venueAddress.district || "",
@@ -1379,7 +1382,9 @@ export default function LearningEditorPage() {
                       }));
                       setDirty(true);
                     }}
-                    placeholder={isMn ? "Байршлын хаягаа хайж сонгоно уу..." : "Search venue address..."}
+                    maxLength={180}
+                    className="lw-in"
+                    placeholder={t("apAddressPh")}
                   />
                   {touched[2] && errors.address && <span className="lw-er">{errors.address}</span>}
                 </div>
@@ -1426,7 +1431,7 @@ export default function LearningEditorPage() {
                         flashToast(isMn ? "Байршилд төвлөрлөө" : "Centered location");
                       }}
                     >
-                      {isMn ? "Байршил шалгах" : "Check Pin"}
+                      {t("apChooseLocation")}
                     </button>
                   </div>
                 </div>
@@ -1434,12 +1439,12 @@ export default function LearningEditorPage() {
 
               {/* Right Card: Duration, Dates & Sessions */}
               <section className="lw-cardIn">
-                <h2 className="lw-h2">{isMn ? "Сургалтын хугацаа" : "Course Duration"}</h2>
+                <h2 className="lw-h2">{t("apDuration")}</h2>
 
                 <div className="lw-2">
                   <label className="lw-f">
                     <span className="lw-lb">
-                      {isMn ? "Эхлэх огноо" : "Start Date"} <i>*</i>
+                      {t("startDate")} <i>*</i>
                     </span>
                     <input
                       type="date"
@@ -1456,7 +1461,7 @@ export default function LearningEditorPage() {
 
                   <label className="lw-f">
                     <span className="lw-lb">
-                      {isMn ? "Дуусах огноо" : "End Date"} <i>*</i>
+                      {t("endDate")} <i>*</i>
                     </span>
                     <input
                       type="date"
@@ -1475,25 +1480,22 @@ export default function LearningEditorPage() {
 
                 <label className="lw-f">
                   <span className="lw-lb">
-                    {isMn ? "Нийт хичээлийн тоо" : "Total Sessions"} <i>*</i>
+                    {t("apSessions")} <i>*</i>
                   </span>
                   <input
-                    type="number"
-                    min={1}
+                    type="text"
+                    inputMode="numeric"
                     className="lw-in"
-                    placeholder={isMn ? "Жишээ нь: 16" : "e.g. 16"}
+                    maxLength={3}
+                    placeholder={t("apSessionsPh")}
                     aria-invalid={Boolean(touched[2] && errors.totalSessions)}
                     value={formData.totalSessions}
                     onChange={(e) => {
-                      setFormData((prev) => ({ ...prev, totalSessions: e.target.value }));
+                      setFormData((prev) => ({ ...prev, totalSessions: clipDigits(e.target.value, 3) }));
                       setDirty(true);
                     }}
                   />
-                  <p className="lw-fh">
-                    {isMn
-                      ? "Сургалтын турш хуваарийн дагуу явагдах нийт хичээлийн тоо."
-                      : "Total number of class sessions for the program."}
-                  </p>
+                  <p className="lw-fh">{t("apSessionsHint")}</p>
                   {touched[2] && errors.totalSessions && <span className="lw-er">{errors.totalSessions}</span>}
                 </label>
 
@@ -1501,7 +1503,7 @@ export default function LearningEditorPage() {
                 <div className="lw-calc">
                   <span className="lw-calcI">i</span>
                   <span className="lw-calcT">
-                    <b>{isMn ? "Үргэлжлэх хугацаа" : "Calculated Duration"}</b>
+                    <b>{t("apDurationCalc")}</b>
                     <span>{durationText}</span>
                   </span>
                 </div>
@@ -1509,35 +1511,27 @@ export default function LearningEditorPage() {
             </div>
 
             {/* Bottom Section: Batches / Cohorts */}
-            <section className="lw-sec">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                <div>
-                  <h3 className="lw-h2">{isMn ? "Хуваарь ба ангиуд" : "Schedules & Batches"}</h3>
-                  <span style={{ fontSize: "13px", color: "var(--bd-gray-400)" }}>
-                    {isMn ? "Сурагчид өөрт тохирох ангийг сонгон бүртгүүлнэ." : "Students choose their preferred cohort."}
-                  </span>
-                </div>
+            <section className="lw-cardIn" style={{ marginTop: "16px" }}>
+              <div className="lw-rcH" style={{ marginBottom: "2px" }}>
+                <b>{t("apCohorts")}</b>
                 <button
                   type="button"
                   className="lw-gh lw-sm"
                   onClick={handleOpenAddCohort}
-                  style={{ borderRadius: "999px" }}
                 >
-                  + {isMn ? "Анги нэмэх" : "Add Batch"}
+                  {t("apAddCohort")}
                 </button>
               </div>
 
               {formData.batches.length === 0 ? (
-                <div className="lw-empty">
-                  {isMn ? "Анги хараахан нэмэгдээгүй байна. Дээрх 'Анги нэмэх' товчийг дарж хуваарь үүсгэнэ үү." : "No batches added yet. Click 'Add Batch' to create a schedule."}
-                </div>
+                <p className="lw-empty">{t("apNoCohorts")}</p>
               ) : (
                 <div className="lw-cohList">
                   <div className="lw-cohRow lw-cohHead">
-                    <span>{isMn ? "Анги" : "Batch"}</span>
-                    <span>{isMn ? "Өдрүүд" : "Days"}</span>
-                    <span>{isMn ? "Цаг" : "Time"}</span>
-                    <span>{isMn ? "Суудал" : "Seats"}</span>
+                    <span>{t("apCohort")}</span>
+                    <span>{t("apDays")}</span>
+                    <span>{t("apTime")}</span>
+                    <span>{t("apSeats")}</span>
                     <span />
                   </div>
                   {formData.batches.map((b, i) => {
@@ -1550,17 +1544,17 @@ export default function LearningEditorPage() {
 
                     return (
                       <div key={i} className="lw-cohRow">
-                        <b>{b.batchName || (isMn ? "Анги" : "Batch")}</b>
+                        <b>{b.batchName || t("apCohort")}</b>
                         <span>{daysStr || "—"}</span>
                         <span>{b.startTime} – {b.endTime}</span>
-                        <span>{b.seats} {isMn ? "суудал" : "seats"}</span>
+                        <span data-lb={t("apSeats")}>{b.seats}</span>
                         <span className="lw-cohActs">
                           <button
                             type="button"
                             className="lw-gh lw-sm"
                             onClick={() => handleOpenEditCohort(i)}
                           >
-                            {isMn ? "Засах" : "Edit"}
+                            {t("edit")}
                           </button>
                           <button
                             type="button"
@@ -1587,87 +1581,70 @@ export default function LearningEditorPage() {
           <div className="lw-grid2">
             {/* Left Card: Price (Fixed Course Only - No Passes) */}
             <section className="lw-cardIn">
-              <h2 className="lw-h2">{isMn ? "Сургалтын төлбөр" : "Course Fee"}</h2>
+              <h2 className="lw-h2">{t("apCoursePrice")}</h2>
 
               <label className="lw-f">
                 <span className="lw-row1">
                   <span className="lw-lb" style={{ margin: 0 }}>
-                    {isMn ? "Нийт үнэ" : "Full Price"} <i>*</i>
+                    {t("apPriceLabel")} <i>*</i>
                   </span>
-                  <span className="lw-inWrap lw-inWrap-sm">
+                  <span className="lw-inWrap lw-inWrap-price">
                     <input
-                      type="number"
-                      min={0}
+                      type="text"
+                      inputMode="numeric"
                       className="lw-in"
-                      placeholder={isMn ? "Жишээ нь: 500000" : "e.g. 500000"}
+                      maxLength={10}
+                      placeholder={t("apPricePh")}
                       aria-invalid={Boolean(touched[3] && errors.price)}
                       value={formData.price}
+                      onKeyDown={(e) => {
+                        if (["-", "+", "e", "E", "."].includes(e.key)) e.preventDefault();
+                        const digit = e.key >= "0" && e.key <= "9";
+                        if (digit && String(formData.price || "").length >= 10) e.preventDefault();
+                      }}
                       onChange={(e) => {
-                        setFormData((prev) => ({ ...prev, price: e.target.value }));
+                        const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                        setFormData((prev) => ({ ...prev, price: digits }));
                         setDirty(true);
                       }}
                     />
                     <span className="lw-inSuf">₮</span>
                   </span>
                 </span>
-                <p className="lw-fh">
-                  {isMn
-                    ? "Сургалтын үндсэн бүтэн төлбөр. Бүртгүүлэхэд бүтэн дүнгээр төлөгдөнө."
-                    : "The full enrollment fee for the course. Paid upon registration."}
-                </p>
+                <p className="lw-fh">{t("apPriceHint")}</p>
                 {touched[3] && errors.price && <span className="lw-er">{errors.price}</span>}
               </label>
             </section>
 
-            {/* Right Card: Refund Policy (From Backend API Only) & Summaries */}
             <section className="lw-cardIn">
-              <h2 className="lw-h2">{isMn ? "Буцаан олголтын нөхцөл" : "Refund Policy"}</h2>
+              <h2 className="lw-h2">{t("apRefundHead")}</h2>
 
               <label className="lw-f">
-                <span className="lw-lb">
-                  {isMn ? "Нөхцөл сонгох" : "Select Policy"} <i>*</i>
+                <span className="lw-row1">
+                  <span className="lw-lb" style={{ margin: 0 }}>
+                    {t("apRefundPick")} <i>*</i>
+                  </span>
+                  <select
+                    className="lw-in"
+                    style={{ flex: "0 1 auto", width: "240px", minWidth: 0 }}
+                    aria-invalid={Boolean(touched[3] && errors.refundPolicy)}
+                    value={getCanonicalRefundPolicy(formData.refundPolicy)}
+                    onChange={(e) => {
+                      setFormData((prev) => ({ ...prev, refundPolicy: e.target.value }));
+                      setDirty(true);
+                    }}
+                  >
+                    <option value="">{t("apSelect")}</option>
+                    {refundOptions.map((opt, i) => (
+                      <option key={i} value={opt.val}>
+                        {isMn ? opt.mn : opt.en}
+                      </option>
+                    ))}
+                  </select>
                 </span>
-                <select
-                  className="lw-in"
-                  aria-invalid={Boolean(touched[3] && errors.refundPolicy)}
-                  value={getCanonicalRefundPolicy(formData.refundPolicy)}
-                  onChange={(e) => {
-                    setFormData((prev) => ({ ...prev, refundPolicy: e.target.value }));
-                    setDirty(true);
-                  }}
-                >
-                  <option value="">
-                    {isMn ? "Сонгоно уу..." : "Select policy..."}
-                  </option>
-                  {refundOptions.map((opt, i) => (
-                    <option key={i} value={opt.val}>
-                      {isMn ? opt.mn : opt.en}
-                    </option>
-                  ))}
-                </select>
+                <p className="lw-fh">{t("apRefundHint")}</p>
                 {touched[3] && errors.refundPolicy && <span className="lw-er">{errors.refundPolicy}</span>}
               </label>
-
-              {/* Automatic calculations */}
-              <div style={{ marginTop: "14px", borderTop: "1px solid var(--bd-border-soft)", paddingTop: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", color: "var(--bd-gray-400)" }}>
-                    {isMn ? "Нийт суудлын тоо (бүх ангиуд)" : "Total Seats Capacity"}
-                  </span>
-                  <b style={{ color: "var(--bd-white)", fontSize: "15px" }}>
-                    {totalCapacity > 0 ? `${totalCapacity} ${isMn ? "суудал" : "seats"}` : "—"}
-                  </b>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", color: "var(--bd-gray-400)" }}>
-                    {isMn ? "Нэг удаагийн хичээлийн тооцоологдсон өртөг" : "Estimated Cost Per Session"}
-                  </span>
-                  <b style={{ color: "var(--acc-bright)", fontSize: "15px" }}>
-                    {perSessionPriceText}
-                  </b>
-                </div>
-              </div>
             </section>
           </div>
         )}
@@ -1679,9 +1656,7 @@ export default function LearningEditorPage() {
           <div style={{ marginTop: "18px" }}>
             <p className="lw-note2">
               <i className="lw-i">i</i>
-              {isMn
-                ? "Бүх мэдээллээ шалгаад баталгаажуулна уу. Нийтлэгдсэний дараа нийтийн сайт дээр шууд харагдана."
-                : "Review all details before publishing. Once published, your course will immediately be visible to students."}
+              {t("apReviewNote")}
             </p>
 
             {/* Error Banner if incomplete */}
@@ -1708,9 +1683,9 @@ export default function LearningEditorPage() {
                 {/* Basic Info Card */}
                 <div className="lw-rcard">
                   <div className="lw-rcH">
-                    <b>{isMn ? "Үндсэн мэдээлэл" : "Basic Info"}</b>
+                    <b>{t("apBasic")}</b>
                     <button type="button" className="lw-edit" onClick={() => setStep(1)}>
-                      {isMn ? "Засах" : "Edit"}
+                      {t("edit")}
                     </button>
                   </div>
                   <div className="lw-topRow">
@@ -1720,29 +1695,27 @@ export default function LearningEditorPage() {
                     />
                     <div style={{ flex: "1 1 240px", minWidth: 0 }}>
                       <span className="lw-kv2">
-                        <span>{isMn ? "Сургалтын нэр" : "Title"}</span>
+                        <span>{t("apCourseName")}</span>
                         <span>{formData.courseTitle || "—"}</span>
                       </span>
                       <span className="lw-kv2">
-                        <span>{isMn ? "Ангилал" : "Category"}</span>
+                        <span>{t("category")}</span>
                         <span>{selectedCategoryObj?.name || "—"}</span>
                       </span>
-                      <span className="lw-kv2">
-                        <span>{isMn ? "Товч тайлбар" : "Summary"}</span>
+                      <span className="lw-kv2 lw-clamp">
+                        <span>{t("apShort")}</span>
                         <span>{formData.shortdesc || "—"}</span>
                       </span>
-                      <span className="lw-kv2">
-                        <span>{isMn ? "Дэлгэрэнгүй" : "Details"}</span>
-                        <span style={{ maxHeight: "60px", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {formData.longdesc || "—"}
-                        </span>
+                      <span className="lw-kv2 lw-clamp">
+                        <span>{t("apLongReview")}</span>
+                        <span>{formData.longdesc || "—"}</span>
                       </span>
                     </div>
                   </div>
 
                   {formData.whatYouWillLearn && (
                     <div className="lw-long">
-                      <b>{isMn ? "Суралцах үр дүн" : "Learning Outcomes"}</b>
+                      <b>{t("apOutcomes")}</b>
                       <div className="lw-pl">
                         {formData.whatYouWillLearn
                           .split("\n")
@@ -1758,10 +1731,10 @@ export default function LearningEditorPage() {
                   )}
 
                   <div className="lw-media">
-                    <b>{isMn ? "Медиа" : "Media"}</b>
+                    <b>{t("apMedia")}</b>
                     <span className="lw-mrow">
-                      <span>{isMn ? "Постер зураг" : "Poster image"}</span>
-                      <b>{formData.posterImage?.length ? (isMn ? "Оруулсан" : "Uploaded") : (isMn ? "Оруулаагүй" : "Not uploaded")}</b>
+                      <span>{t("apPoster")}</span>
+                      <b>{formData.posterImage?.length ? t("apUploaded") : t("apNotUploaded")}</b>
                       <span className="lw-chk" style={{ color: formData.posterImage?.length ? "var(--acc-bright)" : "var(--bd-gray-600)" }}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
@@ -1770,8 +1743,8 @@ export default function LearningEditorPage() {
                       </span>
                     </span>
                     <span className="lw-mrow">
-                      <span>{isMn ? "Зургийн цомог" : "Photo gallery"}</span>
-                      <b>{formData.mediaLinks?.length ? (isMn ? `${formData.mediaLinks.length} зураг` : `${formData.mediaLinks.length} photos`) : (isMn ? "Оруулаагүй" : "None")}</b>
+                      <span>{t("apGallery")}</span>
+                      <b>{formData.mediaLinks?.length ? t("apGalleryCount", { count: formData.mediaLinks.length }) : t("apNotUploaded")}</b>
                       <span className="lw-chk" style={{ color: formData.mediaLinks?.length ? "var(--acc-bright)" : "var(--bd-gray-600)" }}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
@@ -1780,8 +1753,8 @@ export default function LearningEditorPage() {
                       </span>
                     </span>
                     <span className="lw-mrow">
-                      <span>{isMn ? "Танилцуулга видео" : "Teaser video"}</span>
-                      <b>{formData.shortTeaserVideo?.length ? (isMn ? "Оруулсан" : "Uploaded") : (isMn ? "Оруулаагүй" : "None")}</b>
+                      <span>{t("apTeaser")}</span>
+                      <b>{formData.shortTeaserVideo?.length ? t("apUploaded") : t("apNotUploaded")}</b>
                       <span className="lw-chk" style={{ color: formData.shortTeaserVideo?.length ? "var(--acc-bright)" : "var(--bd-gray-600)" }}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
@@ -1795,25 +1768,21 @@ export default function LearningEditorPage() {
                 {/* Pricing & Policy Card */}
                 <div className="lw-rcard">
                   <div className="lw-rcH">
-                    <b>{isMn ? "Үнэ ба бодлого" : "Pricing & Policy"}</b>
+                    <b>{t("apPrice")}</b>
                     <button type="button" className="lw-edit" onClick={() => setStep(3)}>
-                      {isMn ? "Засах" : "Edit"}
+                      {t("edit")}
                     </button>
                   </div>
                   <span className="lw-kv2">
-                    <span>{isMn ? "Нийт үнэ" : "Full Price"}</span>
+                    <span>{t("apPriceLabel")}</span>
                     <span>{formData.price ? `₮${Number(formData.price).toLocaleString("en-US")}` : "—"}</span>
                   </span>
                   <span className="lw-kv2">
-                    <span>{isMn ? "Нийт суудал" : "Total Seats"}</span>
-                    <span>{totalCapacity > 0 ? `${totalCapacity} ${isMn ? "суудал" : "seats"}` : "—"}</span>
+                    <span>{t("apTotalSeats")}</span>
+                    <span>{totalCapacity > 0 ? String(totalCapacity) : "—"}</span>
                   </span>
                   <span className="lw-kv2">
-                    <span>{isMn ? "Нэг хичээлийн өртөг" : "Per Session"}</span>
-                    <span>{perSessionPriceText}</span>
-                  </span>
-                  <span className="lw-kv2">
-                    <span>{isMn ? "Буцаан олголт" : "Refund Policy"}</span>
+                    <span>{t("apRefundHead")}</span>
                     <span>{getRefundPolicyDisplay(formData.refundPolicy, isMn) || "—"}</span>
                   </span>
                 </div>
@@ -1824,27 +1793,27 @@ export default function LearningEditorPage() {
                 {/* Schedule Card */}
                 <div className="lw-rcard">
                   <div className="lw-rcH">
-                    <b>{isMn ? "Хуваарь" : "Schedule"}</b>
+                    <b>{t("apSchedule")}</b>
                     <button type="button" className="lw-edit" onClick={() => setStep(2)}>
-                      {isMn ? "Засах" : "Edit"}
+                      {t("edit")}
                     </button>
                   </div>
                   <span className="lw-kv2">
-                    <span>{isMn ? "Эхлэх огноо" : "Start Date"}</span>
+                    <span>{t("startDate")}</span>
                     <span>{formData.startDate || "—"}</span>
                   </span>
                   <span className="lw-kv2">
-                    <span>{isMn ? "Дуусах огноо" : "End Date"}</span>
+                    <span>{t("endDate")}</span>
                     <span>{formData.endDate || "—"}</span>
                   </span>
                   <span className="lw-kv2">
-                    <span>{isMn ? "Хичээлийн тоо" : "Sessions"}</span>
-                    <span>{formData.totalSessions ? `${formData.totalSessions} ${isMn ? "хичээл" : "sessions"}` : "—"}</span>
+                    <span>{t("apLessonCount")}</span>
+                    <span>{formData.totalSessions ? t("apLessons", { count: formData.totalSessions }) : "—"}</span>
                   </span>
 
                   <div style={{ marginTop: "12px" }}>
                     <b style={{ display: "block", fontSize: "13px", color: "var(--bd-gray-400)", marginBottom: "8px" }}>
-                      {isMn ? "Бүртгэлтэй ангиуд" : "Batches"}
+                      {t("apCohorts")}
                     </b>
                     {formData.batches.length === 0 ? (
                       <span style={{ fontSize: "12.5px", color: "var(--bd-gray-500)" }}>{isMn ? "Анги нэмээгүй" : "No batches added"}</span>
@@ -1864,9 +1833,9 @@ export default function LearningEditorPage() {
                 {/* Location Card */}
                 <div className="lw-rcard">
                   <div className="lw-rcH">
-                    <b>{isMn ? "Байршил" : "Location"}</b>
+                    <b>{t("apVenue")}</b>
                     <button type="button" className="lw-edit" onClick={() => setStep(2)}>
-                      {isMn ? "Засах" : "Edit"}
+                      {t("edit")}
                     </button>
                   </div>
                   <div className="lw-topRow">
@@ -1878,11 +1847,11 @@ export default function LearningEditorPage() {
                     </span>
                     <div style={{ flex: "1 1 220px", minWidth: 0 }}>
                       <span className="lw-kv2">
-                        <span>{isMn ? "Талбайн нэр" : "Venue Name"}</span>
+                        <span>{t("apVenueName")}</span>
                         <span>{formData.venueName || "—"}</span>
                       </span>
                       <span className="lw-kv2">
-                        <span>{isMn ? "Хаяг" : "Address"}</span>
+                        <span>{t("apAddress")}</span>
                         <span>{formData.venueAddress?.address || "—"}</span>
                       </span>
                       {formData.venueAddress?.address && (
@@ -1894,7 +1863,7 @@ export default function LearningEditorPage() {
                             formData.venueAddress.address
                           )}`}
                         >
-                          {isMn ? "Газрын зураг дээр харах ↗" : "View on Google Maps ↗"}
+                          {t("apMapLink")}
                         </a>
                       )}
                     </div>
@@ -1909,7 +1878,7 @@ export default function LearningEditorPage() {
         <div className="lw-acts">
           {step > 1 && (
             <button type="button" className="lw-gh" onClick={handleBack}>
-              {isMn ? "Буцах" : "Back"}
+              {t("back")}
             </button>
           )}
 
@@ -1922,12 +1891,12 @@ export default function LearningEditorPage() {
             onClick={handleSaveDraft}
           >
             {savingDraft && <span className="lw-sp" />}
-            {savingDraft ? (isMn ? "Хадгалж байна..." : "Saving...") : isMn ? "Ноорог хадгалах" : "Save Draft"}
+            {savingDraft ? (isMn ? "Хадгалж байна..." : "Saving...") : t("apSaveDraft")}
           </button>
 
           {step < 4 ? (
             <button type="button" className="lw-go" onClick={handleNext}>
-              {isMn ? "Үргэлжлүүлэх" : "Continue"}
+              {t("continue")}
             </button>
           ) : (
             <button
@@ -1939,7 +1908,7 @@ export default function LearningEditorPage() {
               {publishing && <span className="lw-sp" />}
               {publishing
                 ? isMn ? "Илгээж байна..." : "Publishing..."
-                : isMn ? (mode === "published" ? "Шинэчлэх" : "Нийтлэх") : mode === "published" ? "Update Course" : "Publish Course"}
+                : mode === "published" ? t("apUpdate") : t("apSubmitReview")}
             </button>
           )}
         </div>
@@ -1951,10 +1920,10 @@ export default function LearningEditorPage() {
           <div className="lw-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="lw-mHead">
               <div>
-                <b style={{ fontSize: "19px", color: "var(--bd-white)" }}>
-                  {editingCohortIndex !== null ? (isMn ? "Анги засах" : "Edit Batch") : (isMn ? "Анги нэмэх" : "Add Batch")}
+                <b style={{ fontSize: "21px", color: "var(--bd-white)" }}>
+                  {editingCohortIndex !== null ? t("apEditCohort") : t("apAddCohort")}
                 </b>
-                <p>{isMn ? "Ангийн хуваарь, суудлын тоог оруулна уу." : "Set the schedule and seats for this batch."}</p>
+                <p>{t("apCohortIntro")}</p>
               </div>
               <button
                 type="button"
@@ -1982,18 +1951,19 @@ export default function LearningEditorPage() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <label className="lw-f">
-                <span className="lw-lb">{isMn ? "Ангийн нэр" : "Batch Name"} <i>*</i></span>
+                <span className="lw-lb">{t("apCohortName")} <i>*</i></span>
                 <input
                   type="text"
                   className="lw-in"
-                  placeholder={isMn ? "Жишээ нь: Өдрийн анги, Оройн анги" : "e.g. Morning Batch, Weekend Batch"}
+                  maxLength={40}
+                  placeholder={t("apCohortNamePh")}
                   value={cohortForm.name}
-                  onChange={(e) => setCohortForm((prev) => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setCohortForm((prev) => ({ ...prev, name: e.target.value.slice(0, 40) }))}
                 />
               </label>
 
               <div className="lw-f">
-                <span className="lw-lb">{isMn ? "Хичээллэх өдрүүд" : "Days of Week"} <i>*</i></span>
+                <span className="lw-lb">{t("apDays")} <i>*</i></span>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                   {DAYS.map((d) => {
                     const isSelected = cohortForm.days.includes(d.key);
@@ -2021,7 +1991,7 @@ export default function LearningEditorPage() {
 
               <div className="lw-2">
                 <label className="lw-f">
-                  <span className="lw-lb">{isMn ? "Эхлэх цаг" : "Start Time"} <i>*</i></span>
+                  <span className="lw-lb">{t("apStartTime")} <i>*</i></span>
                   <input
                     type="time"
                     className="lw-in"
@@ -2030,7 +2000,7 @@ export default function LearningEditorPage() {
                   />
                 </label>
                 <label className="lw-f">
-                  <span className="lw-lb">{isMn ? "Дуусах цаг" : "End Time"} <i>*</i></span>
+                  <span className="lw-lb">{t("apEndTime")} <i>*</i></span>
                   <input
                     type="time"
                     className="lw-in"
@@ -2041,8 +2011,9 @@ export default function LearningEditorPage() {
               </div>
 
               <div className="lw-f">
-                <span className="lw-lb">{isMn ? "Суудлын тоо" : "Seats Capacity"} <i>*</i></span>
-                <div className="lw-stepbox">
+                <span className="lw-lb">{t("apSeats")} <i>*</i></span>
+                <span className="lw-stepn">
+                <span className="lw-stepbox">
                   <button
                     type="button"
                     onClick={() =>
@@ -2055,12 +2026,12 @@ export default function LearningEditorPage() {
                     −
                   </button>
                   <input
-                    type="number"
-                    min={1}
-                    placeholder={isMn ? "Жишээ нь: 15" : "e.g. 15"}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
                     value={cohortForm.seats}
                     onChange={(e) =>
-                      setCohortForm((prev) => ({ ...prev, seats: e.target.value }))
+                      setCohortForm((prev) => ({ ...prev, seats: clipDigits(e.target.value, 4) }))
                     }
                   />
                   <button
@@ -2068,13 +2039,16 @@ export default function LearningEditorPage() {
                     onClick={() =>
                       setCohortForm((prev) => ({
                         ...prev,
-                        seats: (Number(prev.seats) || 0) + 1,
+                        seats: Math.min(9999, (Number(prev.seats) || 0) + 1),
                       }))
                     }
                   >
                     +
                   </button>
-                </div>
+                </span>
+                <span className="lw-suffix">{t("apStudent")}</span>
+                </span>
+                <p className="lw-fh">{t("apSeatsHint")}</p>
               </div>
             </div>
 
@@ -2153,46 +2127,54 @@ export default function LearningEditorPage() {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: "60px",
-                height: "60px",
+                width: "64px",
+                height: "64px",
                 borderRadius: "999px",
                 background: "rgba(35, 173, 164, 0.14)",
                 color: "var(--acc-bright)",
-                margin: "0 auto 16px",
+                margin: "0 auto",
               }}
             >
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="m8.4 12.2 2.4 2.4 4.8-5.2" />
               </svg>
             </span>
-            <b style={{ fontSize: "20px", color: "var(--bd-white)", display: "block", marginBottom: "8px" }}>
+            <b style={{ fontSize: "20px", fontWeight: 700, letterSpacing: "-0.014em", color: "var(--bd-white)", display: "block", marginTop: "15px" }}>
               {doneModal.title}
             </b>
-            <p style={{ fontSize: "14px", color: "var(--bd-gray-400)", lineHeight: 1.5, margin: "0 0 24px" }}>
+            <p style={{ fontSize: "14px", color: "var(--bd-gray-400)", lineHeight: 1.6, margin: "9px 0 0" }}>
               {doneModal.msg}
             </p>
 
-            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "9px", flexWrap: "wrap", justifyContent: "center", marginTop: "20px" }}>
               <button
                 type="button"
-                className="lw-gh lw-sm"
-                onClick={() => router.push("/CoursesManagement")}
-              >
-                {isMn ? "Миний сургалтууд" : "My Courses"}
-              </button>
-              <button
-                type="button"
-                className="lw-go lw-sm"
+                className="lw-go"
                 onClick={() => {
-                  if (courseId) {
-                    router.push(`/CourseDetailOrganiser?courseId=${courseId}`);
-                  } else {
-                    router.push("/CoursesManagement");
-                  }
+                  const id = doneModal.courseId || courseId;
+                  if (id) router.push(`/CourseDetailOrganiser?courseId=${id}`);
+                  else router.push("/CoursesManagement");
                 }}
               >
-                {isMn ? "Сургалт харах" : "View Course"}
+                {t("apViewCourse")}
               </button>
+              <button
+                type="button"
+                className="lw-gh"
+                onClick={() => router.push("/CoursesManagement")}
+              >
+                {t("lmMyCourses")}
+              </button>
+              {doneModal.type === "published" && (
+                <button
+                  type="button"
+                  className="lw-gh"
+                  onClick={() => router.push("/Dashboard")}
+                >
+                  {t("dashboard")}
+                </button>
+              )}
             </div>
           </div>
         </div>

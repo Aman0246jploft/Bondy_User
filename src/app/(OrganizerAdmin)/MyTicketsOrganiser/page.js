@@ -2,12 +2,12 @@
 
 import React from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import UnifiedTickets from "@/components/Tickets/UnifiedTickets";
+import OrganizerOrders from "@/components/Tickets/OrganizerOrders";
 
 export default function MyTicketsOrganiserPage() {
   return (
     <ProtectedRoute>
-      <UnifiedTickets role="ORGANIZER" />
+      <OrganizerOrders />
     </ProtectedRoute>
   );
 }

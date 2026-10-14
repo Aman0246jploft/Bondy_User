@@ -27,6 +27,8 @@ function StaffPage() {
   const [submittingStaff, setSubmittingStaff] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const fileInputRef = useRef(null);
   const entityListRef = useRef(null);
 
@@ -41,6 +43,7 @@ function StaffPage() {
 
   // Assignment Modal states
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignStep, setAssignStep] = useState(null);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [events, setEvents] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -113,6 +116,12 @@ function StaffPage() {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const okType = file.type === "image/png" || file.type === "image/jpeg";
+    if (!okType || file.size > 2 * 1024 * 1024) {
+      toast.error(t("stPhotoBig"));
+      e.target.value = "";
+      return;
+    }
 
     const formData = new FormData();
     formData.append("files", file);
@@ -142,6 +151,8 @@ function StaffPage() {
     setShowAddStaff(true);
     setShowPassword(false);
     setPasswordError("");
+    setNameError("");
+    setEmailError("");
   };
 
   // Open edit view for a specific staff member
@@ -154,6 +165,8 @@ function StaffPage() {
     setShowAddStaff(true);
     setShowPassword(false);
     setPasswordError("");
+    setNameError("");
+    setEmailError("");
   };
 
   // Handle password change with real-time validation
@@ -161,15 +174,10 @@ function StaffPage() {
     setFormPassword(val);
     const password = val.trim();
     if (!password) {
-      if (!editingStaffId) {
-        setPasswordError(t("passwordRequired") || "Password is required for new staff.");
-      } else {
-        setPasswordError("");
-      }
+      setPasswordError(editingStaffId ? "" : t("stPwLen"));
     } else {
-      const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
-      if (!passwordRegex.test(password)) {
-        setPasswordError(t("passwordComplexity") || "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.");
+      if (password.length < 8 || password.length > 64) {
+        setPasswordError(t("stPwLen"));
       } else {
         setPasswordError("");
       }
@@ -199,34 +207,46 @@ function StaffPage() {
   // Handle submission of the Add/Edit Staff form
   const handleStaffFormSubmit = async (e) => {
     e.preventDefault();
-    if (!formFullName.trim() || !formEmail.trim()) {
-      toast.error(t("fillRequiredFields") || "Please fill in all required fields.");
-      return;
-    }
-    if (!editingStaffId && !formPassword.trim()) {
-      setPasswordError(t("passwordRequired") || "Password is required for new staff.");
-      toast.error(t("passwordRequired") || "Password is required for new staff.");
-      return;
-    }
+    const name = formFullName.trim();
+    const email = formEmail.trim();
     const password = formPassword.trim();
-    if (password) {
-      const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
-      if (!passwordRegex.test(password)) {
-        setPasswordError(t("passwordComplexity") || "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.");
-        toast.error(t("passwordComplexity") || "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.");
-        return;
-      }
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    let valid = true;
+    if (!name) {
+      setNameError(t("stNameErr"));
+      valid = false;
+    } else if (name.length > 80) {
+      setNameError(t("stNameLen"));
+      valid = false;
+    } else {
+      setNameError("");
     }
+    if (!email || !emailOk) {
+      setEmailError(t("stEmailErr"));
+      valid = false;
+    } else if (email.length > 120) {
+      setEmailError(t("stEmailLen"));
+      valid = false;
+    } else {
+      setEmailError("");
+    }
+    if ((!editingStaffId && !password) || (password && (password.length < 8 || password.length > 64))) {
+      setPasswordError(t("stPwLen"));
+      valid = false;
+    } else {
+      setPasswordError("");
+    }
+    if (!valid) return;
 
     try {
       setSubmittingStaff(true);
       const payload = {
-        fullname: formFullName,
-        email: formEmail,
+        fullname: name.slice(0, 80),
+        email: email.slice(0, 120),
         profilePhoto: formPhoto || null,
       };
-      if (formPassword.trim()) {
-        payload.password = formPassword;
+      if (password) {
+        payload.password = password.slice(0, 64);
       }
 
       let res;
@@ -280,6 +300,8 @@ function StaffPage() {
     });
 
     setAssignedMap(initialMap);
+    setEntitySearchQuery("");
+    setAssignStep("type");
     setShowAssignModal(true);
   };
 
@@ -380,6 +402,33 @@ function StaffPage() {
       return title.includes(q);
     },
   );
+
+  const assignPool = activeTab === "events" ? events : courses;
+  const selectedCount = assignPool.filter((item) => assignedMap[item._id]).length;
+  const staffName = (staff) =>
+    `${staff?.firstName || ""} ${staff?.lastName || ""}`.trim() || t("staffMember");
+  const MONTH_KEYS = ["monthJan", "monthFeb", "monthMar", "monthApr", "monthMay", "monthJun", "monthJul", "monthAug", "monthSep", "monthOct", "monthNov", "monthDec"];
+  const itemMeta = (item) => {
+    let when = "";
+    if (item.startDate) {
+      const d = new Date(item.startDate);
+      if (!Number.isNaN(d.getTime())) {
+        when = `${t(MONTH_KEYS[d.getMonth()])} ${d.getDate()}`;
+        if (item.startTime) when += ` · ${item.startTime}`;
+      }
+    }
+    const place = item.venueName || "";
+    return [when, place].filter(Boolean).join(" · ");
+  };
+  const clearAssignSelection = () => {
+    setAssignedMap((prev) => {
+      const next = { ...prev };
+      assignPool.forEach((item) => {
+        next[item._id] = false;
+      });
+      return next;
+    });
+  };
 
   return (
     <div className="staff-container col-12">
@@ -826,455 +875,283 @@ function StaffPage() {
         }
       `}</style>
 
-      {/* --------------------------------------------------------------- */}
-      {/* ADD STAFF VIEW */}
-      {/* --------------------------------------------------------------- */}
-      {showAddStaff ? (
-        <div className="cards">
-          <div className="add-staff-header">
-            <button
-              className="back-arrow-btn "
-              onClick={() => {
-                setShowAddStaff(false);
-                setEditingStaffId(null);
-              }}>
-              &#8592;
-            </button>
-            <h2>{editingStaffId ? (t("editStaff") || "Edit Staff") : (t("addStaff") || "Add Staff")}</h2>
-          </div>
-          <p
-            style={{
-              color: "#7c7c7c",
-              fontSize: "14px",
-              marginBottom: "30px",
-            }}>
-            {editingStaffId
-              ? (t("editStaffDesc") || "Update this team member's information.")
-              : (t("addStaffDesc") || "Assign a new team member to your scanning pool. They will be able to access the event check-in tools immediately.")}
-          </p>
+      <div className="sf-tools">
+        <label className="sf-search">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+            <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t("stSearch")}
+          />
+        </label>
+        <button type="button" className="sf-add" onClick={handleAddClick}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+            <path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+          {t("stAdd")}
+        </button>
+      </div>
 
-          <form onSubmit={handleStaffFormSubmit}>
-            {/* Circle Upload Photo */}
-            <div
-              className="photo-upload-circle"
-              onClick={() => !uploadingPhoto && fileInputRef.current.click()}>
-              {uploadingPhoto ? (
-                <Spinner animation="border" size="sm" variant="light" />
-              ) : formPhoto ? (
-                <img
-                  src={getFullImageUrl(formPhoto)}
-                  alt="Avatar Preview"
-                  className="photo-preview"
-                  onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
-                />
-              ) : (
-                <div className="upload-placeholder">
-                  {/* <svg viewBox="0 0 24 24">
-                    <path d="M19 12h-2v3h-3v2h3v3h2v-3h3v-2h-3zM11.5 8.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM17 9.5V6H7L4.5 9.5 3 8v11h11v-2H5.4l1.6-2.2 2.2 2.2h3.8z" />
-                  </svg> */}
-                  <span>{t("addPhoto") || "Add Photo"}</span>
-                </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                style={{ display: "none" }}
-                onChange={handlePhotoUpload}
-              />
-            </div>
-
-            {/* Inputs */}
-            <div className="staff-form-group">
-              <label>{t("fullNameLabel") || "Full Name"} <span style={{ color: "#e74c3c" }}>*</span></label>
-              <input
-                type="text"
-                placeholder={t("enterFullNamePlaceholder") || "Enter full name"}
-                value={formFullName}
-                onChange={(e) => setFormFullName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="staff-form-group">
-              <label>{t("staffEmailLabel") || "Staff Email"} <span style={{ color: "#e74c3c" }}>*</span></label>
-              <input
-                type="email"
-                placeholder={t("enterStaffEmailPlaceholder") || "Enter staff email"}
-                value={formEmail}
-                onChange={(e) => setFormEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="staff-form-group">
-              <label>{t("passwordLabel") || "Password"}{!editingStaffId && <span style={{ color: "#e74c3c" }}> *</span>}</label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder={editingStaffId ? (t("enterNewPasswordPlaceholder") || "Enter new password (optional)") : (t("enterPasswordPlaceholder") || "Enter password")}
-                  value={formPassword}
-                  onChange={(e) => handlePasswordChange(e.target.value)}
-                  required={!editingStaffId}
-                  style={{ paddingRight: "40px" }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: "absolute",
-                    right: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    zIndex: 10
-                  }}
-                >
-                  {showPassword ? (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "rgba(255,255,255,0.6)" }}>
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "rgba(255,255,255,0.6)" }}>
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              <span style={{ color: passwordError ? "#e74c3c" : "#888888", fontSize: "11px", marginTop: "4px", display: "block", lineHeight: "1.4" }}>
-                {passwordError || t("passwordComplexity") || "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters."}
-              </span>
-            </div>
-
-            <button
-              type="submit"
-              className="submit-staff-btn"
-              disabled={submittingStaff}>
-              {submittingStaff ? (
-                <Spinner animation="border" size="sm" />
-              ) : editingStaffId ? (
-                t("saveChanges") || "Save Changes"
-              ) : (
-                t("addStaffMember") || "Add Staff Member"
-              )}
-            </button>
-          </form>
+      {loadingStaff ? (
+        <div className="sf-list">
+          <div className="sf-skel" style={{ height: 74 }} />
+          <div className="sf-skel" style={{ height: 74 }} />
+          <div className="sf-skel" style={{ height: 74 }} />
+        </div>
+      ) : staffList.length === 0 ? (
+        <div className="sf-state">
+          <span className="sf-stateI">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M5 19c1.2-3 3.4-4.5 7-4.5S17.8 16 19 19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </span>
+          <b>{t("stEmpty")}</b>
+          <p>{t("stEmptyBody")}</p>
+          <button type="button" className="sf-go" onClick={handleAddClick}>{t("stAdd")}</button>
+        </div>
+      ) : filteredStaffList.length === 0 ? (
+        <div className="sf-state">
+          <b>{t("stNoMatch")}</b>
+          <p>{t("stNoMatchBody")}</p>
+          <button type="button" className="sf-go" onClick={() => setSearchQuery("")}>{t("stClearSearch")}</button>
         </div>
       ) : (
-        /* --------------------------------------------------------------- */
-        /* STAFF LIST VIEW */
-        /* --------------------------------------------------------------- */
-        <div className="cards">
-          <div className="staff-header">
-            <h2>{t("staffHeader") || "Staff"}</h2>
-            <button
-              className="add-staff-btn-circle"
-              onClick={handleAddClick}>
-              +
-            </button>
-          </div>
-
-          <div className="search-wrapper-staff">
-            <svg
-              className="search-icon"
-              width="16"
-              height="16"
-              fill="currentColor"
-              viewBox="0 0 16 16">
-              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder={t("searchStaffPlaceholder") || "Search by name, email or Staff ID..."}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          {loadingStaff ? (
-            <div className="text-center py-5">
-              <Spinner animation="border" variant="teal" />
-            </div>
-          ) : filteredStaffList.length === 0 ? (
-            <div className="text-center py-5" style={{ color: "#7c7c7c" }}>
-              {t("noStaffMembersFound") || "No staff members found."}
-            </div>
-          ) : (
-            <div className="staff-list">
-              {filteredStaffList.map((staff) => (
-                <div className="staff-card" key={staff._id}>
-                  <div className="staff-info-box">
-                    <div className="staff-avatar-circle">
-                      <img
-                        src={staff.profileImage ? getFullImageUrl(staff.profileImage) : "/img/sidebar-logo.svg"}
-                        alt="Avatar"
-                        onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
-                      />
-                    </div>
-                    <div className="staff-details">
-                      <h5>
-                        {`${staff.firstName || ""} ${staff.lastName || ""}`.trim() ||
-                          t("staffMember") || "Staff Member"}
-                      </h5>
-                      <p>{staff.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="d-flex align-items-center gap-3">
-                    <button
-                      className="assign-action-btn"
-                      onClick={() => handleOpenAssign(staff)}>
-                      <img src="/img/ticket-icon.svg" alt="Assign" />
-                      <span>{t("assignEvent") || "Assign Event"}</span>
+        <section className="sf-list">
+          {filteredStaffList.map((staff) => {
+            const inactive = staff.status === "inactive" || staff.isActive === false;
+            return (
+              <div className="sf-row" key={staff._id}>
+                {staff.profileImage ? (
+                  <img className="sf-av" src={getFullImageUrl(staff.profileImage)} alt="" />
+                ) : (
+                  <span className="sf-av sf-av-empty" aria-hidden="true" />
+                )}
+                <span className="sf-who">
+                  <b>
+                    {staffName(staff)}
+                    <span className={`sf-pill ${inactive ? "is-off" : "is-on"}`}>
+                      {inactive ? t("stInactive") : t("stActive")}
+                    </span>
+                  </b>
+                  <i>{staff.email}</i>
+                </span>
+                <span className="sf-acts">
+                  {!inactive && (
+                    <button type="button" className="sf-assign" onClick={() => handleOpenAssign(staff)}>
+                      {t("stAssign")}
                     </button>
+                  )}
+                  <button
+                    type="button"
+                    className="sf-kebab"
+                    aria-label={t("actions")}
+                    onClick={() => setActiveDropdownId(activeDropdownId === staff._id ? null : staff._id)}
+                  >
+                    ⋯
+                  </button>
+                  {activeDropdownId === staff._id && (
+                    <>
+                      <button type="button" className="sf-menu-back" aria-label={t("close")} onClick={() => setActiveDropdownId(null)} />
+                      <span className="sf-menu">
+                        <button type="button" onClick={() => { setActiveDropdownId(null); handleOpenEdit(staff); }}>{t("edit")}</button>
+                        <button type="button" data-del onClick={() => { setActiveDropdownId(null); setStaffToDelete(staff); setShowDeleteModal(true); }}>{t("delete")}</button>
+                      </span>
+                    </>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </section>
+      )}
 
-                    <div className="staff-actions-wrapper">
-                      <button
-                        type="button"
-                        className="three-dots-btn"
-                        onClick={() => {
-                          setActiveDropdownId(activeDropdownId === staff._id ? null : staff._id);
-                        }}>
-                        ⋮
-                      </button>
-                      {activeDropdownId === staff._id && (
-                        <>
-                          <div
-                            style={{
-                              position: "fixed",
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              zIndex: 999,
-                              background: "transparent",
-                            }}
-                            onClick={() => setActiveDropdownId(null)}
-                          />
-                          <div className="staff-dropdown-menu" style={{ zIndex: 1000 }}>
-                            <button
-                              type="button"
-                              className="staff-dropdown-item"
-                              onClick={() => {
-                                setActiveDropdownId(null);
-                                handleOpenEdit(staff);
-                              }}>
-                              {t("edit") || "Edit"}
-                            </button>
-                            <button
-                              type="button"
-                              className="staff-dropdown-item delete"
-                              onClick={() => {
-                                setActiveDropdownId(null);
-                                setStaffToDelete(staff);
-                                setShowDeleteModal(true);
-                              }}>
-                              {t("delete") || "Delete"}
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+      {showAddStaff && (
+        <div className="sf-scrim" onClick={(e) => { if (e.target === e.currentTarget) { setShowAddStaff(false); setEditingStaffId(null); } }}>
+          <form className="sf-sheet" noValidate onSubmit={handleStaffFormSubmit}>
+            <div className="sf-sheetHead">
+              <div>
+                <b>{editingStaffId ? t("stEdit") : t("stAdd")}</b>
+                <span>{editingStaffId ? t("stEditSub") : t("stAddSub")}</span>
+              </div>
+              <button type="button" className="sf-x" aria-label={t("close")} onClick={() => { setShowAddStaff(false); setEditingStaffId(null); }}>×</button>
             </div>
-          )}
+            <p className="sf-note">{t("stNote")}</p>
+            <div className="sf-photo">
+              {formPhoto ? (
+                <img className="sf-av" src={getFullImageUrl(formPhoto)} alt="" />
+              ) : (
+                <span className="sf-av sf-av-empty" aria-hidden="true" />
+              )}
+              <span className="sf-photoTxt">
+                <b>{formPhoto ? t("stImageAdded") : t("stNoImage")}</b>
+                <span>{formPhoto ? t("stPhotoSaved") : t("stPhotoType")}</span>
+              </span>
+              <label className="sf-gh sf-pick">
+                {uploadingPhoto ? "…" : t("stAddImage")}
+                <input type="file" accept="image/png,image/jpeg" ref={fileInputRef} onChange={handlePhotoUpload} />
+              </label>
+            </div>
+            <label className="sf-f">
+              <span className="sf-lb">{t("stFullName")} <i>*</i></span>
+              <input className="sf-in" type="text" maxLength={80} value={formFullName} onChange={(e) => { setFormFullName(e.target.value); setNameError(""); }} placeholder={t("stNamePh")} aria-invalid={nameError ? "true" : "false"} />
+              {nameError ? <span className="sf-er">{nameError}</span> : null}
+            </label>
+            <label className="sf-f">
+              <span className="sf-lb">{t("stEmail")} <i>*</i></span>
+              <input className="sf-in" type="email" maxLength={120} value={formEmail} onChange={(e) => { setFormEmail(e.target.value); setEmailError(""); }} placeholder={t("stEmailPh")} aria-invalid={emailError ? "true" : "false"} />
+              {emailError ? <span className="sf-er">{emailError}</span> : null}
+            </label>
+            <div className="sf-f">
+              <span className="sf-lb">{t("stPassword")} <i>*</i></span>
+              <span className="sf-pw">
+                <input
+                  className="sf-in"
+                  type={showPassword ? "text" : "password"}
+                  maxLength={64}
+                  value={formPassword}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  placeholder={t("stPwPh")}
+                  aria-invalid={passwordError ? "true" : "false"}
+                />
+                <button type="button" className="sf-eye" onClick={() => setShowPassword((v) => !v)}>
+                  {showPassword ? t("stHide") : t("stView")}
+                </button>
+              </span>
+              {passwordError ? <span className="sf-er">{passwordError}</span> : null}
+              <span className="sf-hint">{editingStaffId ? t("stPwEdit") : t("stPwAdd")}</span>
+            </div>
+            <div className="sf-sheetActs sf-formActs">
+              <button type="submit" className="sf-go" disabled={submittingStaff || uploadingPhoto}>
+                {submittingStaff ? "…" : editingStaffId ? t("stSave") : t("stAdd")}
+              </button>
+              <button type="button" className="sf-gh" onClick={() => { setShowAddStaff(false); setEditingStaffId(null); }}>{t("cancel")}</button>
+            </div>
+          </form>
         </div>
       )}
 
-      {/* --------------------------------------------------------------- */}
-      {/* ASSIGNED EVENTS/COURSES MODAL */}
-      {/* --------------------------------------------------------------- */}
-      <Modal
-        show={showAssignModal}
-        onHide={() => setShowAssignModal(false)}
-        centered
-        className="dark-modal">
-        <Modal.Header closeButton>
-          <Modal.Title>{t("assignedEventsTitle") || "Assigned Events"}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body
-          className="p-0"
-          style={{ background: "#161616", padding: "0 !important" }}>
-          {/* Tabs */}
-          <div className="modal-tabs">
-            <button
-              className={`modal-tab-btn ${activeTab === "events" ? "active" : ""}`}
-              onClick={() => {
-                setActiveTab("events");
-                setEntitySearchQuery("");
-              }}>
-              {t("eventsTab") || "Events"}
-            </button>
-            <button
-              className={`modal-tab-btn ${activeTab === "courses" ? "active" : ""}`}
-              onClick={() => {
-                setActiveTab("courses");
-                setEntitySearchQuery("");
-              }}>
-              {t("coursesTab") || "Courses"}
-            </button>
+      {showAssignModal && assignStep === "type" && (
+        <div className="sf-scrim" onClick={(e) => { if (e.target === e.currentTarget) setShowAssignModal(false); }}>
+          <div className="sf-sheet sf-sheet-sm">
+            <div className="sf-sheetHead">
+              <div>
+                <b>{t("stChooseType")}</b>
+                <span>{staffName(selectedStaff)}</span>
+              </div>
+              <button type="button" className="sf-x" aria-label={t("close")} onClick={() => setShowAssignModal(false)}>×</button>
+            </div>
+            <div className="sf-pick-grid">
+              <button type="button" className="sf-opt" onClick={() => { setActiveTab("events"); setEntitySearchQuery(""); setAssignStep("list"); }}>
+                <b>{t("stAssignEvent")}</b>
+                <span>{t("stAssignEventBody")}</span>
+              </button>
+              <button type="button" className="sf-opt" onClick={() => { setActiveTab("courses"); setEntitySearchQuery(""); setAssignStep("list"); }}>
+                <b>{t("stAssignCourse")}</b>
+                <span>{t("stAssignCourseBody")}</span>
+              </button>
+            </div>
+            <div className="sf-sheetActs">
+              <button type="button" className="sf-gh" onClick={() => setShowAssignModal(false)}>{t("cancel")}</button>
+            </div>
           </div>
+        </div>
+      )}
 
-          {/* Search */}
-          <div
-            className="search-wrapper-staff"
-            style={{ marginBottom: "15px" }}>
-            <svg
-              className="search-icon"
-              width="14"
-              height="14"
-              fill="currentColor"
-              viewBox="0 0 16 16">
-              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder={activeTab === "events" ? (t("searchByEventName") || "Search by event name...") : (t("searchByCourseName") || "Search by course name...")}
-              value={entitySearchQuery}
-              onChange={(e) => setEntitySearchQuery(e.target.value)}
-              style={{
-                height: "42px",
-                borderRadius: "21px",
-                paddingLeft: "42px",
-              }}
-            />
-          </div>
-
-          {/* Scrollable list */}
-          {loadingEntities ? (
-            <div className="text-center py-4">
-              <Spinner animation="border" variant="teal" />
+      {showAssignModal && assignStep === "list" && (
+        <div className="sf-scrim" onClick={(e) => { if (e.target === e.currentTarget) setShowAssignModal(false); }}>
+          <div className="sf-sheet">
+            <div className="sf-sheetHead">
+              <div>
+                <b>{activeTab === "courses" ? t("stAssignCourse") : t("stAssignEvent")}</b>
+                <span>{staffName(selectedStaff)}</span>
+              </div>
+              <button type="button" className="sf-x" aria-label={t("close")} onClick={() => setShowAssignModal(false)}>×</button>
             </div>
-          ) : filteredEntities.length === 0 ? (
-            <div className="text-center py-4" style={{ color: "#7c7c7c" }}>
-              {activeTab === "events" ? (t("noEventsFound") || "No events found.") : (t("noCoursesFound") || "No courses found.")}
-            </div>
-          ) : (
-            <div className="entity-list-container" ref={entityListRef}>
-              {filteredEntities.map((item) => {
-                const title = item.eventTitle || item.courseTitle;
-                const isAssigned = !!assignedMap[item._id];
-                const dateStr = item.startDate
-                  ? new Date(item.startDate).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })
-                  : "";
-                const endDateStr = item.endDate
-                  ? new Date(item.endDate).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })
-                  : "";
-                const location = item.venueName || "Online";
-
-                const poster =
-                  Array.isArray(item.posterImage) && item.posterImage.length > 0
-                    ? getFullImageUrl(item.posterImage[0])
-                    : "";
-
-                return (
-                  <div className="entity-item-card" key={item._id}>
-                    <div className="entity-thumbnail">
-                      <img
-                        src={poster || "/img/sidebar-logo.svg"}
-                        alt="Thumbnail"
-                        onError={(e) => { e.target.src = "/img/sidebar-logo.svg"; }}
-                      />
-                    </div>
-                    <div className="entity-text-details">
-                      <h6>{title}</h6>
-                      <p>{`${dateStr} - ${endDateStr} , ${location}`}</p>
-                    </div>
-
-                    <button
-                      className={`toggle-assign-btn ${isAssigned ? "assigned" : ""}`}
-                      onClick={() => handleToggleAssignItem(item._id)}>
-                      {isAssigned ? (
-                        <svg
-                          width="24"
-                          height="24"
-                          fill="currentColor"
-                          viewBox="0 0 16 16">
-                          <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
-                        </svg>
-                      ) : (
-                        <svg
-                          width="24"
-                          height="24"
-                          fill="currentColor"
-                          viewBox="0 0 16 16">
-                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Save Button */}
-          <button
-            className="save-assignment-btn"
-            onClick={handleSaveAssignments}
-            disabled={savingAssignments}>
-            {savingAssignments ? (
-              <Spinner animation="border" size="sm" />
+            <label className="sf-search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              <input
+                type="text"
+                value={entitySearchQuery}
+                onChange={(e) => setEntitySearchQuery(e.target.value)}
+                placeholder={activeTab === "courses" ? t("stSearchCourses") : t("stSearchEvents")}
+              />
+            </label>
+            {loadingEntities ? (
+              <div className="sf-list">
+                <div className="sf-skel" style={{ height: 62 }} />
+                <div className="sf-skel" style={{ height: 62 }} />
+              </div>
+            ) : filteredEntities.length === 0 ? (
+              <div className="sf-state">
+                <b>{entitySearchQuery.trim() ? t("stNoAssignMatch") : activeTab === "courses" ? t("stNoCourses") : t("stNoEvents")}</b>
+                <p>{entitySearchQuery.trim() ? t("stCheckSearch") : t("stAssignLater")}</p>
+                {entitySearchQuery.trim() ? (
+                  <button type="button" className="sf-gh" onClick={() => setEntitySearchQuery("")}>{t("stClearSearch")}</button>
+                ) : null}
+              </div>
             ) : (
-              t("save") || "Save"
+              <div className="sf-list">
+                {filteredEntities.map((item) => {
+                  const on = !!assignedMap[item._id];
+                  return (
+                    <button
+                      type="button"
+                      key={item._id}
+                      className="sf-arow"
+                      aria-selected={on ? "true" : "false"}
+                      onClick={() => handleToggleAssignItem(item._id)}
+                    >
+                      <span className="sf-check">✓</span>
+                      <span>
+                        <b>{item.eventTitle || item.courseTitle}</b>
+                        <i>{itemMeta(item)}</i>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             )}
-          </button>
-        </Modal.Body>
-      </Modal>
-
-      {/* --------------------------------------------------------------- */}
-      {/* DELETE CONFIRMATION MODAL */}
-      {/* --------------------------------------------------------------- */}
-      <Modal
-        show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
-        centered
-        className="dark-modal">
-        <Modal.Header closeButton>
-          <Modal.Title>{t("deleteStaffTitle") || "Delete Staff Member"}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ background: "#161616", padding: "20px" }}>
-          <p style={{ color: "#fff", fontSize: "16px", marginBottom: "25px" }}>
-            {t("deleteStaffConfirmText") || "Are you sure you want to delete this staff member? This action cannot be undone."}
-          </p>
-          <div className="d-flex gap-3 justify-content-end">
-            <button
-              className="btn btn-secondary px-4 py-2"
-              style={{ borderRadius: "20px", fontSize: "14px" }}
-              onClick={() => setShowDeleteModal(false)}>
-              {t("cancel") || "Cancel"}
-            </button>
-            <button
-              className="btn btn-danger px-4 py-2"
-              style={{ borderRadius: "20px", fontSize: "14px" }}
-              onClick={handleDeleteStaff}
-              disabled={deletingStaff}>
-              {deletingStaff ? (
-                <Spinner animation="border" size="sm" />
-              ) : (
-                t("yesDelete") || "Yes, Delete"
-              )}
-            </button>
+            {selectedCount > 0 && (
+              <div className="sf-sel">
+                <span>{t("stSelected", { count: selectedCount })}</span>
+                <button type="button" onClick={clearAssignSelection}>{t("stClearSel")}</button>
+              </div>
+            )}
+            <div className="sf-sheetActs">
+              <button type="button" className="sf-go" onClick={handleSaveAssignments} disabled={savingAssignments}>
+                {savingAssignments ? "…" : t("stSave")}
+              </button>
+              <button type="button" className="sf-gh" onClick={() => setShowAssignModal(false)}>{t("cancel")}</button>
+            </div>
           </div>
-        </Modal.Body>
-      </Modal>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="sf-scrim" onClick={(e) => { if (e.target === e.currentTarget && !deletingStaff) setShowDeleteModal(false); }}>
+          <div className="sf-sheet sf-sheet-sm">
+            <b className="sf-ask">{t("stRemoveAsk")}</b>
+            <p className="sf-askBody">
+              {staffToDelete ? staffName(staffToDelete) : ""} — {t("stRemoveBody")}
+            </p>
+            <div className="sf-sheetActs">
+              <button type="button" className="sf-danger" onClick={handleDeleteStaff} disabled={deletingStaff}>
+                {deletingStaff ? "…" : t("stRemove")}
+              </button>
+              <button type="button" className="sf-gh" onClick={() => setShowDeleteModal(false)}>{t("cancel")}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

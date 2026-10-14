@@ -1,0 +1,49 @@
+.pp-scrim { position: fixed; inset: 0; z-index: 1100; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0,0,0,.66); backdrop-filter: blur(4px); }
+.pp-sheet { box-sizing: border-box; width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; padding: 24px; border: 1px solid rgba(255,255,255,.16); border-radius: 24px; background: #17191d; box-shadow: 0 30px 80px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 13px; color: #fff; }
+.pp-sheet, .pp-sheet * { min-width: 0; }
+.pp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.pp-head b { display: block; font-size: 18.5px; font-weight: 700; letter-spacing: -.014em; }
+.pp-head span { display: block; margin-top: 4px; font-size: 13px; color: rgba(255,255,255,.5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-x { width: 34px; height: 34px; flex-shrink: 0; padding: 0; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; background: transparent; color: rgba(255,255,255,.55); font-size: 17px; cursor: pointer; }
+.pp-hint { margin: 0; font-size: 12.5px; line-height: 1.55; color: rgba(255,255,255,.45); }
+.pp-er { display: block; font-size: 12.5px; color: #ff8a8a; }
+.pp-rail { display: flex; align-items: stretch; gap: 12px; width: 100%; overflow-x: auto; padding: 2px 2px 6px; box-sizing: border-box; scrollbar-width: thin; }
+.pp-plan { flex: 0 0 auto; width: 210px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 17px; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; background: #1c1e22; color: inherit; text-align: left; cursor: pointer; transition: border-color .16s, background .16s; }
+.pp-plan:hover { border-color: rgba(255,255,255,.28); }
+.pp-plan[aria-selected="true"] { border-color: #23ada4; background: rgba(35,173,164,.1); }
+.pp-plan b { font-size: 15.5px; font-weight: 700; }
+.pp-price { font-size: 24px; font-weight: 700; letter-spacing: -.02em; color: #3dccc4; }
+.pp-plan i { font-style: normal; font-size: 12.5px; color: rgba(255,255,255,.6); }
+.pp-plan em { font-style: normal; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.75); }
+.pp-note { font-size: 11.5px; line-height: 1.5; color: rgba(255,255,255,.42); }
+.pp-kv { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+.pp-kv:last-child { border-bottom: none; }
+.pp-kv > span:first-child { font-size: 12.5px; color: rgba(255,255,255,.5); flex-shrink: 0; }
+.pp-kv > span:last-child { font-size: 13.5px; font-weight: 600; text-align: right; }
+.pp-res { padding: 22px 18px; border: 1px solid; border-radius: 18px; text-align: center; }
+.pp-res b { display: block; font-size: 16px; font-weight: 700; }
+.pp-res p { margin: 8px 0 0; font-size: 12.5px; line-height: 1.55; color: rgba(255,255,255,.7); }
+.pp-ok { border-color: rgba(52,199,89,.5); background: rgba(52,199,89,.1); }
+.pp-ok b { color: #34c759; }
+.pp-warn { border-color: rgba(255,138,51,.5); background: rgba(255,138,51,.1); }
+.pp-warn b { color: #ffb273; }
+.pp-danger { border-color: rgba(255,90,90,.5); background: rgba(255,90,90,.1); }
+.pp-danger b { color: #ff8a8a; }
+.pp-acts { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.pp-go, .pp-gh { display: inline-flex; align-items: center; justify-content: center; gap: 9px; height: 46px; border-radius: 999px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.pp-go { flex: 1; padding: 0 24px; border: none; background: #23ada4; color: #fff; }
+.pp-go:hover { filter: brightness(1.08); }
+.pp-go[disabled] { opacity: .4; cursor: not-allowed; }
+.pp-gh { padding: 0 20px; border: 1px solid rgba(255,255,255,.18); background: transparent; color: #fff; font-weight: 600; }
+.pp-gh:hover { border-color: #23ada4; }
+.pp-gh[disabled] { opacity: .5; cursor: not-allowed; }
+.pp-full { flex: 1; }
+.pp-sp { width: 15px; height: 15px; border-radius: 999px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; animation: pp-spin .7s linear infinite; }
+@keyframes pp-spin { to { transform: rotate(360deg); } }
+@media (max-width: 620px) {
+  .pp-plan { width: 186px; }
+  .pp-sheet { padding: 18px; border-radius: 20px; }
+  .pp-kv { flex-direction: column; gap: 3px; }
+  .pp-kv > span:last-child { text-align: left; }
+  .pp-acts .pp-go, .pp-acts .pp-gh { flex: 1 1 auto; }
+}

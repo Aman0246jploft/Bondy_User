@@ -1,79 +1,150 @@
 "use client";
+
 import Link from "next/link";
-import React, { useState, useEffect, Suspense } from "react";
-import { Col, Row, Spinner } from "react-bootstrap";
-import { useSearchParams } from "next/navigation";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
+import { Spinner } from "react-bootstrap";
+import { useRouter, useSearchParams } from "next/navigation";
 import eventApi from "@/api/eventApi";
 import bookingApi from "@/api/bookingApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
-import { formatTime } from "@/utils/timeHelper";
 import { useLanguage } from "@/context/LanguageContext";
+import PromotionPlanModal from "@/components/Promotion/PromotionPlanModal";
 
-function ExpandableText({ text, limit = 200, className = "" }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const { t } = useLanguage();
-  if (!text) return <p className={className}>{t("na") || "N/A"}</p>;
+const money = (n) => `₮${Number(n || 0).toLocaleString("en-US")}`;
 
-  const shouldShowToggle = text.length > limit;
-  const displayText =
-    isExpanded || !shouldShowToggle ? text : `${text.substring(0, limit)}...`;
+function Icon({ name, size = 15 }) {
+  const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true, style: { flexShrink: 0 } };
+  if (name === "eye") {
+    return <svg {...common}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>;
+  }
+  if (name === "promote") {
+    return <svg {...common}><path d="M4 10.4v3.2a1.6 1.6 0 0 0 1.6 1.6h1.7L14 19.4V4.6L7.3 8.8H5.6A1.6 1.6 0 0 0 4 10.4Z" /><path d="M17.2 8.6a4.6 4.6 0 0 1 0 6.8" /><path d="M19.2 6.4a8 8 0 0 1 0 11.2" /></svg>;
+  }
+  if (name === "edit") {
+    return <svg {...common}><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" /></svg>;
+  }
+  if (name === "ticket") {
+    return <svg {...common}><path d="M3 8a2 2 0 0 0 0 4v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0 0-4V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2Z" /><path d="M13 6v12" strokeDasharray="2 3" /></svg>;
+  }
+  if (name === "wallet") {
+    return <svg {...common}><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h12A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-12A2.5 2.5 0 0 1 3 16.5v-9Z" /><path d="M3 9h14a2 2 0 0 1 2 2v1.2" /><circle cx="16.2" cy="12.6" r="1" fill="currentColor" stroke="none" /></svg>;
+  }
+  if (name === "users") {
+    return <svg {...common}><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" /><circle cx="9.5" cy="7" r="3" /><path d="M20 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 4.13a3 3 0 0 1 0 5.75" /></svg>;
+  }
+  if (name === "atom") {
+    return <svg {...common}><circle cx="12" cy="12" r="2" /><ellipse cx="12" cy="12" rx="9" ry="4" /><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(60 12 12)" /><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(120 12 12)" /></svg>;
+  }
+  if (name === "chair") {
+    return <svg {...common}><path d="M7 11V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v5" /><path d="M5 11h14v3a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3Z" /><path d="M8 16v4M16 16v4" /></svg>;
+  }
+  if (name === "pin") {
+    return <svg {...common}><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" /><circle cx="12" cy="10" r="2.4" /></svg>;
+  }
+  if (name === "calendar") {
+    return <svg {...common}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>;
+  }
+  if (name === "clock") {
+    return <svg {...common}><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M9 2h6" /></svg>;
+  }
+  if (name === "shield") {
+    return <svg {...common}><path d="M12 3 5 6v6c0 4.2 2.8 7.2 7 9 4.2-1.8 7-4.8 7-9V6l-7-3Z" /><path d="m9 12 2 2 4-4" /></svg>;
+  }
+  if (name === "list") {
+    return <svg {...common}><path d="M8 6h12M8 12h12M8 18h12" /><path d="M4 6h.01M4 12h.01M4 18h.01" /></svg>;
+  }
+  return null;
+}
 
-  return (
-    <div className={className}>
-      <p
-        style={{
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-          overflowWrap: "anywhere",
-          margin: 0,
-          color: "rgba(255,255,255,0.8)",
-          fontSize: "14px",
-          lineHeight: "1.6",
-        }}>
-        {displayText}
-      </p>
-      {shouldShowToggle && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="mt-2 border-0 bg-transparent p-0"
-          style={{
-            fontSize: "13px",
-            fontWeight: "600",
-            cursor: "pointer",
-            color: "#23ada4",
-            transition: "all 0.2s"
-          }}>
-          {isExpanded ? t("viewLess") : t("viewMore")}
-        </button>
-      )}
-    </div>
-  );
+const MONTH_KEYS = ["monthJan", "monthFeb", "monthMar", "monthApr", "monthMay", "monthJun", "monthJul", "monthAug", "monthSep", "monthOct", "monthNov", "monthDec"];
+const WEEKDAY_KEYS = ["weekdaySun", "weekdayMon", "weekdayTue", "weekdayWed", "weekdayThu", "weekdayFri", "weekdaySat"];
+
+function formatDay(value, t, withWeekday) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const monthDay = `${t(MONTH_KEYS[date.getMonth()])} ${date.getDate()}`;
+  if (!withWeekday) return monthDay;
+  return `${monthDay}, ${t(WEEKDAY_KEYS[date.getDay()])}`;
+}
+
+function formatOrderDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${mm}.${dd}.${date.getFullYear()}`;
+}
+
+function ageLabel(value, isMn) {
+  if (!value || value === "ALL") return isMn ? "Бүх нас" : "All ages";
+  if (typeof value === "string") return value;
+  if (value.minAge && value.maxAge) return `${value.minAge}–${value.maxAge}`;
+  if (value.minAge) return `${value.minAge}+`;
+  return "";
+}
+
+function refundLabel(value, isMn) {
+  const map = {
+    "No Refund": isMn ? "Буцаан олголтгүй" : "No refund",
+    "1 Day Before": isMn ? "1 хоногийн өмнө" : "1 day before",
+    "7 Days Before": isMn ? "7 хоногийн өмнө" : "7 days before",
+  };
+  return map[value] || value || "";
+}
+
+function venueLine(event) {
+  const address = event.venueAddress || {};
+  return [event.venueName, address.address, address.city].filter(Boolean).join(", ");
+}
+
+function buildChart(series) {
+  const points = Array.isArray(series) ? series : [];
+  if (!points.length) return null;
+  const max = Math.max(...points.map((p) => Number(p.tickets) || 0), 1);
+  const width = 600;
+  const top = 22;
+  const bottom = 150;
+  const coords = points.map((p, index) => {
+    const x = points.length === 1 ? width / 2 : 8 + (index / (points.length - 1)) * (width - 16);
+    const y = bottom - ((Number(p.tickets) || 0) / max) * (bottom - top);
+    return [x, y];
+  });
+  const line = coords.map((p, index) => `${index ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
+  const labels = [];
+  const step = Math.max(1, Math.ceil(points.length / 6));
+  points.forEach((p, index) => {
+    if (index % step === 0 || index === points.length - 1) labels.push(p.date);
+  });
+  return {
+    line,
+    area: `${line} L${coords[coords.length - 1][0].toFixed(1)} 158 L${coords[0][0].toFixed(1)} 158 Z`,
+    coords,
+    max,
+    labels,
+  };
 }
 
 function EventDetailsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const eventId = searchParams.get("eventId");
+  const { language, t } = useLanguage();
+  const isMn = language === "mn";
+
   const [event, setEvent] = useState(null);
-  const [attendees, setAttendees] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showReservationModal, setShowReservationModal] = useState(false);
-  const [tempReservedExternally, setTempReservedExternally] = useState(0);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancellationReason, setCancellationReason] = useState("");
-  const [isCancelling, setIsCancelling] = useState(false);
-
-  const [attendeesList, setAttendeesList] = useState([]);
-  const [attendeesPage, setAttendeesPage] = useState(1);
-  const [attendeesSearch, setAttendeesSearch] = useState("");
-  const [attendeesPagination, setAttendeesPagination] = useState(null);
-  const [attendeesLoading, setAttendeesLoading] = useState(false);
-
-  // Tab state
   const [activeTab, setActiveTab] = useState("overview");
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [showCancel, setShowCancel] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [promoOpen, setPromoOpen] = useState(false);
+  const [showExternal, setShowExternal] = useState(false);
+  const [externalDraft, setExternalDraft] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
-  // Bookings tab state
   const [bookingsList, setBookingsList] = useState([]);
   const [bookingsPage, setBookingsPage] = useState(1);
   const [bookingsSearch, setBookingsSearch] = useState("");
@@ -81,81 +152,125 @@ function EventDetailsContent() {
   const [bookingsTotalPages, setBookingsTotalPages] = useState(0);
   const [bookingsLoading, setBookingsLoading] = useState(false);
 
-  // Analytics tab state
   const [analyticsData, setAnalyticsData] = useState(null);
-  const [analyticsFilter, setAnalyticsFilter] = useState("thisMonth");
+  const [analyticsRange, setAnalyticsRange] = useState("all");
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [dateOpen, setDateOpen] = useState(false);
+  const [pickStart, setPickStart] = useState("");
+  const [pickEnd, setPickEnd] = useState("");
+  const [customLabel, setCustomLabel] = useState("");
+  const [hoverIndex, setHoverIndex] = useState(null);
 
-  const fetchAttendeesList = async () => {
+  const copy = {
+    title: isMn ? "Эвентийн дэлгэрэнгүй" : "Event details",
+    sub: isMn ? "Тасалбар, захиалга, оролцогчийн мэдээлэл" : "Tickets, bookings and attendee details",
+    events: isMn ? "Эвент" : "Events",
+    publicPage: isMn ? "Нийтийн хуудсыг харах" : "View public page",
+    promote: isMn ? "Сурталчлах" : "Promote",
+    edit: isMn ? "Засах" : "Edit",
+    overview: isMn ? "Тойм" : "Overview",
+    bookings: isMn ? "Захиалга" : "Bookings",
+    analytics: isMn ? "Аналитик" : "Analytics",
+    sold: isMn ? "Зарагдсан тасалбар" : "Tickets sold",
+    external: isMn ? "Гаднын захиалга" : "External bookings",
+    editExternal: isMn ? "Гаднын захиалга засах" : "Edit external bookings",
+    addExternal: isMn ? "Гаднын захиалга нэмэх" : "Add external bookings",
+    remaining: isMn ? "Үлдсэн" : "Remaining",
+    capacity: isMn ? "Нийт багтаамж" : "Total capacity",
+    info: isMn ? "Эвентийн мэдээлэл" : "Event information",
+    summary: isMn ? "Товч танилцуулга" : "Overview",
+    age: isMn ? "Насны хязгаар" : "Age limit",
+    entry: isMn ? "Оролцох мэдээлэл" : "Entry information",
+    dress: isMn ? "Хувцаслалт" : "Dress code",
+    refund: isMn ? "Буцаан олголтын болон цуцлалтын нөхцөл" : "Refund and cancellation policy",
+    more: isMn ? "Дэлгэрэнгүй мэдээлэл" : "More details",
+    showMore: isMn ? "Дэлгэрэнгүй үзэх" : "Show more",
+    showLess: isMn ? "Хураах" : "Show less",
+    about: isMn ? "Эвентийн танилцуулга" : "About this event",
+    extra: isMn ? "Нэмэлт мэдээлэл" : "Additional information",
+    types: isMn ? "Тасалбарын төрөл" : "Ticket types",
+    name: isMn ? "Нэр" : "Name",
+    price: isMn ? "Үнэ" : "Price",
+    extShort: isMn ? "Гаднын" : "External",
+    revenue: isMn ? "Орлого" : "Revenue",
+    total: isMn ? "НИЙТ" : "TOTAL",
+    free: isMn ? "Үнэгүй" : "Free",
+    cancel: isMn ? "Эвентийг цуцлах" : "Cancel event",
+    cancelNote: isMn ? "Тасалбар авсан оролцогчдод мэдэгдэж, төлбөрийн буцаалт хийнэ." : "Ticket holders are notified and payments are refunded.",
+    cancelled: isMn ? "Эвент цуцлагдсан" : "Event cancelled",
+    cancelledNote: isMn ? "Оролцогчдод мэдэгдэл илгээж, төлбөрийн буцаалтыг эхлүүлсэн." : "Attendees were notified and refunds were started.",
+    cancelAsk: isMn ? "Эвентийг цуцлах уу?" : "Cancel this event?",
+    cancelBody: isMn ? "Энэ үйлдлийг буцаах боломжгүй. Тасалбар авсан оролцогч бүрт мэдэгдэл илгээж, төлбөрийн буцаалтыг эхлүүлнэ." : "This cannot be undone. Every ticket holder is notified and refunds are started.",
+    back: isMn ? "Болих" : "Go back",
+    confirmCancel: isMn ? "Тийм, цуцлах" : "Yes, cancel",
+    orders: isMn ? "Захиалгууд" : "Bookings",
+    search: isMn ? "Нэр, захиалгын дугаараар хайх" : "Search by name or order number",
+    buyer: isMn ? "Захиалагч" : "Buyer",
+    orderNo: isMn ? "Захиалгын №" : "Order no.",
+    ticket: isMn ? "Тасалбар" : "Ticket",
+    amount: isMn ? "Дүн" : "Amount",
+    status: isMn ? "Төлөв" : "Status",
+    date: isMn ? "Огноо" : "Date",
+    paid: isMn ? "Төлсөн" : "Paid",
+    refunded: isMn ? "Буцаасан" : "Refunded",
+    none: isMn ? "Илэрц олдсонгүй" : "No results",
+    fill: isMn ? "Дүүргэлт" : "Fill",
+    views: isMn ? "Үзсэн" : "Views",
+    conversion: isMn ? "Хөрвүүлэлт" : "Conversion",
+    chart: isMn ? "Тасалбарын борлуулалт" : "Ticket sales",
+    all: isMn ? "Нийт" : "All",
+    d7: isMn ? "Сүүлийн 7 хоног" : "Last 7 days",
+    d30: isMn ? "Сүүлийн 30 хоног" : "Last 30 days",
+    month: isMn ? "Энэ сар" : "This month",
+    pick: isMn ? "Огноо сонгох" : "Choose dates",
+    start: isMn ? "Эхлэх" : "Start",
+    end: isMn ? "Дуусах" : "End",
+    apply: isMn ? "Хэрэглэх" : "Apply",
+    dismiss: isMn ? "Цуцлах" : "Cancel",
+    save: isMn ? "Хадгалах" : "Save",
+    seats: isMn ? "суудал" : "seats",
+    created: isMn ? "Үүсгэсэн огноо" : "Created",
+    notFound: isMn ? "Эвент олдсонгүй" : "Event not found",
+    noChart: isMn ? "Энэ хугацаанд борлуулалт алга." : "No sales in this period.",
+    ticketWord: (n) => (isMn ? `${n} тасалбар` : n === 1 ? "1 ticket" : `${n} tickets`),
+  };
+
+  // Refresh after a purchase without blanking the page, so the modal keeps its result screen
+  const refreshEvent = async () => {
     try {
-      setAttendeesLoading(true);
-      const res = await eventApi.getAllAttendees(eventId, {
-        page: attendeesPage,
-        limit: 5,
-        search: attendeesSearch,
-      });
-      if (res && res.status && res.data) {
-        setAttendeesList(res.data.attendees || []);
-        setAttendeesPagination(res.data.pagination || null);
-      }
-    } catch (err) {
-      console.error("Failed to fetch attendees list:", err);
-    } finally {
-      setAttendeesLoading(false);
+      const response = await eventApi.getEventDetails(eventId);
+      if (response?.status && response?.data?.event) setEvent(response.data.event);
+    } catch (error) {
+      console.error("Failed to refresh event", error);
     }
   };
 
-  const getAttendeesPaginationItems = () => {
-    const totalPages = attendeesPagination?.totalPages || 0;
-
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, index) => index + 1);
-    }
-
-    const visiblePages = new Set([1, 2, 3, totalPages - 1, totalPages]);
-
-    if (attendeesPage <= 3) {
-      visiblePages.add(4);
-    } else if (attendeesPage >= totalPages - 2) {
-      visiblePages.add(totalPages - 3);
+  const fetchDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await eventApi.getEventDetails(eventId);
+      if (response?.status && response?.data?.event) {
+        setEvent(response.data.event);
     } else {
-      visiblePages.add(attendeesPage - 1);
-      visiblePages.add(attendeesPage);
-      visiblePages.add(attendeesPage + 1);
-    }
-
-    const sortedPages = Array.from(visiblePages)
-      .filter((page) => page >= 1 && page <= totalPages)
-      .sort((a, b) => a - b);
-
-    const items = [];
-    sortedPages.forEach((page, index) => {
-      const previousPage = sortedPages[index - 1];
-      if (index > 0 && page - previousPage > 1) {
-        items.push("ellipsis");
+        setEvent(null);
       }
-      items.push(page);
-    });
-
-    return items;
+    } catch (error) {
+      console.error("Failed to fetch event details", error);
+      setEvent(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => {
-    if (eventId) {
-      fetchAttendeesList();
-    }
-  }, [eventId, attendeesPage, attendeesSearch]);
-
-  // Fetch bookings list
   const fetchBookings = async () => {
     try {
       setBookingsLoading(true);
       const res = await bookingApi.getEventAttendees(eventId, {
         page: bookingsPage,
-        limit: 10,
+        limit: 20,
         search: bookingsSearch,
       });
-      if (res && res.status && res.data) {
+      if (res?.status && res.data) {
         setBookingsList(res.data.attendees || []);
         setBookingsTotal(res.data.totalAttendees || 0);
         setBookingsTotalPages(res.data.totalPages || 0);
@@ -167,22 +282,20 @@ function EventDetailsContent() {
     }
   };
 
-  useEffect(() => {
-    if (eventId && activeTab === "bookings") {
-      fetchBookings();
-    }
-  }, [eventId, activeTab, bookingsPage, bookingsSearch]);
-
-  // Fetch analytics
   const fetchAnalytics = async () => {
     try {
       setAnalyticsLoading(true);
-      const res = await eventApi.getEventAnalytics(eventId, {
-        filter: analyticsFilter,
-      });
-      if (res && res.status && res.data) {
-        setAnalyticsData(res.data);
+      const params = {};
+      if (analyticsRange === "d7") params.filter = "7d";
+      else if (analyticsRange === "d30") params.filter = "30d";
+      else if (analyticsRange === "month") params.filter = "thisMonth";
+      else if (analyticsRange === "custom" && pickStart && pickEnd) {
+        params.filter = "custom";
+        params.startDate = pickStart;
+        params.endDate = pickEnd;
       }
+      const res = await eventApi.getEventAnalytics(eventId, params);
+      if (res?.status && res.data) setAnalyticsData(res.data);
     } catch (err) {
       console.error("Failed to fetch analytics:", err);
     } finally {
@@ -191,22 +304,73 @@ function EventDetailsContent() {
   };
 
   useEffect(() => {
-    if (eventId && activeTab === "analytics") {
-      fetchAnalytics();
-    }
-  }, [eventId, activeTab, analyticsFilter]);
+    if (eventId) fetchDetails();
+  }, [eventId]);
 
-  const handleCancelEvent = async () => {
+  useEffect(() => {
+    if (eventId) fetchBookings();
+  }, [eventId, bookingsPage, bookingsSearch]);
+
+  useEffect(() => {
+    if (eventId && activeTab === "analytics") fetchAnalytics();
+  }, [eventId, activeTab, analyticsRange, pickStart, pickEnd]);
+
+  useEffect(() => {
+    if (event?.eventTitle) document.title = `${event.eventTitle} - Bondy`;
+  }, [event]);
+
+  const stats = useMemo(() => {
+    const tickets = Array.isArray(event?.tickets) ? event.tickets : [];
+    const cap = tickets.reduce((sum, ticket) => sum + (Number(ticket.qty) || 0), 0) || Number(event?.totalTickets) || 0;
+    const sold = tickets.reduce((sum, ticket) => sum + (Number(ticket.soldQty) || 0), 0) || Number(event?.totalBooked) || 0;
+    const external = Number(event?.reserveExternal ?? event?.ReservedExternally) || 0;
+    const left = Math.max(0, cap - sold - external);
+    const revenue = tickets.reduce((sum, ticket) => sum + (Number(ticket.soldQty) || 0) * (Number(ticket.price) || 0), 0);
+    const fill = cap > 0 ? ((sold / cap) * 100).toFixed(1) : "0.0";
+    return { tickets, cap, sold, external, left, revenue, fill };
+  }, [event]);
+
+  const chart = useMemo(() => buildChart(analyticsData?.salesSeries), [analyticsData]);
+
+  const openExternal = () => {
+    setExternalDraft(stats.external);
+    setSaveError("");
+    setShowExternal(true);
+  };
+
+  const saveExternal = async () => {
+    const next = Math.max(0, Number(externalDraft) || 0);
+    const maxExternal = Math.max(0, stats.cap - stats.sold);
+    if (next > maxExternal) {
+      setSaveError(isMn ? `Хамгийн ихдээ ${maxExternal} байна.` : `Maximum is ${maxExternal}.`);
+      return;
+    }
+    try {
+      setIsSaving(true);
+      const res = await eventApi.updateEvent(eventId, { ReservedExternally: next });
+      if (res?.status === false) {
+        setSaveError(res.message || (isMn ? "Хадгалж чадсангүй." : "Could not save."));
+        return;
+      }
+      await fetchDetails();
+      setShowExternal(false);
+    } catch (err) {
+      setSaveError(err?.response?.data?.message || (isMn ? "Хадгалж чадсангүй." : "Could not save."));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const confirmCancel = async () => {
     try {
       setIsCancelling(true);
-      const finalReason = cancellationReason;
       const res = await bookingApi.cancelEvent({
-        eventId: eventId,
-        reason: finalReason || "Event cancelled by organizer",
+        eventId,
+        reason: "Event cancelled by organizer",
       });
-      if (res && res.status) {
+      if (res?.status) {
         await fetchDetails();
-        setShowCancelModal(false);
+        setShowCancel(false);
       }
     } catch (err) {
       console.error("Failed to cancel event:", err);
@@ -215,61 +379,10 @@ function EventDetailsContent() {
     }
   };
 
-  const handleSaveChanges = async () => {
-    try {
-      setIsSaving(true);
-      const res = await eventApi.updateEvent(eventId, {
-        ReservedExternally: tempReservedExternally,
-      });
-      if (res && res.status) {
-        await fetchDetails();
-        setShowReservationModal(false);
-      }
-    } catch (err) {
-      console.error("Failed to update external reservations:", err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const fetchDetails = async () => {
-    try {
-      setLoading(true);
-      const response = await eventApi.getEventDetails(eventId);
-      if (response && response?.data && response?.status) {
-        setEvent(response?.data?.event);
-        setAttendees(response?.data?.attendees);
-      }
-    } catch (error) {
-      console.error("Failed to fetch event details", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const { t, language } = useLanguage();
-
-  useEffect(() => {
-    if (eventId) {
-      fetchDetails();
-    }
-  }, [eventId]);
-
-  useEffect(() => {
-    if (event) {
-      document.title = `${event.eventTitle || t("eventDetails")} - Control Center`;
-    } else {
-      document.title = `${t("eventDetails")} - Bondy`;
-    }
-  }, [event, t]);
-
   if (loading) {
     return (
-      <div className="d-flex flex-column align-items-center justify-content-center py-5 min-vh-50">
+      <div className="d-flex justify-content-center py-5">
         <Spinner animation="border" style={{ color: "#23ada4" }} />
-        <p className="mt-3 text-secondary">
-          {t("loadingEventDetails") || "Loading details..."}
-        </p>
       </div>
     );
   }
@@ -277,2684 +390,471 @@ function EventDetailsContent() {
   if (!event) {
     return (
       <div className="text-center py-5">
-        <h4 className="text-white mb-3">{t("eventNotFound")}</h4>
-        <Link href="/EventsManagement" className="custom-btn">
-          {t("backToList")}
-        </Link>
+        <h4 className="text-white mb-3">{copy.notFound}</h4>
+        <Link href="/EventsManagement" className="ed-primary" style={{ display: "inline-flex", padding: "0 18px" }}>{copy.events}</Link>
       </div>
     );
   }
 
-  // Estimate total revenue based on tickets soldQty (use actual totalRevenue from backend if available)
-  const estimatedRevenue =
-    event.totalRevenue !== undefined
-      ? event.totalRevenue
-      : event.tickets?.reduce(
-        (sum, ticket) => sum + (ticket.soldQty || 0) * (ticket.price || 0),
-        0,
-      ) || 0;
-
-  const status = event.status?.toLowerCase();
-  const isPastOrEnded =
-    status === "past" || new Date(event.endDate) < new Date();
+  const cancelled = String(event.status || "").toLowerCase() === "cancelled";
+  const poster = getFullImageUrl(event.posterImage?.[0]) || "/img/sidebar-logo.svg";
+  const infoRows = [
+    { k: copy.summary, v: event.shortdesc, icon: "list" },
+    { k: copy.age, v: ageLabel(event.ageRestriction, isMn), icon: "shield" },
+    { k: copy.entry, v: event.notes, icon: "clock" },
+    { k: copy.dress, v: event.dressCode, icon: "users" },
+    { k: copy.refund, v: refundLabel(event.refundPolicy, isMn), icon: "wallet" },
+  ].filter((row) => String(row.v || "").trim());
+  const detailBlocks = [
+    { k: copy.about, v: event.longdesc },
+    { k: copy.extra, v: event.addOns },
+  ].filter((row) => String(row.v || "").trim());
+  const timeLabel = [event.startTime, event.endTime].filter(Boolean).join(" – ");
+  const ranges = [
+    { id: "all", label: copy.all },
+    { id: "d7", label: copy.d7 },
+    { id: "d30", label: copy.d30 },
+    { id: "month", label: copy.month },
+  ];
+  const views = Number(analyticsData?.viewCount) || 0;
+  const soldInRange = Number(analyticsData?.totalTicketsSold) || 0;
+  const conversion = views > 0 ? `${((soldInRange / views) * 100).toFixed(1)}%` : "0%";
+  const used = stats.sold + stats.external;
+  const fillUsed = stats.cap > 0 ? Math.round((used / stats.cap) * 100) : 0;
+  const hover = chart && hoverIndex != null ? chart.coords[hoverIndex] : null;
+  const hoverPoint = hover ? analyticsData.salesSeries[hoverIndex] : null;
 
   return (
-    <div className="event-control-center">
-      {/* Action Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 gap-4">
-        <Link href="/EventsManagement" className="back-btn-dashboard">
-          <span className="me-2">←</span> {t("backToList") || "Back to Events"}
-        </Link>
-        <div className="d-flex gap-2">
-          {!isPastOrEnded && event.status?.toLowerCase() !== "cancelled" && (
-            <>
-              <Link
-                href={`/BasicInfo?eventId=${event._id}`}
-                className="custom-btn edit-event-btn">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none">
-                  <path
-                    d="M2.42914 9.53695C2.31714 9.53695 2.20536 9.4943 2.11983 9.40877C1.94899 9.23792 1.94899 8.96098 2.11983 8.79014L8.95664 1.95333C9.12727 1.78248 9.40443 1.78248 9.57527 1.95333C9.74611 2.12417 9.74611 2.40111 9.57527 2.57195L2.73846 9.40877C2.65314 9.49408 2.54114 9.53695 2.42914 9.53695Z"
-                    fill="white"
-                  />
-                  <path
-                    d="M1.75361 12.6879C1.7232 12.6879 1.69236 12.6846 1.66152 12.678C1.42527 12.6273 1.27477 12.3947 1.32552 12.1585L2.00145 9.00782C2.0522 8.77157 2.28583 8.62151 2.52099 8.67182C2.75724 8.72257 2.90774 8.9551 2.85699 9.19135L2.18105 12.342C2.13708 12.5474 1.95552 12.6879 1.75361 12.6879Z"
-                    fill="white"
-                  />
-                  <path
-                    d="M4.904 12.0113C4.792 12.0113 4.68022 11.9687 4.59469 11.8832C4.42384 11.7123 4.42384 11.4354 4.59469 11.2645L11.4315 4.42794C11.6021 4.25709 11.8793 4.25709 12.0501 4.42794C12.221 4.59878 12.221 4.87572 12.0501 5.04656L5.21353 11.8832C5.128 11.9687 5.016 12.0113 4.904 12.0113Z"
-                    fill="white"
-                  />
-                  <path
-                    d="M1.75289 12.6877C1.55098 12.6877 1.36964 12.5472 1.32545 12.3418C1.27492 12.1056 1.4252 11.873 1.66145 11.8223L4.81211 11.1464C5.04858 11.0963 5.28111 11.2463 5.33164 11.4824C5.38217 11.7186 5.23189 11.9511 4.99564 12.0019L1.84498 12.6778C1.81414 12.6846 1.7833 12.6877 1.75289 12.6877Z"
-                    fill="white"
-                  />
-                  <path
-                    d="M10.5032 6.41216C10.3912 6.41216 10.2792 6.36951 10.1939 6.28398L7.7192 3.80926C7.54835 3.63841 7.54835 3.36148 7.7192 3.19063C7.88982 3.01979 8.1672 3.01979 8.33782 3.19063L10.8125 5.66535C10.9834 5.8362 10.9834 6.11313 10.8125 6.28398C10.7272 6.36951 10.6152 6.41216 10.5032 6.41216Z"
-                    fill="white"
-                  />
-                  <path
-                    d="M11.7407 5.17502C11.6287 5.17502 11.5167 5.13237 11.4312 5.04684C11.2604 4.87599 11.2604 4.59905 11.4312 4.42799C11.6747 4.18452 11.8088 3.85487 11.8088 3.50005C11.8088 3.14524 11.6747 2.81559 11.4312 2.57212C11.1875 2.32843 10.8579 2.19434 10.503 2.19434C10.1482 2.19434 9.81857 2.32843 9.5751 2.57212C9.40448 2.74296 9.12754 2.74318 8.95626 2.57212C8.78541 2.40127 8.78541 2.12434 8.95626 1.95327C9.36488 1.54443 9.91416 1.31934 10.503 1.31934C11.0917 1.31934 11.6412 1.54443 12.0498 1.95327C12.4587 2.3619 12.6838 2.91118 12.6838 3.50005C12.6838 4.08893 12.4587 4.63821 12.0498 5.04684C11.9647 5.13215 11.8527 5.17502 11.7407 5.17502Z"
-                    fill="white"
-                  />
-                </svg>{" "}
-                {t("edit") || "Edit Event"}
-              </Link>
-              {!event.isDraft && (
-                <button
-                  onClick={() => setShowCancelModal(true)}
-                  className="custom-btn btn-danger-custom">
-                  🛑 {t("cancelEvent") || "Cancel Event"}
-                </button>
-              )}
-            </>
-          )}
+    <div className="ed-page">
+      <div className="ed-mobbar">
+        <button type="button" className="ed-mobback" onClick={() => router.push("/EventsManagement")} aria-label={copy.events}>←</button>
+        <span className="ed-mobbarT"><b>{event.eventTitle}</b><span>{copy.title}</span></span>
         </div>
-      </div>
+      <nav className="ed-crumb">
+        <button type="button" onClick={() => router.push("/EventsManagement")}>{copy.events}</button>
+        <span>/</span>
+        <span>{event.eventTitle}</span>
+      </nav>
 
-      {/* Hero Overview Card */}
-      <div className="hero-details-card mb-4">
-        <div
-          className="hero-blur-bg"
-          style={{
-            backgroundImage: `url(${getFullImageUrl(event.posterImage?.[0]) || "/img/sidebar-logo.svg"})`,
-          }}></div>
-        <div className="hero-content-overlay d-flex flex-column flex-md-row gap-4 p-4 align-items-center align-items-md-stretch">
-          <div className="hero-poster shadow-lg">
-            <img
-              src={
-                getFullImageUrl(event.posterImage?.[0]) ||
-                "/img/sidebar-logo.svg"
-              }
-              alt={event.eventTitle}
-              onError={(e) => {
-                e.target.src = "/img/sidebar-logo.svg";
-              }}
-            />
+      <section className="ed-hero">
+        <div className="ed-heroMain">
+          <img className="ed-heroImg" src={poster} alt="" onError={(e) => { e.currentTarget.src = "/img/sidebar-logo.svg"; }} />
+          <div className="ed-heroTxt">
+            <b>{event.eventTitle}</b>
+            {event.shortdesc ? <p>{event.shortdesc}</p> : null}
+            {venueLine(event) ? <span className="ed-heroMetaRow ed-pin"><Icon name="pin" />{venueLine(event)}</span> : null}
+            <div className="ed-heroMeta">
+              {event.startDate ? <span className="ed-heroMetaRow"><Icon name="calendar" />{formatDay(event.startDate, t, true)}</span> : null}
+              {timeLabel ? <span className="ed-heroMetaRow"><Icon name="clock" />{timeLabel}</span> : null}
+              {event.createdAt ? <span className="ed-heroMetaRow" style={{ color: "var(--bd-gray-600)" }}><Icon name="calendar" />{copy.created}: {formatDay(event.createdAt, t, false)}</span> : null}
           </div>
-          <div className="hero-text-details d-flex flex-column justify-content-between text-center text-md-start">
-            <div>
-              <div className="d-flex gap-2 flex-wrap mb-2 justify-content-center justify-content-md-start">
-                <span
-                  className={`badge-status ${event.isDraft ? "draft" : event.status?.toLowerCase() || "upcoming"}`}>
-                  {event.isDraft
-                    ? t("draftLabel") || "Draft"
-                    : t(event.status?.toLowerCase()) || event.status}
-                </span>
-                {event.isFeatured && (
-                  <span className="badge-status featured">⭐ Featured</span>
-                )}
-                {event.visibility && (
-                  <span className="badge-status visibility">
-                    {event.visibility}
-                  </span>
-                )}
-              </div>
-              <h1 className="hero-title text-truncate-2">{event.eventTitle}</h1>
-              <p className="hero-category text-muted mt-2">
-                {event.eventCategory?.name || t("na")}
-              </p>
-            </div>
-            <div className="hero-meta text-muted mt-3 d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
-              <div className="align-items-center d-flex gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none">
-                  <path
-                    d="M11.3333 9.33333C11.7015 9.33333 12 9.03486 12 8.66667C12 8.29848 11.7015 8 11.3333 8C10.9652 8 10.6667 8.29848 10.6667 8.66667C10.6667 9.03486 10.9652 9.33333 11.3333 9.33333Z"
-                    fill="url(#paint0_linear_4557_4256)"
-                  />
-                  <path
-                    d="M11.3333 12C11.7015 12 12 11.7015 12 11.3333C12 10.9651 11.7015 10.6667 11.3333 10.6667C10.9652 10.6667 10.6667 10.9651 10.6667 11.3333C10.6667 11.7015 10.9652 12 11.3333 12Z"
-                    fill="url(#paint1_linear_4557_4256)"
-                  />
-                  <path
-                    d="M8.66668 8.66667C8.66668 9.03486 8.3682 9.33333 8.00001 9.33333C7.63182 9.33333 7.33334 9.03486 7.33334 8.66667C7.33334 8.29848 7.63182 8 8.00001 8C8.3682 8 8.66668 8.29848 8.66668 8.66667Z"
-                    fill="url(#paint2_linear_4557_4256)"
-                  />
-                  <path
-                    d="M8.66668 11.3333C8.66668 11.7015 8.3682 12 8.00001 12C7.63182 12 7.33334 11.7015 7.33334 11.3333C7.33334 10.9651 7.63182 10.6667 8.00001 10.6667C8.3682 10.6667 8.66668 10.9651 8.66668 11.3333Z"
-                    fill="url(#paint3_linear_4557_4256)"
-                  />
-                  <path
-                    d="M4.66668 9.33333C5.03487 9.33333 5.33334 9.03486 5.33334 8.66667C5.33334 8.29848 5.03487 8 4.66668 8C4.29849 8 4.00001 8.29848 4.00001 8.66667C4.00001 9.03486 4.29849 9.33333 4.66668 9.33333Z"
-                    fill="url(#paint4_linear_4557_4256)"
-                  />
-                  <path
-                    d="M4.66668 12C5.03487 12 5.33334 11.7015 5.33334 11.3333C5.33334 10.9651 5.03487 10.6667 4.66668 10.6667C4.29849 10.6667 4.00001 10.9651 4.00001 11.3333C4.00001 11.7015 4.29849 12 4.66668 12Z"
-                    fill="url(#paint5_linear_4557_4256)"
-                  />
-                  <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
-                    d="M4.66668 1.16667C4.94282 1.16667 5.16668 1.39053 5.16668 1.66667V2.17515C5.60801 2.16666 6.09423 2.16666 6.62898 2.16667H9.37095C9.90572 2.16666 10.392 2.16666 10.8333 2.17515V1.66667C10.8333 1.39053 11.0572 1.16667 11.3333 1.16667C11.6095 1.16667 11.8333 1.39053 11.8333 1.66667V2.21806C12.0066 2.23127 12.1707 2.24788 12.326 2.26876C13.1076 2.37384 13.7403 2.59525 14.2392 3.09416C14.7381 3.59307 14.9595 4.2257 15.0646 5.00732C15.1667 5.76679 15.1667 6.7372 15.1667 7.96236V9.37094C15.1667 10.5961 15.1667 11.5665 15.0646 12.326C14.9595 13.1076 14.7381 13.7403 14.2392 14.2392C13.7403 14.7381 13.1076 14.9595 12.326 15.0646C11.5666 15.1667 10.5961 15.1667 9.37098 15.1667H6.62907C5.40391 15.1667 4.43347 15.1667 3.674 15.0646C2.89238 14.9595 2.25975 14.7381 1.76084 14.2392C1.26193 13.7403 1.04052 13.1076 0.935434 12.326C0.833325 11.5665 0.833333 10.5961 0.833344 9.37094V7.96239C0.833333 6.73722 0.833325 5.7668 0.935434 5.00732C1.04052 4.2257 1.26193 3.59307 1.76084 3.09416C2.25975 2.59525 2.89238 2.37384 3.674 2.26876C3.82928 2.24788 3.99338 2.23127 4.16668 2.21806V1.66667C4.16668 1.39053 4.39054 1.16667 4.66668 1.16667ZM3.80724 3.25984C3.13652 3.35002 2.75009 3.51913 2.46795 3.80127C2.18581 4.08341 2.01669 4.46984 1.92652 5.14057C1.91124 5.25416 1.89848 5.37374 1.8878 5.5H14.1122C14.1015 5.37374 14.0888 5.25416 14.0735 5.14057C13.9833 4.46984 13.8142 4.08341 13.5321 3.80127C13.2499 3.51913 12.8635 3.35002 12.1928 3.25984C11.5077 3.16773 10.6046 3.16667 9.33334 3.16667H6.66668C5.39546 3.16667 4.49235 3.16773 3.80724 3.25984ZM1.83334 8C1.83334 7.43066 1.83356 6.93515 1.84207 6.5H14.158C14.1665 6.93515 14.1667 7.43066 14.1667 8V9.33333C14.1667 10.6045 14.1656 11.5077 14.0735 12.1928C13.9833 12.8635 13.8142 13.2499 13.5321 13.5321C13.2499 13.8142 12.8635 13.9833 12.1928 14.0735C11.5077 14.1656 10.6046 14.1667 9.33334 14.1667H6.66668C5.39546 14.1667 4.49235 14.1656 3.80724 14.0735C3.13652 13.9833 2.75009 13.8142 2.46795 13.5321C2.18581 13.2499 2.01669 12.8635 1.92652 12.1928C1.83441 11.5077 1.83334 10.6045 1.83334 9.33333V8Z"
-                    fill="url(#paint6_linear_4557_4256)"
-                  />
-                  <defs>
-                    <linearGradient
-                      id="paint0_linear_4557_4256"
-                      x1="4.42367"
-                      y1="-0.593198"
-                      x2="11.5116"
-                      y2="18.9812"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                    <linearGradient
-                      id="paint1_linear_4557_4256"
-                      x1="4.42367"
-                      y1="-0.593198"
-                      x2="11.5116"
-                      y2="18.9812"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                    <linearGradient
-                      id="paint2_linear_4557_4256"
-                      x1="4.42367"
-                      y1="-0.593198"
-                      x2="11.5116"
-                      y2="18.9812"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                    <linearGradient
-                      id="paint3_linear_4557_4256"
-                      x1="4.42367"
-                      y1="-0.593198"
-                      x2="11.5116"
-                      y2="18.9812"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                    <linearGradient
-                      id="paint4_linear_4557_4256"
-                      x1="4.42367"
-                      y1="-0.593198"
-                      x2="11.5116"
-                      y2="18.9812"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                    <linearGradient
-                      id="paint5_linear_4557_4256"
-                      x1="4.42367"
-                      y1="-0.593198"
-                      x2="11.5116"
-                      y2="18.9812"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                    <linearGradient
-                      id="paint6_linear_4557_4256"
-                      x1="4.42367"
-                      y1="-0.593198"
-                      x2="11.5116"
-                      y2="18.9812"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                  </defs>
-                </svg>{" "}
-                {t("createDate")}:{" "}
-                <strong>
-                  {new Date(event.createdAt).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </strong>
-              </div>
-              <div className="align-items-center d-flex gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="13"
-                  height="14"
-                  viewBox="0 0 13 14"
-                  fill="none">
-                  <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
-                    d="M6.49626 6.17512C6.1483 6.17512 5.84778 6.47786 5.84778 6.87512C5.84778 7.27239 6.1483 7.57512 6.49626 7.57512C6.84423 7.57512 7.14475 7.27239 7.14475 6.87512C7.14475 6.47786 6.84423 6.17512 6.49626 6.17512ZM5.03528 6.87512C5.03528 6.03529 5.67921 5.33514 6.49626 5.33514C7.31331 5.33514 7.95725 6.03529 7.95725 6.87512C7.95725 7.71501 7.31331 8.41512 6.49626 8.41512C5.67921 8.41512 5.03528 7.71501 5.03528 6.87512ZM8.0931 10.5154C7.26917 9.56475 5.73116 9.59711 4.90175 10.5209C4.74911 10.6909 4.49206 10.7008 4.32762 10.543C4.16318 10.3851 4.15362 10.1194 4.30626 9.94941C5.44153 8.68499 7.53637 8.61431 8.69825 9.95484C8.84796 10.1276 8.83388 10.3932 8.66677 10.5479C8.49967 10.7027 8.24281 10.6882 8.0931 10.5154Z"
-                    fill="url(#paint0_linear_4703_14950)"
-                  />
-                  <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
-                    d="M5.552 2.39423C5.55281 2.62619 5.37163 2.81493 5.14727 2.8158C4.42678 2.81857 3.90924 2.83361 3.51393 2.90157C3.12861 2.96781 2.89958 3.07822 2.73043 3.2439C2.54463 3.42588 2.42981 3.6756 2.36738 4.13038C2.30296 4.59968 2.302 5.22099 2.302 6.10882V8.76148C2.302 9.6493 2.30296 10.2706 2.36738 10.7399C2.42981 11.1947 2.54463 11.4444 2.73043 11.6264C2.91932 11.8114 3.18343 11.9279 3.6585 11.9906C4.14312 12.0543 4.78282 12.0551 5.68742 12.0551H7.31242C8.217 12.0551 8.85671 12.0543 9.34134 11.9906C9.81644 11.9279 10.0805 11.8114 10.2694 11.6264C10.4552 11.4444 10.57 11.1947 10.6325 10.7399C10.6969 10.2706 10.6978 9.6493 10.6978 8.76148V6.10882C10.6978 5.22099 10.6969 4.59968 10.6325 4.13038C10.57 3.6756 10.4552 3.42588 10.2694 3.2439C10.1003 3.07822 9.87125 2.96781 9.48591 2.90157C9.0906 2.83361 8.57304 2.81857 7.85257 2.8158C7.62821 2.81493 7.44702 2.62619 7.44784 2.39423C7.44865 2.16228 7.63124 1.97494 7.8556 1.9758C8.56746 1.97855 9.14926 1.99216 9.61921 2.07295C10.0991 2.15545 10.5013 2.31388 10.8282 2.6341C11.1977 2.99598 11.3605 3.45585 11.4369 4.01235C11.5103 4.54752 11.5103 5.22862 11.5103 6.07634V8.79396C11.5103 9.64169 11.5103 10.3228 11.4369 10.858C11.3605 11.4144 11.1977 11.8743 10.8282 12.2362C10.4618 12.595 10.0015 12.7504 9.44398 12.8238C8.90205 12.8952 8.2105 12.8952 7.34124 12.8951H5.6586C4.78935 12.8952 4.09779 12.8952 3.55585 12.8238C2.9984 12.7504 2.53801 12.595 2.17163 12.2362C1.80216 11.8743 1.63933 11.4144 1.56294 10.858C1.48948 10.3228 1.48949 9.64169 1.4895 8.79402V6.07628C1.48949 5.22861 1.48948 4.54752 1.56294 4.01235C1.63933 3.45585 1.80216 2.99598 2.17163 2.6341C2.49858 2.31388 2.90072 2.15545 3.38065 2.07295C3.85058 1.99216 4.43235 1.97855 5.14424 1.9758C5.3686 1.97494 5.55119 2.16228 5.552 2.39423Z"
-                    fill="url(#paint1_linear_4703_14950)"
-                  />
-                  <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
-                    d="M6.45871 0.85512C6.47225 0.855132 6.48601 0.855137 6.49993 0.855137C6.51385 0.855137 6.52761 0.855132 6.54115 0.85512C6.75533 0.854975 6.92714 0.854857 7.0832 0.891991C7.44243 0.977464 7.75903 1.20909 7.93567 1.54487C8.01286 1.69156 8.05078 1.86202 8.09313 2.0524C8.09622 2.06623 8.09936 2.08017 8.10251 2.0942L8.14763 2.29587C8.14903 2.30237 8.1505 2.30886 8.15196 2.31533C8.19432 2.50456 8.2331 2.67795 8.25011 2.82343C8.26836 2.97963 8.26961 3.16013 8.19047 3.34046C8.10966 3.52475 7.97511 3.67532 7.81093 3.77842C7.6565 3.8754 7.48907 3.9074 7.33269 3.92157C7.18276 3.93516 6.99816 3.93515 6.78669 3.93514H6.21317C6.00171 3.93515 5.81711 3.93516 5.66717 3.92157C5.51079 3.9074 5.34338 3.8754 5.18892 3.77842C5.02473 3.67532 4.89023 3.52475 4.80937 3.34046C4.73024 3.16013 4.73149 2.97963 4.74974 2.82343C4.76674 2.67795 4.80555 2.50456 4.84791 2.31533C4.84936 2.30886 4.85081 2.30237 4.85226 2.29587L4.89738 2.0942C4.90052 2.08017 4.90362 2.06623 4.9067 2.0524C4.94906 1.86202 4.987 1.69156 5.06418 1.54487C5.24085 1.20909 5.55748 0.977464 5.91666 0.891991C6.07272 0.854857 6.24453 0.854975 6.45871 0.85512ZM6.49993 1.69514C6.22384 1.69514 6.15278 1.69777 6.09893 1.71059C5.94608 1.74695 5.83379 1.8401 5.77789 1.94625C5.76088 1.97861 5.74653 2.02621 5.689 2.2835L5.64388 2.48517C5.59573 2.70035 5.56751 2.82904 5.55635 2.92419C5.55126 2.96816 5.55174 2.99092 5.5525 3.0001C5.56258 3.0196 5.58094 3.04176 5.61068 3.06046L5.61143 3.06087C5.61143 3.06087 5.61301 3.06164 5.61458 3.06232C5.61777 3.06367 5.62362 3.06588 5.63326 3.06848C5.65352 3.07397 5.68591 3.08005 5.73813 3.08478C5.84825 3.09476 5.99672 3.09514 6.23013 3.09514H6.76973C7.00314 3.09514 7.15161 3.09476 7.26173 3.08478C7.31395 3.08005 7.34634 3.07397 7.3666 3.06848C7.37624 3.06588 7.38209 3.06367 7.38528 3.06232C7.38686 3.06164 7.38843 3.06087 7.38843 3.06087L7.38902 3.06056C7.41881 3.04185 7.43728 3.0196 7.44736 3.0001C7.44812 2.99092 7.44861 2.96816 7.44351 2.92419C7.43236 2.82904 7.40413 2.70035 7.35598 2.48517L7.31086 2.2835C7.25333 2.02621 7.23898 1.97861 7.22197 1.94625C7.16607 1.8401 7.05378 1.74695 6.90093 1.71059C6.84708 1.69777 6.77602 1.69514 6.49993 1.69514Z"
-                    fill="url(#paint2_linear_4703_14950)"
-                  />
-                  <defs>
-                    <linearGradient
-                      id="paint0_linear_4703_14950"
-                      x1="5.35104"
-                      y1="4.66639"
-                      x2="8.39631"
-                      y2="11.7755"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                    <linearGradient
-                      id="paint1_linear_4703_14950"
-                      x1="3.9996"
-                      y1="0.603189"
-                      x2="9.99692"
-                      y2="15.4494"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                    <linearGradient
-                      id="paint2_linear_4703_14950"
-                      x1="5.62143"
-                      y1="0.467928"
-                      x2="7.05083"
-                      y2="4.87544"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                  </defs>
-                </svg>{" "}
-                {t("organizerName")}:{" "}
-                <strong>
-                  {event.createdBy?.firstName
-                    ? `${event.createdBy.firstName} ${event.createdBy.lastName || ""}`
-                    : "N/A"}
-                </strong>
               </div>
             </div>
-          </div>
-        </div>
+        <div className="ed-heroActs">
+          <Link href={`/eventDetails?id=${event._id}`} className="ed-primary ed-ctaWide"><Icon name="eye" />{copy.publicPage}</Link>
+          <div className="ed-heroPair">
+            <button type="button" className="ed-secondary ed-ctaWide" onClick={() => setPromoOpen(true)}><Icon name="promote" />{copy.promote}</button>
+            <button type="button" className="ed-secondary ed-ctaWide" onClick={() => router.push(`/BasicInfo?eventId=${event._id}`)}><Icon name="edit" />{copy.edit}</button>
+              </div>
+              </div>
+      </section>
+
+      <div className="og-tabs" role="tablist">
+        <button type="button" className="og-tab" role="tab" aria-selected={activeTab === "overview"} onClick={() => setActiveTab("overview")}>{copy.overview}</button>
+        <button type="button" className="og-tab" role="tab" aria-selected={activeTab === "bookings"} onClick={() => setActiveTab("bookings")}>
+          {copy.bookings}{bookingsTotal > 0 ? <span className="og-tab-n">{bookingsTotal}</span> : null}
+        </button>
+        <button type="button" className="og-tab" role="tab" aria-selected={activeTab === "analytics"} onClick={() => setActiveTab("analytics")}>{copy.analytics}</button>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="tab-nav-bar mb-4">
-        <button
-          className={`tab-nav-item ${activeTab === "overview" ? "active" : ""}`}
-          onClick={() => setActiveTab("overview")}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>
-          {t("overview") || "Overview"}
-        </button>
-        <button
-          className={`tab-nav-item ${activeTab === "bookings" ? "active" : ""}`}
-          onClick={() => setActiveTab("bookings")}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
-          {t("bookingsTab") || "Bookings"}
-        </button>
-        <button
-          className={`tab-nav-item ${activeTab === "analytics" ? "active" : ""}`}
-          onClick={() => setActiveTab("analytics")}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
-          {t("analyticsTab") || "Analytics"}
-        </button>
-      </div>
-
-      {/* Overview Tab */}
-      {activeTab === "overview" && (<>
-        {/* Organizer KPI Dashboard Cards */}
-        <Row className="gx-3 gy-3 mb-4">
-          <Col lg={3} md={6} xs={12}>
-            <div className="kpi-card shadow-sm">
-              <div className="kpi-icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="18"
-                  viewBox="0 0 22 18"
-                  fill="none">
-                  <path
-                    d="M17.75 8.75C17.75 9.30229 17.3023 9.75 16.75 9.75C16.1977 9.75 15.75 9.30229 15.75 8.75C15.75 8.19772 16.1977 7.75 16.75 7.75C17.3023 7.75 17.75 8.19772 17.75 8.75Z"
-                    fill="#E89A16"
-                  />
-                  <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
-                    d="M8.69358 3.21614e-07H11.8064C13.6442 -1.55332e-05 15.0998 -2.81632e-05 16.239 0.153135C17.4114 0.310763 18.3604 0.64288 19.1088 1.39124C20.0331 2.31563 20.3277 3.55363 20.4347 5.16008C21.0119 5.4141 21.4478 5.9513 21.4958 6.63179C21.5001 6.69199 21.5 6.75687 21.5 6.81701C21.5 6.82249 21.5 6.82794 21.5 6.83333V10.6667C21.5 10.6721 21.5 10.6775 21.5 10.683C21.5 10.7431 21.5001 10.808 21.4958 10.8682C21.4478 11.5487 21.0119 12.0859 20.4347 12.3399C20.3277 13.9464 20.0331 15.1844 19.1088 16.1088C18.3604 16.8571 17.4114 17.1892 16.239 17.3469C15.0998 17.5 13.6442 17.5 11.8064 17.5H8.69359C6.85583 17.5 5.40019 17.5 4.26098 17.3469C3.08856 17.1892 2.13961 16.8571 1.39124 16.1088C0.64288 15.3604 0.310763 14.4114 0.153135 13.239C-2.81632e-05 12.0998 -1.55332e-05 10.6442 3.21614e-07 8.80642V8.69358C-1.55332e-05 6.85582 -2.81632e-05 5.40019 0.153135 4.26098C0.310763 3.08856 0.64288 2.13961 1.39124 1.39124C2.13961 0.64288 3.08856 0.310763 4.26098 0.153135C5.40019 -2.81632e-05 6.85582 -1.55332e-05 8.69358 3.21614e-07ZM18.9179 12.5H16.9808C14.8356 12.5 13 10.8724 13 8.75C13 6.62756 14.8356 5 16.9808 5H18.9179C18.8041 3.65855 18.5466 2.95043 18.0481 2.4519C17.6249 2.02869 17.0452 1.77502 16.0392 1.63976C15.0115 1.50159 13.6568 1.5 11.75 1.5H8.75C6.84318 1.5 5.48851 1.50159 4.46085 1.63976C3.45476 1.77502 2.87511 2.02869 2.4519 2.4519C2.02869 2.87511 1.77502 3.45476 1.63976 4.46085C1.50159 5.48851 1.5 6.84318 1.5 8.75C1.5 10.6568 1.50159 12.0115 1.63976 13.0392C1.77502 14.0452 2.02869 14.6249 2.4519 15.0481C2.87511 15.4713 3.45476 15.725 4.46085 15.8602C5.48851 15.9984 6.84318 16 8.75 16H11.75C13.6568 16 15.0115 15.9984 16.0392 15.8602C17.0452 15.725 17.6249 15.4713 18.0481 15.0481C18.5466 14.5496 18.8041 13.8415 18.9179 12.5ZM4 4.75C4 4.33579 4.33579 4 4.75 4H8.75C9.16421 4 9.5 4.33579 9.5 4.75C9.5 5.16421 9.16421 5.5 8.75 5.5H4.75C4.33579 5.5 4 5.16421 4 4.75ZM19.6735 6.50023C19.6532 6.50001 19.6266 6.5 19.5833 6.5H16.9808C15.5574 6.5 14.5 7.55873 14.5 8.75C14.5 9.94127 15.5574 11 16.9808 11H19.5833C19.6266 11 19.6532 11 19.6735 10.9998C19.686 10.9996 19.6926 10.9995 19.6957 10.9993L19.6979 10.9992C19.9041 10.9867 19.9927 10.8476 19.9995 10.7639C19.9995 10.7639 19.9997 10.7576 19.9998 10.7486C20 10.7308 20 10.7072 20 10.6667V6.83333C20 6.79282 20 6.76917 19.9998 6.75143C19.9997 6.74238 19.9995 6.73609 19.9995 6.73609C19.9927 6.65242 19.9041 6.5133 19.6979 6.50076C19.6979 6.50076 19.693 6.50043 19.6735 6.50023Z"
-                    fill="#E89A16"
-                  />
-                </svg>
-              </div>
-              <div className="kpi-content">
-                <h5>{t("estimatedRevenue") || "Estimated Revenue"}</h5>
-                <h3>₮{estimatedRevenue.toLocaleString()}</h3>
-                <p className="small text-muted">
-                  {t("ticketsRevenueOnly") || "From direct ticket sales"}
-                </p>
-              </div>
-            </div>
-          </Col>
-          <Col lg={3} md={6} xs={12}>
-            <div className="kpi-card shadow-sm">
-              <div className="kpi-icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="15"
-                  viewBox="0 0 13 11"
-                  fill="none">
-                  <path
-                    d="M7.70473 9.87681L7.20473 9.87542V9.87542L7.70473 9.87681ZM7.70822 8.625L8.20822 8.62639V8.625H7.70822ZM1.18975 9.76777L0.829484 10.1145H0.829484L1.18975 9.76777ZM1.18975 1.23223L0.829484 0.885519L0.829484 0.885519L1.18975 1.23223ZM1.07185 4.40854L0.820438 4.84073H0.820438L1.07185 4.40854ZM0.506346 3.61842L0.00675315 3.59826V3.59826L0.506346 3.61842ZM1.07185 6.59146L0.820438 6.15927L0.820437 6.15927L1.07185 6.59146ZM0.506346 7.38158L1.00594 7.36142L0.506346 7.38158ZM11.9282 4.40854L12.1796 4.84073H12.1796L11.9282 4.40854ZM12.4937 3.61842L12.9932 3.59826V3.59825L12.4937 3.61842ZM11.8103 1.23223L12.1705 0.885519L12.1705 0.885519L11.8103 1.23223ZM11.9282 6.59146L11.6767 7.02366H11.6767L11.9282 6.59146ZM12.4937 7.38158L12.9932 7.40174V7.40174L12.4937 7.38158ZM11.8103 9.76777L12.1705 10.1145H12.1705L11.8103 9.76777ZM12.4662 6.95749L12.9066 6.7208L12.9066 6.7208L12.4662 6.95749ZM12.4662 4.04252L12.9066 4.2792L12.9066 4.2792L12.4662 4.04252ZM0.533806 6.95749L0.0933742 6.7208H0.093374L0.533806 6.95749ZM0.533806 4.04252L0.974239 3.80583L0.974239 3.80583L0.533806 4.04252ZM7.70822 2.375H8.20822L8.20822 2.37361L7.70822 2.375ZM7.70386 0.811594L7.20386 0.812988V0.812988L7.70386 0.811594ZM9.21667 0.511814L9.23009 0.0119942V0.0119942L9.21667 0.511814ZM9.52018 10.4776L9.54216 10.9771H9.54216L9.52018 10.4776ZM7.61568 10.4088L7.25549 10.062L7.25549 10.062L7.61568 10.4088ZM7.70473 9.87681L8.20472 9.87821L8.20821 8.62639L7.70822 8.625L7.20822 8.62361L7.20473 9.87542L7.70473 9.87681ZM8.30971 8V8.5C8.34787 8.5 8.41121 8.53773 8.41121 8.625H8.91121H9.41121C9.41121 8.02192 8.93594 7.5 8.30971 7.5V8ZM8.30971 8V7.5C7.68348 7.5 7.20822 8.02192 7.20822 8.625H7.70822H8.20822C8.20822 8.53773 8.27155 8.5 8.30971 8.5V8ZM5.29701 0.5V1H7.40311V0.5V0H5.29701V0.5ZM7.10473 10.5V10H5.29701V10.5V11H7.10473V10.5ZM5.29701 10.5V10C4.14815 10 3.33874 9.99886 2.72618 9.91328C2.13002 9.83 1.79485 9.67546 1.55001 9.42105L1.18975 9.76777L0.829484 10.1145C1.28934 10.5923 1.87361 10.8039 2.58782 10.9037C3.28562 11.0011 4.17749 11 5.29701 11V10.5ZM5.29701 0.5V0C4.17749 0 3.28562 -0.00114477 2.58782 0.0963379C1.87361 0.196113 1.28934 0.407691 0.829484 0.885519L1.18975 1.23223L1.55001 1.57895C1.79485 1.32454 2.13002 1.17 2.72618 1.08672C3.33874 1.00114 4.14815 1 5.29701 1V0.5ZM1.07185 4.40854L0.820438 4.84073C1.03483 4.96544 1.18804 5.20983 1.18804 5.5H1.68804H2.18804C2.18804 4.85227 1.8442 4.27938 1.32326 3.97634L1.07185 4.40854ZM0.506346 3.61842L1.00594 3.63858C1.05285 2.47627 1.20605 1.93635 1.55001 1.57895L1.18975 1.23223L0.829484 0.885519C0.203047 1.53644 0.0539864 2.42797 0.00675315 3.59826L0.506346 3.61842ZM1.68804 5.5H1.18804C1.18804 5.79017 1.03483 6.03456 0.820438 6.15927L1.07185 6.59146L1.32326 7.02366C1.8442 6.72062 2.18804 6.14773 2.18804 5.5H1.68804ZM0.506346 7.38158L0.00675315 7.40174C0.0539864 8.57203 0.203047 9.46356 0.829484 10.1145L1.18975 9.76777L1.55001 9.42105C1.20605 9.06365 1.05285 8.52373 1.00594 7.36142L0.506346 7.38158ZM11.312 5.5H11.812C11.812 5.20983 11.9652 4.96544 12.1796 4.84073L11.9282 4.40854L11.6767 3.97634C11.1558 4.27938 10.812 4.85227 10.812 5.5H11.312ZM12.4937 3.61842L12.9932 3.59825C12.946 2.42797 12.797 1.53644 12.1705 0.885519L11.8103 1.23223L11.45 1.57895C11.794 1.93635 11.9471 2.47627 11.9941 3.63858L12.4937 3.61842ZM11.9282 6.59146L12.1796 6.15927C11.9652 6.03456 11.812 5.79017 11.812 5.5H11.312H10.812C10.812 6.14773 11.1558 6.72062 11.6767 7.02366L11.9282 6.59146ZM12.4937 7.38158L11.9941 7.36142C11.9471 8.52373 11.794 9.06365 11.45 9.42105L11.8103 9.76777L12.1705 10.1145C12.797 9.46356 12.946 8.57203 12.9932 7.40174L12.4937 7.38158ZM11.9282 6.59146L11.6767 7.02366C11.8477 7.12309 11.9574 7.18716 12.0312 7.23562C12.0673 7.25938 12.0818 7.271 12.0845 7.27337C12.0909 7.27889 12.0571 7.2525 12.0258 7.19417L12.4662 6.95749L12.9066 6.7208C12.8545 6.62389 12.7845 6.55653 12.7378 6.51628C12.6875 6.47287 12.6321 6.43393 12.5803 6.39989C12.4782 6.33278 12.3397 6.25241 12.1796 6.15927L11.9282 6.59146ZM12.4937 7.38158L12.9932 7.40174C12.9976 7.29477 13.0025 7.18364 12.9985 7.09064C12.9946 6.99687 12.9807 6.85867 12.9066 6.7208L12.4662 6.95749L12.0258 7.19417C11.9931 7.13346 11.9977 7.09165 11.9994 7.13283C12.0002 7.15034 12.0003 7.1762 11.9993 7.21623C11.9983 7.2561 11.9964 7.30245 11.9941 7.36142L12.4937 7.38158ZM11.9282 4.40854L12.1796 4.84073C12.3397 4.74759 12.4782 4.66722 12.5803 4.60011C12.6321 4.56607 12.6875 4.52713 12.7378 4.48372C12.7845 4.44347 12.8545 4.37611 12.9066 4.2792L12.4662 4.04252L12.0258 3.80583C12.0571 3.7475 12.0909 3.72111 12.0845 3.72663C12.0818 3.729 12.0673 3.74062 12.0312 3.76438C11.9574 3.81284 11.8477 3.87691 11.6767 3.97634L11.9282 4.40854ZM12.4937 3.61842L11.9941 3.63858C11.9964 3.69755 11.9983 3.7439 11.9993 3.78377C12.0003 3.8238 12.0002 3.84966 11.9994 3.86717C11.9977 3.90835 11.9931 3.86654 12.0258 3.80584L12.4662 4.04252L12.9066 4.2792C12.9807 4.14133 12.9946 4.00313 12.9985 3.90936C13.0025 3.81636 12.9976 3.70523 12.9932 3.59826L12.4937 3.61842ZM1.07185 6.59146L0.820437 6.15927C0.66032 6.25241 0.521801 6.33278 0.419659 6.39989C0.367866 6.43393 0.312461 6.47287 0.262159 6.51628C0.215516 6.55653 0.145453 6.62389 0.0933742 6.7208L0.533806 6.95749L0.974239 7.19417C0.942891 7.2525 0.909068 7.27889 0.915469 7.27337C0.91821 7.271 0.932653 7.25938 0.968807 7.23562C1.04256 7.18716 1.15233 7.12309 1.32326 7.02366L1.07185 6.59146ZM0.506346 7.38158L1.00594 7.36142C1.00356 7.30245 1.0017 7.2561 1.00072 7.21623C0.999725 7.1762 0.999842 7.15034 1.00058 7.13283C1.00232 7.09165 1.00686 7.13346 0.974239 7.19417L0.533806 6.95749L0.093374 6.7208C0.0192864 6.85867 0.00543186 6.99687 0.00147241 7.09064C-0.002455 7.18364 0.00243565 7.29477 0.00675315 7.40174L0.506346 7.38158ZM1.07185 4.40854L1.32326 3.97634C1.15233 3.87691 1.04256 3.81284 0.968805 3.76438C0.932652 3.74062 0.91821 3.729 0.915469 3.72663C0.90907 3.72111 0.942892 3.7475 0.974239 3.80583L0.533806 4.04252L0.0933737 4.2792C0.145452 4.37611 0.215513 4.44347 0.262157 4.48372C0.31246 4.52713 0.367865 4.56607 0.419657 4.60011C0.521799 4.66722 0.660319 4.74759 0.820438 4.84073L1.07185 4.40854ZM0.506346 3.61842L0.00675315 3.59826C0.00243565 3.70523 -0.002455 3.81636 0.00147241 3.90936C0.00543186 4.00313 0.0192864 4.14133 0.0933741 4.2792L0.533806 4.04252L0.974239 3.80583C1.00686 3.86654 1.00232 3.90835 1.00058 3.86717C0.999842 3.84966 0.999725 3.8238 1.00072 3.78377C1.0017 3.7439 1.00356 3.69755 1.00594 3.63858L0.506346 3.61842ZM7.70822 2.375L8.20822 2.37361L8.20386 0.8102L7.70386 0.811594L7.20386 0.812988L7.20822 2.37639L7.70822 2.375ZM8.30971 3V2.5C8.27155 2.5 8.20822 2.46227 8.20822 2.375H7.70822H7.20822C7.20822 2.97808 7.68348 3.5 8.30971 3.5V3ZM8.91121 2.375H8.41121C8.41121 2.46227 8.34787 2.5 8.30971 2.5V3V3.5C8.93594 3.5 9.41121 2.97808 9.41121 2.375H8.91121ZM8.91121 0.822613H8.41121V2.375H8.91121H9.41121V0.822613H8.91121ZM9.21667 0.511814L9.20324 1.01163C10.5152 1.04688 11.08 1.19454 11.45 1.57895L11.8103 1.23223L12.1705 0.885519C11.4872 0.175513 10.5191 0.0466259 9.23009 0.0119942L9.21667 0.511814ZM8.91121 0.822613H9.41121C9.41121 0.907402 9.33851 1.01527 9.20324 1.01163L9.21667 0.511814L9.23009 0.0119942C8.75929 -0.000654578 8.41121 0.389072 8.41121 0.822613H8.91121ZM7.40311 0.5V1C7.27545 1 7.2041 0.898189 7.20386 0.812988L7.70386 0.811594L8.20386 0.810201C8.20266 0.38053 7.86229 0 7.40311 0V0.5ZM9.52018 10.4776L9.54216 10.9771C10.6706 10.9275 11.5397 10.7699 12.1705 10.1145L11.8103 9.76777L11.45 9.42105C11.1122 9.77201 10.6071 9.92928 9.49819 9.97808L9.52018 10.4776ZM8.91121 8.625H8.41121V9.86031H8.91121H9.41121V8.625H8.91121ZM7.70473 9.87681L7.20473 9.87542C7.20452 9.95067 7.20433 10.0084 7.203 10.0576C7.20166 10.1071 7.19941 10.1361 7.19711 10.1535C7.19485 10.1707 7.19414 10.1633 7.2019 10.1438C7.21119 10.1204 7.22836 10.0902 7.25549 10.062L7.61568 10.4088L7.97587 10.7556C8.12441 10.6013 8.17054 10.4207 8.18854 10.2841C8.20492 10.1598 8.20435 10.0116 8.20472 9.87821L7.70473 9.87681ZM7.10473 10.5V11C7.23109 11 7.37816 11.0011 7.50233 10.9838C7.64304 10.9641 7.8246 10.9127 7.97588 10.7556L7.61568 10.4088L7.25549 10.062C7.28284 10.0336 7.31422 10.0136 7.3418 10.0018C7.3653 9.99177 7.377 9.99157 7.36379 9.99342C7.35013 9.99533 7.3247 9.99752 7.2781 9.99875C7.23175 9.99996 7.17719 10 7.10473 10V10.5ZM9.52018 10.4776L9.4982 9.97808C9.42547 9.98128 9.37111 9.98363 9.32497 9.98439C9.27858 9.98515 9.25398 9.98395 9.24142 9.98266C9.22951 9.98144 9.24287 9.98145 9.2683 9.99157C9.29794 10.0034 9.32984 10.0232 9.3569 10.0502L9.0036 10.404L8.6503 10.7578C8.80727 10.9145 8.99278 10.9624 9.13956 10.9775C9.26684 10.9905 9.41616 10.9827 9.54216 10.9771L9.52018 10.4776ZM8.91121 9.86031H8.41121C8.41121 9.99675 8.41016 10.1489 8.42713 10.2764C8.44588 10.4173 8.49461 10.6023 8.6503 10.7578L9.0036 10.404L9.3569 10.0502C9.38482 10.0781 9.40299 10.1088 9.41301 10.1332C9.42136 10.1537 9.42069 10.1617 9.41838 10.1444C9.41605 10.1269 9.41376 10.0974 9.41249 10.0468C9.41124 9.99643 9.41121 9.93738 9.41121 9.86031H8.91121Z"
-                    fill="url(#paint0_linear_5343_4765)"
-                  />
-                  <defs>
-                    <linearGradient
-                      id="paint0_linear_5343_4765"
-                      x1="3.50585"
-                      y1="-0.757047"
-                      x2="7.966"
-                      y2="13.6801"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
-              <div className="kpi-content">
-                <h5>{t("ticketsSold") || "Tickets Sold"}</h5>
-                <h3>
-                  {(((event.totalBooked || 0) + (event.ReservedExternally || 0)))?.toLocaleString() || 0}{" "}
-                  <span className="total-cap">
-                    / {event.totalTickets?.toLocaleString() || 0}
+      {activeTab === "overview" && (
+        <div>
+          <div className="ed-kpis">
+            <section className="ed-kpi">
+              <span className="ed-kpiH"><Icon name="ticket" size={19} />{copy.sold}</span>
+              <b className="ed-kpiV is-accent">{stats.sold}<i> / {stats.cap}</i></b>
+              <span className="ed-kpiFoot">
+                <span className="ed-kpiPct">{stats.fill}%</span>
+                <span className="ed-kpiTrack"><i style={{ width: `${Math.min(100, Number(stats.fill))}%` }} /></span>
                   </span>
-                </h3>
-                <div className="progress-bar-container mt-2">
-                  <div
-                    className="progress-bar-filled"
-                    style={{
-                      width: `${event.totalTickets > 0 ? (((event.totalBooked || 0) + (event.ReservedExternally || 0)) / event.totalTickets) * 100 : 0}%`,
-                    }}></div>
+            </section>
+            <section className="ed-kpi">
+              <span className="ed-kpiH"><Icon name="users" size={19} />{copy.external}</span>
+              <b className="ed-kpiV is-amber">{stats.external}</b>
+              <button type="button" className="ed-util ed-kpiBtn" onClick={openExternal}><Icon name="edit" />{stats.external > 0 ? copy.editExternal : copy.addExternal}</button>
+            </section>
+            <section className="ed-kpi">
+              <span className="ed-kpiH"><Icon name="chair" size={19} />{copy.remaining}</span>
+              <b className="ed-kpiV is-accent">{stats.left}</b>
+              <span className="ed-kpiNote">{copy.capacity}: {stats.cap}</span>
+            </section>
                 </div>
-              </div>
-            </div>
-          </Col>
-          <Col lg={3} md={6} xs={12}>
-            <div className="kpi-card shadow-sm">
-              <div className="kpi-icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 31 31"
-                  fill="none">
-                  <g clip-path="url(#clip0_4557_4130)">
-                    <path
-                      d="M27.894 13.084C27.894 12.2664 27.229 11.6012 26.4114 11.6012H24.7373C24.5266 11.6012 24.326 11.6454 24.1444 11.7251V9.1306C24.1444 8.88485 23.9452 8.68567 23.6995 8.68567C23.4537 8.68567 23.2545 8.88485 23.2545 9.1306V17.1999H7.07044V9.1306C7.07044 8.88485 6.87126 8.68567 6.62575 8.68567C6.38001 8.68567 6.18082 8.88485 6.18082 9.1306V11.7251C5.99901 11.6454 5.79843 11.6012 5.5879 11.6012H3.91381C3.09622 11.6012 2.43103 12.2664 2.43103 13.084V17.8549C2.43103 18.7441 2.70341 19.5867 3.22036 20.3031C3.21874 20.3452 3.21805 20.3874 3.21805 20.4298C3.21805 21.507 3.9951 22.4061 5.01813 22.5958V22.896C5.01813 23.504 5.39728 24.0253 5.93138 24.2358V27.7133C5.41465 27.7953 5.01813 28.2441 5.01813 28.7838V29.2739C5.01813 29.8717 5.50452 30.3578 6.10208 30.3578H9.62535C10.2231 30.3578 10.7093 29.8717 10.7093 29.2739V28.7838C10.7093 28.2441 10.313 27.7953 9.79605 27.7133V24.3354H20.5292V27.7133C20.0122 27.7953 19.6159 28.2441 19.6159 28.7838V29.2739C19.6159 29.8717 20.1021 30.3578 20.6999 30.3578H24.2229C24.8207 30.3578 25.3069 29.8717 25.3069 29.2739V28.7838C25.3069 28.2441 24.9106 27.7953 24.3936 27.7133V24.2358C24.9279 24.0253 25.3069 23.504 25.3069 22.896V22.5958C26.3301 22.4061 27.1072 21.507 27.1072 20.4298C27.1072 20.3874 27.1062 20.3452 27.1046 20.3031C27.6218 19.5867 27.894 18.7441 27.894 17.8549V13.084ZM3.53605 19.0325C3.39407 18.6607 3.32088 18.2642 3.32088 17.8549V13.084C3.32088 12.7569 3.58677 12.491 3.91381 12.491H5.5879C5.9147 12.491 6.18082 12.7569 6.18082 13.084V17.2108C5.0142 17.3067 4.02128 18.0252 3.53605 19.0325ZM9.81967 28.7835V29.2739C9.81967 29.3809 9.73236 29.468 9.62535 29.468H6.10208C5.99507 29.468 5.90799 29.3809 5.90799 29.2739V28.7835C5.90799 28.6765 5.99507 28.5895 6.10208 28.5895H9.62535C9.73236 28.5895 9.81967 28.6765 9.81967 28.7835ZM6.82123 27.6996V24.3354H8.9062V27.6996H6.82123ZM24.4172 28.7835V29.2739C24.4172 29.3809 24.3301 29.468 24.2229 29.468H20.6996C20.5926 29.468 20.5055 29.3809 20.5055 29.2739V28.7835C20.5055 28.6765 20.5926 28.5895 20.6996 28.5895H24.2229C24.3301 28.5895 24.4172 28.6765 24.4172 28.7835ZM21.4188 27.6996V24.3354H23.5038V27.6996H21.4188ZM24.4172 22.8957C24.4172 23.1989 24.1706 23.4458 23.8674 23.4458H6.45783C6.15465 23.4458 5.90799 23.1989 5.90799 22.8957V22.6329H24.4172V22.8957ZM24.9039 21.743H5.42114C4.69689 21.743 4.10767 21.154 4.10767 20.4298C4.10767 19.1395 5.15756 18.0896 6.44787 18.0896H23.8773C25.1677 18.0896 26.2176 19.1392 26.2176 20.4298C26.2173 21.154 25.6281 21.743 24.9039 21.743ZM27.0043 17.8549C27.0043 18.2642 26.9311 18.6607 26.7889 19.0325C26.3037 18.0252 25.3108 17.3067 24.1444 17.2108V13.084C24.1444 12.7569 24.4103 12.491 24.7373 12.491H26.4114C26.7382 12.491 27.0043 12.7569 27.0043 13.084V17.8549Z"
-                      fill="url(#paint0_linear_4557_4130)"
-                    />
-                    <path
-                      d="M6.62577 7.79489C6.87128 7.79489 7.07047 7.59571 7.07047 7.34997V4.19541C7.07047 2.37263 8.55348 0.889852 10.3763 0.889852H19.949C21.7718 0.889852 23.2546 2.37263 23.2546 4.19541V7.34997C23.2546 7.59571 23.4538 7.79489 23.6995 7.79489C23.9452 7.79489 24.1444 7.59571 24.1444 7.34997V4.19541C24.1444 1.88208 22.2623 0 19.949 0H10.3763C8.06292 0 6.18085 1.88208 6.18085 4.19541V7.34997C6.18085 7.59571 6.38003 7.79489 6.62577 7.79489Z"
-                      fill="url(#paint1_linear_4557_4130)"
-                    />
-                  </g>
-                  <defs>
-                    <linearGradient
-                      id="paint0_linear_4557_4130"
-                      x1="8.80918"
-                      y1="5.96138"
-                      x2="18.6447"
-                      y2="37.1325"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                    <linearGradient
-                      id="paint1_linear_4557_4130"
-                      x1="10.6805"
-                      y1="-0.979855"
-                      x2="12.6136"
-                      y2="11.0368"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                    <clipPath id="clip0_4557_4130">
-                      <rect width="30.3579" height="30.3579" fill="white" />
-                    </clipPath>
-                  </defs>
-                </svg>
-              </div>
-              <div className="kpi-content">
-                <h5>{t("seatsLeft") || "Tickets Left"}</h5>
-                <h3>{((event.totalTickets || 0) - (event.totalBooked || 0) - (event.ReservedExternally || 0)).toLocaleString()}</h3>
-                <p className="small text-muted">
-                  {event.ReservedExternally > 0
-                    ? `+${event.ReservedExternally} ${t("reservedExternally") || "Reserved Externally"}`
-                    : t("availableForPublicBooking") || "Available for public booking"}
-                </p>
-              </div>
-            </div>
-          </Col>
-          <Col lg={3} md={6} xs={12}>
-            <div className="kpi-card shadow-sm">
-              <div className="kpi-icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 31 31"
-                  fill="none">
-                  <g clip-path="url(#clip0_4557_4160)">
-                    <path
-                      d="M25.956 11.587C26.8193 10.7415 27.3221 9.58639 27.3221 8.34842C27.3221 5.83761 25.2794 3.79474 22.7684 3.79474C21.9388 3.79474 21.1226 4.02278 20.4071 4.45437C20.1679 4.59893 20.0909 4.90968 20.2351 5.1491C20.3794 5.38853 20.6907 5.46484 20.9299 5.32105C21.4877 4.98457 22.1231 4.80669 22.7684 4.80669C24.7211 4.80669 26.3101 6.39549 26.3101 8.34842C26.3101 9.55105 25.7078 10.6596 24.6969 11.3152C23.848 11.8721 22.7718 12.0327 21.7891 11.7528C21.5233 11.6762 21.2406 11.8313 21.1635 12.1001C21.0869 12.3689 21.2426 12.6488 21.5114 12.7256C21.9205 12.8427 22.3434 12.902 22.7684 12.902C23.564 12.902 24.333 12.685 25.0158 12.2931C27.6131 13.2343 29.3459 15.6865 29.3459 18.4677V20.9975H24.7322C24.3739 17.6181 22.2477 14.6608 19.1466 13.2566C20.1334 12.2518 20.7445 10.8767 20.7445 9.36037C20.7446 6.29144 18.2478 3.79474 15.1789 3.79474C12.1101 3.79474 9.6133 6.29144 9.6133 9.36037C9.6133 10.8771 10.2247 12.2527 11.2121 13.2576C10.1685 13.7317 9.20051 14.3951 8.37954 15.2114C6.80574 16.7897 5.84804 18.8154 5.62071 20.9976H1.01195V18.4678C1.01195 16.7157 1.69631 15.0637 2.93701 13.8178C3.62 13.1391 4.45152 12.6213 5.34684 12.2959C6.02971 12.6863 6.79643 12.9021 7.58947 12.9021C8.01442 12.9021 8.43735 12.8428 8.84647 12.7257C9.11525 12.6489 9.27089 12.3689 9.19434 12.1002C9.11726 11.8314 8.83461 11.6765 8.5688 11.7528C7.5865 12.0332 6.51087 11.8729 5.65854 11.3141C4.65009 10.6596 4.04774 9.55111 4.04774 8.34842C4.04774 6.39549 5.63678 4.80669 7.58947 4.80669C8.23475 4.80669 8.87019 4.98457 9.42801 5.32105C9.66815 5.46484 9.97795 5.38776 10.1227 5.1491C10.267 4.90974 10.1899 4.59893 9.9508 4.45437C9.23531 4.02278 8.41909 3.79474 7.58947 3.79474C5.07842 3.79474 3.03579 5.83761 3.03579 8.34842C3.03579 9.58544 3.5377 10.7396 4.39857 11.5844C3.59616 11.9574 2.85506 12.4724 2.22152 13.1017C0.789067 14.5405 0 16.4461 0 18.4677V21.5035C0 21.783 0.22632 22.0095 0.505945 22.0095H5.56557V26.0572C5.56557 26.3366 5.79189 26.5631 6.07151 26.5631H24.2862C24.5659 26.5631 24.7922 26.3366 24.7922 26.0572V22.0095H29.8518C30.1315 22.0095 30.3577 21.7829 30.3577 21.5035V18.4677C30.3579 15.4761 28.6193 12.8148 25.956 11.587ZM10.6253 9.36037C10.6253 6.84956 12.6679 4.80669 15.1789 4.80669C17.69 4.80669 19.7326 6.84956 19.7326 9.36037C19.7326 11.8712 17.69 13.914 15.1789 13.914C12.6679 13.914 10.6253 11.8711 10.6253 9.36037ZM23.7803 25.5512H6.57752V22.0095C6.57752 19.7153 7.47183 17.5549 9.09449 15.9273C9.94932 15.077 10.9856 14.4175 12.0967 13.9908C12.9799 14.5806 14.0396 14.9259 15.1789 14.9259C16.3202 14.9259 17.3817 14.5796 18.2657 13.988C21.5729 15.2587 23.7803 18.4472 23.7803 22.0095V25.5512Z"
-                      fill="url(#paint0_linear_4557_4160)"
-                    />
-                  </g>
-                  <defs>
-                    <linearGradient
-                      id="paint0_linear_4557_4160"
-                      x1="7.60424"
-                      y1="0.932643"
-                      x2="16.8976"
-                      y2="34.3569"
-                      gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#23ADA4" />
-                      <stop offset="1" stop-color="#23ADA4" />
-                    </linearGradient>
-                    <clipPath id="clip0_4557_4160">
-                      <rect width="30.3579" height="30.3579" fill="white" />
-                    </clipPath>
-                  </defs>
-                </svg>
-              </div>
-              <div className="kpi-content">
-                <h5>{t("totalAttendees") || "Total Check-Ins"}</h5>
-                <h3>{event.totalAttendees || 0}</h3>
-                <p className="small text-muted">
-                  {t("checkedInSuffix") || "Attendees checked in"}
-                </p>
-              </div>
-            </div>
-          </Col>
-        </Row>
 
-        {/* Main Two-Column Grid */}
-        <Row className="gx-4">
-          {/* Left Column - Details, Media & Gallery */}
-          <Col lg={8} md={12} className="mb-4">
-            <div className="content-card mb-4 p-4 shadow-sm">
-              <h4 className="card-heading-line mb-3">
-                <span>{t("shortDescription")}</span>
-              </h4>
-              <ExpandableText text={event.shortdesc} limit={250} />
-            </div>
-
-            <div className="content-card mb-4 p-4 shadow-sm">
-              <h4 className="card-heading-line mb-3">
-                <span>{t("detailedHighlights")}</span>
-              </h4>
-              <ExpandableText text={event.longdesc} limit={450} />
-            </div>
-
-            {/* Optional Teaser Video */}
-            {event.shortTeaserVideo && event.shortTeaserVideo.length > 0 && (
-              <div className="content-card mb-4 p-4 shadow-sm">
-                <h4 className="card-heading-line mb-3">
-                  <span>{t("teaserVideo")}</span>
-                </h4>
-                <div className="video-card-container">
-                  <video
-                    width="100%"
-                    controls
-                    poster={getFullImageUrl(event.posterImage?.[0])}
-                    className="rounded-3 shadow-md">
-                    <source src={getFullImageUrl(event.shortTeaserVideo[0])} />
-                    {t("videoNotSupported") ||
-                      "Your browser does not support videos."}
-                  </video>
-                </div>
-              </div>
-            )}
-
-            {/* Gallery Images */}
-            {event.mediaLinks && event.mediaLinks.length > 0 && (
-              <div className="content-card p-4 shadow-sm">
-                <h4 className="card-heading-line mb-3">
-                  <span>{t("gallery")}</span>
-                </h4>
-                <div className="details-gallery-grid">
-                  {event.mediaLinks.map((link, idx) => (
-                    <div key={idx} className="details-gallery-item">
-                      <img
-                        src={getFullImageUrl(link)}
-                        alt={`Gallery ${idx}`}
-                        onError={(e) => {
-                          e.target.src = "/img/sidebar-logo.svg";
-                        }}
-                      />
+          {infoRows.length > 0 && (
+            <section className="ed-info">
+              <h2 className="ed-infoH">{copy.info}</h2>
+              {infoRows.map((row) => (
+                <div className="ed-infoRow" key={row.k}>
+                  <span className="ed-infoI"><Icon name={row.icon} size={17} /></span>
+                  <span className="ed-infoK">{row.k}</span>
+                  <span className="ed-infoV">{row.v}</span>
                     </div>
                   ))}
-                </div>
-              </div>
-            )}
-          </Col>
+            </section>
+          )}
 
-          {/* Right Column - Location, Tickets, Attendees */}
-          <Col lg={4} md={12} className="mb-4">
-            {/* Capacity and Reservations Card */}
-            <div className="content-card mb-4 p-4 shadow-sm">
-              <h4 className="card-heading-line mb-3">
-                <span>{t("capacityOverview") || "Capacity Overview"}</span>
-              </h4>
-              <div className="d-flex justify-content-between align-items-center mb-4 text-center">
-                <div className="flex-fill">
-                  <div style={{ fontSize: "24px", color: "#23ada4" }}>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="15"
-                      viewBox="0 0 13 11"
-                      fill="none">
-                      <path
-                        d="M7.70473 9.87681L7.20473 9.87542V9.87542L7.70473 9.87681ZM7.70822 8.625L8.20822 8.62639V8.625H7.70822ZM1.18975 9.76777L0.829484 10.1145H0.829484L1.18975 9.76777ZM1.18975 1.23223L0.829484 0.885519L0.829484 0.885519L1.18975 1.23223ZM1.07185 4.40854L0.820438 4.84073H0.820438L1.07185 4.40854ZM0.506346 3.61842L0.00675315 3.59826V3.59826L0.506346 3.61842ZM1.07185 6.59146L0.820438 6.15927L0.820437 6.15927L1.07185 6.59146ZM0.506346 7.38158L1.00594 7.36142L0.506346 7.38158ZM11.9282 4.40854L12.1796 4.84073H12.1796L11.9282 4.40854ZM12.4937 3.61842L12.9932 3.59826V3.59825L12.4937 3.61842ZM11.8103 1.23223L12.1705 0.885519L12.1705 0.885519L11.8103 1.23223ZM11.9282 6.59146L11.6767 7.02366H11.6767L11.9282 6.59146ZM12.4937 7.38158L12.9932 7.40174V7.40174L12.4937 7.38158ZM11.8103 9.76777L12.1705 10.1145H12.1705L11.8103 9.76777ZM12.4662 6.95749L12.9066 6.7208L12.9066 6.7208L12.4662 6.95749ZM12.4662 4.04252L12.9066 4.2792L12.9066 4.2792L12.4662 4.04252ZM0.533806 6.95749L0.0933742 6.7208H0.093374L0.533806 6.95749ZM0.533806 4.04252L0.974239 3.80583L0.974239 3.80583L0.533806 4.04252ZM7.70822 2.375H8.20822L8.20822 2.37361L7.70822 2.375ZM7.70386 0.811594L7.20386 0.812988V0.812988L7.70386 0.811594ZM9.21667 0.511814L9.23009 0.0119942V0.0119942L9.21667 0.511814ZM9.52018 10.4776L9.54216 10.9771H9.54216L9.52018 10.4776ZM7.61568 10.4088L7.25549 10.062L7.25549 10.062L7.61568 10.4088ZM7.70473 9.87681L8.20472 9.87821L8.20821 8.62639L7.70822 8.625L7.20822 8.62361L7.20473 9.87542L7.70473 9.87681ZM8.30971 8V8.5C8.34787 8.5 8.41121 8.53773 8.41121 8.625H8.91121H9.41121C9.41121 8.02192 8.93594 7.5 8.30971 7.5V8ZM8.30971 8V7.5C7.68348 7.5 7.20822 8.02192 7.20822 8.625H7.70822H8.20822C8.20822 8.53773 8.27155 8.5 8.30971 8.5V8ZM5.29701 0.5V1H7.40311V0.5V0H5.29701V0.5ZM7.10473 10.5V10H5.29701V10.5V11H7.10473V10.5ZM5.29701 10.5V10C4.14815 10 3.33874 9.99886 2.72618 9.91328C2.13002 9.83 1.79485 9.67546 1.55001 9.42105L1.18975 9.76777L0.829484 10.1145C1.28934 10.5923 1.87361 10.8039 2.58782 10.9037C3.28562 11.0011 4.17749 11 5.29701 11V10.5ZM5.29701 0.5V0C4.17749 0 3.28562 -0.00114477 2.58782 0.0963379C1.87361 0.196113 1.28934 0.407691 0.829484 0.885519L1.18975 1.23223L1.55001 1.57895C1.79485 1.32454 2.13002 1.17 2.72618 1.08672C3.33874 1.00114 4.14815 1 5.29701 1V0.5ZM1.07185 4.40854L0.820438 4.84073C1.03483 4.96544 1.18804 5.20983 1.18804 5.5H1.68804H2.18804C2.18804 4.85227 1.8442 4.27938 1.32326 3.97634L1.07185 4.40854ZM0.506346 3.61842L1.00594 3.63858C1.05285 2.47627 1.20605 1.93635 1.55001 1.57895L1.18975 1.23223L0.829484 0.885519C0.203047 1.53644 0.0539864 2.42797 0.00675315 3.59826L0.506346 3.61842ZM1.68804 5.5H1.18804C1.18804 5.79017 1.03483 6.03456 0.820438 6.15927L1.07185 6.59146L1.32326 7.02366C1.8442 6.72062 2.18804 6.14773 2.18804 5.5H1.68804ZM0.506346 7.38158L0.00675315 7.40174C0.0539864 8.57203 0.203047 9.46356 0.829484 10.1145L1.18975 9.76777L1.55001 9.42105C1.20605 9.06365 1.05285 8.52373 1.00594 7.36142L0.506346 7.38158ZM11.312 5.5H11.812C11.812 5.20983 11.9652 4.96544 12.1796 4.84073L11.9282 4.40854L11.6767 3.97634C11.1558 4.27938 10.812 4.85227 10.812 5.5H11.312ZM12.4937 3.61842L12.9932 3.59825C12.946 2.42797 12.797 1.53644 12.1705 0.885519L11.8103 1.23223L11.45 1.57895C11.794 1.93635 11.9471 2.47627 11.9941 3.63858L12.4937 3.61842ZM11.9282 6.59146L12.1796 6.15927C11.9652 6.03456 11.812 5.79017 11.812 5.5H11.312H10.812C10.812 6.14773 11.1558 6.72062 11.6767 7.02366L11.9282 6.59146ZM12.4937 7.38158L11.9941 7.36142C11.9471 8.52373 11.794 9.06365 11.45 9.42105L11.8103 9.76777L12.1705 10.1145C12.797 9.46356 12.946 8.57203 12.9932 7.40174L12.4937 7.38158ZM11.9282 6.59146L11.6767 7.02366C11.8477 7.12309 11.9574 7.18716 12.0312 7.23562C12.0673 7.25938 12.0818 7.271 12.0845 7.27337C12.0909 7.27889 12.0571 7.2525 12.0258 7.19417L12.4662 6.95749L12.9066 6.7208C12.8545 6.62389 12.7845 6.55653 12.7378 6.51628C12.6875 6.47287 12.6321 6.43393 12.5803 6.39989C12.4782 6.33278 12.3397 6.25241 12.1796 6.15927L11.9282 6.59146ZM12.4937 7.38158L12.9932 7.40174C12.9976 7.29477 13.0025 7.18364 12.9985 7.09064C12.9946 6.99687 12.9807 6.85867 12.9066 6.7208L12.4662 6.95749L12.0258 7.19417C11.9931 7.13346 11.9977 7.09165 11.9994 7.13283C12.0002 7.15034 12.0003 7.1762 11.9993 7.21623C11.9983 7.2561 11.9964 7.30245 11.9941 7.36142L12.4937 7.38158ZM11.9282 4.40854L12.1796 4.84073C12.3397 4.74759 12.4782 4.66722 12.5803 4.60011C12.6321 4.56607 12.6875 4.52713 12.7378 4.48372C12.7845 4.44347 12.8545 4.37611 12.9066 4.2792L12.4662 4.04252L12.0258 3.80583C12.0571 3.7475 12.0909 3.72111 12.0845 3.72663C12.0818 3.729 12.0673 3.74062 12.0312 3.76438C11.9574 3.81284 11.8477 3.87691 11.6767 3.97634L11.9282 4.40854ZM12.4937 3.61842L11.9941 3.63858C11.9964 3.69755 11.9983 3.7439 11.9993 3.78377C12.0003 3.8238 12.0002 3.84966 11.9994 3.86717C11.9977 3.90835 11.9931 3.86654 12.0258 3.80584L12.4662 4.04252L12.9066 4.2792C12.9807 4.14133 12.9946 4.00313 12.9985 3.90936C13.0025 3.81636 12.9976 3.70523 12.9932 3.59826L12.4937 3.61842ZM1.07185 6.59146L0.820437 6.15927C0.66032 6.25241 0.521801 6.33278 0.419659 6.39989C0.367866 6.43393 0.312461 6.47287 0.262159 6.51628C0.215516 6.55653 0.145453 6.62389 0.0933742 6.7208L0.533806 6.95749L0.974239 7.19417C0.942891 7.2525 0.909068 7.27889 0.915469 7.27337C0.91821 7.271 0.932653 7.25938 0.968807 7.23562C1.04256 7.18716 1.15233 7.12309 1.32326 7.02366L1.07185 6.59146ZM0.506346 7.38158L1.00594 7.36142C1.00356 7.30245 1.0017 7.2561 1.00072 7.21623C0.999725 7.1762 0.999842 7.15034 1.00058 7.13283C1.00232 7.09165 1.00686 7.13346 0.974239 7.19417L0.533806 6.95749L0.093374 6.7208C0.0192864 6.85867 0.00543186 6.99687 0.00147241 7.09064C-0.002455 7.18364 0.00243565 7.29477 0.00675315 7.40174L0.506346 7.38158ZM1.07185 4.40854L1.32326 3.97634C1.15233 3.87691 1.04256 3.81284 0.968805 3.76438C0.932652 3.74062 0.91821 3.729 0.915469 3.72663C0.90907 3.72111 0.942892 3.7475 0.974239 3.80583L0.533806 4.04252L0.0933737 4.2792C0.145452 4.37611 0.215513 4.44347 0.262157 4.48372C0.31246 4.52713 0.367865 4.56607 0.419657 4.60011C0.521799 4.66722 0.660319 4.74759 0.820438 4.84073L1.07185 4.40854ZM0.506346 3.61842L0.00675315 3.59826C0.00243565 3.70523 -0.002455 3.81636 0.00147241 3.90936C0.00543186 4.00313 0.0192864 4.14133 0.0933741 4.2792L0.533806 4.04252L0.974239 3.80583C1.00686 3.86654 1.00232 3.90835 1.00058 3.86717C0.999842 3.84966 0.999725 3.8238 1.00072 3.78377C1.0017 3.7439 1.00356 3.69755 1.00594 3.63858L0.506346 3.61842ZM7.70822 2.375L8.20822 2.37361L8.20386 0.8102L7.70386 0.811594L7.20386 0.812988L7.20822 2.37639L7.70822 2.375ZM8.30971 3V2.5C8.27155 2.5 8.20822 2.46227 8.20822 2.375H7.70822H7.20822C7.20822 2.97808 7.68348 3.5 8.30971 3.5V3ZM8.91121 2.375H8.41121C8.41121 2.46227 8.34787 2.5 8.30971 2.5V3V3.5C8.93594 3.5 9.41121 2.97808 9.41121 2.375H8.91121ZM8.91121 0.822613H8.41121V2.375H8.91121H9.41121V0.822613H8.91121ZM9.21667 0.511814L9.20324 1.01163C10.5152 1.04688 11.08 1.19454 11.45 1.57895L11.8103 1.23223L12.1705 0.885519C11.4872 0.175513 10.5191 0.0466259 9.23009 0.0119942L9.21667 0.511814ZM8.91121 0.822613H9.41121C9.41121 0.907402 9.33851 1.01527 9.20324 1.01163L9.21667 0.511814L9.23009 0.0119942C8.75929 -0.000654578 8.41121 0.389072 8.41121 0.822613H8.91121ZM7.40311 0.5V1C7.27545 1 7.2041 0.898189 7.20386 0.812988L7.70386 0.811594L8.20386 0.810201C8.20266 0.38053 7.86229 0 7.40311 0V0.5ZM9.52018 10.4776L9.54216 10.9771C10.6706 10.9275 11.5397 10.7699 12.1705 10.1145L11.8103 9.76777L11.45 9.42105C11.1122 9.77201 10.6071 9.92928 9.49819 9.97808L9.52018 10.4776ZM8.91121 8.625H8.41121V9.86031H8.91121H9.41121V8.625H8.91121ZM7.70473 9.87681L7.20473 9.87542C7.20452 9.95067 7.20433 10.0084 7.203 10.0576C7.20166 10.1071 7.19941 10.1361 7.19711 10.1535C7.19485 10.1707 7.19414 10.1633 7.2019 10.1438C7.21119 10.1204 7.22836 10.0902 7.25549 10.062L7.61568 10.4088L7.97587 10.7556C8.12441 10.6013 8.17054 10.4207 8.18854 10.2841C8.20492 10.1598 8.20435 10.0116 8.20472 9.87821L7.70473 9.87681ZM7.10473 10.5V11C7.23109 11 7.37816 11.0011 7.50233 10.9838C7.64304 10.9641 7.8246 10.9127 7.97588 10.7556L7.61568 10.4088L7.25549 10.062C7.28284 10.0336 7.31422 10.0136 7.3418 10.0018C7.3653 9.99177 7.377 9.99157 7.36379 9.99342C7.35013 9.99533 7.3247 9.99752 7.2781 9.99875C7.23175 9.99996 7.17719 10 7.10473 10V10.5ZM9.52018 10.4776L9.4982 9.97808C9.42547 9.98128 9.37111 9.98363 9.32497 9.98439C9.27858 9.98515 9.25398 9.98395 9.24142 9.98266C9.22951 9.98144 9.24287 9.98145 9.2683 9.99157C9.29794 10.0034 9.32984 10.0232 9.3569 10.0502L9.0036 10.404L8.6503 10.7578C8.80727 10.9145 8.99278 10.9624 9.13956 10.9775C9.26684 10.9905 9.41616 10.9827 9.54216 10.9771L9.52018 10.4776ZM8.91121 9.86031H8.41121C8.41121 9.99675 8.41016 10.1489 8.42713 10.2764C8.44588 10.4173 8.49461 10.6023 8.6503 10.7578L9.0036 10.404L9.3569 10.0502C9.38482 10.0781 9.40299 10.1088 9.41301 10.1332C9.42136 10.1537 9.42069 10.1617 9.41838 10.1444C9.41605 10.1269 9.41376 10.0974 9.41249 10.0468C9.41124 9.99643 9.41121 9.93738 9.41121 9.86031H8.91121Z"
-                        fill="url(#paint0_linear_5343_4765)"
-                      />
-                      <defs>
-                        <linearGradient
-                          id="paint0_linear_5343_4765"
-                          x1="3.50585"
-                          y1="-0.757047"
-                          x2="7.966"
-                          y2="13.6801"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  </div>
-                  <div className="small text-muted mt-1">
-                    {t("booked") || "Booked"}
-                  </div>
-                  <h4 className="fw-bold mb-0 text-white mt-1">
-                    {event.totalBooked || 0}
-                  </h4>
-                </div>
-                <div
-                  className="flex-fill"
-                  style={{
-                    borderLeft: "1px solid rgba(255,255,255,0.08)",
-                    borderRight: "1px solid rgba(255,255,255,0.08)",
-                  }}>
-                  <div style={{ fontSize: "24px", color: "#f1c40f" }}>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="31"
-                      height="31"
-                      viewBox="0 0 31 31"
-                      fill="none">
-                      <g clip-path="url(#clip0_4557_4160)">
-                        <path
-                          d="M25.956 11.587C26.8193 10.7415 27.3221 9.58639 27.3221 8.34842C27.3221 5.83761 25.2794 3.79474 22.7684 3.79474C21.9388 3.79474 21.1226 4.02278 20.4071 4.45437C20.1679 4.59893 20.0909 4.90968 20.2351 5.1491C20.3794 5.38853 20.6907 5.46484 20.9299 5.32105C21.4877 4.98457 22.1231 4.80669 22.7684 4.80669C24.7211 4.80669 26.3101 6.39549 26.3101 8.34842C26.3101 9.55105 25.7078 10.6596 24.6969 11.3152C23.848 11.8721 22.7718 12.0327 21.7891 11.7528C21.5233 11.6762 21.2406 11.8313 21.1635 12.1001C21.0869 12.3689 21.2426 12.6488 21.5114 12.7256C21.9205 12.8427 22.3434 12.902 22.7684 12.902C23.564 12.902 24.333 12.685 25.0158 12.2931C27.6131 13.2343 29.3459 15.6865 29.3459 18.4677V20.9975H24.7322C24.3739 17.6181 22.2477 14.6608 19.1466 13.2566C20.1334 12.2518 20.7445 10.8767 20.7445 9.36037C20.7446 6.29144 18.2478 3.79474 15.1789 3.79474C12.1101 3.79474 9.6133 6.29144 9.6133 9.36037C9.6133 10.8771 10.2247 12.2527 11.2121 13.2576C10.1685 13.7317 9.20051 14.3951 8.37954 15.2114C6.80574 16.7897 5.84804 18.8154 5.62071 20.9976H1.01195V18.4678C1.01195 16.7157 1.69631 15.0637 2.93701 13.8178C3.62 13.1391 4.45152 12.6213 5.34684 12.2959C6.02971 12.6863 6.79643 12.9021 7.58947 12.9021C8.01442 12.9021 8.43735 12.8428 8.84647 12.7257C9.11525 12.6489 9.27089 12.3689 9.19434 12.1002C9.11726 11.8314 8.83461 11.6765 8.5688 11.7528C7.5865 12.0332 6.51087 11.8729 5.65854 11.3141C4.65009 10.6596 4.04774 9.55111 4.04774 8.34842C4.04774 6.39549 5.63678 4.80669 7.58947 4.80669C8.23475 4.80669 8.87019 4.98457 9.42801 5.32105C9.66815 5.46484 9.97795 5.38776 10.1227 5.1491C10.267 4.90974 10.1899 4.59893 9.9508 4.45437C9.23531 4.02278 8.41909 3.79474 7.58947 3.79474C5.07842 3.79474 3.03579 5.83761 3.03579 8.34842C3.03579 9.58544 3.5377 10.7396 4.39857 11.5844C3.59616 11.9574 2.85506 12.4724 2.22152 13.1017C0.789067 14.5405 0 16.4461 0 18.4677V21.5035C0 21.783 0.22632 22.0095 0.505945 22.0095H5.56557V26.0572C5.56557 26.3366 5.79189 26.5631 6.07151 26.5631H24.2862C24.5659 26.5631 24.7922 26.3366 24.7922 26.0572V22.0095H29.8518C30.1315 22.0095 30.3577 21.7829 30.3577 21.5035V18.4677C30.3579 15.4761 28.6193 12.8148 25.956 11.587ZM10.6253 9.36037C10.6253 6.84956 12.6679 4.80669 15.1789 4.80669C17.69 4.80669 19.7326 6.84956 19.7326 9.36037C19.7326 11.8712 17.69 13.914 15.1789 13.914C12.6679 13.914 10.6253 11.8711 10.6253 9.36037ZM23.7803 25.5512H6.57752V22.0095C6.57752 19.7153 7.47183 17.5549 9.09449 15.9273C9.94932 15.077 10.9856 14.4175 12.0967 13.9908C12.9799 14.5806 14.0396 14.9259 15.1789 14.9259C16.3202 14.9259 17.3817 14.5796 18.2657 13.988C21.5729 15.2587 23.7803 18.4472 23.7803 22.0095V25.5512Z"
-                          fill="url(#paint0_linear_4557_4160)"
-                        />
-                      </g>
-                      <defs>
-                        <linearGradient
-                          id="paint0_linear_4557_4160"
-                          x1="7.60424"
-                          y1="0.932643"
-                          x2="16.8976"
-                          y2="34.3569"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <clipPath id="clip0_4557_4160">
-                          <rect width="30.3579" height="30.3579" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
-                  </div>
-                  <div className="small text-muted mt-1">
-                    {t("reservedExternally") || "Reserved Externally"}
-                  </div>
-                  <h4 className="fw-bold mb-0 mt-1" style={{ color: "#f1c40f" }}>
-                    {event.ReservedExternally || 0}
-                  </h4>
-                </div>
-                <div className="flex-fill">
-                  <div style={{ fontSize: "24px", color: "#23ada4" }}>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="31"
-                      height="31"
-                      viewBox="0 0 31 31"
-                      fill="none">
-                      <g clip-path="url(#clip0_4557_4130)">
-                        <path
-                          d="M27.894 13.084C27.894 12.2664 27.229 11.6012 26.4114 11.6012H24.7373C24.5266 11.6012 24.326 11.6454 24.1444 11.7251V9.1306C24.1444 8.88485 23.9452 8.68567 23.6995 8.68567C23.4537 8.68567 23.2545 8.88485 23.2545 9.1306V17.1999H7.07044V9.1306C7.07044 8.88485 6.87126 8.68567 6.62575 8.68567C6.38001 8.68567 6.18082 8.88485 6.18082 9.1306V11.7251C5.99901 11.6454 5.79843 11.6012 5.5879 11.6012H3.91381C3.09622 11.6012 2.43103 12.2664 2.43103 13.084V17.8549C2.43103 18.7441 2.70341 19.5867 3.22036 20.3031C3.21874 20.3452 3.21805 20.3874 3.21805 20.4298C3.21805 21.507 3.9951 22.4061 5.01813 22.5958V22.896C5.01813 23.504 5.39728 24.0253 5.93138 24.2358V27.7133C5.41465 27.7953 5.01813 28.2441 5.01813 28.7838V29.2739C5.01813 29.8717 5.50452 30.3578 6.10208 30.3578H9.62535C10.2231 30.3578 10.7093 29.8717 10.7093 29.2739V28.7838C10.7093 28.2441 10.313 27.7953 9.79605 27.7133V24.3354H20.5292V27.7133C20.0122 27.7953 19.6159 28.2441 19.6159 28.7838V29.2739C19.6159 29.8717 20.1021 30.3578 20.6999 30.3578H24.2229C24.8207 30.3578 25.3069 29.8717 25.3069 29.2739V28.7838C25.3069 28.2441 24.9106 27.7953 24.3936 27.7133V24.2358C24.9279 24.0253 25.3069 23.504 25.3069 22.896V22.5958C26.3301 22.4061 27.1072 21.507 27.1072 20.4298C27.1072 20.3874 27.1062 20.3452 27.1046 20.3031C27.6218 19.5867 27.894 18.7441 27.894 17.8549V13.084ZM3.53605 19.0325C3.39407 18.6607 3.32088 18.2642 3.32088 17.8549V13.084C3.32088 12.7569 3.58677 12.491 3.91381 12.491H5.5879C5.9147 12.491 6.18082 12.7569 6.18082 13.084V17.2108C5.0142 17.3067 4.02128 18.0252 3.53605 19.0325ZM9.81967 28.7835V29.2739C9.81967 29.3809 9.73236 29.468 9.62535 29.468H6.10208C5.99507 29.468 5.90799 29.3809 5.90799 29.2739V28.7835C5.90799 28.6765 5.99507 28.5895 6.10208 28.5895H9.62535C9.73236 28.5895 9.81967 28.6765 9.81967 28.7835ZM6.82123 27.6996V24.3354H8.9062V27.6996H6.82123ZM24.4172 28.7835V29.2739C24.4172 29.3809 24.3301 29.468 24.2229 29.468H20.6996C20.5926 29.468 20.5055 29.3809 20.5055 29.2739V28.7835C20.5055 28.6765 20.5926 28.5895 20.6996 28.5895H24.2229C24.3301 28.5895 24.4172 28.6765 24.4172 28.7835ZM21.4188 27.6996V24.3354H23.5038V27.6996H21.4188ZM24.4172 22.8957C24.4172 23.1989 24.1706 23.4458 23.8674 23.4458H6.45783C6.15465 23.4458 5.90799 23.1989 5.90799 22.8957V22.6329H24.4172V22.8957ZM24.9039 21.743H5.42114C4.69689 21.743 4.10767 21.154 4.10767 20.4298C4.10767 19.1395 5.15756 18.0896 6.44787 18.0896H23.8773C25.1677 18.0896 26.2176 19.1392 26.2176 20.4298C26.2173 21.154 25.6281 21.743 24.9039 21.743ZM27.0043 17.8549C27.0043 18.2642 26.9311 18.6607 26.7889 19.0325C26.3037 18.0252 25.3108 17.3067 24.1444 17.2108V13.084C24.1444 12.7569 24.4103 12.491 24.7373 12.491H26.4114C26.7382 12.491 27.0043 12.7569 27.0043 13.084V17.8549Z"
-                          fill="url(#paint0_linear_4557_4130)"
-                        />
-                        <path
-                          d="M6.62577 7.79489C6.87128 7.79489 7.07047 7.59571 7.07047 7.34997V4.19541C7.07047 2.37263 8.55348 0.889852 10.3763 0.889852H19.949C21.7718 0.889852 23.2546 2.37263 23.2546 4.19541V7.34997C23.2546 7.59571 23.4538 7.79489 23.6995 7.79489C23.9452 7.79489 24.1444 7.59571 24.1444 7.34997V4.19541C24.1444 1.88208 22.2623 0 19.949 0H10.3763C8.06292 0 6.18085 1.88208 6.18085 4.19541V7.34997C6.18085 7.59571 6.38003 7.79489 6.62577 7.79489Z"
-                          fill="url(#paint1_linear_4557_4130)"
-                        />
-                      </g>
-                      <defs>
-                        <linearGradient
-                          id="paint0_linear_4557_4130"
-                          x1="8.80918"
-                          y1="5.96138"
-                          x2="18.6447"
-                          y2="37.1325"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint1_linear_4557_4130"
-                          x1="10.6805"
-                          y1="-0.979855"
-                          x2="12.6136"
-                          y2="11.0368"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <clipPath id="clip0_4557_4130">
-                          <rect width="30.3579" height="30.3579" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
-                  </div>
-                  <div className="small text-muted mt-1">
-                    {t("capacity") || "Capacity"}
-                  </div>
-                  <h4 className="fw-bold mb-0 text-white mt-1">
-                    {event.totalTickets || 0}
-                  </h4>
-                </div>
-              </div>
-
-              <hr style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} />
-
-              <div className="mt-3">
-                <div className="d-flex justify-content-between small mb-2">
-                  <span className="text-white-50">
-                    <span className="text-white fw-bold">
-                      {(event.totalBooked || 0) + (event.ReservedExternally || 0)}
-                    </span>{" "}
-                    / {event.totalTickets || 0} {t("booked") || "Booked"}
-                  </span>
-                  <span style={{ color: "#23ada4" }} className="fw-bold">
-                    {((event.totalTickets || 0) - (event.totalBooked || 0) - (event.ReservedExternally || 0)) || 0} {t("available") || "Available"}
-                  </span>
-                </div>
-                <div className="progress-bar-container light">
-                  <div
-                    className="progress-bar-filled"
-                    style={{
-                      width: `${event.totalTickets > 0 ? (((event.totalBooked || 0) + (event.ReservedExternally || 0)) / event.totalTickets) * 100 : 0}%`,
-                    }}></div>
-                </div>
-              </div>
-
-              <div className="text-center mt-4">
-                <button
-                  onClick={() => {
-                    setTempReservedExternally(event.ReservedExternally || 0);
-                    setShowReservationModal(true);
-                  }}
-                  className="btn-update-outside">
-                  {t("updateOutsideReservation") || "Update Outside Reservation"}
+          {detailBlocks.length > 0 && (
+            <section className="ed-info ed-details">
+              <button type="button" className="ed-detailsH" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>
+                <span className="ed-infoH">{copy.more}</span>
+                <span className="ed-detailsMore">{detailsOpen ? copy.showLess : copy.showMore}</span>
+                <span className="ed-detailsC" data-open={String(detailsOpen)}>⌄</span>
                 </button>
+              <div className="ed-detailsB" data-clip={String(!detailsOpen)}>
+                {detailBlocks.map((block) => (
+                  <div className="ed-detailBlock" key={block.k}>
+                    <b className="ed-detailK">{block.k}</b>
+                    <p className="ed-detailV">{block.v}</p>
               </div>
+                ))}
             </div>
+            </section>
+          )}
 
-            {/* DateTime & Location details */}
-            <div className="content-card mb-4 p-4 shadow-sm">
-              <h4 className="card-heading-line mb-3">
-                <span>{t("dateTimeLocation")}</span>
-              </h4>
-              <div className="schedule-box mb-3 d-flex flex-column gap-3">
-                <div className="d-flex align-items-start gap-2">
-                  <span className="icon-schedule">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none">
-                      <path
-                        d="M8.03065 1.25016C7.85783 1.24891 7.7169 1.38797 7.71565 1.56047C7.7144 1.73297 7.85315 1.87391 8.02596 1.87516C8.19846 1.87641 8.3394 1.73766 8.34065 1.56516C8.3419 1.39266 8.20315 1.25172 8.03065 1.25016Z"
-                        fill="url(#paint0_linear_4557_4217)"
-                      />
-                      <path
-                        d="M8.01641 3.12513C6.80982 3.11657 5.82166 4.08998 5.81253 5.2962C5.80344 6.50236 6.77738 7.49098 7.9836 7.50008C7.98919 7.50011 7.99476 7.50014 8.00035 7.50014C9.19888 7.50014 10.1784 6.52964 10.1875 5.32901C10.1966 4.12291 9.22266 3.13422 8.01641 3.12513ZM8.00029 6.87517C7.99635 6.87517 7.99222 6.87514 7.98829 6.87511C7.12669 6.86861 6.431 6.16242 6.4375 5.30089C6.44397 4.44323 7.1436 3.75004 7.99972 3.75004C8.00366 3.75004 8.00779 3.75007 8.01172 3.7501C8.87332 3.7566 9.56901 4.46279 9.56251 5.32432C9.55601 6.18198 8.85641 6.87517 8.00029 6.87517Z"
-                        fill="url(#paint1_linear_4557_4217)"
-                      />
-                      <path
-                        d="M9.36348 1.48716C9.20091 1.42947 9.0222 1.51463 8.96451 1.67732C8.90685 1.84 8.99201 2.0186 9.15466 2.07629C10.5311 2.56413 11.4485 3.8751 11.4375 5.33845C11.4362 5.51101 11.575 5.65198 11.7476 5.65329C11.7484 5.65329 11.7492 5.65329 11.75 5.65329C11.9215 5.65329 12.0612 5.51492 12.0625 5.34314C12.0755 3.61354 10.9908 2.06394 9.36348 1.48716Z"
-                        fill="url(#paint2_linear_4557_4217)"
-                      />
-                      <path
-                        d="M9.91741 11.7638C11.9959 9.08836 13.2949 7.6932 13.3125 5.35245C13.3345 2.40735 10.9444 0 7.9995 0C5.089 0 2.70968 2.35713 2.68756 5.27276C2.66968 7.67698 3.99278 9.07024 6.08566 11.7634C4.00362 12.0745 2.68756 12.8563 2.68756 13.8125C2.68756 14.4531 3.27962 15.0278 4.35472 15.431C5.33325 15.7979 6.62785 16 8 16C9.37216 16 10.6668 15.7979 11.6453 15.431C12.7204 15.0278 13.3125 14.453 13.3125 13.8125C13.3125 12.8568 11.9976 12.0752 9.91741 11.7638ZM3.31253 5.27748C3.33203 2.70469 5.43125 0.625001 7.99957 0.625001C10.5983 0.625001 12.7069 2.74963 12.6875 5.34779C12.6709 7.57073 11.2933 8.94064 9.09401 11.8076C8.70172 12.3187 8.34147 12.802 8.00047 13.2747C7.66047 12.8017 7.30741 12.3271 6.90925 11.8074C4.61906 8.82042 3.29559 7.55405 3.31253 5.27748ZM8 15.375C5.31716 15.375 3.31253 14.5501 3.31253 13.8125C3.31253 13.2655 4.5109 12.5745 6.52585 12.3352C6.97125 12.9197 7.36175 13.4506 7.74475 13.9928C7.80325 14.0757 7.89832 14.125 7.99972 14.125C7.99982 14.125 7.99991 14.125 8 14.125C8.10132 14.125 8.19635 14.0759 8.25494 13.9932C8.63432 13.4581 9.03551 12.914 9.4771 12.3356C11.4902 12.5751 12.6875 13.2659 12.6875 13.8126C12.6875 14.5501 10.6829 15.375 8 15.375Z"
-                        fill="url(#paint3_linear_4557_4217)"
-                      />
-                      <defs>
-                        <linearGradient
-                          id="paint0_linear_4557_4217"
-                          x1="7.8722"
-                          y1="1.17158"
-                          x2="8.19437"
-                          y2="2.04061"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint1_linear_4557_4217"
-                          x1="6.90837"
-                          y1="2.57511"
-                          x2="9.16353"
-                          y2="8.65824"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint2_linear_4557_4217"
-                          x1="9.72702"
-                          y1="0.943136"
-                          x2="12.3669"
-                          y2="6.24632"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint3_linear_4557_4217"
-                          x1="5.34887"
-                          y1="-2.01128"
-                          x2="16.1186"
-                          y2="17.2805"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  </span>
-                  <div>
-                    <h6 className="mb-1 text-muted" style={{ fontSize: "13px" }}>
-                      {t("venue")}
-                    </h6>
-                    <p
-                      className="text-white mb-0 font-weight-bold"
-                      style={{ fontSize: "14px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
-                      {event.venueName}
-                    </p>
-                    <p className="small text-secondary mb-0" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
-                      {event.venueAddress?.address}
-                    </p>
-                    <p className="small text-secondary mb-0">
-                      {event.venueAddress?.city}, {event.venueAddress?.country}
-                    </p>
+          <section className="ed-card">
+            <div className="ed-cardH">
+              <h2>{copy.types}</h2>
+              <button type="button" className="ed-mini" onClick={() => router.push(`/BasicInfo?eventId=${event._id}&step=3`)}>{copy.edit}</button>
                   </div>
+            <div className="og-table og-t1 ed-ttable">
+              <div className="og-table-inner" style={{ minWidth: 760 }}>
+                <div className="og-row og-head ed-grid6">
+                  <span>{copy.name}</span><span>{copy.price}</span><span>{copy.sold}</span><span>{copy.extShort}</span><span>{copy.remaining}</span><span>{copy.revenue}</span>
                 </div>
-
-                <div className="d-flex align-items-start gap-2">
-                  <span className="icon-schedule">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none">
-                      <path
-                        d="M11.3333 9.33333C11.7015 9.33333 12 9.03486 12 8.66667C12 8.29848 11.7015 8 11.3333 8C10.9652 8 10.6667 8.29848 10.6667 8.66667C10.6667 9.03486 10.9652 9.33333 11.3333 9.33333Z"
-                        fill="url(#paint0_linear_4557_4256)"
-                      />
-                      <path
-                        d="M11.3333 12C11.7015 12 12 11.7015 12 11.3333C12 10.9651 11.7015 10.6667 11.3333 10.6667C10.9652 10.6667 10.6667 10.9651 10.6667 11.3333C10.6667 11.7015 10.9652 12 11.3333 12Z"
-                        fill="url(#paint1_linear_4557_4256)"
-                      />
-                      <path
-                        d="M8.66668 8.66667C8.66668 9.03486 8.3682 9.33333 8.00001 9.33333C7.63182 9.33333 7.33334 9.03486 7.33334 8.66667C7.33334 8.29848 7.63182 8 8.00001 8C8.3682 8 8.66668 8.29848 8.66668 8.66667Z"
-                        fill="url(#paint2_linear_4557_4256)"
-                      />
-                      <path
-                        d="M8.66668 11.3333C8.66668 11.7015 8.3682 12 8.00001 12C7.63182 12 7.33334 11.7015 7.33334 11.3333C7.33334 10.9651 7.63182 10.6667 8.00001 10.6667C8.3682 10.6667 8.66668 10.9651 8.66668 11.3333Z"
-                        fill="url(#paint3_linear_4557_4256)"
-                      />
-                      <path
-                        d="M4.66668 9.33333C5.03487 9.33333 5.33334 9.03486 5.33334 8.66667C5.33334 8.29848 5.03487 8 4.66668 8C4.29849 8 4.00001 8.29848 4.00001 8.66667C4.00001 9.03486 4.29849 9.33333 4.66668 9.33333Z"
-                        fill="url(#paint4_linear_4557_4256)"
-                      />
-                      <path
-                        d="M4.66668 12C5.03487 12 5.33334 11.7015 5.33334 11.3333C5.33334 10.9651 5.03487 10.6667 4.66668 10.6667C4.29849 10.6667 4.00001 10.9651 4.00001 11.3333C4.00001 11.7015 4.29849 12 4.66668 12Z"
-                        fill="url(#paint5_linear_4557_4256)"
-                      />
-                      <path
-                        fill-rule="evenodd"
-                        clip-rule="evenodd"
-                        d="M4.66668 1.16667C4.94282 1.16667 5.16668 1.39053 5.16668 1.66667V2.17515C5.60801 2.16666 6.09423 2.16666 6.62898 2.16667H9.37095C9.90572 2.16666 10.392 2.16666 10.8333 2.17515V1.66667C10.8333 1.39053 11.0572 1.16667 11.3333 1.16667C11.6095 1.16667 11.8333 1.39053 11.8333 1.66667V2.21806C12.0066 2.23127 12.1707 2.24788 12.326 2.26876C13.1076 2.37384 13.7403 2.59525 14.2392 3.09416C14.7381 3.59307 14.9595 4.2257 15.0646 5.00732C15.1667 5.76679 15.1667 6.7372 15.1667 7.96236V9.37094C15.1667 10.5961 15.1667 11.5665 15.0646 12.326C14.9595 13.1076 14.7381 13.7403 14.2392 14.2392C13.7403 14.7381 13.1076 14.9595 12.326 15.0646C11.5666 15.1667 10.5961 15.1667 9.37098 15.1667H6.62907C5.40391 15.1667 4.43347 15.1667 3.674 15.0646C2.89238 14.9595 2.25975 14.7381 1.76084 14.2392C1.26193 13.7403 1.04052 13.1076 0.935434 12.326C0.833325 11.5665 0.833333 10.5961 0.833344 9.37094V7.96239C0.833333 6.73722 0.833325 5.7668 0.935434 5.00732C1.04052 4.2257 1.26193 3.59307 1.76084 3.09416C2.25975 2.59525 2.89238 2.37384 3.674 2.26876C3.82928 2.24788 3.99338 2.23127 4.16668 2.21806V1.66667C4.16668 1.39053 4.39054 1.16667 4.66668 1.16667ZM3.80724 3.25984C3.13652 3.35002 2.75009 3.51913 2.46795 3.80127C2.18581 4.08341 2.01669 4.46984 1.92652 5.14057C1.91124 5.25416 1.89848 5.37374 1.8878 5.5H14.1122C14.1015 5.37374 14.0888 5.25416 14.0735 5.14057C13.9833 4.46984 13.8142 4.08341 13.5321 3.80127C13.2499 3.51913 12.8635 3.35002 12.1928 3.25984C11.5077 3.16773 10.6046 3.16667 9.33334 3.16667H6.66668C5.39546 3.16667 4.49235 3.16773 3.80724 3.25984ZM1.83334 8C1.83334 7.43066 1.83356 6.93515 1.84207 6.5H14.158C14.1665 6.93515 14.1667 7.43066 14.1667 8V9.33333C14.1667 10.6045 14.1656 11.5077 14.0735 12.1928C13.9833 12.8635 13.8142 13.2499 13.5321 13.5321C13.2499 13.8142 12.8635 13.9833 12.1928 14.0735C11.5077 14.1656 10.6046 14.1667 9.33334 14.1667H6.66668C5.39546 14.1667 4.49235 14.1656 3.80724 14.0735C3.13652 13.9833 2.75009 13.8142 2.46795 13.5321C2.18581 13.2499 2.01669 12.8635 1.92652 12.1928C1.83441 11.5077 1.83334 10.6045 1.83334 9.33333V8Z"
-                        fill="url(#paint6_linear_4557_4256)"
-                      />
-                      <defs>
-                        <linearGradient
-                          id="paint0_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint1_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint2_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint3_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint4_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint5_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint6_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  </span>
-                  <div>
-                    <h6 className="mb-1 text-muted" style={{ fontSize: "13px" }}>
-                      {t("startDate")}
-                    </h6>
-                    <p className="text-white mb-0" style={{ fontSize: "14px" }}>
-                      {new Date(event.startDate).toLocaleDateString(
-                        language === "mn" ? "mn-MN" : "en-GB",
-                        { day: "numeric", month: "short", year: "numeric" },
-                      )}
-                      <span className="mx-2">•</span>
-                      {formatTime(event.startTime, true, language)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="d-flex align-items-start gap-2">
-                  <span className="icon-schedule">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none">
-                      <path
-                        d="M11.3333 9.33333C11.7015 9.33333 12 9.03486 12 8.66667C12 8.29848 11.7015 8 11.3333 8C10.9652 8 10.6667 8.29848 10.6667 8.66667C10.6667 9.03486 10.9652 9.33333 11.3333 9.33333Z"
-                        fill="url(#paint0_linear_4557_4256)"
-                      />
-                      <path
-                        d="M11.3333 12C11.7015 12 12 11.7015 12 11.3333C12 10.9651 11.7015 10.6667 11.3333 10.6667C10.9652 10.6667 10.6667 10.9651 10.6667 11.3333C10.6667 11.7015 10.9652 12 11.3333 12Z"
-                        fill="url(#paint1_linear_4557_4256)"
-                      />
-                      <path
-                        d="M8.66668 8.66667C8.66668 9.03486 8.3682 9.33333 8.00001 9.33333C7.63182 9.33333 7.33334 9.03486 7.33334 8.66667C7.33334 8.29848 7.63182 8 8.00001 8C8.3682 8 8.66668 8.29848 8.66668 8.66667Z"
-                        fill="url(#paint2_linear_4557_4256)"
-                      />
-                      <path
-                        d="M8.66668 11.3333C8.66668 11.7015 8.3682 12 8.00001 12C7.63182 12 7.33334 11.7015 7.33334 11.3333C7.33334 10.9651 7.63182 10.6667 8.00001 10.6667C8.3682 10.6667 8.66668 10.9651 8.66668 11.3333Z"
-                        fill="url(#paint3_linear_4557_4256)"
-                      />
-                      <path
-                        d="M4.66668 9.33333C5.03487 9.33333 5.33334 9.03486 5.33334 8.66667C5.33334 8.29848 5.03487 8 4.66668 8C4.29849 8 4.00001 8.29848 4.00001 8.66667C4.00001 9.03486 4.29849 9.33333 4.66668 9.33333Z"
-                        fill="url(#paint4_linear_4557_4256)"
-                      />
-                      <path
-                        d="M4.66668 12C5.03487 12 5.33334 11.7015 5.33334 11.3333C5.33334 10.9651 5.03487 10.6667 4.66668 10.6667C4.29849 10.6667 4.00001 10.9651 4.00001 11.3333C4.00001 11.7015 4.29849 12 4.66668 12Z"
-                        fill="url(#paint5_linear_4557_4256)"
-                      />
-                      <path
-                        fill-rule="evenodd"
-                        clip-rule="evenodd"
-                        d="M4.66668 1.16667C4.94282 1.16667 5.16668 1.39053 5.16668 1.66667V2.17515C5.60801 2.16666 6.09423 2.16666 6.62898 2.16667H9.37095C9.90572 2.16666 10.392 2.16666 10.8333 2.17515V1.66667C10.8333 1.39053 11.0572 1.16667 11.3333 1.16667C11.6095 1.16667 11.8333 1.39053 11.8333 1.66667V2.21806C12.0066 2.23127 12.1707 2.24788 12.326 2.26876C13.1076 2.37384 13.7403 2.59525 14.2392 3.09416C14.7381 3.59307 14.9595 4.2257 15.0646 5.00732C15.1667 5.76679 15.1667 6.7372 15.1667 7.96236V9.37094C15.1667 10.5961 15.1667 11.5665 15.0646 12.326C14.9595 13.1076 14.7381 13.7403 14.2392 14.2392C13.7403 14.7381 13.1076 14.9595 12.326 15.0646C11.5666 15.1667 10.5961 15.1667 9.37098 15.1667H6.62907C5.40391 15.1667 4.43347 15.1667 3.674 15.0646C2.89238 14.9595 2.25975 14.7381 1.76084 14.2392C1.26193 13.7403 1.04052 13.1076 0.935434 12.326C0.833325 11.5665 0.833333 10.5961 0.833344 9.37094V7.96239C0.833333 6.73722 0.833325 5.7668 0.935434 5.00732C1.04052 4.2257 1.26193 3.59307 1.76084 3.09416C2.25975 2.59525 2.89238 2.37384 3.674 2.26876C3.82928 2.24788 3.99338 2.23127 4.16668 2.21806V1.66667C4.16668 1.39053 4.39054 1.16667 4.66668 1.16667ZM3.80724 3.25984C3.13652 3.35002 2.75009 3.51913 2.46795 3.80127C2.18581 4.08341 2.01669 4.46984 1.92652 5.14057C1.91124 5.25416 1.89848 5.37374 1.8878 5.5H14.1122C14.1015 5.37374 14.0888 5.25416 14.0735 5.14057C13.9833 4.46984 13.8142 4.08341 13.5321 3.80127C13.2499 3.51913 12.8635 3.35002 12.1928 3.25984C11.5077 3.16773 10.6046 3.16667 9.33334 3.16667H6.66668C5.39546 3.16667 4.49235 3.16773 3.80724 3.25984ZM1.83334 8C1.83334 7.43066 1.83356 6.93515 1.84207 6.5H14.158C14.1665 6.93515 14.1667 7.43066 14.1667 8V9.33333C14.1667 10.6045 14.1656 11.5077 14.0735 12.1928C13.9833 12.8635 13.8142 13.2499 13.5321 13.5321C13.2499 13.8142 12.8635 13.9833 12.1928 14.0735C11.5077 14.1656 10.6046 14.1667 9.33334 14.1667H6.66668C5.39546 14.1667 4.49235 14.1656 3.80724 14.0735C3.13652 13.9833 2.75009 13.8142 2.46795 13.5321C2.18581 13.2499 2.01669 12.8635 1.92652 12.1928C1.83441 11.5077 1.83334 10.6045 1.83334 9.33333V8Z"
-                        fill="url(#paint6_linear_4557_4256)"
-                      />
-                      <defs>
-                        <linearGradient
-                          id="paint0_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint1_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint2_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint3_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint4_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint5_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint6_linear_4557_4256"
-                          x1="4.42367"
-                          y1="-0.593198"
-                          x2="11.5116"
-                          y2="18.9812"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  </span>
-                  <div>
-                    <h6 className="mb-1 text-muted" style={{ fontSize: "13px" }}>
-                      {t("endDate")}
-                    </h6>
-                    <p className="text-white mb-0" style={{ fontSize: "14px" }}>
-                      {new Date(event.endDate).toLocaleDateString(
-                        language === "mn" ? "mn-MN" : "en-GB",
-                        { day: "numeric", month: "short", year: "numeric" },
-                      )}
-                      <span className="mx-2">•</span>
-                      {formatTime(event.endTime, true, language)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <hr style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} />
-
-              <Row className="gy-2">
-                <Col xs={6}>
-                  <h6 className="small text-muted mb-1">
-                    {t("ageRestriction") || "Age Limit"}
-                  </h6>
-                  <p className="text-white font-weight-medium mb-0">
-                    {typeof event.ageRestriction === "string"
-                      ? event.ageRestriction
-                      : event.ageRestriction?.minAge
-                        ? `${event.ageRestriction.minAge}+`
-                        : "All Ages"}
-                  </p>
-                </Col>
-                <Col xs={6}>
-                  <h6 className="small text-muted mb-1">
-                    {t("dressCode") || "Dress Code"}
-                  </h6>
-                  <p className="text-white font-weight-medium mb-0">
-                    {event.dressCode || "Casual"}
-                  </p>
-                </Col>
-                {event.refundPolicy && (
-                  <Col xs={12} className="mt-2">
-                    <h6 className="small text-muted mb-1">
-                      {t("refundPolicy") || "Refund Policy"}
-                    </h6>
-                    <p className="text-white font-weight-medium mb-0">
-                      {event.refundPolicy === "No Refund" ? t("noRefund") : event.refundPolicy === "1 Day Before" ? t("oneDayBefore") : event.refundPolicy === "7 Days Before" ? t("sevenDaysBefore") : event.refundPolicy}
-                    </p>
-                  </Col>
-                )}
-              </Row>
-            </div>
-
-            {/* Ticket Tiers Performance Breakdown */}
-            <div className="content-card mb-4 p-4 shadow-sm">
-              <h4 className="card-heading-line mb-3">
-                <span>{t("ticketAndPricing") || "Ticket Types"}</span>
-              </h4>
-              {event.tickets && event.tickets.length > 0 ? (
-                <div className="d-flex flex-column gap-3">
-                  {event.tickets.map((tck, idx) => {
-                    const tckPercent =
-                      tck.qty > 0 ? Math.round((tck.soldQty / tck.qty) * 100) : 0;
+                {stats.tickets.map((ticket) => {
+                  const sold = Number(ticket.soldQty) || 0;
+                  const cap = Number(ticket.qty) || 0;
+                  const left = Math.max(0, cap - sold);
+                  const pct = cap > 0 ? Math.min(100, Math.round((sold / cap) * 100)) : 0;
                     return (
-                      <div
-                        className="ticket-tier-row p-3 rounded"
-                        key={tck._id || idx}>
-                        <div className="d-flex justify-content-between align-items-start">
-                          <div>
-                            <h6
-                              className="text-white font-weight-bold mb-0"
-                              style={{ fontSize: "15px" }}>
-                              {tck.ticketName}
-                            </h6>
-                            <p className="small text-secondary mb-0 mt-1">
-                              {tck.ticketShortDesc || "No description provided"}
-                            </p>
-                          </div>
-                          <div className="text-end">
-                            <h5 className="ticket-price-badge m-0">
-                              ₮{tck.price?.toLocaleString()}
-                            </h5>
-                            <span className="small text-secondary d-block mt-1" style={{ fontSize: "12px" }}>
-                              {t("sold") || "Sold"}: {tck.soldQty || 0}
+                    <div className="og-row ed-grid6" key={ticket._id || ticket.ticketName}>
+                      <span><b style={{ fontSize: 14 }}>{ticket.ticketName || copy.ticket}</b></span>
+                      <span>{ticket.isFreeTicket || !ticket.price ? copy.free : money(ticket.price)}</span>
+                      <span style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                        <b>{sold} / {cap}</b>
+                        <span className="ed-barTrack"><i style={{ width: `${pct}%` }} /></span>
                             </span>
-                          </div>
-                        </div>
+                      <span><button type="button" className="ed-doorB" onClick={openExternal}>{stats.tickets.length === 1 ? stats.external : "—"}</button></span>
+                      <span style={{ fontWeight: 700 }}>{left}</span>
+                      <span>{money(sold * (Number(ticket.price) || 0))}</span>
                       </div>
                     );
                   })}
+                <div className="og-row ed-grid6" style={{ background: "var(--bd-ink-800)" }}>
+                  <span style={{ fontWeight: 700 }}>{copy.total}</span>
+                  <span />
+                  <span style={{ fontWeight: 700 }}>{stats.sold} / {stats.cap}</span>
+                  <span style={{ fontWeight: 700, color: "#ff8a33" }}>{stats.external}</span>
+                  <span style={{ fontWeight: 700 }}>{stats.left}</span>
+                  <span style={{ fontWeight: 700 }}>{money(stats.revenue)}</span>
                 </div>
-              ) : (
-                <p className="text-secondary small my-3 text-center">
-                  No ticket options defined for this event.
-                </p>
-              )}
             </div>
-
-            {/* Attendees List Card
-          <div className="content-card p-4 shadow-sm mb-4">
-            <h4 className="card-heading-line mb-3">
-              <span>{t("attendeesList") || "Event Attendees"}</span>
-            </h4>
-
-            <div className="mb-3">
-              <input
-                type="text"
-                className="form-control custom-select-dark"
-                placeholder={t("searchAttendees") || "Search by name..."}
-                value={attendeesSearch}
-                onChange={(e) => {
-                  setAttendeesSearch(e.target.value);
-                  setAttendeesPage(1);
-                }}
-              />
             </div>
-
-            {attendeesLoading ? (
-              <div className="text-center py-4">
-                <Spinner
-                  animation="border"
-                  size="sm"
-                  style={{ color: "#23ada4" }}
-                />
+            <div className="ed-mcards">
+              {stats.tickets.map((ticket) => {
+                const sold = Number(ticket.soldQty) || 0;
+                const cap = Number(ticket.qty) || 0;
+                const pct = cap > 0 ? Math.min(100, Math.round((sold / cap) * 100)) : 0;
+                return (
+                  <div className="ed-mcard" key={`m-${ticket._id || ticket.ticketName}`}>
+                    <div className="ed-mhead">
+                      <span className="ed-mname">{ticket.ticketName || copy.ticket}</span>
+                      <span className="ed-mprice">{ticket.isFreeTicket || !ticket.price ? copy.free : money(ticket.price)}</span>
               </div>
-            ) : attendeesList && attendeesList.length > 0 ? (
-              <>
-                <div className="d-flex flex-column gap-3">
-                  {attendeesList.map((attendee) => (
-                    <div
-                      key={attendee._id}
-                      className="d-flex align-items-center justify-content-between p-3 rounded bg-dark-soft border border-secondary border-opacity-10">
-                      <div className="d-flex align-items-center gap-3">
-                        <img
-                          src={
-                            getFullImageUrl(attendee.profileImage) ||
-                            "/img/default-user.png"
-                          }
-                          onError={(e) => {
-                            e.target.src = "/img/default-user.png";
-                          }}
-                          alt={attendee.firstName}
-                          className="rounded-circle"
-                          style={{
-                            width: "40px",
-                            height: "40px",
-                            objectFit: "cover",
-                          }}
-                        />
-                        <div>
-                          <h6 className="mb-0 text-white fw-bold">
-                            {attendee.firstName} {attendee.lastName}
-                          </h6>
-                          <small className="text-secondary">
-                            {attendee.userRole || "GUEST"}
-                          </small>
-                          {attendee.tickets && attendee.tickets.length > 0 && (
-                            <div className="mt-1">
-                              {attendee.tickets.map((tck, idx) => (
-                                <span
-                                  key={idx}
-                                  className="badge bg-secondary me-1"
-                                  style={{ fontSize: "10px" }}>
-                                  {tck.ticketName} x{tck.qty}
-                                </span>
-                              ))}
+                    <span className="ed-mtrack"><i style={{ width: `${pct}%` }} /></span>
+                    <div className="ed-mcols">
+                      <span className="ed-mcol"><span className="ed-mcolL">{copy.sold}</span><span className="ed-mcolV">{sold}<i>/{cap}</i></span></span>
+                      <button type="button" className="ed-mdoor" onClick={openExternal}>
+                        <span className="ed-mdoorL">{copy.extShort}</span>
+                        <span className="ed-mdoorV">{stats.tickets.length === 1 ? stats.external : "—"}</span>
+                      </button>
+                      <span className="ed-mcol ed-mcol-r"><span className="ed-mcolL">{copy.remaining}</span><span className="ed-mcolV">{Math.max(0, cap - sold)}</span></span>
                             </div>
-                          )}
+                    <div className="ed-mfoot">{money(sold * (Number(ticket.price) || 0))}</div>
                         </div>
+                );
+              })}
                       </div>
-                      <Link
-                        href={`/Message?userId=${attendee._id}`}
-                        className="btn-message-attendee">
-                        {t("message") || "Message"}
-                      </Link>
-                    </div>
-                  ))}
-                </div>
+          </section>
 
-                {attendeesPagination && attendeesPagination.totalPages > 1 && (
-                  <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
-                    <button
-                      className="btn-pagination"
-                      disabled={attendeesPage <= 1}
-                      onClick={() => setAttendeesPage((prev) => prev - 1)}>
-                      ← {t("prev") || "Prev"}
-                    </button>
-                    <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
-                      {getAttendeesPaginationItems().map((item, index) =>
-                        item === "ellipsis" ? (
-                          <span
-                            key={`attendees-ellipsis-${index}`}
-                            className="pagination-ellipsis">
-                            ...
-                          </span>
-                        ) : (
-                          <button
-                            key={`attendees-page-${item}`}
-                            className={`btn-pagination page-number ${attendeesPage === item ? "active" : ""
-                              }`}
-                            onClick={() => setAttendeesPage(item)}
-                            disabled={attendeesPage === item}>
-                            {item}
-                          </button>
-                        ),
-                      )}
-                    </div>
-                    <button
-                      className="btn-pagination"
-                      disabled={attendeesPage >= attendeesPagination.totalPages}
-                      onClick={() => setAttendeesPage((prev) => prev + 1)}>
-                      {t("next") || "Next"} →
-                    </button>
-                  </div>
-                )}
+          <div className="ed-foot">
+            {!cancelled ? (
+              <>
+                <button type="button" className="ed-danger" onClick={() => setShowCancel(true)}>{copy.cancel}</button>
+                <span>{copy.cancelNote}</span>
               </>
             ) : (
-              <p className="text-secondary small my-2 text-center">
-                No attendees found.
-              </p>
-            )}
-          </div>
-          */}
-          </Col>
-        </Row>
-      </>)}
+              <>
+                <b className="ed-cancelled">{copy.cancelled}</b>
+                <span>{copy.cancelledNote}</span>
+              </>
+                      )}
+                    </div>
+                  </div>
+                )}
 
-      {/* Bookings Tab */}
       {activeTab === "bookings" && (
-        <div className="bookings-tab-content">
-          <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-            <h5 style={{ color: "#fff", fontWeight: 700, margin: 0, fontSize: "18px" }}>
-              {t("totalBookings") || "Total Bookings"}
-              <span style={{
-                background: "rgba(35,173,164,0.15)",
-                color: "#23ada4",
-                fontSize: "13px",
-                fontWeight: 700,
-                padding: "3px 12px",
-                borderRadius: "20px",
-                marginLeft: "10px",
-              }}>{bookingsTotal}</span>
-            </h5>
-          </div>
-          <div className="mb-3">
+        <section className="ed-card">
+          <div className="ed-cardH">
+            <h2>{copy.orders}</h2>
+            <label className="ed-osearch">
             <input
               type="text"
-              className="bookings-search-input"
-              placeholder={t("searchByNameOrOrderId") || "Search by name or order ID..."}
               value={bookingsSearch}
+                placeholder={copy.search}
               onChange={(e) => {
                 setBookingsSearch(e.target.value);
                 setBookingsPage(1);
               }}
             />
+            </label>
           </div>
           {bookingsLoading ? (
-            <div className="d-flex justify-content-center py-5">
-              <Spinner animation="border" style={{ color: "#23ada4" }} />
-            </div>
+            <div className="d-flex justify-content-center py-4"><Spinner animation="border" style={{ color: "#23ada4" }} /></div>
           ) : bookingsList.length === 0 ? (
-            <div className="text-center py-5">
-              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px" }}>
-                {t("noBookingsYet") || "No bookings yet"}
-              </p>
-            </div>
+            <p className="ed-empty">{copy.none}</p>
           ) : (
-            <>
-              <div className="d-flex flex-column gap-3">
-                {bookingsList.map((booking, idx) => (
-                  <div key={booking.transactionId || idx} className="booking-card">
-                    <div className="d-flex align-items-center gap-3">
-                      <div className="booking-avatar">
+            <div className="og-table og-t3">
+              <div className="og-table-inner og-wide">
+                <div className="og-row og-head ed-grid7">
+                  <span>{copy.buyer}</span><span>{copy.orderNo}</span><span>{copy.ticket}</span><span>{copy.amount}</span><span>{copy.status}</span><span>{copy.date}</span><span />
+                </div>
+                {bookingsList.map((booking) => {
+                  const name = `${booking.user?.firstName || ""} ${booking.user?.lastName || ""}`.trim() || "—";
+                  const qty = booking.tickets?.totalQty || 0;
+                  const typeName = booking.tickets?.details?.map((item) => item.ticketName).filter(Boolean).join(", ") || booking.ticketName || "";
+                  const refunded = booking.status === "REFUNDED";
+                  return (
+                    <div
+                      className="og-row ed-grid7"
+                      key={booking.transactionId || booking.bookingId}
+                      role="button"
+                      tabIndex={0}
+                      style={{ cursor: "pointer" }}
+                      onClick={() => router.push(`/TicketDetailsOrganiser?id=${booking.transactionId}`)}
+                    >
+                      <span style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
                         {booking.user?.profileImage ? (
-                          <img src={getFullImageUrl(booking.user.profileImage)} alt="" />
+                          <img className="ed-avatar" src={getFullImageUrl(booking.user.profileImage)} alt="" />
                         ) : (
-                          <span>{(booking.user?.firstName?.[0] || "?").toUpperCase()}</span>
+                          <span className="ed-avatar">{(name[0] || "?").toUpperCase()}</span>
                         )}
-                      </div>
-                      <div className="flex-1" style={{ minWidth: 0 }}>
-                        <div className="d-flex align-items-center gap-2 flex-wrap">
-                          <h6 className="booking-name mb-0">
-                            {booking.user?.firstName || ""} {booking.user?.lastName || ""}
-                          </h6>
-                          {booking.status === "REFUNDED" ? (
-                            <span className="badge-refunded">{t("refunded") || "Refunded"}</span>
-                          ) : (
-                            <span className="badge-paid">{t("paid") || "Paid"}</span>
-                          )}
-                          {booking.tickets?.isFullyCheckedIn && (
-                            <span className="badge-checked-in">✓ Checked In</span>
-                          )}
-                        </div>
-                        <p className="booking-ticket-info mb-0">
-                          {booking.tickets?.details?.[0]?.ticketName || booking.ticketName || "Ticket"} × {booking.tickets?.totalQty || 1}
-                        </p>
-                        <div className="booking-meta">
-                          <span>{t("orderId") || "Order ID"}: {booking.bookingId || "—"}</span>
-                          <span>•</span>
-                          <span>₮{(booking.totalAmount || 0).toLocaleString()}</span>
-                          <span>•</span>
-                          <span>
-                            {booking.bookingDate
-                              ? new Date(booking.bookingDate).toLocaleDateString("en-GB", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              })
-                              : "—"}
+                        <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</b>
                           </span>
+                      <span style={{ color: "var(--bd-gray-400)", letterSpacing: ".04em" }}>{booking.bookingId || "—"}</span>
+                      <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <b>{copy.ticketWord(qty)}</b>
+                        {typeName ? <span style={{ fontSize: 12, color: "var(--bd-gray-600)" }}>{typeName}</span> : null}
+                      </span>
+                      <span style={{ fontWeight: 700 }}>{money(booking.totalAmount)}</span>
+                      <span><span className={`ed-badge ${refunded ? "refund" : "paid"}`}>{refunded ? copy.refunded : copy.paid}</span></span>
+                      <span style={{ color: "var(--bd-gray-500)" }}>{formatOrderDate(booking.bookingDate)}</span>
+                      <span style={{ textAlign: "right", color: "var(--bd-gray-600)" }}>›</span>
                         </div>
+                  );
+                })}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-              {/* Bookings Pagination */}
-              {bookingsTotalPages > 1 && (
-                <div className="d-flex justify-content-center gap-2 mt-4 flex-wrap">
-                  <button
-                    className="btn-pagination"
-                    disabled={bookingsPage <= 1}
-                    onClick={() => setBookingsPage((p) => Math.max(1, p - 1))}>
-                    ←
-                  </button>
-                  {Array.from({ length: bookingsTotalPages }, (_, i) => i + 1)
-                    .filter((p) => {
-                      if (bookingsTotalPages <= 5) return true;
-                      if (p === 1 || p === bookingsTotalPages) return true;
-                      return Math.abs(p - bookingsPage) <= 1;
-                    })
-                    .map((p, i, arr) => (
-                      <React.Fragment key={p}>
-                        {i > 0 && p - arr[i - 1] > 1 && (
-                          <span className="pagination-ellipsis">…</span>
-                        )}
-                        <button
-                          className={`btn-pagination page-number ${bookingsPage === p ? "active" : ""}`}
-                          onClick={() => setBookingsPage(p)}>
-                          {p}
-                        </button>
-                      </React.Fragment>
-                    ))}
-                  <button
-                    className="btn-pagination"
-                    disabled={bookingsPage >= bookingsTotalPages}
-                    onClick={() => setBookingsPage((p) => Math.min(bookingsTotalPages, p + 1))}>
-                    →
-                  </button>
+          )}
+          {bookingsTotalPages > 1 && (
+            <div className="ed-pager">
+              <button type="button" disabled={bookingsPage <= 1} onClick={() => setBookingsPage((page) => page - 1)}>‹</button>
+              {Array.from({ length: bookingsTotalPages }, (_, index) => index + 1).map((page) => (
+                <button key={page} type="button" aria-current={page === bookingsPage} onClick={() => setBookingsPage(page)}>{page}</button>
+              ))}
+              <button type="button" disabled={bookingsPage >= bookingsTotalPages} onClick={() => setBookingsPage((page) => page + 1)}>›</button>
                 </div>
               )}
-            </>
-          )}
-        </div>
+        </section>
       )}
 
-      {/* Analytics Tab */}
       {activeTab === "analytics" && (
-        <div className="analytics-tab-content">
-          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-4">
-            <h5 style={{ color: "#fff", fontWeight: 700, margin: 0, fontSize: "18px" }}>
-              {t("analyticsTab") || "Analytics"}
-            </h5>
+        <div>
+          <div className="ed-anFilters">
+            <div className="ed-ranges">
+              {ranges.map((range) => (
+                <button key={range.id} type="button" className="og-range" aria-selected={analyticsRange === range.id} onClick={() => { setDateOpen(false); setAnalyticsRange(range.id); }}>{range.label}</button>
+              ))}
+              <button type="button" className="og-range" aria-selected={analyticsRange === "custom"} onClick={() => setDateOpen((open) => !open)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
+                {analyticsRange === "custom" && customLabel ? customLabel : copy.pick}
+              </button>
+            </div>
+            <div className="ed-rangesel">
             <select
-              className="analytics-filter-select"
-              value={analyticsFilter}
-              onChange={(e) => setAnalyticsFilter(e.target.value)}>
-              <option value="thisMonth">{t("thisMonth") || "This Month"}</option>
-              <option value="7d">{t("last7Days") || "Last 7 Days"}</option>
-              <option value="30d">{t("last30Days") || "Last 30 Days"}</option>
-              <option value="">{t("allTime") || "All Time"}</option>
+                aria-label={copy.pick}
+                value={analyticsRange}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setAnalyticsRange(next);
+                  setDateOpen(next === "custom");
+                }}
+              >
+                {ranges.map((range) => <option key={range.id} value={range.id}>{range.label}</option>)}
+                <option value="custom">{copy.pick}</option>
             </select>
           </div>
-          {analyticsLoading ? (
-            <div className="d-flex justify-content-center py-5">
-              <Spinner animation="border" style={{ color: "#23ada4" }} />
+            {dateOpen && (
+              <div className="og-datepop">
+                <span style={{ display: "block", fontWeight: 700, marginBottom: 12 }}>{copy.pick}</span>
+                <label style={{ display: "block", marginBottom: 10 }}>
+                  <span style={{ display: "block", fontSize: 12, marginBottom: 5 }}>{copy.start}</span>
+                  <input type="date" value={pickStart} onChange={(e) => setPickStart(e.target.value)} />
+                </label>
+                <label style={{ display: "block", marginBottom: 14 }}>
+                  <span style={{ display: "block", fontSize: 12, marginBottom: 5 }}>{copy.end}</span>
+                  <input type="date" value={pickEnd} onChange={(e) => setPickEnd(e.target.value)} />
+                </label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    type="button"
+                    className="ed-popGo"
+                    onClick={() => {
+                      if (!pickStart || !pickEnd) return;
+                      setCustomLabel(`${pickStart} – ${pickEnd}`);
+                      setAnalyticsRange("custom");
+                      setDateOpen(false);
+                    }}
+                  >{copy.apply}</button>
+                  <button type="button" className="ed-popGhost" onClick={() => setDateOpen(false)}>{copy.dismiss}</button>
             </div>
-          ) : (
-            <Row className="gx-3 gy-3">
-              <Col md={6} xs={12}>
-                <div className="analytics-kpi-card">
-                  <div className="analytics-kpi-icon" style={{ background: "rgba(35,173,164,0.12)" }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                   </div>
-                  <div className="analytics-kpi-info">
-                    <span className="analytics-kpi-label">{t("views") || "Views"}</span>
-                    <span className="analytics-kpi-value">{(analyticsData?.viewCount || 0).toLocaleString()}</span>
-                  </div>
-                </div>
-              </Col>
-              <Col md={6} xs={12}>
-                <div className="analytics-kpi-card">
-                  <div className="analytics-kpi-icon" style={{ background: "rgba(35,173,164,0.12)" }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>
-                  </div>
-                  <div className="analytics-kpi-info">
-                    <span className="analytics-kpi-label">{t("totalBookings") || "Total Bookings"}</span>
-                    <span className="analytics-kpi-value">{(analyticsData?.totalBookings || 0).toLocaleString()}</span>
-                  </div>
-                </div>
-              </Col>
-              <Col md={6} xs={12}>
-                <div className="analytics-kpi-card">
-                  <div className="analytics-kpi-icon" style={{ background: "rgba(35,173,164,0.12)" }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
-                  </div>
-                  <div className="analytics-kpi-info">
-                    <span className="analytics-kpi-label">{t("bookingRate") || "Booking Rate"}</span>
-                    <span className="analytics-kpi-value">{analyticsData?.bookingRate || 0}%</span>
-                  </div>
-                </div>
-              </Col>
-              <Col md={6} xs={12}>
-                <div className="analytics-kpi-card">
-                  <div className="analytics-kpi-icon" style={{ background: "rgba(139,92,246,0.12)" }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" /><path d="M18 12a2 2 0 0 0 0 4h4v-4z" /></svg>
-                  </div>
-                  <div className="analytics-kpi-info">
-                    <span className="analytics-kpi-label">{t("revenue") || "Revenue"}</span>
-                    <span className="analytics-kpi-value">₮{(analyticsData?.organizerRevenue || 0).toLocaleString()}</span>
-                  </div>
-                </div>
-              </Col>
-            </Row>
           )}
         </div>
+
+          {analyticsLoading ? (
+            <div className="d-flex justify-content-center py-4"><Spinner animation="border" style={{ color: "#23ada4" }} /></div>
+          ) : (
+            <>
+              <div className="ed-anMain">
+                <section className="ed-anCard"><span className="ed-anH"><span className="ed-anI"><Icon name="ticket" size={18} /></span>{copy.sold}</span><b className="ed-anV">{soldInRange.toLocaleString("en-US")}</b></section>
+                <section className="ed-anCard"><span className="ed-anH"><span className="ed-anI"><Icon name="wallet" size={18} /></span>{copy.revenue}</span><b className="ed-anV">{money(analyticsData?.grossRevenue)}</b></section>
+                <section className="ed-anCard">
+                  <span className="ed-anH"><span className="ed-anI"><Icon name="users" size={18} /></span>{copy.fill}</span>
+                  <b className="ed-anV">{fillUsed}%</b>
+                  <span className="ed-anNote">{used} / {stats.cap} {copy.seats}</span>
+                  <span className="ed-kpiTrack"><i style={{ width: `${Math.min(100, fillUsed)}%` }} /></span>
+                </section>
+            </div>
+              <div className="ed-anSecond">
+                <section className="ed-anCard"><span className="ed-anH"><span className="ed-anI"><Icon name="eye" size={18} /></span>{copy.views}</span><b className="ed-anV">{views.toLocaleString("en-US")}</b></section>
+                <section className="ed-anCard"><span className="ed-anH"><span className="ed-anI"><Icon name="atom" size={18} /></span>{copy.conversion}</span><b className="ed-anV">{conversion}</b></section>
+                </div>
+              <section className="ed-chart">
+                <h2>{copy.chart}</h2>
+                {!chart ? <p className="ed-empty">{copy.noChart}</p> : (
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", height: 170, padding: "14px 0 22px", textAlign: "right" }}>
+                      <span style={{ fontSize: 11, color: "var(--bd-gray-600)" }}>{chart.max}</span>
+                      <span style={{ fontSize: 11, color: "var(--bd-gray-600)" }}>{Math.round(chart.max / 2)}</span>
+                      <span style={{ fontSize: 11, color: "var(--bd-gray-600)" }}>0</span>
+                </div>
+                    <div
+                      className="ed-anPlot"
+                      onMouseMove={(e) => {
+                        const box = e.currentTarget.getBoundingClientRect();
+                        if (!box.width || !chart.coords.length) return;
+                        const t = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
+                        setHoverIndex(Math.round(t * (chart.coords.length - 1)));
+                      }}
+                      onMouseLeave={() => setHoverIndex(null)}
+                    >
+                      <svg viewBox="0 0 600 170" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 170 }} aria-hidden="true">
+                        <line x1="0" y1="22" x2="600" y2="22" stroke="rgba(255,255,255,.06)" />
+                        <line x1="0" y1="65" x2="600" y2="65" stroke="rgba(255,255,255,.06)" />
+                        <line x1="0" y1="107" x2="600" y2="107" stroke="rgba(255,255,255,.06)" />
+                        <line x1="0" y1="150" x2="600" y2="150" stroke="rgba(255,255,255,.06)" />
+                        <path d={chart.area} fill="rgba(35,173,164,.26)" />
+                        <path d={chart.line} fill="none" stroke="var(--acc, #23ada4)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+                    </svg>
+                      {hover && hoverPoint ? (
+                        <>
+                          <span className="ed-anRule" style={{ left: `${(hover[0] / 600) * 100}%` }} />
+                          <span className="ed-anDot" style={{ left: `${(hover[0] / 600) * 100}%`, top: hover[1] }} />
+                          <span className="ed-anTip" style={{ left: `${(hover[0] / 600) * 100}%`, top: hover[1], transform: "translate(-50%, -100%)" }}>
+                            {hoverPoint.date} · {copy.ticketWord(hoverPoint.tickets)}
+                  </span>
+                        </>
+                      ) : null}
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginTop: 8 }}>
+                        {chart.labels.map((label) => <span key={label} style={{ fontSize: 11.5, color: "var(--bd-gray-600)" }}>{label.slice(5)}</span>)}
+                </div>
+              </div>
+                </div>
+                )}
+              </section>
+            </>
+          )}
+                </div>
       )}
 
-      {showReservationModal && (
-        <div className="custom-modal-overlay">
-          <div className="custom-modal-container">
-            <div className="custom-modal-header">
-              <button
-                className="modal-back-btn"
-                onClick={() => setShowReservationModal(false)}>
-                ←
-              </button>
-              <h5 className="modal-title">
-                {t("adjustReservedSeats") || "Adjust Reserved Seats"}
-              </h5>
-              <div style={{ width: "24px" }}></div>
+      <PromotionPlanModal
+        open={promoOpen}
+        kind="event"
+        listingId={event._id}
+        title={event.eventTitle}
+        viewHref={`/eventDetails?id=${event._id}`}
+        running={Boolean(event.isFeatured && event.featuredExpiry && new Date(event.featuredExpiry) > new Date())}
+        ineligible={cancelled || String(event.status || "").toLowerCase() === "past" || Boolean(event.endDate && new Date(event.endDate) < new Date(new Date().setHours(0, 0, 0, 0)))}
+        onClose={() => setPromoOpen(false)}
+        onPurchased={refreshEvent}
+      />
+
+      {showCancel && (
+        <div className="ed-scrim" onClick={() => setShowCancel(false)}>
+          <div className="ed-sheet" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="ed-sheetH">
+              <b style={{ display: "block", fontSize: 18 }}>{copy.cancelAsk}</b>
+              <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--bd-gray-500)" }}>{copy.cancelBody}</p>
             </div>
-
-            <div className="custom-modal-body">
-              <div className="modal-event-info-card">
-                <div className="info-row">
-                  <span className="info-icon">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 14 14"
-                      fill="none">
-                      <path
-                        d="M9.91675 8.16668C10.2389 8.16668 10.5001 7.90551 10.5001 7.58334C10.5001 7.26118 10.2389 7.00001 9.91675 7.00001C9.59458 7.00001 9.33342 7.26118 9.33342 7.58334C9.33342 7.90551 9.59458 8.16668 9.91675 8.16668Z"
-                        fill="url(#paint0_linear_4703_14959)"
-                      />
-                      <path
-                        d="M9.91675 10.5C10.2389 10.5 10.5001 10.2388 10.5001 9.91668C10.5001 9.59451 10.2389 9.33334 9.91675 9.33334C9.59458 9.33334 9.33342 9.59451 9.33342 9.91668C9.33342 10.2388 9.59458 10.5 9.91675 10.5Z"
-                        fill="url(#paint1_linear_4703_14959)"
-                      />
-                      <path
-                        d="M7.58342 7.58334C7.58342 7.90551 7.32225 8.16668 7.00008 8.16668C6.67792 8.16668 6.41675 7.90551 6.41675 7.58334C6.41675 7.26118 6.67792 7.00001 7.00008 7.00001C7.32225 7.00001 7.58342 7.26118 7.58342 7.58334Z"
-                        fill="url(#paint2_linear_4703_14959)"
-                      />
-                      <path
-                        d="M7.58342 9.91668C7.58342 10.2388 7.32225 10.5 7.00008 10.5C6.67792 10.5 6.41675 10.2388 6.41675 9.91668C6.41675 9.59451 6.67792 9.33334 7.00008 9.33334C7.32225 9.33334 7.58342 9.59451 7.58342 9.91668Z"
-                        fill="url(#paint3_linear_4703_14959)"
-                      />
-                      <path
-                        d="M4.08342 8.16668C4.40558 8.16668 4.66675 7.90551 4.66675 7.58334C4.66675 7.26118 4.40558 7.00001 4.08342 7.00001C3.76125 7.00001 3.50008 7.26118 3.50008 7.58334C3.50008 7.90551 3.76125 8.16668 4.08342 8.16668Z"
-                        fill="url(#paint4_linear_4703_14959)"
-                      />
-                      <path
-                        d="M4.08342 10.5C4.40558 10.5 4.66675 10.2388 4.66675 9.91668C4.66675 9.59451 4.40558 9.33334 4.08342 9.33334C3.76125 9.33334 3.50008 9.59451 3.50008 9.91668C3.50008 10.2388 3.76125 10.5 4.08342 10.5Z"
-                        fill="url(#paint5_linear_4703_14959)"
-                      />
-                      <path
-                        fill-rule="evenodd"
-                        clip-rule="evenodd"
-                        d="M4.08342 1.02084C4.32504 1.02084 4.52092 1.21672 4.52092 1.45834V1.90326C4.90708 1.89584 5.33252 1.89584 5.80043 1.89584H8.19966C8.66758 1.89584 9.09308 1.89584 9.47925 1.90326V1.45834C9.47925 1.21672 9.67512 1.02084 9.91675 1.02084C10.1584 1.02084 10.3542 1.21672 10.3542 1.45834V1.94081C10.5059 1.95237 10.6495 1.9669 10.7853 1.98517C11.4693 2.07712 12.0228 2.27086 12.4594 2.7074C12.8959 3.14395 13.0896 3.6975 13.1816 4.38141C13.2709 5.04595 13.2709 5.89506 13.2709 6.96708V8.19958C13.2709 9.2716 13.2709 10.1207 13.1816 10.7853C13.0896 11.4692 12.8959 12.0227 12.4594 12.4593C12.0228 12.8958 11.4693 13.0896 10.7853 13.1815C10.1208 13.2709 9.2717 13.2709 8.19968 13.2708H5.80051C4.72849 13.2709 3.87936 13.2709 3.21482 13.1815C2.53091 13.0896 1.97735 12.8958 1.54081 12.4593C1.10426 12.0227 0.910527 11.4692 0.818577 10.7853C0.729232 10.1207 0.729239 9.27161 0.729248 8.19959V6.9671C0.729239 5.89507 0.729232 5.04595 0.818577 4.38141C0.910527 3.6975 1.10426 3.14395 1.54081 2.7074C1.97735 2.27086 2.53091 2.07712 3.21482 1.98517C3.35069 1.9669 3.49428 1.95237 3.64592 1.94081V1.45834C3.64592 1.21672 3.84179 1.02084 4.08342 1.02084ZM3.33141 2.85237C2.74452 2.93127 2.4064 3.07925 2.15953 3.32612C1.91265 3.57299 1.76468 3.91112 1.68577 4.498C1.67241 4.5974 1.66124 4.70203 1.6519 4.81251H12.3483C12.3389 4.70203 12.3278 4.5974 12.3144 4.49801C12.2355 3.91112 12.0875 3.57299 11.8406 3.32612C11.5938 3.07925 11.2556 2.93127 10.6688 2.85237C10.0693 2.77177 9.27906 2.77084 8.16675 2.77084H5.83342C4.7211 2.77084 3.93088 2.77177 3.33141 2.85237ZM1.60425 7.00001C1.60425 6.50183 1.60443 6.06827 1.61188 5.68751H12.3883C12.3957 6.06827 12.3959 6.50183 12.3959 7.00001V8.16668C12.3959 9.27899 12.395 10.0692 12.3144 10.6687C12.2355 11.2556 12.0875 11.5937 11.8406 11.8406C11.5938 12.0874 11.2556 12.2354 10.6688 12.3143C10.0693 12.3949 9.27906 12.3958 8.16675 12.3958H5.83342C4.7211 12.3958 3.93088 12.3949 3.33141 12.3143C2.74452 12.2354 2.4064 12.0874 2.15953 11.8406C1.91265 11.5937 1.76468 11.2556 1.68577 10.6687C1.60518 10.0692 1.60425 9.27899 1.60425 8.16668V7.00001Z"
-                        fill="url(#paint6_linear_4703_14959)"
-                      />
-                      <defs>
-                        <linearGradient
-                          id="paint0_linear_4703_14959"
-                          x1="3.87078"
-                          y1="-0.51904"
-                          x2="10.0727"
-                          y2="16.6086"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint1_linear_4703_14959"
-                          x1="3.87078"
-                          y1="-0.51904"
-                          x2="10.0727"
-                          y2="16.6086"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint2_linear_4703_14959"
-                          x1="3.87078"
-                          y1="-0.51904"
-                          x2="10.0727"
-                          y2="16.6086"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint3_linear_4703_14959"
-                          x1="3.87078"
-                          y1="-0.51904"
-                          x2="10.0727"
-                          y2="16.6086"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint4_linear_4703_14959"
-                          x1="3.87078"
-                          y1="-0.51904"
-                          x2="10.0727"
-                          y2="16.6086"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint5_linear_4703_14959"
-                          x1="3.87078"
-                          y1="-0.51904"
-                          x2="10.0727"
-                          y2="16.6086"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint6_linear_4703_14959"
-                          x1="3.87078"
-                          y1="-0.51904"
-                          x2="10.0727"
-                          y2="16.6086"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  </span>
-                  <span className="info-text">
-                    {new Date(event.startDate).toLocaleDateString("en-GB", {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-                <div className="info-row">
-                  <span className="info-icon">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 16 16"
-                      fill="none">
-                      <path
-                        d="M8.03059 1.25016C7.85777 1.24891 7.71683 1.38797 7.71558 1.56047C7.71433 1.73297 7.85308 1.87391 8.0259 1.87516C8.1984 1.87641 8.33934 1.73766 8.34059 1.56516C8.34184 1.39266 8.20309 1.25172 8.03059 1.25016Z"
-                        fill="url(#paint0_linear_4557_4584)"
-                      />
-                      <path
-                        d="M8.01644 3.12512C6.80985 3.11655 5.82169 4.08996 5.81256 5.29618C5.80347 6.50234 6.77741 7.49097 7.98363 7.50006C7.98922 7.50009 7.99479 7.50013 8.00038 7.50013C9.19891 7.50013 10.1784 6.52962 10.1875 5.329C10.1966 4.1229 9.22269 3.13421 8.01644 3.12512ZM8.00032 6.87516C7.99638 6.87516 7.99225 6.87512 7.98832 6.87509C7.12672 6.86859 6.43103 6.1624 6.43753 5.30087C6.444 4.44321 7.14363 3.75002 7.99975 3.75002C8.00369 3.75002 8.00782 3.75006 8.01175 3.75009C8.87335 3.75659 9.56904 4.46278 9.56254 5.32431C9.55604 6.18197 8.85644 6.87516 8.00032 6.87516Z"
-                        fill="url(#paint1_linear_4557_4584)"
-                      />
-                      <path
-                        d="M9.36354 1.48717C9.20098 1.42948 9.02226 1.51464 8.96457 1.67732C8.90691 1.84001 8.99207 2.01861 9.15473 2.07629C10.5312 2.56414 11.4485 3.87511 11.4375 5.33846C11.4363 5.51102 11.5751 5.65199 11.7477 5.6533C11.7485 5.6533 11.7493 5.6533 11.7501 5.6533C11.9215 5.6533 12.0612 5.51493 12.0625 5.34314C12.0755 3.61355 10.9909 2.06395 9.36354 1.48717Z"
-                        fill="url(#paint2_linear_4557_4584)"
-                      />
-                      <path
-                        d="M9.91741 11.7638C11.9959 9.08836 13.2949 7.6932 13.3125 5.35245C13.3345 2.40735 10.9444 0 7.9995 0C5.089 0 2.70968 2.35713 2.68756 5.27276C2.66968 7.67698 3.99278 9.07024 6.08566 11.7634C4.00362 12.0745 2.68756 12.8563 2.68756 13.8125C2.68756 14.4531 3.27962 15.0278 4.35472 15.431C5.33325 15.7979 6.62785 16 8 16C9.37216 16 10.6668 15.7979 11.6453 15.431C12.7204 15.0278 13.3125 14.453 13.3125 13.8125C13.3125 12.8568 11.9976 12.0752 9.91741 11.7638ZM3.31253 5.27748C3.33203 2.70469 5.43125 0.625001 7.99957 0.625001C10.5983 0.625001 12.7069 2.74963 12.6875 5.34779C12.6709 7.57073 11.2933 8.94064 9.09401 11.8076C8.70172 12.3187 8.34147 12.802 8.00047 13.2747C7.66047 12.8017 7.30741 12.3271 6.90925 11.8074C4.61906 8.82042 3.29559 7.55405 3.31253 5.27748ZM8 15.375C5.31716 15.375 3.31253 14.5501 3.31253 13.8125C3.31253 13.2655 4.5109 12.5745 6.52585 12.3352C6.97125 12.9197 7.36175 13.4506 7.74475 13.9928C7.80325 14.0757 7.89832 14.125 7.99972 14.125C7.99982 14.125 7.99991 14.125 8 14.125C8.10132 14.125 8.19635 14.0759 8.25494 13.9932C8.63432 13.4581 9.03551 12.914 9.4771 12.3356C11.4902 12.5751 12.6875 13.2659 12.6875 13.8126C12.6875 14.5501 10.6829 15.375 8 15.375Z"
-                        fill="url(#paint3_linear_4557_4584)"
-                      />
-                      <defs>
-                        <linearGradient
-                          id="paint0_linear_4557_4584"
-                          x1="7.87214"
-                          y1="1.17158"
-                          x2="8.19431"
-                          y2="2.04062"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint1_linear_4557_4584"
-                          x1="6.9084"
-                          y1="2.57509"
-                          x2="9.16356"
-                          y2="8.65822"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint2_linear_4557_4584"
-                          x1="9.72708"
-                          y1="0.943144"
-                          x2="12.367"
-                          y2="6.24633"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint3_linear_4557_4584"
-                          x1="5.34887"
-                          y1="-2.01128"
-                          x2="16.1186"
-                          y2="17.2805"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  </span>
-                  <span className="info-text">{event.venueName}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-icon">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 16 16"
-                      fill="none">
-                      <g clip-path="url(#clip0_4557_4601)">
-                        <path
-                          d="M10.8505 9.41285L8.61962 7.73973V4.33154C8.61962 3.98885 8.34262 3.71185 7.99994 3.71185C7.65725 3.71185 7.38025 3.98885 7.38025 4.33154V8.0496C7.38025 8.24479 7.47197 8.42885 7.62812 8.54535L10.1068 10.4044C10.2183 10.488 10.3485 10.5283 10.478 10.5283C10.667 10.5283 10.8529 10.4434 10.9744 10.2798C11.1802 10.0065 11.1244 9.61798 10.8505 9.41285Z"
-                          fill="url(#paint0_linear_4557_4601)"
-                        />
-                        <path
-                          d="M8 0C3.58853 0 0 3.58853 0 8C0 12.4115 3.58853 16 8 16C12.4115 16 16 12.4115 16 8C16 3.58853 12.4115 0 8 0ZM8 14.7607C4.27266 14.7607 1.23934 11.7273 1.23934 8C1.23934 4.27266 4.27266 1.23934 8 1.23934C11.728 1.23934 14.7607 4.27266 14.7607 8C14.7607 11.7273 11.7273 14.7607 8 14.7607Z"
-                          fill="url(#paint1_linear_4557_4601)"
-                        />
-                      </g>
-                      <defs>
-                        <linearGradient
-                          id="paint0_linear_4557_4601"
-                          x1="8.31164"
-                          y1="2.85499"
-                          x2="13.3233"
-                          y2="10.2293"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <linearGradient
-                          id="paint1_linear_4557_4601"
-                          x1="4.0078"
-                          y1="-2.01128"
-                          x2="12.2551"
-                          y2="20.2353"
-                          gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#23ADA4" />
-                          <stop offset="1" stop-color="#23ADA4" />
-                        </linearGradient>
-                        <clipPath id="clip0_4557_4601">
-                          <rect width="16" height="16" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
-                  </span>
-                  <span className="info-text">
-                    {formatTime(event.startTime, true, language)} -{" "}
-                    {formatTime(event.endTime, true, language)}
-                  </span>
-                </div>
-                <div className="event-title-sub mt-2">{event.eventTitle}</div>
-              </div>
-
-              <div className="counter-section mt-4">
-                <h6 className="counter-title">
-                  {t("reservedExternallyLabel") || "Reserved externally"}
-                </h6>
-                <p className="counter-subtitle">
-                  {t("reservedExternallyDesc") ||
-                    "Add the number of seats reserved outside of Bondy"}
-                </p>
-
-                <div className="counter-widget-container">
-                  <button
-                    className="counter-btn"
-                    onClick={() =>
-                      setTempReservedExternally((prev) => Math.max(0, prev - 1))
-                    }
-                    disabled={tempReservedExternally <= 0}>
-                    —
-                  </button>
-                  <span className="counter-value">
-                    {tempReservedExternally}
-                  </span>
-                  <button
-                    className="counter-btn"
-                    onClick={() => {
-                      const maxAllowed =
-                        (event.totalTickets || 0) - (event.totalAttendees || 0);
-                      setTempReservedExternally((prev) =>
-                        Math.min(maxAllowed, prev + 1),
-                      );
-                    }}
-                    disabled={
-                      tempReservedExternally >=
-                      (event.totalTickets || 0) - (event.totalAttendees || 0)
-                    }>
-                    +
-                  </button>
-                </div>
-              </div>
-
-              <div className="capacity-overview-section mt-4">
-                <h6 className="overview-section-title">
-                  {t("updatedCapacityOverview") || "Updated capacity overview"}
-                </h6>
-                <div className="overview-row">
-                  <span>{t("booked") || "Booked"}</span>
-                  <span className="value-teal">
-                    {event.totalAttendees || 0}
-                  </span>
-                </div>
-                <div className="overview-row">
-                  <span>
-                    {t("reservedExternally") || "Reserved externally"}
-                  </span>
-                  <span className="value-yellow">{tempReservedExternally}</span>
-                </div>
-                <div className="overview-row">
-                  <span>{t("available") || "Available"}</span>
-                  <span className="value-teal">
-                    {Math.max(
-                      0,
-                      (event.totalTickets || 0) -
-                      (event.totalAttendees || 0) -
-                      tempReservedExternally,
-                    )}
-                  </span>
-                </div>
-                <div className="overview-row">
-                  <span>{t("capacity") || "Capacity"}</span>
-                  <span className="value-white">{event.totalTickets || 0}</span>
-                </div>
-              </div>
-
-              <p className="session-warning-text mt-4">
-                {t("sessionWarning") ||
-                  "This change applies only to this session."}
-              </p>
-            </div>
-
-            <div className="custom-modal-footer">
-              <button
-                className="modal-btn-cancel"
-                onClick={() => setShowReservationModal(false)}
-                disabled={isSaving}>
-                {t("cancel") || "Cancel"}
-              </button>
-              <button
-                className="modal-btn-save"
-                onClick={handleSaveChanges}
-                disabled={isSaving}>
-                {isSaving ? (
-                  <Spinner
-                    animation="border"
-                    size="sm"
-                    style={{ color: "#fff" }}
-                  />
-                ) : (
-                  t("saveChanges") || "Save changes"
-                )}
-              </button>
+            <div className="ed-sheetF">
+              <button type="button" className="ghost" onClick={() => setShowCancel(false)}>{copy.back}</button>
+              <button type="button" className="ed-cancelD" disabled={isCancelling} onClick={confirmCancel}>{copy.confirmCancel}</button>
             </div>
           </div>
         </div>
       )}
 
-      {showCancelModal && (
-        <div className="custom-modal-overlay">
-          <div className="custom-modal-container">
-            <div className="custom-modal-header">
-              <button
-                className="modal-back-btn"
-                onClick={() => setShowCancelModal(false)}>
-                ←
-              </button>
-              <h5 className="modal-title">
-                {t("cancelEventTitle") || "Cancel Entire Event"}
-              </h5>
-              <div style={{ width: "24px" }}></div>
+      {showExternal && (
+        <div className="ed-scrim" onClick={() => setShowExternal(false)}>
+          <div className="ed-sheet" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="ed-sheetH">
+              <b style={{ display: "block", fontSize: 18 }}>{copy.external}</b>
+              <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--bd-gray-500)" }}>{copy.capacity}: {stats.cap}. {copy.sold}: {stats.sold}.</p>
             </div>
-
-            <div className="custom-modal-body">
-              <p
-                className="text-danger fw-bold mb-3"
-                style={{ fontSize: "14px" }}>
-                ⚠️ {t("warning") || "WARNING"}: {t("actionIrreversible") || "This action is irreversible."}{" "}
-                {event?.isFreeEvent
-                  ? (t("cancelFreeEventWarning") || "The event will be cancelled and all attendees will be notified.")
-                  : event?.refundPolicy === "No Refund"
-                    ? (t("cancelNoRefundWarning") || "The event will be cancelled. According to the 'No Refund' policy, booked tickets will not be refunded.")
-                    : (t("cancelRefundWarning", { policy: event?.refundPolicy || "No Refund" }) || `The event will be cancelled, and booked tickets will be refunded according to the '${event?.refundPolicy || "No Refund"}' policy.`)}
-              </p>
-
-              <div className="mb-3">
-                <label className="small text-muted mb-2">
-                  {t("cancellationReason") || "Cancellation Reason"}
-                </label>
-                <textarea
-                  className="form-control custom-textarea-dark"
-                  rows="4"
-                  placeholder={t("enterReasonDetails") || "Enter reason details..."}
-                  value={cancellationReason}
-                  onChange={(e) => setCancellationReason(e.target.value)}
-                />
+            <div className="ed-sheetB">
+              <div className="ed-step">
+                <button type="button" disabled={externalDraft <= 0} onClick={() => setExternalDraft((n) => Math.max(0, n - 1))}>−</button>
+                <b>{externalDraft}</b>
+                <button type="button" disabled={externalDraft >= Math.max(0, stats.cap - stats.sold)} onClick={() => setExternalDraft((n) => n + 1)}>+</button>
               </div>
+              {saveError ? <p style={{ color: "#ff6b6b", fontSize: 13, marginTop: 10 }}>{saveError}</p> : null}
             </div>
-
-            <div className="custom-modal-footer">
-              <button
-                className="modal-btn-cancel"
-                onClick={() => setShowCancelModal(false)}
-                disabled={isCancelling}>
-                {t("keepEvent") || "Keep Event"}
-              </button>
-              <button
-                className="modal-btn-confirm-cancel"
-                onClick={handleCancelEvent}
-                disabled={
-                  isCancelling ||
-                  !cancellationReason.trim()
-                }>
-                {isCancelling ? (
-                  <Spinner
-                    animation="border"
-                    size="sm"
-                    style={{ color: "#fff" }}
-                  />
-                ) : (
-                  t("confirmCancel") || "Cancel Event"
-                )}
-              </button>
+            <div className="ed-sheetF">
+              <button type="button" className="ghost" onClick={() => setShowExternal(false)}>{copy.dismiss}</button>
+              <button type="button" className="ed-popGo" disabled={isSaving} onClick={saveExternal}>{copy.save}</button>
             </div>
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .event-control-center {
-          color: #fff;
-          font-family: "Inter", sans-serif;
-        }
-        .back-btn-dashboard {
-          color: #888;
-          text-decoration: none;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          transition: color 0.2s;
-        }
-        .back-btn-dashboard:hover {
-          color: #23ada4;
-        }
-        .edit-event-btn {
-          padding: 8px 20px;
-          font-size: 13px;
-          border-radius: 20px;
-        }
-        .hero-details-card {
-          position: relative;
-          background: #1e1e1e;
-          border: 1px solid #2d2d2d;
-          border-radius: 16px;
-          overflow: hidden;
-        }
-        .hero-blur-bg {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-size: cover;
-          background-position: center;
-          filter: blur(40px) brightness(0.25);
-          z-index: 1;
-        }
-        .hero-content-overlay {
-          position: relative;
-          z-index: 2;
-        }
-        .hero-poster {
-          width: 130px;
-          height: 130px;
-          border-radius: 12px;
-          overflow: hidden;
-          flex-shrink: 0;
-          border: 2px solid rgba(255, 255, 255, 0.1);
-        }
-        .hero-poster img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        .hero-text-details {
-          flex: 1;
-        }
-        .hero-title {
-          font-size: 24px;
-          font-weight: 700;
-          color: #fff;
-          margin: 0;
-        }
-        .badge-status {
-          font-size: 11px;
-          font-weight: 600;
-          padding: 4px 12px;
-          border-radius: 20px;
-          text-transform: uppercase;
-        }
-        .badge-status.draft {
-          background: rgba(255, 193, 7, 0.15);
-          color: #ffc107;
-          border: 1px solid rgba(255, 193, 7, 0.3);
-        }
-        .badge-status.upcoming {
-          background: rgba(0, 123, 255, 0.15);
-          color: #007bff;
-          border: 1px solid rgba(0, 123, 255, 0.3);
-        }
-        .badge-status.ongoing {
-          background: rgba(40, 167, 69, 0.15);
-          color: #28a745;
-          border: 1px solid rgba(40, 167, 69, 0.3);
-        }
-        .badge-status.past {
-          background: rgba(108, 117, 125, 0.15);
-          color: #999;
-          border: 1px solid rgba(108, 117, 125, 0.3);
-        }
-        .badge-status.cancelled {
-          background: rgba(220, 53, 69, 0.15);
-          color: #dc3545;
-          border: 1px solid rgba(220, 53, 69, 0.3);
-        }
-        .badge-status.featured {
-          background: linear-gradient(135deg, #f6d365, #fda085);
-          color: #000;
-        }
-        .badge-status.visibility {
-          background: rgba(255, 255, 255, 0.08);
-          color: #ccc;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-
-        .kpi-card {
-          background: #1e1e1e;
-          border: 1px solid #2d2d2d;
-          border-radius: 14px;
-          padding: 20px;
-          display: flex;
-          align-items: self-start;
-          gap: 16px;
-          height: 100%;
-        }
-        .kpi-icon {
-          font-size: 28px;
-          background: rgba(35, 173, 164, 0.1);
-          width: 52px;
-          height: 52px;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .kpi-content {
-          flex: 1;
-        }
-        .kpi-content h5 {
-          color: #888;
-          font-size: 12px;
-          text-transform: uppercase;
-          margin-bottom: 6px;
-          font-weight: 600;
-          letter-spacing: 0.5px;
-        }
-        .kpi-content h3 {
-          font-size: 22px;
-          font-weight: 700;
-          color: #fff;
-          margin: 0;
-        }
-        .kpi-content .total-cap {
-          font-size: 13px;
-          color: #666;
-          font-weight: 500;
-        }
-        .progress-bar-container {
-          background: #111;
-          height: 6px;
-          border-radius: 10px;
-          overflow: hidden;
-          width: 100%;
-        }
-        .progress-bar-container.light {
-          background: rgba(255, 255, 255, 0.05);
-        }
-        .progress-bar-filled {
-          background: #23ada4;
-          height: 100%;
-          border-radius: 10px;
-        }
-        .content-card {
-          background: #1e1e1e;
-          border: 1px solid #2d2d2d;
-          border-radius: 14px;
-        }
-        .card-heading-line {
-          font-size: 15px;
-          font-weight: 600;
-          text-transform: uppercase;
-          border-bottom: 1px solid #2d2d2d;
-          padding-bottom: 12px;
-          color: #23ada4;
-          margin-bottom: 16px;
-        }
-        .card-heading-line span {
-          position: relative;
-        }
-        .card-heading-line span::after {
-          content: "";
-          position: absolute;
-          bottom: -13px;
-          left: 0;
-          width: 100%;
-          height: 2px;
-          background: #23ada4;
-        }
-        .details-gallery-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-          gap: 12px;
-        }
-        .details-gallery-item {
-          aspect-ratio: 1;
-          border-radius: 10px;
-          overflow: hidden;
-          border: 1px solid #333;
-        }
-        .details-gallery-item img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.25s ease;
-        }
-        .details-gallery-item img:hover {
-          transform: scale(1.08);
-        }
-        .icon-schedule {
-          font-size: 20px;
-          background: rgba(255, 255, 255, 0.05);
-          width: 36px;
-          height: 36px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 8px;
-        }
-        .ticket-tier-row {
-          background: #161616;
-          border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-        .ticket-price-badge {
-          color: #23ada4;
-          font-weight: 700;
-          font-size: 16px;
-        }
-        .bg-dark-soft {
-          background: rgba(0, 0, 0, 0.2);
-          border: 1px solid rgba(255, 255, 255, 0.02);
-        }
-        .attendee-img {
-          transition:
-            transform 0.2s ease,
-            z-index 0.2s ease;
-        }
-        .attendee-img:hover {
-          transform: translateY(-4px) scale(1.05);
-          z-index: 10;
-        }
-        .btn-update-outside {
-          background: transparent;
-          border: 1px solid #23ada4;
-          color: #23ada4;
-          padding: 10px 24px;
-          border-radius: 24px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          width: 100%;
-        }
-        .btn-update-outside:hover {
-          background: rgba(35, 173, 164, 0.1);
-        }
-        .custom-modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.85);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 9999;
-          backdrop-filter: blur(8px);
-        }
-        .custom-modal-container {
-          background: #111111;
-          border: 1px solid #2d2d2d;
-          border-radius: 24px;
-          width: 90%;
-          max-width: 480px;
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-        }
-        .custom-modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-        .modal-back-btn {
-          background: transparent;
-          border: none;
-          color: #fff;
-          font-size: 24px;
-          cursor: pointer;
-          padding: 0;
-          line-height: 1;
-        }
-        .modal-title {
-          font-size: 18px;
-          font-weight: 700;
-          color: #fff;
-          margin: 0;
-        }
-        .modal-event-info-card {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 16px;
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        .info-row {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.8);
-        }
-        .info-icon {
-          font-size: 16px;
-        }
-        .event-title-sub {
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.4);
-        }
-        .counter-section {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-        }
-        .counter-title {
-          font-size: 16px;
-          font-weight: 700;
-          color: #fff;
-          margin-bottom: 4px;
-        }
-        .counter-subtitle {
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.5);
-          margin-bottom: 16px;
-        }
-        .counter-widget-container {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 32px;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 16px;
-          padding: 12px 24px;
-          width: 100%;
-        }
-        .counter-btn {
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
-          border: none;
-          background: rgba(255, 255, 255, 0.08);
-          color: #fff;
-          font-size: 20px;
-          font-weight: 700;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s ease;
-        }
-        .counter-btn:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.15);
-        }
-        .counter-btn:disabled {
-          opacity: 0.3;
-          cursor: not-allowed;
-        }
-        .counter-value {
-          font-size: 28px;
-          font-weight: 700;
-          color: #f1c40f;
-          min-width: 40px;
-          text-align: center;
-        }
-        .capacity-overview-section {
-          background: rgba(255, 255, 255, 0.02);
-          border-radius: 16px;
-          padding: 16px;
-        }
-        .overview-section-title {
-          font-size: 14px;
-          font-weight: 600;
-          color: #fff;
-          margin-bottom: 12px;
-        }
-        .overview-row {
-          display: flex;
-          justify-content: space-between;
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.6);
-          padding: 8px 0;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-        }
-        .overview-row:last-child {
-          border-bottom: none;
-        }
-        .value-teal {
-          color: #23ada4;
-          font-weight: 600;
-        }
-        .value-yellow {
-          color: #f1c40f;
-          font-weight: 600;
-        }
-        .value-white {
-          color: #fff;
-          font-weight: 600;
-        }
-        .session-warning-text {
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.4);
-          text-align: center;
-        }
-        .custom-modal-footer {
-          display: flex;
-          gap: 12px;
-          margin-top: 12px;
-        }
-        .modal-btn-cancel {
-          flex: 1;
-          background: transparent;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          color: #fff;
-          padding: 12px;
-          border-radius: 24px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .modal-btn-cancel:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.05);
-        }
-        .modal-btn-save {
-          flex: 1;
-          background: #23ada4;
-          border: none;
-          color: #111;
-          padding: 12px;
-          border-radius: 24px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .modal-btn-save:hover:not(:disabled) {
-          background: #1e968e;
-        }
-        .modal-btn-save:disabled,
-        .modal-btn-cancel:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        .custom-select-dark,
-        .custom-textarea-dark {
-          background: rgba(255, 255, 255, 0.05) !important;
-          border: 1px solid rgba(255, 255, 255, 0.1) !important;
-          color: #fff !important;
-          border-radius: 10px;
-          padding: 10px 14px;
-        }
-        .custom-select-dark option {
-          background: #111;
-          color: #fff;
-        }
-        .btn-danger-custom {
-          background: #dc3545;
-          border: none;
-          color: #fff;
-          padding: 8px 20px;
-          font-size: 13px;
-          border-radius: 20px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.2s ease;
-        }
-        .btn-danger-custom:hover {
-          background: #c82333;
-        }
-        .modal-btn-confirm-cancel {
-          flex: 1;
-          background: #dc3545;
-          border: none;
-          color: #fff;
-          padding: 12px;
-          border-radius: 24px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .modal-btn-confirm-cancel:hover:not(:disabled) {
-          background: #bd2130;
-        }
-        .modal-btn-confirm-cancel:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        .btn-message-attendee {
-          background: #23ada4;
-          border: none;
-          color: #111;
-          padding: 6px 14px;
-          border-radius: 16px;
-          font-size: 12px;
-          font-weight: 700;
-          text-decoration: none;
-          display: inline-block;
-          transition: background 0.2s ease;
-        }
-        .btn-message-attendee:hover {
-          background: #1e968e;
-          color: #111;
-        }
-        .btn-pagination {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: #fff;
-          padding: 6px 16px;
-          border-radius: 16px;
-          font-size: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .btn-pagination:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.1);
-        }
-        .btn-pagination:disabled {
-          opacity: 0.3;
-          cursor: not-allowed;
-        }
-        .btn-pagination.page-number {
-          min-width: 38px;
-          padding-inline: 12px;
-        }
-        .btn-pagination.page-number.active {
-          background: #23ada4;
-          border-color: #23ada4;
-          color: #111;
-          opacity: 1;
-        }
-        .pagination-ellipsis {
-          color: rgba(255, 255, 255, 0.55);
-          padding: 0 4px;
-          font-weight: 600;
-        }
-
-        /* Tab Navigation Bar */
-        .tab-nav-bar {
-          display: flex;
-          border-bottom: 1px solid #2d2d2d;
-          gap: 24px;
-        }
-        .tab-nav-item {
-          background: transparent;
-          border: none;
-          border-bottom: 2px solid transparent;
-          color: rgba(255, 255, 255, 0.6);
-          font-size: 15px;
-          font-weight: 600;
-          padding: 12px 4px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .tab-nav-item svg {
-          stroke: currentColor;
-          transition: stroke 0.2s ease;
-        }
-        .tab-nav-item:hover {
-          color: #fff;
-        }
-        .tab-nav-item.active {
-          color: #23ada4;
-          border-bottom-color: #23ada4;
-        }
-
-        /* Bookings Tab */
-        .bookings-search-input {
-          width: 100%;
-          background: #1e1e1e;
-          border: 1px solid #2d2d2d;
-          border-radius: 12px;
-          color: #fff;
-          padding: 12px 16px;
-          font-size: 14px;
-          outline: none;
-          transition: border-color 0.2s ease;
-        }
-        .bookings-search-input:focus {
-          border-color: #23ada4;
-        }
-        .booking-card {
-          background: #1e1e1e;
-          border: 1px solid #2d2d2d;
-          border-radius: 14px;
-          padding: 16px;
-        }
-        .booking-avatar {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.08);
-          color: #fff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 16px;
-          overflow: hidden;
-          flex-shrink: 0;
-        }
-        .booking-avatar img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        .booking-name {
-          color: #fff;
-          font-size: 15px;
-          font-weight: 600;
-        }
-        .booking-ticket-info {
-          color: rgba(255, 255, 255, 0.85);
-          font-size: 13.5px;
-          margin-top: 2px;
-        }
-        .booking-meta {
-          display: flex;
-          gap: 8px;
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.4);
-          margin-top: 4px;
-          flex-wrap: wrap;
-        }
-        .badge-checked-in {
-          background: rgba(35, 173, 164, 0.12);
-          color: #23ada4;
-          font-size: 11px;
-          font-weight: 600;
-          padding: 2px 8px;
-          border-radius: 12px;
-        }
-        .badge-paid {
-          background: rgba(35, 173, 164, 0.12);
-          color: #23ada4;
-          border: 1px solid rgba(35, 173, 164, 0.3);
-          font-size: 11px;
-          font-weight: 600;
-          padding: 2px 8px;
-          border-radius: 12px;
-        }
-        .badge-refunded {
-          background: rgba(220, 53, 69, 0.12);
-          color: #dc3545;
-          border: 1px solid rgba(220, 53, 69, 0.3);
-          font-size: 11px;
-          font-weight: 600;
-          padding: 2px 8px;
-          border-radius: 12px;
-        }
-
-        /* Analytics Tab */
-        .analytics-filter-select {
-          background: #1e1e1e;
-          border: 1px solid #2d2d2d;
-          color: #fff;
-          border-radius: 10px;
-          padding: 8px 12px;
-          font-size: 14px;
-          outline: none;
-          cursor: pointer;
-        }
-        .analytics-kpi-card {
-          background: #1e1e1e;
-          border: 1px solid #2d2d2d;
-          border-radius: 14px;
-          padding: 20px;
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          height: 100%;
-        }
-        .analytics-kpi-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-        .analytics-kpi-info {
-          display: flex;
-          flex-direction: column;
-        }
-        .analytics-kpi-label {
-          color: rgba(255, 255, 255, 0.5);
-          font-size: 12px;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        .analytics-kpi-value {
-          color: #fff;
-          font-size: 20px;
-          font-weight: 700;
-          margin-top: 4px;
-        }
-      `}</style>
     </div>
   );
 }
 
-function page() {
+export default function Page() {
   return (
-    <Suspense
-      fallback={
-        <div className="text-center py-5">
-          <Spinner animation="border" style={{ color: "#23ada4" }} />
-        </div>
-      }>
+    <Suspense fallback={<div className="text-center py-5"><Spinner animation="border" style={{ color: "#23ada4" }} /></div>}>
       <EventDetailsContent />
     </Suspense>
   );
 }
-
-export default page;
