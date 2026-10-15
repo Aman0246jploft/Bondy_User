@@ -12,6 +12,7 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import DateRangeCalendarPopover from "../../components/DateRangeCalendarPopover";
 import InteractiveMapStage from "../../components/InteractiveMapStage";
+import { useUserLocation } from "@/utils/locationHelper";
 
 // Helper for distance in km using Haversine formula
 function calcDistanceKm(lat1, lon1, lat2, lon2) {
@@ -500,6 +501,7 @@ function ProgramsListingContent() {
   const { t, language } = useLanguage();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const userCoords = useUserLocation();
 
   // Search input & form
   const [searchQuery, setSearchQuery] = useState("");
@@ -644,9 +646,18 @@ function ProgramsListingContent() {
       const schedLine = formatCourseDateText(crs.startDate, language);
 
       const coords = crs.venueAddress?.coordinates;
-      const lng = Array.isArray(coords) && !isNaN(coords[0]) ? Number(coords[0]) : 106.9176;
-      const lat = Array.isArray(coords) && !isNaN(coords[1]) ? Number(coords[1]) : 47.9186;
-      const km = calcDistanceKm(47.9186, 106.9176, lat, lng);
+      let lng = Array.isArray(coords) && !isNaN(coords[0]) ? Number(coords[0]) : null;
+      let lat = Array.isArray(coords) && !isNaN(coords[1]) ? Number(coords[1]) : null;
+      if (lat == null && crs.venueAddress?.latitude != null && !isNaN(Number(crs.venueAddress.latitude))) {
+        lat = Number(crs.venueAddress.latitude);
+      }
+      if (lng == null && crs.venueAddress?.longitude != null && !isNaN(Number(crs.venueAddress.longitude))) {
+        lng = Number(crs.venueAddress.longitude);
+      }
+
+      const userLat = userCoords?.latitude;
+      const userLng = userCoords?.longitude;
+      const km = (lat != null && lng != null && userLat != null && userLng != null) ? calcDistanceKm(userLat, userLng, lat, lng) : null;
 
       const catObj = crs.courseCategory || crs.category || crs.categoryId;
       const catId = catObj?._id ? String(catObj._id) : "";
@@ -671,14 +682,14 @@ function ProgramsListingContent() {
         km,
         time: timeStr,
         date: dateStr,
-        lat,
-        lng,
+        lat: lat || 47.9186,
+        lng: lng || 106.9176,
         promo: Boolean(crs.isFeatured),
         href: `/programDetails?id=${crs._id}`,
         raw: crs,
       };
     },
-    [language, t]
+    [language, t, userCoords]
   );
 
   // Construct query parameters for the backend API
@@ -714,9 +725,9 @@ function ProgramsListingContent() {
         params.timeOfDay = appliedFilters.tod;
       }
 
-      if (appliedFilters.dist && appliedFilters.dist !== "any") {
-        params.latitude = 47.9186;
-        params.longitude = 106.9176;
+      if (appliedFilters.dist && appliedFilters.dist !== "any" && userCoords?.latitude != null && userCoords?.longitude != null) {
+        params.latitude = userCoords.latitude;
+        params.longitude = userCoords.longitude;
         params.radius = appliedFilters.dist;
       }
 
@@ -730,6 +741,7 @@ function ProgramsListingContent() {
       customDateTo,
       appliedFilters.tod,
       appliedFilters.dist,
+      userCoords,
     ]
   );
 

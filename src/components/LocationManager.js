@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import authApi from "@/api/authApi";
+import { saveUserLocation } from "@/utils/locationHelper";
 
 export default function LocationManager() {
     const pathname = usePathname();
@@ -9,17 +10,20 @@ export default function LocationManager() {
     useEffect(() => {
         if (pathname && pathname.startsWith("/public")) return;
         const handleLocationUpdate = async () => {
-            const token = localStorage.getItem("token");
-            if (!token) return;
+            if (!("geolocation" in navigator)) return;
 
-            // Avoid updating every time the component renders or on every page load
             const sessionUpdated = sessionStorage.getItem("location_synced");
-            if (sessionUpdated) return;
+            const cachedCoords = sessionStorage.getItem("user_coords");
+            if (sessionUpdated && cachedCoords) return;
 
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        const { latitude, longitude } = position.coords;
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    // Save for all users (guests, customers, organizers)
+                    saveUserLocation({ latitude, longitude });
+
+                    const token = localStorage.getItem("token");
+                    if (!token || sessionUpdated) return;
 
                         try {
                             // Try to get city/country information using a free reverse geocoding service
@@ -83,7 +87,6 @@ export default function LocationManager() {
                         console.warn("Geolocation permission denied or error:", error);
                     }
                 );
-            }
         };
 
         handleLocationUpdate();

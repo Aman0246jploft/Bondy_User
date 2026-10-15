@@ -14,6 +14,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FAQ from "@/components/FAQ";
 import ShareSheet from "@/components/ShareSheet";
+import { useUserLocation, extractCoordinates, calcDistanceKm } from "@/utils/locationHelper";
 
 const FALLBACK_IMG = "/img/sidebar-logo.svg";
 
@@ -864,6 +865,14 @@ function ProgramDetailsContent() {
     ? `https://www.google.com/maps/search/?api=1&query=${venueAddress.latitude},${venueAddress.longitude}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullVenue)}`;
 
+  // ─── Real Distance to Course Venue ───────────────────────────────────────
+  const userCoords = useUserLocation();
+  const courseCoords = useMemo(() => extractCoordinates(program), [program]);
+  const realDistanceKm = useMemo(() => {
+    if (!userCoords?.latitude || !userCoords?.longitude || !courseCoords) return null;
+    return calcDistanceKm(userCoords.latitude, userCoords.longitude, courseCoords.latitude, courseCoords.longitude);
+  }, [userCoords, courseCoords]);
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--bd-ink-900)", color: "var(--bd-white)", display: "flex", flexDirection: "column" }}>
       <Header />
@@ -1273,6 +1282,11 @@ function ProgramDetailsContent() {
                   <span style={{ fontSize: 14, lineHeight: 1.5, color: "var(--bd-gray-400)" }}>
                     {fullVenue}
                   </span>
+                  {realDistanceKm != null && (
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--acc-bright)" }}>
+                      {t("kmFromYou", { km: realDistanceKm })}
+                    </span>
+                  )}
                   <a
                     href={googleMapsUrl}
                     target="_blank"

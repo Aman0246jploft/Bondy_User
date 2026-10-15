@@ -1,3 +1,5 @@
+import React from "react";
+
 /**
  * Global function to fetch and format location data.
  * Currently uses browser Geolocation API.
@@ -108,3 +110,152 @@ export const getCoordinatesFromAddress = async (address) => {
         throw error;
     }
 };
+
+/**
+ * Calculates distance in km between two lat/lon pairs using the Haversine formula.
+ * Returns null if any coordinate is missing or invalid.
+ */
+export function calcDistanceKm(lat1, lon1, lat2, lon2) {
+    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+    const nLat1 = Number(lat1);
+    const nLon1 = Number(lon1);
+    const nLat2 = Number(lat2);
+    const nLon2 = Number(lon2);
+    if (isNaN(nLat1) || isNaN(nLon1) || isNaN(nLat2) || isNaN(nLon2)) return null;
+
+    const R = 6371; // Earth's radius in km
+    const dLat = (nLat2 - nLat1) * (Math.PI / 180);
+    const dLon = (nLon2 - nLon1) * (Math.PI / 180);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(nLat1 * (Math.PI / 180)) * Math.cos(nLat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const dist = R * c;
+    return dist < 10 ? Math.round(dist * 10) / 10 : Math.round(dist);
+}
+
+/**
+ * Extracts { latitude, longitude } from an event or course object.
+ * Supports both flat latitude/longitude and GeoJSON coordinates: [lng, lat].
+ */
+export function extractCoordinates(item) {
+    if (!item) return null;
+    const va = item.venueAddress || item.location;
+    if (va) {
+        if (va.latitude != null && va.longitude != null) {
+            const lat = Number(va.latitude);
+            const lng = Number(va.longitude);
+            if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                return { latitude: lat, longitude: lng };
+            }
+        }
+        if (Array.isArray(va.coordinates) && va.coordinates.length >= 2) {
+            const lng = Number(va.coordinates[0]);
+            const lat = Number(va.coordinates[1]);
+            if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                return { latitude: lat, longitude: lng };
+            }
+        }
+    }
+    if (Array.isArray(item.coordinates) && item.coordinates.length >= 2) {
+        const lng = Number(item.coordinates[0]);
+        const lat = Number(item.coordinates[1]);
+        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+            return { latitude: lat, longitude: lng };
+        }
+    }
+    if (item.latitude != null && item.longitude != null) {
+        const lat = Number(item.latitude);
+        const lng = Number(item.longitude);
+        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+            return { latitude: lat, longitude: lng };
+        }
+    }
+    return null;
+}
+
+/**
+ * Retrieves cached user coordinates from browser storage.
+ */
+export function getCachedUserLocation() {
+    if (typeof window === "undefined") return null;
+    try {
+        const cached = sessionStorage.getItem("user_coords") || localStorage.getItem("user_coords");
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && typeof parsed.latitude === "number" && typeof parsed.longitude === "number") {
+                return parsed;
+            }
+        }
+    } catch (e) {}
+    return null;
+}
+
+/**
+ * Saves user coordinates to browser storage and broadcasts to other components.
+ */
+export function saveUserLocation(coords) {
+    if (typeof window === "undefined" || !coords) return;
+    try {
+        const data = {
+            latitude: Number(coords.latitude),
+            longitude: Number(coords.longitude),
+            timestamp: Date.now(),
+        };
+        sessionStorage.setItem("user_coords", JSON.stringify(data));
+        localStorage.setItem("user_coords", JSON.stringify(data));
+        window.dispatchEvent(new CustomEvent("bondy_user_location", { detail: data }));
+    } catch (e) {}
+}
+
+/**
+ * React hook to get and observe user location across guest, customer, and organizer pages.
+ */
+export function useUserLocation() {
+    const [coords, setCoords] = typeof window !== "undefined"
+        ? React.useState(() => getCachedUserLocation())
+        : [null, () => {}];
+
+    React.useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        // 1. Initial check from cache
+        const cached = getCachedUserLocation();
+        if (cached && (!coords || coords.latitude !== cached.latitude || coords.longitude !== cached.longitude)) {
+            setCoords(cached);
+        }
+
+        // 2. If no coords yet, ask browser geolocation (works for both guests and logged in users)
+        if (!cached && "geolocation" in navigator && !sessionStorage.getItem("user_coords_denied")) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const newCoords = {
+                        latitude: pos.coords.latitude,
+                        longitude: pos.coords.longitude,
+                    };
+                    saveUserLocation(newCoords);
+                    setCoords(newCoords);
+                },
+                () => {
+                    try {
+                        sessionStorage.setItem("user_coords_denied", "true");
+                    } catch (e) {}
+                },
+                { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+            );
+        }
+
+        // 3. Listen for global location updates
+        const handleUpdate = (e) => {
+            if (e.detail?.latitude && e.detail?.longitude) {
+                setCoords(e.detail);
+            }
+        };
+
+        window.addEventListener("bondy_user_location", handleUpdate);
+        return () => window.removeEventListener("bondy_user_location", handleUpdate);
+    }, []);
+
+    return coords;
+}
