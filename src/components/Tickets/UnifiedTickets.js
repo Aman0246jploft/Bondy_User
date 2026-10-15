@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import bookingApi from "@/api/bookingApi";
 import reviewApi from "@/api/reviewApi";
@@ -11,6 +12,8 @@ import "./tickets-unified.css";
 
 export default function UnifiedTickets({ role = "CUSTOMER" }) {
   const { t, language } = useLanguage();
+  const router = useRouter();
+  const organizerId = useSearchParams().get("organizerId") || "";
   const [tickets, setTickets] = useState([]);
   const [pagination, setPagination] = useState({});
   const [activeTab, setActiveTab] = useState("upcoming");
@@ -26,9 +29,6 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [submittedReviews, setSubmittedReviews] = useState({});
-
-  const isOrganizer = role === "ORGANIZER";
-  const detailsBasePath = isOrganizer ? "/TicketDetailsOrganiser" : "/TicketDetails";
 
   const fetchUserReviews = async () => {
     try {
@@ -55,6 +55,8 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
     setLoading(true);
     try {
       let params = { page, limit: 10 };
+
+      if (organizerId) params.organizerId = organizerId;
 
       if (bType && bType !== "all") {
         params.bookingType = bType;
@@ -86,8 +88,8 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
 
   useEffect(() => {
     fetchTickets(activeTab, currentPage, bookingType);
-    document.title = `${t("myTickets") || "My Tickets"} - Bondy`;
-  }, [activeTab, currentPage, bookingType]);
+    document.title = `${t("bcOrders") || "My bookings"} - Bondy`;
+  }, [activeTab, currentPage, bookingType, organizerId]);
 
   useEffect(() => {
     fetchUserReviews();
@@ -115,7 +117,7 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
     }
 
     const title = ticket.bookingType === "EVENT" ? item.eventTitle : item.courseTitle;
-    let dateStr = ticket.bookingType === "EVENT" ? item.startDate : item.createdAt;
+    let dateStr = item.startDate || item.createdAt;
 
     try {
       if (dateStr) {
@@ -130,8 +132,9 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
       dateStr = "N/A";
     }
 
-    const venue = item.locationName || item.venue || item.address || item.city || "";
-    const rawImg = item.bannerImage || item.image || item.eventBanner || item.courseBanner || "";
+    const venueRaw = item.venueName || item.venueAddress?.venueName || item.locationName || item.venue || item.address || "";
+    const venue = String(venueRaw).split(",")[0].trim();
+    const rawImg = (Array.isArray(item.posterImage) ? item.posterImage[0] : item.posterImage) || item.bannerImage || item.image || "";
     const imageSrc = rawImg ? getFullImageUrl(rawImg) : "";
 
     return { title, dateStr, venue, imageSrc };
@@ -225,16 +228,6 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
     <div className="ac-orders-wrap">
       <div className="ac-card ac-orders">
         {/* Header Title */}
-        <div className="ac-orders-header">
-          <h2 className="ac-orders-title">{t("myTickets") || "My Tickets & Bookings"}</h2>
-          {pagination?.totalTickets > 0 && (
-            <span className="ac-orders-count">
-              {pagination.totalTickets} {t("tickets") || "tickets"}
-            </span>
-          )}
-        </div>
-
-        {/* Tab Switcher (Upcoming, Past, All, Canceled) */}
         <div className="ac-tabs-bar" role="tablist">
           <button
             type="button"
@@ -243,9 +236,8 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
             className={`ac-tab ${activeTab === "upcoming" ? "active" : ""}`}
             onClick={() => handleTabSelect("upcoming")}
           >
-            <span>{t("upcoming") || "Upcoming"}</span>
+            <span>{t("ordActive")}</span>
           </button>
-
           <button
             type="button"
             role="tab"
@@ -253,27 +245,7 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
             className={`ac-tab ${activeTab === "past" ? "active" : ""}`}
             onClick={() => handleTabSelect("past")}
           >
-            <span>{t("past") || "Past"}</span>
-          </button>
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "all"}
-            className={`ac-tab ${activeTab === "all" ? "active" : ""}`}
-            onClick={() => handleTabSelect("all")}
-          >
-            <span>{t("all") || "All"}</span>
-          </button>
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "canceled"}
-            className={`ac-tab ${activeTab === "canceled" ? "active" : ""}`}
-            onClick={() => handleTabSelect("canceled")}
-          >
-            <span>{t("canceled") || "Canceled"}</span>
+            <span>{t("ordPast")}</span>
           </button>
         </div>
 
@@ -293,13 +265,7 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
             aria-selected={bookingType === "EVENT"}
             onClick={() => handleTypeSelect("EVENT")}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            <span>{t("events") || "Events"}</span>
+            <span>{t("obEvent")}</span>
           </button>
           <button
             type="button"
@@ -307,11 +273,7 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
             aria-selected={bookingType === "COURSE"}
             onClick={() => handleTypeSelect("COURSE")}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
-            <span>{t("courses") || "Courses"}</span>
+            <span>{t("obCourse")}</span>
           </button>
         </div>
 
@@ -324,31 +286,27 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
               <div className="ac-skel-book" />
             </>
           ) : tickets.length === 0 ? (
-            <div className="ac-empty-box">
-              <span className="ac-empty-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z" />
-                  <path d="M13 5v2" />
-                  <path d="M13 17v2" />
-                  <path d="M13 11v2" />
-                </svg>
-              </span>
-              <h3 className="ac-empty-title">{t("noTicketsFound") || "No tickets found"}</h3>
-              <p className="ac-empty-desc">
-                {activeTab === "upcoming"
-                  ? t("noUpcomingTickets") || "You do not have any upcoming bookings yet."
-                  : t("noTicketsCategory") || "No tickets match your selected filter."}
-              </p>
-            </div>
+            <p className="ac-empty-line">{t("ordEmpty")}</p>
           ) : (
             tickets.map((ticket) => {
               const { title, dateStr, venue, imageSrc } = getItemDetails(ticket);
-              const entityId = ticket.bookingType === "EVENT" ? ticket.eventId?._id : ticket.courseId?._id;
-              const hasReview = !!submittedReviews[entityId];
-              const isPast = isPastTicket(ticket);
+              const isEvent = ticket.bookingType === "EVENT";
+              const sub = isEvent
+                ? (ticket.ticketName ? t("ordSub", { count: ticket.qty || 1, name: ticket.ticketName }) : "")
+                : (ticket.ticketName || "");
+              const detailHref = `/TicketDetails?id=${ticket._id}`;
 
               return (
-                <div className="ac-book" key={ticket._id}>
+                <div
+                  className="ac-book"
+                  key={ticket._id}
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => router.push(detailHref)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") router.push(detailHref);
+                  }}
+                >
                   {/* Thumbnail */}
                   <div
                     className="ac-book-th"
@@ -366,20 +324,8 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
 
                   {/* Content */}
                   <div className="ac-book-content">
-                    <div className="ac-book-top">
-                      <h4 className="ac-book-t" title={title}>
-                        {title}
-                      </h4>
-                    </div>
-
-                    <div className="ac-book-meta">
-                      <span className="ac-book-ref">#{ticket.bookingId}</span>
-                      {ticket.ticketName && <span className="ac-book-badge">{ticket.ticketName}</span>}
-                      <span>
-                        {ticket.qty} {t("ticketsSuffix") || "ticket(s)"}
-                      </span>
-                      <span className="ac-book-amount">₮{ticket.totalAmount?.toLocaleString()}</span>
-                    </div>
+                    <h4 className="ac-book-t" title={title}>{title}</h4>
+                    {sub && <span className="ac-book-sub">{sub}</span>}
 
                     {dateStr && (
                       <div className="ac-book-row">
@@ -410,27 +356,14 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
 
                   {/* Actions & Status */}
                   <div className="ac-book-side">
-                    <div>{getStatusBadge(ticket.status)}</div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
-                      {isPast && (
-                        <button
-                          type="button"
-                          className="ac-review-btn"
-                          onClick={() => openReviewModal(ticket)}
-                        >
-                          <span>★</span>
-                          <span>{hasReview ? t("editReview") || "Edit Review" : t("addReview") || "Review"}</span>
-                        </button>
-                      )}
-
-                      <Link href={`${detailsBasePath}?id=${ticket._id}`} className="ac-cta">
-                        <span>{t("TicketDetails") || "View Details"}</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                      </Link>
-                    </div>
+                    <Link
+                      href={detailHref}
+                      className="ac-cta"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span>{t("ordDetails")}</span>
+                      <span>›</span>
+                    </Link>
                   </div>
                 </div>
               );

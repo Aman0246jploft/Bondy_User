@@ -76,8 +76,9 @@ function BookingsBody() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [failed, setFailed] = useState(false);
+  const paramType = params.get("type") || "all";
   const [query, setQuery] = useState(params.get("ref") || "");
-  const [type, setType] = useState("all");
+  const [type, setType] = useState(paramType);
   const [status, setStatus] = useState("all");
   const [range, setRange] = useState("all");
   const [customFrom, setCustomFrom] = useState("");
@@ -104,13 +105,13 @@ function BookingsBody() {
     setHasMore(false);
     setLoading(true);
     setQuery(params.get("ref") || "");
-    setType("all");
+    setType(params.get("type") || "all");
     setStatus("all");
     setRange("all");
     setCustomFrom("");
     setCustomTo("");
     setShowCal(false);
-  }, [userId]);
+  }, [userId, params]);
 
   const requestFor = (nextPage) => {
     const request = {

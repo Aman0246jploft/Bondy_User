@@ -9,7 +9,7 @@ import { formatDate } from "@/utils/dateFormater";
 import { useLanguage } from "@/context/LanguageContext";
 import "./favorites-unified.css";
 
-export default function UnifiedFavorites() {
+export default function UnifiedFavorites({ titleKey = "myFavorite" }) {
   const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState("Event");
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -48,7 +48,7 @@ export default function UnifiedFavorites() {
 
   useEffect(() => {
     fetchWishlist(activeTab, 1);
-    document.title = `${t("myFavorite") || "Saved & Favorites"} - Bondy`;
+    document.title = `${t(titleKey)} - Bondy`;
   }, [activeTab]);
 
   const handleTabSelect = (tabKey) => {
@@ -86,7 +86,7 @@ export default function UnifiedFavorites() {
       <div className="ac-card ac-saved">
         {/* Header Title + Category Chips */}
         <div className="ac-saved-header">
-          <h2 className="ac-saved-title">{t("myFavorite") || "Saved & Favorites"}</h2>
+          <h2 className="ac-saved-title">{t(titleKey)}</h2>
 
           <div className="ac-saved-chips">
             <button
@@ -130,9 +130,15 @@ export default function UnifiedFavorites() {
         ) : wishlistItems.length === 0 ? (
           <div className="ac-saved-empty">
             <span className="ac-saved-empty-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
+              {titleKey === "saved" ? (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M 12.211 2.797 C 13.415 3.619 14.612 4.609 15.751 5.748 C 16.89 6.887 17.88 8.085 18.703 9.288 C 19.404 7.911 19.825 6.606 19.956 5.475 C 20.121 4.048 19.817 2.993 19.162 2.338 C 18.506 1.682 17.452 1.379 16.025 1.544 C 14.893 1.674 13.589 2.096 12.211 2.797 Z M 19.618 10.75 C 20.624 8.985 21.264 7.226 21.446 5.647 C 21.641 3.956 21.317 2.372 20.222 1.277 C 19.128 0.182 17.543 -0.142 15.853 0.053 C 14.273 0.236 12.515 0.876 10.75 1.881 C 8.984 0.876 7.226 0.236 5.647 0.054 C 3.956 -0.141 2.372 0.182 1.277 1.277 C 0.182 2.372 -0.142 3.956 0.053 5.647 C 0.236 7.227 0.876 8.985 1.881 10.75 C 0.876 12.515 0.236 14.273 0.054 15.853 C -0.141 17.543 0.182 19.127 1.277 20.222 C 2.372 21.317 3.956 21.641 5.647 21.446 C 7.226 21.264 8.985 20.624 10.75 19.618 C 12.515 20.624 14.273 21.264 15.853 21.446 C 17.543 21.641 19.127 21.317 20.222 20.222 C 21.317 19.128 21.641 17.543 21.446 15.853 C 21.264 14.273 20.624 12.515 19.618 10.75 Z M 17.869 10.75 C 17.032 9.425 15.964 8.082 14.69 6.809 C 13.417 5.536 12.075 4.467 10.75 3.63 C 9.425 4.467 8.082 5.536 6.809 6.809 C 5.536 8.082 4.467 9.425 3.63 10.75 C 4.467 12.075 5.536 13.417 6.809 14.691 C 8.082 15.964 9.425 17.032 10.75 17.869 C 12.075 17.032 13.417 15.964 14.691 14.69 C 15.964 13.417 17.032 12.075 17.869 10.75 Z M 12.211 18.703 C 13.415 17.881 14.612 16.89 15.751 15.751 C 16.89 14.612 17.88 13.415 18.703 12.212 C 19.404 13.589 19.825 14.893 19.956 16.025 C 20.12 17.452 19.817 18.506 19.162 19.162 C 18.506 19.817 17.452 20.121 16.024 19.956 C 14.893 19.825 13.589 19.404 12.211 18.703 Z M 9.288 18.703 C 8.084 17.881 6.887 16.89 5.748 15.751 C 4.609 14.612 3.619 13.415 2.797 12.212 C 2.096 13.589 1.674 14.893 1.544 16.025 C 1.379 17.452 1.682 18.506 2.338 19.162 C 2.994 19.817 4.048 20.12 5.475 19.956 C 6.606 19.825 7.911 19.404 9.288 18.703 Z M 2.797 9.288 C 3.619 8.085 4.609 6.887 5.748 5.748 C 6.887 4.609 8.085 3.619 9.288 2.797 C 7.91 2.096 6.606 1.674 5.475 1.544 C 4.048 1.379 2.993 1.682 2.338 2.338 C 1.682 2.993 1.379 4.048 1.544 5.475 C 1.674 6.606 2.095 7.911 2.797 9.288 Z M 10.75 9 C 9.783 9 9 9.783 9 10.75 C 9 11.716 9.783 12.5 10.75 12.5 C 11.716 12.5 12.5 11.716 12.5 10.75 C 12.5 9.783 11.716 9 10.75 9 Z M 7.5 10.75 C 7.5 8.955 8.955 7.5 10.75 7.5 C 12.545 7.5 14 8.955 14 10.75 C 14 12.545 12.545 14 10.75 14 C 8.955 14 7.5 12.545 7.5 10.75 Z" transform="matrix(1 0 0 1 1.25 1.25)" />
+                </svg>
+              ) : (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              )}
             </span>
             <h3 className="ac-saved-empty-title">
               {t("noItemsFound")

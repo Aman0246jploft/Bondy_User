@@ -7810,12 +7810,12 @@ button.cg-row, .cg-row { width: 100%; display: grid; grid-template-columns: minm
 .og-ranges { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 16px; }
 .og-range { height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: #17191d; color: rgba(255,255,255,.62); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .og-range[aria-selected="true"] { background: #23ada4; border-color: #23ada4; color: #04211f; }
-.og-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.og-stats div { padding: 14px 16px; border-radius: 20px; background: #17191d; border: 1px solid rgba(255,255,255,.08); }
-.og-stats span { display: block; margin-top: 8px; font-size: 12.5px; color: rgba(255,255,255,.45); }
-.og-stats b { display: block; margin-top: 3px; font-size: 25px; font-weight: 700; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.cd-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.cd-stats div { padding: 14px 16px; border-radius: 20px; background: #17191d; border: 1px solid rgba(255,255,255,.08); }
+.cd-stats span { display: block; margin-top: 8px; font-size: 12.5px; color: rgba(255,255,255,.45); }
+.cd-stats b { display: block; margin-top: 3px; font-size: 25px; font-weight: 700; letter-spacing: -.02em; overflow-wrap: anywhere; }
 @media (max-width: 900px) {
-  .og-2col, .og-stats { grid-template-columns: 1fr; }
+  .og-2col, .cd-stats { grid-template-columns: 1fr; }
   .cd-extbtn { width: 100%; }
 }
 .cd-empty { margin: 0; padding: 8px 18px 18px; color: rgba(255,255,255,.5); }
@@ -8219,8 +8219,8 @@ button.cd-pkg { width: 100%; border-radius: 16px; padding: 16px; cursor: pointer
 .og-range-wrap { display: inline-flex; }
 .og-ico { display: inline-flex; color: #3dccc4; }
 .og-ico-o { color: #ff8a33; }
-.og-stats .og-ico + span { margin-top: 8px; }
-.og-stats div { margin-bottom: 0; }
+.cd-stats .og-ico + span { margin-top: 8px; }
+.cd-stats div { margin-bottom: 0; }
 .og-chart { margin-top: 14px; }
 .og-chart h2 { margin: 0 0 14px; font-size: 16px; font-weight: 700; }
 .cd-emptyflat { padding: 24px 0; text-align: center; }

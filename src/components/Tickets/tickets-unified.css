@@ -165,8 +165,9 @@
 /* Individual Ticket Card */
 .ac-book {
   display: flex;
-  gap: 16px;
-  padding: 16px;
+  gap: 14px;
+  padding: 14px;
+  cursor: pointer;
   border-radius: 18px;
   background: var(--bd-ink-800, #1a243b);
   border: 1px solid var(--bd-border, rgba(255, 255, 255, 0.08));
@@ -296,11 +297,27 @@
 }
 
 /* Side Actions */
+.ac-book-sub {
+  font-size: 13px;
+  color: var(--bd-gray-500, #8a8a8a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ac-empty-line {
+  margin: 0;
+  padding: 30px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--bd-gray-600, #6b6b6b);
+}
+
 .ac-book-side {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 14px;
   flex-shrink: 0;
   min-width: 140px;

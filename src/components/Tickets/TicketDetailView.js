@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import QRCode from "react-qr-code";
 import bookingApi from "@/api/bookingApi";
 import { useLanguage } from "@/context/LanguageContext";
+import { getFullImageUrl } from "@/utils/imageHelper";
 import "./ticket-detail-view.css";
 
 function Icon({ name }) {
@@ -54,6 +55,29 @@ function dateText(value, language) {
     month: "short",
     day: "numeric",
   });
+}
+
+function shortDate(value, language) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(language === "mn" ? "mn-MN" : "en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function clientWhen(item, language) {
+  if (!item?.startDate && !item?.startTime) return "";
+  const date = item?.startDate ? new Date(item.startDate) : null;
+  const day = date && !Number.isNaN(date.getTime())
+    ? date.toLocaleDateString(language === "mn" ? "mn-MN" : "en-US", {
+      month: "short",
+      day: "numeric",
+      weekday: "short",
+    })
+    : "";
+  return [day, item?.startTime].filter(Boolean).join(" · ");
 }
 
 function payLabel(method, t) {
@@ -124,8 +148,11 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
   const isCourse = ticket.bookingType === "COURSE";
   const item = isCourse ? ticket.courseId : ticket.eventId;
   const title = isCourse ? item?.courseTitle : item?.eventTitle;
-  const image = Array.isArray(item?.posterImage) ? item.posterImage[0] : "";
-  const when = [dateText(item?.startDate, language), item?.startTime].filter(Boolean).join(" · ");
+  const rawImage = Array.isArray(item?.posterImage) ? item.posterImage[0] : "";
+  const image = showCustomerNav && rawImage ? getFullImageUrl(rawImage) : rawImage;
+  const when = showCustomerNav
+    ? clientWhen(item, language)
+    : [dateText(item?.startDate, language), item?.startTime].filter(Boolean).join(" · ");
   const where = placeText(item);
   const buyerName = `${ticket.userId?.firstName || ""} ${ticket.userId?.lastName || ""}`.trim();
   const option = ticket.ticketName || tickets[0]?.ticketName || "";
@@ -163,8 +190,14 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
   }
 
   const batch = (item?.batches || []).find((row) => String(row._id) === String(ticket.batchId));
-  const period = [dateText(item?.startDate, language), dateText(item?.endDate, language)].filter(Boolean).join(" – ");
-  const weekly = [Array.isArray(batch?.days) ? batch.days.join(", ") : "", batch?.startTime && batch?.endTime ? `${batch.startTime} – ${batch.endTime}` : ""].filter(Boolean).join(" · ");
+  const dayNames = { Mon: "Да", Tue: "Мя", Wed: "Лха", Thu: "Пү", Fri: "Ба", Sat: "Бя", Sun: "Ням" };
+  const dayText = Array.isArray(batch?.days)
+    ? batch.days.map((day) => (showCustomerNav && language === "mn" ? (dayNames[day] || day) : day)).join(", ")
+    : "";
+  const period = showCustomerNav
+    ? [shortDate(item?.startDate, language), shortDate(item?.endDate, language)].filter(Boolean).join(" – ")
+    : [dateText(item?.startDate, language), dateText(item?.endDate, language)].filter(Boolean).join(" – ");
+  const weekly = [dayText, batch?.startTime && batch?.endTime ? `${batch.startTime} – ${batch.endTime}` : ""].filter(Boolean).join(" · ");
 
   return (
     <div className="td-page">
@@ -189,7 +222,7 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
         </nav>
       )}
 
-      <h1 className="td-title">{t("tdHeading")}</h1>
+      <h1 className="td-title">{showCustomerNav && isCourse ? t("tdCourseHeading") : t("tdHeading")}</h1>
 
       <section className="td-hero">
         <span className="td-thumb" style={image ? { backgroundImage: `url(${image})` } : undefined} />
@@ -253,18 +286,18 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
               {person && (
                 <span className="td-r"><Icon name="user" /><span className="td-k">{t("tdName")}</span><b className="td-v">{person}</b></span>
               )}
-              {isCourse && title && (
+              {isCourse && title && !showCustomerNav && (
                 <span className="td-r"><Icon name="list" /><span className="td-k">{t("obCourse")}</span><b className="td-v">{title}</b></span>
               )}
               {(isCourse ? (batch?.batchName || option) : option) && (
                 <span className="td-r">
                   <Icon name="ticket" />
-                  <span className="td-k">{isCourse ? t("tdSelectedClass") : t("tdTicketType")}</span>
+                  <span className="td-k">{isCourse ? (showCustomerNav ? t("bdCohort") : t("tdSelectedClass")) : t("tdTicketType")}</span>
                   <b className="td-v">{isCourse ? (batch?.batchName || option) : option}</b>
                 </span>
               )}
               {isCourse && period && (
-                <span className="td-r"><Icon name="cal" /><span className="td-k">{t("tdCoursePeriod")}</span><b className="td-v">{period}</b></span>
+                <span className="td-r"><Icon name="cal" /><span className="td-k">{showCustomerNav ? t("bdCourseDates") : t("tdCoursePeriod")}</span><b className="td-v">{period}</b></span>
               )}
               {isCourse && weekly && (
                 <span className="td-r"><Icon name="cal" /><span className="td-k">{t("tdWeekly")}</span><b className="td-v">{weekly}</b></span>
@@ -293,6 +326,26 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
           </div>
         </div>
       </section>
+
+      {showCustomerNav && qr && (
+        <button
+          type="button"
+          className="td-save"
+          onClick={() => {
+            const svg = document.querySelector(".td-qr-box svg");
+            if (!svg) return;
+            const blob = new Blob([svg.outerHTML], { type: "image/svg+xml" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${ticket.bookingId || "ticket"}.svg`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }}
+        >
+          {t("tdSaveQr")}
+        </button>
+      )}
 
       {(showCustomerNav || ordersHref) && (
         <div className="td-cta">

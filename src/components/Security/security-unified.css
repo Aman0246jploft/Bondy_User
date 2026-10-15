@@ -76,6 +76,44 @@
   color: var(--acc-bright, #2dd4bf);
 }
 
+.bd-sec-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bd-sec-option .bd-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.bd-sec-verify {
+  flex-shrink: 0;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--acc, #23ada4);
+  border-radius: 14px;
+  background: rgba(35, 173, 164, 0.12);
+  color: var(--acc-bright, #36cec2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bd-sec-verify:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bd-sec-card.customer .bd-sec-icon,
+.bd-sec-card.customer .bd-sec-danger-icon {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+}
+
 .bd-sec-info {
   flex: 1;
   min-width: 0;

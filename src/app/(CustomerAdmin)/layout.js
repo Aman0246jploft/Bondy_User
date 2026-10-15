@@ -52,13 +52,13 @@ export default function RootLayout({ children }) {
   }, [pathname]);
 
   const getPageTitle = () => {
-    if (pathname.includes("/Personalinfo")) return t("personalInfo") || "Personal Information";
-    if (pathname.includes("/MyTickets")) return t("tickets") || "My Tickets";
+    if (pathname.includes("/Personalinfo")) return t("acPersonalHeading");
+    if (pathname.includes("/MyTickets")) return t("bcOrders");
     if (pathname.includes("/Messagee")) return t("messages") || "Messages";
-    if (pathname.includes("/MyFavorite")) return t("myFavorite") || "Saved & Favorites";
-    if (pathname.includes("/CustomerReferral")) return t("referral") || "Referrals & Invites";
+    if (pathname.includes("/MyFavorite")) return t("saved");
+    if (pathname.includes("/CustomerReferral")) return t("ivTitle");
     if (pathname.includes("/SupportTicketsC")) return t("hcTitle");
-    if (pathname.includes("/Notification")) return t("notification") || "Notifications";
+    if (pathname.includes("/Notification")) return t("notifications") || "Notifications";
     if (pathname.includes("/Security")) return t("security") || "Security";
     if (pathname.includes("/Setting")) return t("settings") || "Settings";
     // if (pathname.includes("/ChangePassword")) return t("changePassword") || "Change Password";
@@ -68,6 +68,8 @@ export default function RootLayout({ children }) {
 
   if (!authorized) return null;
 
+  const isDetail = pathname.includes("/TicketDetails");
+
   return (
     <div className="bd-account-shell">
       {/* Website Consumer Header */}
@@ -76,7 +78,7 @@ export default function RootLayout({ children }) {
       {/* Main Centered Account Body */}
       <main id="top" className="bd-acct-container" data-screen-label="Account">
         {/* Breadcrumbs */}
-        {!pathname.includes("/TicketDetails") && (
+        {!isDetail && (
         <nav className="bd-crumb" aria-label="Breadcrumb">
           <Link href="/" className="bd-crumb-link">
             {t("home") || "Home"}
@@ -87,6 +89,7 @@ export default function RootLayout({ children }) {
         )}
 
         {/* Mobile Accordion Menu Trigger */}
+        {!isDetail && (
         <button
           type="button"
           className="bd-acct-trig"
@@ -105,8 +108,12 @@ export default function RootLayout({ children }) {
             </svg>
           </span>
         </button>
+        )}
 
         {/* 2-Column Account Grid */}
+        {isDetail ? (
+          <div>{children}</div>
+        ) : (
         <div className="bd-acct">
           <Sidebar
             mobileOpen={mobileMenuOpen}
@@ -116,6 +123,7 @@ export default function RootLayout({ children }) {
             {children}
           </div>
         </div>
+        )}
       </main>
 
       {/* Website Consumer Footer */}
