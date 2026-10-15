@@ -7,7 +7,7 @@ import UnifiedFavorites from "@/components/Favorites/UnifiedFavorites";
 export default function CustomerFavoritePage() {
   return (
     <ProtectedRoute>
-      <UnifiedFavorites />
+      <UnifiedFavorites titleKey="saved" />
     </ProtectedRoute>
   );
 }

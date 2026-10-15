@@ -81,7 +81,7 @@ export default function TicketDetailsOrganiserPage() {
     <ProtectedRoute>
       <Suspense fallback={null}>
         <OrderDetail />
-    </Suspense>
+      </Suspense>
     </ProtectedRoute>
   );
 }

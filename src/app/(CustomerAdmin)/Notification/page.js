@@ -1,321 +1,276 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { Tabs, Tab, Spinner } from "react-bootstrap";
-import notificationApi from "@/api/notificationApi";
-import { toast } from "react-hot-toast";
 
+import React, { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import notificationApi from "@/api/notificationApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSocket } from "@/context/SocketContext";
+import "../../(OrganizerAdmin)/Notifications/notifications.css";
+
+const PAGE_SIZE = 10;
+
+function NotificationIcon({ type, title = "" }) {
+  const common = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" };
+  if (type === "PAYOUT" || /payment|payout|refund|earning|credit/i.test(title)) {
+    return <svg {...common}><path d="M3 7h18v11H3zM3 10h18M7 15h3" /></svg>;
+  }
+  if (type === "CHAT") {
+    return <svg {...common}><path d="M4 5h16v12H8l-4 3V5Z" /><path d="M8 10h8M8 13h5" /></svg>;
+  }
+  if (type === "FOLLOW" || type === "USER") {
+    return <svg {...common}><circle cx="10" cy="8" r="3" /><path d="M4 19a6 6 0 0 1 12 0M18 8v6M15 11h6" /></svg>;
+  }
+  if (/promotion/i.test(title)) {
+    return <svg {...common}><path d="M4 10.5v3A1.5 1.5 0 0 0 5.5 15H8l8.5 4.5v-14L8 10H5.5A1.5 1.5 0 0 0 4 11.5Z" /><path d="M8 15v3.5a1.5 1.5 0 0 0 3 0v-1.9M19.5 9.5a4 4 0 0 1 0 5" /></svg>;
+  }
+  if (/verification|approved|verified/i.test(title)) {
+    return <svg {...common}><path d="M12 3 20 6v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z" /><path d="m8.5 12 2.2 2.2 4.8-5" /></svg>;
+  }
+  if (type === "EVENT" || type === "COURSE") {
+    return <svg {...common}><path d="M4 8.5V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a2.2 2.2 0 0 0 0 4.4V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4.1a2.2 2.2 0 0 0 0-4.4Z" /></svg>;
+  }
+  return <svg {...common}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>;
+}
+
+function toneFor(notification) {
+  const text = `${notification.title || ""} ${notification.message || ""}`;
+  if (/reject|failed|cancel/i.test(text)) return "danger";
+  if (/pending|expire|warning/i.test(text)) return "warn";
+  if (/approved|confirmed|success|paid|completed/i.test(text)) return "ok";
+  if (/promotion/i.test(text)) return "brand";
+  return notification.type === "SYSTEM" ? "neutral" : "brand";
+}
+
+function destinationFor(notification) {
+  const id = notification.relatedId;
+  const link = `${notification.webLink || ""} ${notification.deepLink || ""}`;
+
+  if (notification.type === "CHAT") {
+    const senderId = notification.sender?._id || notification.sender;
+    return senderId ? `/Messagee?userId=${senderId}` : "/Messagee";
+  }
+  if (notification.type === "FOLLOW" || notification.onModel === "User") {
+    return id ? `/profile?id=${id}` : "";
+  }
+  if ((/\/tickets\/|\/bookings/i.test(link) || /booking/i.test(notification.title || "")) && id && notification.onModel !== "Event" && notification.onModel !== "Course") {
+    return `/TicketDetails?id=${id}`;
+  }
+  if (notification.onModel === "Event") return id ? `/eventDetails?id=${id}` : "/Explore";
+  if (notification.onModel === "Course") return id ? `/programDetails?id=${id}` : "/Programs-Listing";
+  if (/support/i.test(link)) return "/SupportTicketsC";
+  if (/setting/i.test(link)) return "/Setting";
+  if (/referral/i.test(link)) return "/CustomerReferral";
+  if (/security|verification/i.test(link)) return "/Security";
+  return "";
+}
 
 export default function NotificationPage() {
   const { t, language } = useLanguage();
-  const { fetchUnreadNotificationCount, unreadNotificationCount } = useSocket();
+  const router = useRouter();
+  const { fetchUnreadNotificationCount } = useSocket();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [deletingMultiple, setDeletingMultiple] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalNotifications, setTotalNotifications] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [failed, setFailed] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
-  const PAGE_SIZE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUnread, setTotalUnread] = useState(0);
+  const [markingAll, setMarkingAll] = useState(false);
+  const [deadLink, setDeadLink] = useState(false);
+  const [toastText, setToastText] = useState("");
+  const [retry, setRetry] = useState(0);
 
-  const fetchNotifications = async (page = currentPage, tab = activeTab) => {
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    setFailed(false);
     try {
-      setLoading(true);
-      const params = {
-        page: page,
-        limit: PAGE_SIZE,
-      };
-      if (tab !== "all") {
-        params.category = tab;
-      }
+      const params = { page: currentPage, limit: PAGE_SIZE };
+      if (activeTab === "unread") params.isRead = false;
       const res = await notificationApi.getMyNotifications(params);
-      if (res?.status === "SUCCESS" || res?.status === true || res?.data) {
-        setNotifications(res?.data?.notifications || []);
-        setTotalNotifications(res?.data?.total || 0);
-        setTotalPages(res?.data?.totalPages || 1);
-      }
+      if (!res?.status || !res?.data) throw new Error("Invalid notification response");
+      setNotifications(res.data.notifications || []);
+      setTotalPages(res.data.totalPages || 1);
+      setTotalUnread(res.data.totalUnread || 0);
     } catch (error) {
       console.error("Error fetching notifications:", error);
-      toast.error(t("failedToLoadNotifications") || "Failed to load notifications");
+      setFailed(true);
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, currentPage]);
 
   useEffect(() => {
-    fetchNotifications(currentPage, activeTab);
+    fetchNotifications();
     fetchUnreadNotificationCount();
-    document.title = `Notification - Bondy`;
-  }, [currentPage, activeTab]);
+    document.title = `${t("notifications")} - Bondy`;
+  }, [fetchNotifications, retry, language]);
+
+  const flash = (text) => {
+    setToastText(text);
+    window.setTimeout(() => setToastText(""), 2200);
+  };
 
   const handleMarkAllRead = async () => {
+    if (!totalUnread || markingAll) return;
+    setMarkingAll(true);
     try {
       const res = await notificationApi.markAllAsRead();
-      if (res?.status || res?.status === "SUCCESS") {
-        toast.success(t("allNotificationsMarkedRead") || "All notifications marked as read");
-        setNotifications((prev) =>
-          prev.map((n) => ({ ...n, isRead: true }))
-        );
+      if (res?.status) {
+        setTotalUnread(0);
+        if (activeTab === "unread") setNotifications([]);
+        else setNotifications((rows) => rows.map((row) => ({ ...row, isRead: true })));
         fetchUnreadNotificationCount();
+        flash(t("allNotificationsMarkedRead"));
       }
-    } catch (error) {
-      toast.error(t("failedToMarkAllRead") || "Failed to mark all as read");
-    }
-  };
-
-  const handleMarkRead = async (id) => {
-    try {
-      const res = await notificationApi.markAsRead(id);
-      if (res?.status || res?.status === "SUCCESS") {
-        setNotifications((prev) =>
-          prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
-        );
-        fetchUnreadNotificationCount();
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      const res = await notificationApi.deleteNotification(id);
-      if (res?.status || res?.status === "SUCCESS") {
-        toast.success(t("notificationDeleted") || "Notification deleted");
-        fetchNotifications(currentPage, activeTab);
-        setSelectedIds((prev) => prev.filter((sid) => sid !== id));
-      }
-    } catch (error) {
-      toast.error(t("failedToDeleteNotification") || "Failed to delete notification");
-    }
-  };
-
-  const handleDeleteSelected = async () => {
-    if (selectedIds.length === 0) return;
-    setDeletingMultiple(true);
-    try {
-      const res = await notificationApi.deleteMultipleNotifications(selectedIds);
-      if (res?.status || res?.status === "SUCCESS") {
-        toast.success(t("notificationsDeleted") || `${selectedIds.length} notification(s) deleted`);
-        setSelectedIds([]);
-        const remainingOnPage = notifications.length - selectedIds.filter(id => notifications.some(n => n._id === id)).length;
-        if (remainingOnPage === 0 && currentPage > 1) {
-          setCurrentPage((p) => p - 1);
-        } else {
-          fetchNotifications(currentPage, activeTab);
-        }
-      }
-    } catch (error) {
-      toast.error(t("failedToDeleteNotification") || "Failed to delete notifications");
     } finally {
-      setDeletingMultiple(false);
+      setMarkingAll(false);
     }
   };
 
-  const toggleSelect = (id) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    const allSelected = notifications.every((n) => selectedIds.includes(n._id));
-    if (allSelected) {
-      setSelectedIds((prev) => prev.filter((id) => !notifications.some((n) => n._id === id)));
-    } else {
-      setSelectedIds((prev) => [
-        ...prev,
-        ...notifications.filter((n) => !prev.includes(n._id)).map((n) => n._id),
-      ]);
+  const openNotification = async (notification) => {
+    if (!notification.isRead) {
+      try {
+        const res = await notificationApi.markAsRead(notification._id);
+        if (res?.status) {
+          setNotifications((rows) => activeTab === "unread"
+            ? rows.filter((row) => row._id !== notification._id)
+            : rows.map((row) => row._id === notification._id ? { ...row, isRead: true } : row));
+          setTotalUnread((count) => Math.max(0, count - 1));
+          fetchUnreadNotificationCount();
+        }
+      } catch {
+        // Opening the target should not be blocked by a read-state failure.
+      }
     }
+    const destination = destinationFor(notification);
+    if (destination) router.push(destination);
+    else setDeadLink(true);
   };
 
-  const formatTime = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now - date;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) {
-      return `${t("todayAt")} ${date.toLocaleTimeString(language === "mn" ? "mn-MN" : "en-US", { hour: '2-digit', minute: '2-digit', hour12: false })}`;
-    } else if (days === 1) {
-      return `${t("yesterdayAt")} ${date.toLocaleTimeString(language === "mn" ? "mn-MN" : "en-US", { hour: '2-digit', minute: '2-digit', hour12: false })}`;
-    } else {
-      return date.toLocaleString(language === "mn" ? "mn-MN" : "en-US", { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
-    }
+  const formatTime = (value) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const diffMs = Math.max(0, Date.now() - date.getTime());
+    const minutes = Math.floor(diffMs / 60000);
+    if (minutes < 1) return t("onNow");
+    if (minutes < 60) return t("onMinutesAgo", { count: minutes });
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return t("onHoursAgo", { count: hours });
+    const days = Math.floor(hours / 24);
+    if (days < 7) return t("onDaysAgo", { count: days });
+    return date.toLocaleDateString(language === "mn" ? "mn-MN" : "en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   };
 
-  const renderPagination = () => {
-    if (totalNotifications <= PAGE_SIZE) return null;
-    return (
-      <div className="d-flex justify-content-between align-items-center px-1 py-3" style={{ borderTop: "1px solid #2a2a2a", marginTop: 8 }}>
-        <span style={{ color: "#888", fontSize: 13 }}>
-          {t("showing") || "Showing"} {Math.min((currentPage - 1) * PAGE_SIZE + 1, totalNotifications)}–{Math.min(currentPage * PAGE_SIZE, totalNotifications)} {t("of") || "of"} {totalNotifications}
-        </span>
-        <div className="d-flex gap-2 flex-wrap">
-          <button className="common_btn" style={{ padding: "6px 14px", fontSize: 13 }} disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
-            ← {t("previous") || "Previous"}
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-            .reduce((acc, p, idx, arr) => { if (idx > 0 && p - arr[idx - 1] > 1) acc.push("..."); acc.push(p); return acc; }, [])
-            .map((p, idx) =>
-              p === "..." ? (
-                <span key={`e-${idx}`} style={{ alignSelf: "center", color: "#666" }}>...</span>
-              ) : (
-                <button key={p} onClick={() => setCurrentPage(p)} className="common_btn" style={{ padding: "6px 12px", fontSize: 13, opacity: currentPage === p ? 1 : 0.5 }}>
-                  {p}
-                </button>
-              )
-            )}
-          <button className="common_btn" style={{ padding: "6px 14px", fontSize: 13 }} disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
-            {t("next") || "Next"} →
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  const renderNotificationCard = (notif) => {
-    const isSelected = selectedIds.includes(notif._id);
-    return (
-      <div
-        key={notif._id}
-        className={`notification-cards ${!notif.isRead ? "unread-notif" : ""} ${isSelected ? "selected-notif" : ""}`}
-        style={{ position: "relative", cursor: "pointer", opacity: notif.isRead ? 0.7 : 1, outline: isSelected ? "2px solid #23ada4" : "none" }}
-        onClick={() => {
-          if (!notif.isRead) handleMarkRead(notif._id);
-        }}
-      >
-        <div className="d-flex align-items-start gap-2">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => toggleSelect(notif._id)}
-            onClick={(e) => e.stopPropagation()}
-            style={{ marginTop: "4px", accentColor: "#23ada4", cursor: "pointer", flexShrink: 0 }}
-          />
-          <div>
-            <h5>{notif.title}</h5>
-            <p>{notif.message}</p>
-          </div>
-        </div>
-        <div className="d-flex flex-column align-items-end justify-content-between">
-          <p style={{ fontSize: "12px", margin: 0 }}>{formatTime(notif.createdAt)}</p>
-        </div>
-      </div>
-    );
-  };
-
-  const getTabTitle = (key, labelKey) => {
-    const label = t(labelKey) || labelKey;
-    if (activeTab === key) {
-      return `${label} (${totalNotifications})`;
-    }
-    return label;
-  };
-
-  const renderTabContent = () => {
-    if (notifications.length === 0) {
-      return <div className="text-center py-4 text-muted">{t("noNotifications")}</div>;
-    }
-    return (
-      <>
-        <div className="d-flex align-items-center justify-content-between mb-2 px-1">
-          <label style={{ fontSize: 14, color: "#aaa", cursor: "pointer", userSelect: "none" }}>
-            <input
-              type="checkbox"
-              checked={notifications.every((n) => selectedIds.includes(n._id))}
-              onChange={toggleSelectAll}
-              style={{ marginRight: 6, accentColor: "#23ada4" }}
-            />
-            {t("selectAll") || "Select All"}
-          </label>
-          {selectedIds.length > 0 && (
-            <button
-              className="common_btn"
-              style={{ padding: "5px 14px", fontSize: 13, background: "#e74c3c", border: "none" }}
-              disabled={deletingMultiple}
-              onClick={handleDeleteSelected}
-            >
-              {deletingMultiple ? <Spinner animation="border" size="sm" /> : `${t("deleteSelected") || "Delete Selected"} (${selectedIds.length})`}
-            </button>
-          )}
-        </div>
-        {notifications.map(renderNotificationCard)}
-        {renderPagination()}
-      </>
-    );
+  const setTab = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
   };
 
   return (
-    <div>
-      <div className="cards notification-card">
-        <div className="card-title">
-          <h3>{t("notifications")}</h3>
-          {unreadNotificationCount > 0 && (
-            <p onClick={handleMarkAllRead} style={{ cursor: "pointer" }}>
-              {t("markAllRead")}{" "}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M15.4933 6.93502C15.8053 7.20743 15.8374 7.68122 15.565 7.99325L7.70786 16.9933C7.56543 17.1564 7.35943 17.25 7.14287 17.25C6.9263 17.25 6.72031 17.1564 6.57788 16.9933L3.43502 13.3933C3.16261 13.0812 3.19473 12.6074 3.50677 12.335C3.8188 12.0626 4.29259 12.0947 4.565 12.4068L7.14287 15.3596L14.435 7.00677C14.7074 6.69473 15.1812 6.66261 15.4933 6.93502Z"
-                  fill="#999999"
-                />
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M20.5175 7.01946C20.8174 7.30513 20.829 7.77986 20.5433 8.07981L11.9716 17.0798C11.8201 17.2389 11.6065 17.3235 11.3872 17.3114C11.1679 17.2993 10.9649 17.1917 10.8318 17.0169L10.4035 16.4544C10.1526 16.1249 10.2163 15.6543 10.5458 15.4034C10.8289 15.1878 11.2161 15.2044 11.4787 15.4223L19.4571 7.04531C19.7428 6.74537 20.2175 6.73379 20.5175 7.01946Z"
-                  fill="#999999"
-                />
-              </svg>
-            </p>
-          )}
-        </div>
-
-        {loading ? (
-          <div className="text-center py-5">
-            <Spinner animation="border" variant="danger" />
-          </div>
-        ) : (
-          <div className="ticket-tabs">
-            <Tabs
-              activeKey={activeTab}
-              onSelect={(k) => {
-                setActiveTab(k);
-                setSelectedIds([]);
-                setCurrentPage(1);
-              }}
-            >
-              <Tab eventKey="all" title={getTabTitle("all", "all")}>
-                {renderTabContent()}
-              </Tab>
-
-              <Tab eventKey="bookings" title={getTabTitle("bookings", "bookings")}>
-                {renderTabContent()}
-              </Tab>
-
-              <Tab eventKey="payments" title={getTabTitle("payments", "payments")}>
-                {renderTabContent()}
-              </Tab>
-
-              <Tab eventKey="eventupdates" title={getTabTitle("eventupdates", "eventupdates")}>
-                {renderTabContent()}
-              </Tab>
-            </Tabs>
-          </div>
-        )}
+    <div className="on-page">
+      <div className="on-head">
+        <p>
+          {loading
+            ? t("loading")
+            : failed
+              ? t("onLoadFailedSummary")
+              : totalUnread
+                ? t("onUnreadCount", { count: totalUnread })
+                : t("onAllRead")}
+        </p>
+        <button
+          type="button"
+          className="on-mark"
+          disabled={!totalUnread || loading || failed || markingAll}
+          onClick={handleMarkAllRead}
+        >
+          {markingAll ? t("opSaving") : t("markAllRead")}
+        </button>
       </div>
+
+      <div className="on-chips">
+        <button type="button" className="on-chip" aria-selected={activeTab === "all"} onClick={() => setTab("all")}>
+          {t("all")}
+        </button>
+        <button type="button" className="on-chip" aria-selected={activeTab === "unread"} onClick={() => setTab("unread")}>
+          {t("onUnread")}
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="on-skels">
+          <div className="on-skel" />
+          <div className="on-skel" />
+          <div className="on-skel" />
+        </div>
+      ) : failed ? (
+        <div className="on-state">
+          <b>{t("failedToLoadNotifications")}</b>
+          <p>{t("obLoadFailBody")}</p>
+          <button type="button" className="on-go" onClick={() => setRetry((value) => value + 1)}>{t("obRetry")}</button>
+        </div>
+      ) : notifications.length === 0 ? (
+        <div className="on-state">
+          <b>{activeTab === "unread" ? t("onNoUnread") : t("noNotifications")}</b>
+          <p>{activeTab === "unread" ? t("onChangeFilter") : t("onEmptyBody")}</p>
+        </div>
+      ) : (
+        <>
+          <div className="on-list">
+            {notifications.map((notification) => (
+              <button
+                key={notification._id}
+                type="button"
+                className="on-row"
+                data-unread={!notification.isRead ? "1" : "0"}
+                onClick={() => openNotification(notification)}
+              >
+                <span className={`on-rowI ${toneFor(notification)}`}>
+                  <NotificationIcon type={notification.type} title={notification.title} />
+                </span>
+                <span className="on-copy">
+                  <b>
+                    <span>{notification.title}</span>
+                    <span className="on-time">{formatTime(notification.createdAt)}</span>
+                  </b>
+                  <i>{notification.message}</i>
+                </span>
+                {!notification.isRead && <span className="on-dot" aria-label={t("onUnread")} />}
+              </button>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="on-pager">
+              <button type="button" disabled={currentPage <= 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>
+                ← {t("previous")}
+              </button>
+              <span>{t("pageOf", { current: currentPage, total: totalPages })}</span>
+              <button type="button" disabled={currentPage >= totalPages} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}>
+                {t("next")} →
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {deadLink && (
+        <div className="on-scrim" onMouseDown={(event) => { if (event.target === event.currentTarget) setDeadLink(false); }}>
+          <div className="on-sheet" role="dialog" aria-modal="true">
+            <b>{t("onTargetMissing")}</b>
+            <p>{t("onTargetMissingBody")}</p>
+            <button type="button" className="on-go" onClick={() => setDeadLink(false)}>{t("onBackToList")}</button>
+          </div>
+        </div>
+      )}
+
+      {toastText && <div className="on-toast" role="status">{toastText}</div>}
     </div>
   );
 }

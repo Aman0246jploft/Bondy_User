@@ -77,25 +77,51 @@ function monotone(pts) {
   for (let i = 0; i < n - 1; i++) {
     const t = dx[i] / 3;
     d += " C" + r(pts[i][0] + t) + " " + r(pts[i][1] + m[i] * t)
-       + " " + r(pts[i + 1][0] - t) + " " + r(pts[i + 1][1] - m[i + 1] * t)
-       + " " + pts[i + 1][0] + " " + pts[i + 1][1];
+      + " " + r(pts[i + 1][0] - t) + " " + r(pts[i + 1][1] - m[i + 1] * t)
+      + " " + pts[i + 1][0] + " " + pts[i + 1][1];
   }
   return d;
 }
 
 function revPaths(v) {
   const W = 640, H = 168, TOP = 14, BOT = 156;
-  const max = Math.max.apply(null, v);
-  const min = Math.min.apply(null, v);
-  const span = (max - min) || 1;
-  const pts = v.map((n, i) => {
-    const x = v.length > 1 ? (i / (v.length - 1)) * W : W / 2;
-    const y = BOT - ((n - min) / span) * (BOT - TOP);
+  const safeV = Array.isArray(v) && v.length > 0 ? v : [0, 0];
+  const max = Math.max.apply(null, safeV);
+  const min = Math.min.apply(null, safeV);
+  const span = max - min;
+  const pts = safeV.map((n, i) => {
+    const x = safeV.length > 1 ? (i / (safeV.length - 1)) * W : W / 2;
+    const y = span === 0 ? BOT : BOT - ((n - min) / span) * (BOT - TOP);
     return [Math.round(x * 10) / 10, Math.round(y * 10) / 10];
   });
   const line = monotone(pts);
   return { pts, line, area: line + " L" + W + " " + H + " L0 " + H + " Z" };
 }
+
+const MN_WEEKDAYS = {
+  MON: "Да",
+  TUE: "Мя",
+  WED: "Лха",
+  THU: "Пү",
+  FRI: "Ба",
+  SAT: "Бя",
+  SUN: "Ня",
+};
+
+const MN_MONTHS = {
+  JAN: "1-р",
+  FEB: "2-р",
+  MAR: "3-р",
+  APR: "4-р",
+  MAY: "5-р",
+  JUN: "6-р",
+  JUL: "7-р",
+  AUG: "8-р",
+  SEP: "9-р",
+  OCT: "10-р",
+  NOV: "11-р",
+  DEC: "12-р",
+};
 
 export default function OrganizerDashboardPage() {
   const router = useRouter();
@@ -197,7 +223,7 @@ export default function OrganizerDashboardPage() {
         try {
           const cached = localStorage.getItem("userProfile");
           if (cached) setProfile(JSON.parse(cached));
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Dashboard stats
@@ -233,8 +259,8 @@ export default function OrganizerDashboardPage() {
             id: tx._id || `tx-${idx}`,
             ref: tx.bookingId || `BND-${(tx._id || "").slice(-6).toUpperCase() || 2000 + idx}`,
             name: tx.customerName && tx.customerName.trim() ? tx.customerName : (isMn ? "Хэрэглэгч" : "Customer"),
-            email: tx.customerEmail || "customer@bondy.mn",
-            phone: tx.customerPhone || "+976 9911-0000",
+            email: tx.customerEmail || "",
+            phone: tx.customerPhone || "",
             avatar: tx.customerAvatar ? getFullImageUrl(tx.customerAvatar) : "",
             item: cleanItem,
             unit: tx.unit || tx.ticketName || (isMn ? "Энгийн тасалбар" : "Standard Ticket"),
@@ -270,8 +296,8 @@ export default function OrganizerDashboardPage() {
               id: item._id || item.bookingId || `ord-${idx}`,
               ref: item.bookingId || `BND-${(item._id || "").slice(-6).toUpperCase() || 1000 + idx}`,
               name: item.userName || (isMn ? "Хэрэглэгч" : "Customer"),
-              email: item.userEmail || "customer@bondy.mn",
-              phone: item.userPhone || "+976 9911-0000",
+              email: item.userEmail || "",
+              phone: item.userPhone || "",
               avatar: item.userAvatar ? getFullImageUrl(item.userAvatar) : "",
               item: cleanItem,
               unit: item.ticketType || (isMn ? "Энгийн тасалбар" : "Standard Ticket"),
@@ -368,148 +394,145 @@ export default function OrganizerDashboardPage() {
   }, [analytics, dashStats]);
 
   const activeEventsCount = useMemo(() => {
-    return (dashStats.totalLiveEvents || 0) || events.filter((e) => e.status === "published" || e.status === "live").length || events.length;
+    if (dashStats.totalLiveEvents !== undefined || dashStats.totalPendingEvents !== undefined) {
+      return (Number(dashStats.totalLiveEvents) || 0) + (Number(dashStats.totalPendingEvents) || 0);
+    }
+    return events.filter((e) => !e.isDraft && (e.status === "Live" || e.status === "Upcoming" || e.status === "published" || e.status === "live")).length;
   }, [dashStats, events]);
 
   const activeCoursesCount = useMemo(() => {
-    return dashStats.courseStats?.totalLiveCourses || courses.filter((c) => c.status === "published" || c.status === "live").length || courses.length;
+    if (dashStats.totalLiveCourses !== undefined && dashStats.totalLiveCourses !== null) {
+      return Number(dashStats.totalLiveCourses) || 0;
+    }
+    return courses.filter((c) => !c.isDraft && (c.status === "Live" || c.status === "Upcoming" || c.status === "Active" || c.status === "published")).length;
   }, [dashStats, courses]);
 
   const totalPublishedCount = useMemo(() => {
-    const evPub = (dashStats.totalLiveEvents || 0) + (dashStats.totalCompletedEvents || 0) || events.length;
-    const crPub = dashStats.courseStats?.totalCourses || courses.length;
+    const hasDashEvents = dashStats.totalLiveEvents !== undefined || dashStats.totalPendingEvents !== undefined || dashStats.totalCompletedEvents !== undefined;
+    const evPub = hasDashEvents
+      ? (Number(dashStats.totalLiveEvents) || 0) + (Number(dashStats.totalPendingEvents) || 0) + (Number(dashStats.totalCompletedEvents) || 0)
+      : events.filter((e) => !e.isDraft).length;
+
+    const hasDashCourses = dashStats.totalCourses !== undefined;
+    const crPub = hasDashCourses
+      ? Math.max(0, (Number(dashStats.totalCourses) || 0) - (Number(dashStats.totalDraftCourses) || 0))
+      : courses.filter((c) => !c.isDraft).length;
+
     return evPub + crPub;
   }, [dashStats, events, courses]);
 
-  // ─── Range Series & Values Configuration (Connecting to Backend API) ─────
-  // ─── Range Series & Values Configuration (Matching Prototype HTML UI) ─────
+  // ─── Range Series & Values Configuration (Connected to Backend API) ──────
   const rangeConfig = useMemo(() => {
-    // Current total net revenue from backend / dashStats / earnings
-    const backendTotalNet = revenueAnalytics?.summary?.totalNet;
-    const baseTotal = backendTotalNet !== undefined && backendTotalNet !== null && backendTotalNet > 0
-      ? backendTotalNet
-      : (totalNetRevenue > 0 ? totalNetRevenue : 16851297);
+    const labelMap = {
+      week: isMn ? "Сүүлийн 7 хоног" : "Last 7 days",
+      prev: isMn ? "Өнгөрсөн сар" : "Last month",
+      m6: isMn ? "Сүүлийн 6 сар" : "Last 6 months",
+      y1: isMn ? "Сүүлийн 1 жил" : "Last year",
+      custom: customDates.label || (isMn ? "Огноо сонгох" : "Choose date"),
+      month: isMn ? "Энэ сар" : "This month",
+    };
 
-    if (range === "week") {
-      const labels = isMn
-        ? ["Да", "Мя", "Лха", "Пү", "Ба", "Бя", "Ня"]
-        : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-      const v = [0.4, 0.7, 0.5, 0.9, 1.4, 1.8, 1.1];
-      const total = Math.round(baseTotal * 0.25) || 4236000;
+    const label = labelMap[range] || (isMn ? "Энэ сар" : "This month");
 
-      return {
-        label: isMn ? "Сүүлийн 7 хоног" : "Last 7 days",
-        totalText: formatMoney(total, isMn),
-        rawTotal: total,
-        labels,
-        v,
-        kpiPeriod: 58,
-        dateFormatter: (i) => labels[i] || "",
-      };
+    // Real total net revenue for this range
+    const rawTotal = revenueAnalytics?.summary?.totalNet !== undefined && revenueAnalytics.summary.totalNet !== null
+      ? Number(revenueAnalytics.summary.totalNet)
+      : (range === "month" ? totalNetRevenue : 0);
+
+    const totalText = formatMoney(rawTotal, isMn);
+
+    // Real orders/bookings count for this range
+    const kpiPeriod = revenueAnalytics?.summary?.totalOrders !== undefined && revenueAnalytics.summary.totalOrders !== null
+      ? Number(revenueAnalytics.summary.totalOrders)
+      : (revenueAnalytics?.summary?.totalTickets !== undefined && revenueAnalytics.summary.totalTickets !== null
+        ? Number(revenueAnalytics.summary.totalTickets)
+        : (range === "month" ? totalBookingsAll : 0));
+
+    // Real amounts array from backend
+    const rawAmounts = Array.isArray(revenueAnalytics?.netRevenue) && revenueAnalytics.netRevenue.length > 0
+      ? revenueAnalytics.netRevenue
+      : [0, 0];
+
+    const rawLabels = Array.isArray(revenueAnalytics?.labels) && revenueAnalytics.labels.length > 0
+      ? revenueAnalytics.labels
+      : [];
+
+    const formatPointDate = (rawStr) => {
+      if (!rawStr) return "";
+      const upper = String(rawStr).toUpperCase();
+      if (MN_WEEKDAYS[upper]) {
+        return isMn ? MN_WEEKDAYS[upper] : rawStr;
+      }
+      if (MN_MONTHS[upper]) {
+        return isMn ? `${MN_MONTHS[upper]} сар` : rawStr;
+      }
+      if (rawStr.includes(".")) {
+        const parts = rawStr.split(".");
+        const m = parseInt(parts[0], 10);
+        const d = parseInt(parts[1], 10);
+        if (!isNaN(m) && !isNaN(d)) {
+          return isMn ? `${m}-р сарын ${d}` : rawStr;
+        }
+      }
+      return rawStr;
+    };
+
+    const formatTickLabel = (rawStr) => {
+      if (!rawStr) return "";
+      const upper = String(rawStr).toUpperCase();
+      if (MN_WEEKDAYS[upper]) {
+        return isMn ? MN_WEEKDAYS[upper] : rawStr;
+      }
+      if (MN_MONTHS[upper]) {
+        return isMn ? MN_MONTHS[upper] : rawStr;
+      }
+      if (rawStr.includes(".")) {
+        const parts = rawStr.split(".");
+        const d = parseInt(parts[1], 10);
+        return !isNaN(d) ? String(d) : rawStr;
+      }
+      return rawStr;
+    };
+
+    const n = rawLabels.length;
+    let displayLabels = [];
+
+    if (n <= 7) {
+      displayLabels = rawLabels.map(formatTickLabel);
+    } else {
+      const step = (n - 1) / 5;
+      const tickIndices = [0, 1, 2, 3, 4, 5].map((i) => Math.min(n - 1, Math.round(i * step)));
+      displayLabels = tickIndices.map((idx) => formatTickLabel(rawLabels[idx]));
     }
 
-    if (range === "prev") {
-      const labels = ["1", "6", "12", "18", "24", "30"];
-      const v = [1.4, 2.1, 2.8, 2.2, 3.6, 3.1, 4.4, 3.9, 5.1, 4.7];
-      const total = Math.round(baseTotal * 0.97) || 16440000;
-
-      return {
-        label: isMn ? "Өнгөрсөн сар" : "Last month",
-        totalText: formatMoney(total, isMn),
-        rawTotal: total,
-        labels,
-        v,
-        kpiPeriod: 194,
-        dateFormatter: (i, n) => {
-          const day = Math.round(1 + (i / Math.max(1, n - 1)) * 29);
-          const prevMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
-          const mName = isMn
-            ? `${prevMonth.getMonth() + 1}-р сарын`
-            : prevMonth.toLocaleString("en-US", { month: "short" });
-          return `${mName} ${day}`;
-        },
-      };
+    if (displayLabels.length === 0) {
+      if (range === "week") {
+        displayLabels = isMn ? ["Да", "Мя", "Лха", "Пү", "Ба", "Бя", "Ня"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      } else if (range === "m6") {
+        displayLabels = isMn ? ["1-р", "2-р", "3-р", "4-р", "5-р", "6-р"] : ["M1", "M2", "M3", "M4", "M5", "M6"];
+      } else {
+        displayLabels = ["1", "5", "9", "13", "17", "21", "25"];
+      }
     }
 
-    if (range === "m6") {
-      const labels = isMn
-        ? ["1-р", "2-р", "3-р", "4-р", "5-р", "6-р"]
-        : ["M-5", "M-4", "M-3", "M-2", "M-1", "Current"];
-      const v = [11.2, 13.6, 12.4, 16.1, 16.4, 18.4];
-      const total = Math.round(baseTotal * 5.4) || 92180000;
-
-      return {
-        label: isMn ? "Сүүлийн 6 сар" : "Last 6 months",
-        totalText: formatMoney(total, isMn),
-        rawTotal: total,
-        labels,
-        v,
-        kpiPeriod: 1204,
-        dateFormatter: (i) => labels[i] ? `${labels[i]}${isMn ? " сар" : ""}` : "",
-      };
-    }
-
-    if (range === "y1") {
-      const labels = isMn
-        ? ["7-р", "9-р", "11-р", "1-р", "3-р", "6-р"]
-        : ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6"];
-      const v = [8.4, 9.9, 12.1, 10.6, 13.2, 11.8, 14.6, 13.9, 16.1, 18.4];
-      const total = Math.round(baseTotal * 9.7) || 164320000;
-
-      return {
-        label: isMn ? "Сүүлийн 1 жил" : "Last year",
-        totalText: formatMoney(total, isMn),
-        rawTotal: total,
-        labels,
-        v,
-        kpiPeriod: 2486,
-        dateFormatter: (i) => labels[i] ? `${labels[i]}${isMn ? " сар" : ""}` : "",
-      };
-    }
-
-    if (range === "custom") {
-      const labels = ["1", "5", "9", "13", "17", "19"];
-      const v = [0.9, 1.6, 1.3, 2.2, 1.9, 2.8, 2.4, 3.1];
-      const total = Math.round(baseTotal * 0.66) || 11240000;
-
-      return {
-        label: customDates.label || (isMn ? "Огноо сонгох" : "Choose date"),
-        totalText: formatMoney(total, isMn),
-        rawTotal: total,
-        labels,
-        v,
-        kpiPeriod: 132,
-        dateFormatter: (i, n) => {
-          const day = Math.round(1 + (i / Math.max(1, n - 1)) * 18);
-          const mName = isMn
-            ? `${new Date().getMonth() + 1}-р сарын`
-            : new Date().toLocaleString("en-US", { month: "short" });
-          return `${mName} ${day}`;
-        },
-      };
-    }
-
-    // Default: 'month' (This month - exactly matching HTML UI prototype in Screenshot 1)
-    const labels = ["1", "5", "9", "13", "17", "19"];
-    const v = [1.1, 2.4, 1.9, 3.2, 2.6, 4.1, 3.4, 5.2, 4.6, 6.1];
-    const total = baseTotal;
+    const dateFormatter = (i) => {
+      if (rawLabels[i]) {
+        return formatPointDate(rawLabels[i]);
+      }
+      return "";
+    };
 
     return {
-      label: isMn ? "Энэ сар" : "This month",
-      totalText: formatMoney(total, isMn),
-      rawTotal: total,
-      labels,
-      v,
-      kpiPeriod: 216,
-      dateFormatter: (i, n) => {
-        const day = Math.round(1 + (i / Math.max(1, n - 1)) * 18);
-        const mName = isMn
-          ? `${new Date().getMonth() + 1}-р сарын`
-          : new Date().toLocaleString("en-US", { month: "short" });
-        return `${mName} ${day}`;
-      },
+      label,
+      totalText,
+      rawTotal,
+      kpiPeriod,
+      v: rawAmounts,
+      rawAmounts,
+      labels: displayLabels,
+      dateFormatter,
     };
-  }, [range, isMn, revenueAnalytics, totalNetRevenue, customDates]);
+  }, [range, isMn, revenueAnalytics, totalNetRevenue, totalBookingsAll, customDates]);
 
   // Compute SVG monotone path and area
   const chartPaths = useMemo(() => {
@@ -534,15 +557,12 @@ export default function OrganizerDashboardPage() {
   const tipPct = hOn ? (hN > 1 ? (hoverIndex / (hN - 1)) * 100 : 50) : 50;
   const tipTop = hOn && chartPaths.pts[hoverIndex] ? Math.round((chartPaths.pts[hoverIndex][1] / 168) * 1000) / 10 : 0;
   const tipShift = `translate(${tipPct < 13 ? "0%" : tipPct > 87 ? "-100%" : "-50%"}, -100%)`;
-  const tipAmount = hOn
-    ? Math.round(
-        rangeConfig.rawTotal > 0
-          ? (rangeConfig.v[hoverIndex] / Math.max(...rangeConfig.v)) * (rangeConfig.rawTotal * 0.35)
-          : rangeConfig.v[hoverIndex] * 1000000
-      )
+  const tipAmount = hOn && rangeConfig.rawAmounts && rangeConfig.rawAmounts[hoverIndex] !== undefined
+    ? Number(rangeConfig.rawAmounts[hoverIndex]) || 0
     : 0;
+  const tipDate = hOn && rangeConfig.dateFormatter ? rangeConfig.dateFormatter(hoverIndex) : "";
   const tipText = hOn
-    ? `${rangeConfig.dateFormatter(hoverIndex, hN)} · ₮${(tipAmount > 0 ? tipAmount : Math.round(rangeConfig.v[hoverIndex] * 1000000)).toLocaleString("en-US")}`
+    ? `${tipDate ? `${tipDate} · ` : ""}₮${tipAmount.toLocaleString("en-US")}`
     : "";
 
   // ─── Promote Modal Action ──────────────────────────────────────────────────
@@ -809,29 +829,147 @@ export default function OrganizerDashboardPage() {
       </section>
 
       {/* ─── 2 KPI Cards (Захиалга & Идэвхтэй нийтлэл) ────────────────────── */}
-      <div className="og-stats" style={{ marginBottom: "4px" }}>
+      {/* ─── 2 KPI Cards (Захиалга & Идэвхтэй нийтлэл) ────────────────────── */}
+      <div
+        className="og-stats"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: "12px",
+          marginBottom: "4px",
+        }}
+      >
         {/* KPI 1: Захиалга (Bookings) */}
         <button
           type="button"
           className="og-kpi"
-          onClick={() => router.push("/MyTicketsOrganiser")}
+          onClick={() => router.push("/OrganizerCustomerBookings?type=all")}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "13px",
+            textAlign: "left",
+            padding: "20px 22px",
+            borderRadius: "20px",
+            background: "linear-gradient(158deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.013) 44%, rgba(255, 255, 255, 0) 100%), var(--bd-ink-850, #161616)",
+            border: "1px solid var(--bd-border, rgba(255, 255, 255, 0.08))",
+            boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 14px 30px rgba(0, 0, 0, 0.24)",
+            cursor: "pointer",
+            transition: "border-color var(--bd-dur, 180ms) var(--bd-ease, ease)",
+            width: "100%",
+            boxSizing: "border-box",
+            color: "inherit",
+          }}
         >
-          <span className="og-kpiH">
-            <span className="og-kpiIco">
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
+          <span
+            className="og-kpiH"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "13px",
+              minWidth: 0,
+            }}
+          >
+            <span
+              className="og-kpiIco"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "40px",
+                height: "40px",
+                flexShrink: 0,
+                borderRadius: "999px",
+                background: "var(--bd-brand-soft, rgba(35, 173, 164, 0.14))",
+                color: "var(--acc-bright, #36cec2)",
+              }}
+            >
+              <svg
+                width="21"
+                height="21"
+                viewBox="0 0 24 24"
+                fill="none"
+                style={{ width: "21px", height: "21px", display: "inline-flex", color: "currentColor" }}
+                aria-hidden="true"
+              >
+                <path
+                  d="M 15.75 12.25 C 16.302 12.25 16.75 11.802 16.75 11.25 C 16.75 10.698 16.302 10.25 15.75 10.25 C 15.198 10.25 14.75 10.698 14.75 11.25 C 14.75 11.802 15.198 12.25 15.75 12.25 Z"
+                  fill="currentColor"
+                  fillRule="nonzero"
+                  transform="matrix(1 0 0 1 1.250 1.750)"
+                />
+                <path
+                  d="M 15.75 16.25 C 16.302 16.25 16.75 15.802 16.75 15.25 C 16.75 14.698 16.302 14.25 15.75 14.25 C 15.198 14.25 14.75 14.698 14.75 15.25 C 14.75 15.802 15.198 16.25 15.75 16.25 Z"
+                  fill="currentColor"
+                  fillRule="nonzero"
+                  transform="matrix(1 0 0 1 1.250 1.750)"
+                />
+                <path
+                  d="M 11.75 11.25 C 11.75 11.802 11.302 12.25 10.75 12.25 C 10.198 12.25 9.75 11.802 9.75 11.25 C 9.75 10.698 10.198 10.25 10.75 10.25 C 11.302 10.25 11.75 10.698 11.75 11.25 Z"
+                  fill="currentColor"
+                  fillRule="nonzero"
+                  transform="matrix(1 0 0 1 1.250 1.750)"
+                />
+                <path
+                  d="M 11.75 15.25 C 11.75 15.802 11.302 16.25 10.75 16.25 C 10.198 16.25 9.75 15.802 9.75 15.25 C 9.75 14.698 10.198 14.25 10.75 14.25 C 11.302 14.25 11.75 14.698 11.75 15.25 Z"
+                  fill="currentColor"
+                  fillRule="nonzero"
+                  transform="matrix(1 0 0 1 1.250 1.750)"
+                />
+                <path
+                  d="M 5.75 12.25 C 6.302 12.25 6.75 11.802 6.75 11.25 C 6.75 10.698 6.302 10.25 5.75 10.25 C 5.198 10.25 4.75 10.698 4.75 11.25 C 4.75 11.802 5.198 12.25 5.75 12.25 Z"
+                  fill="currentColor"
+                  fillRule="nonzero"
+                  transform="matrix(1 0 0 1 1.250 1.750)"
+                />
+                <path
+                  d="M 5.75 16.25 C 6.302 16.25 6.75 15.802 6.75 15.25 C 6.75 14.698 6.302 14.25 5.75 14.25 C 5.198 14.25 4.75 14.698 4.75 15.25 C 4.75 15.802 5.198 16.25 5.75 16.25 Z"
+                  fill="currentColor"
+                  fillRule="nonzero"
+                  transform="matrix(1 0 0 1 1.250 1.750)"
+                />
+                <path
+                  d="M 5.75 0 C 6.164 0 6.5 0.336 6.5 0.75 L 6.5 1.513 C 7.162 1.5 7.891 1.5 8.693 1.5 L 12.806 1.5 C 13.609 1.5 14.338 1.5 15 1.513 L 15 0.75 C 15 0.336 15.336 0 15.75 0 C 16.164 0 16.5 0.336 16.5 0.75 L 16.5 1.577 C 16.76 1.597 17.006 1.622 17.239 1.653 C 18.411 1.811 19.36 2.143 20.109 2.891 C 20.857 3.64 21.189 4.589 21.347 5.761 C 21.5 6.9 21.5 8.356 21.5 10.194 L 21.5 12.306 C 21.5 14.144 21.5 15.6 21.347 16.739 C 21.189 17.911 20.857 18.86 20.109 19.609 C 19.36 20.357 18.411 20.689 17.239 20.847 C 16.1 21 14.644 21 12.806 21 L 8.694 21 C 6.856 21 5.4 21 4.261 20.847 C 3.089 20.689 2.14 20.357 1.391 19.609 C 0.643 18.86 0.311 17.911 0.153 16.739 C 0 15.6 0 14.144 0 12.306 L 0 10.194 C 0 8.356 0 6.9 0.153 5.761 C 0.311 4.589 0.643 3.64 1.391 2.891 C 2.14 2.143 3.089 1.811 4.261 1.653 C 4.494 1.622 4.74 1.597 5 1.577 L 5 0.75 C 5 0.336 5.336 0 5.75 0 Z M 4.461 3.14 C 3.455 3.275 2.875 3.529 2.452 3.952 C 2.029 4.375 1.775 4.955 1.64 5.961 C 1.617 6.131 1.598 6.311 1.582 6.5 L 19.918 6.5 C 19.902 6.311 19.883 6.131 19.86 5.961 C 19.725 4.955 19.471 4.375 19.048 3.952 C 18.625 3.529 18.045 3.275 17.039 3.14 C 16.011 3.002 14.657 3 12.75 3 L 8.75 3 C 6.843 3 5.489 3.002 4.461 3.14 Z M 1.5 10.25 C 1.5 9.396 1.5 8.653 1.513 8 L 19.987 8 C 20 8.653 20 9.396 20 10.25 L 20 12.25 C 20 14.157 19.998 15.511 19.86 16.539 C 19.725 17.545 19.471 18.125 19.048 18.548 C 18.625 18.971 18.045 19.225 17.039 19.36 C 16.011 19.498 14.657 19.5 12.75 19.5 L 8.75 19.5 C 6.843 19.5 5.489 19.498 4.461 19.36 C 3.455 19.225 2.875 18.971 2.452 18.548 C 2.029 18.125 1.775 17.545 1.64 16.539 C 1.502 15.511 1.5 14.157 1.5 12.25 L 1.5 10.25 Z"
+                  fill="currentColor"
+                  fillRule="evenodd"
+                  transform="matrix(1 0 0 1 1.250 1.750)"
+                />
               </svg>
             </span>
-            <span className="og-kpiT">{isMn ? "Захиалга" : "Booking"}</span>
+            <span
+              className="og-kpiT"
+              style={{
+                fontSize: "15px",
+                fontWeight: 600,
+                color: "var(--bd-white, #FFFFFF)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {isMn ? "Захиалга" : "Booking"}
+            </span>
           </span>
-          <b className="og-kpiN">
+          <b
+            className="og-kpiN"
+            style={{
+              margin: 0,
+              fontFamily: "var(--bd-font-ui, 'Inter', sans-serif)",
+              fontSize: "29px",
+              fontWeight: 700,
+              letterSpacing: "-0.028em",
+              lineHeight: 1,
+              color: "var(--bd-white, #FFFFFF)",
+            }}
+          >
             {rangeConfig.kpiPeriod.toLocaleString("en-US")}
           </b>
-          <span className="og-kpiS">
-            {rangeConfig.label} · {isMn ? "Нийт" : "Total"} {(totalBookingsAll > 0 ? totalBookingsAll : 4812).toLocaleString("en-US")}
+          <span
+            className="og-kpiS"
+            style={{
+              fontSize: "12.5px",
+              color: "var(--bd-gray-600, #979797)",
+            }}
+          >
+            {rangeConfig.label} · {isMn ? "Нийт" : "Total"} {totalBookingsAll.toLocaleString("en-US")}
           </span>
         </button>
 
@@ -840,31 +978,102 @@ export default function OrganizerDashboardPage() {
           type="button"
           className="og-kpi"
           onClick={() => router.push("/EventsManagement")}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "13px",
+            textAlign: "left",
+            padding: "20px 22px",
+            borderRadius: "20px",
+            background: "linear-gradient(158deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.013) 44%, rgba(255, 255, 255, 0) 100%), var(--bd-ink-850, #161616)",
+            border: "1px solid var(--bd-border, rgba(255, 255, 255, 0.08))",
+            boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 14px 30px rgba(0, 0, 0, 0.24)",
+            cursor: "pointer",
+            transition: "border-color var(--bd-dur, 180ms) var(--bd-ease, ease)",
+            width: "100%",
+            boxSizing: "border-box",
+            color: "inherit",
+          }}
         >
-          <span className="og-kpiH">
-            <span className="og-kpiIco">
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z" />
-                <line x1="8" y1="8" x2="16" y2="8" />
-                <line x1="8" y1="12" x2="16" y2="12" />
-                <line x1="8" y1="16" x2="12" y2="16" />
+          <span
+            className="og-kpiH"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "13px",
+              minWidth: 0,
+            }}
+          >
+            <span
+              className="og-kpiIco"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "40px",
+                height: "40px",
+                flexShrink: 0,
+                borderRadius: "999px",
+                background: "var(--bd-brand-soft, rgba(35, 173, 164, 0.14))",
+                color: "var(--acc-bright, #36cec2)",
+              }}
+            >
+              <svg
+                width="21"
+                height="21"
+                viewBox="0 0 24 24"
+                fill="none"
+                style={{ width: "21px", height: "21px", display: "inline-flex", color: "currentColor" }}
+                aria-hidden="true"
+              >
+                <path
+                  d="M 19 0 L 1 0 C 0.448 0 0 0.447 0 1 L 0 24 L 4 21 L 7 24 L 10 21 L 13 24 L 16 21 L 20 24 L 20 1 C 20 0.447 19.552 0 19 0 Z M 11 16 L 4 16 L 4 14 L 11 14 L 11 16 Z M 11 12 L 4 12 L 4 10 L 11 10 L 11 12 Z M 11 8 L 4 8 L 4 6 L 11 6 L 11 8 Z M 16 16 L 13 16 L 13 14 L 16 14 L 16 16 Z M 16 12 L 13 12 L 13 10 L 16 10 L 16 12 Z M 16 8 L 13 8 L 13 6 L 16 6 L 16 8 Z"
+                  fill="currentColor"
+                  fillRule="nonzero"
+                  transform="matrix(1 0 0 1 2 0)"
+                />
               </svg>
             </span>
-            <span className="og-kpiT">
+            <span
+              className="og-kpiT"
+              style={{
+                fontSize: "15px",
+                fontWeight: 600,
+                color: "var(--bd-white, #FFFFFF)",
+                whiteSpace: "nowrap",
+              }}
+            >
               <span className="og-kpi-full">{isMn ? "Идэвхтэй нийтлэл" : "Active listings"}</span>
               <span className="og-kpi-short">{isMn ? "Идэвхтэй" : "Active"}</span>
             </span>
           </span>
-          <b className="og-kpiN">
-            {((activeEventsCount + activeCoursesCount) || 24).toLocaleString("en-US")}
+          <b
+            className="og-kpiN"
+            style={{
+              margin: 0,
+              fontFamily: "var(--bd-font-ui, 'Inter', sans-serif)",
+              fontSize: "29px",
+              fontWeight: 700,
+              letterSpacing: "-0.028em",
+              lineHeight: 1,
+              color: "var(--bd-white, #FFFFFF)",
+            }}
+          >
+            {(activeEventsCount + activeCoursesCount).toLocaleString("en-US")}
           </b>
-          <span className="og-kpiS og-kpiS-split">
+          <span
+            className="og-kpiS og-kpiS-split"
+            style={{
+              fontSize: "12.5px",
+              color: "var(--bd-gray-600, #979797)",
+            }}
+          >
             <span>
-              {activeEventsCount || 9} {isMn ? "эвент" : "event"} · {activeCoursesCount || 15} {isMn ? "сургалт" : "course"}
+              {activeEventsCount} {isMn ? "эвент" : "event"} · {activeCoursesCount} {isMn ? "сургалт" : "course"}
             </span>
             <span className="og-kpiSep"> · </span>
             <span>
-              {isMn ? "Нийт" : "Total"} {Math.max(totalPublishedCount || 0, (activeEventsCount + activeCoursesCount) || 0, 68).toLocaleString("en-US")}
+              {isMn ? "Нийт" : "Total"} {totalPublishedCount.toLocaleString("en-US")}
             </span>
           </span>
         </button>
@@ -1229,7 +1438,7 @@ export default function OrganizerDashboardPage() {
         <h2>{isMn ? "Сүүлийн захиалгууд" : "Recent bookings"}</h2>
         <button
           type="button"
-          onClick={() => router.push("/MyTicketsOrganiser")}
+          onClick={() => router.push("/OrganizerCustomerBookings?type=all")}
         >
           <span>{isMn ? "Бүгдийг харах" : "See all"}</span>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1381,9 +1590,10 @@ export default function OrganizerDashboardPage() {
               {events.length > 0 ? (
                 events.map((ev) => {
                   const isChecked = selectedPromoteItem?._id === ev._id;
-                  const sold = ev.totalBooked || 0;
-                  const total = ev.totalTickets || 100;
+                  const sold = Number(ev.totalBooked) || 0;
+                  const total = Number(ev.totalTickets) || 0;
                   const img = ev.posterImage?.[0] ? getFullImageUrl(ev.posterImage[0]) : "/img/sidebar-logo.svg";
+                  const seatText = total > 0 ? ` · ${sold}/${total}` : (sold > 0 ? ` · ${sold} ${isMn ? "борлуулсан" : "sold"}` : "");
 
                   return (
                     <button
@@ -1410,7 +1620,7 @@ export default function OrganizerDashboardPage() {
                           {ev.eventTitle}
                         </b>
                         <span style={{ fontSize: "12px", color: "var(--bd-gray-600)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {formatDateBilingual(ev.startDate, null, isMn, t)} · {sold}/{total}
+                          {formatDateBilingual(ev.startDate, null, isMn, t)}{seatText}
                         </span>
                       </span>
                     </button>
@@ -1429,9 +1639,10 @@ export default function OrganizerDashboardPage() {
               {courses.length > 0 ? (
                 courses.map((cr) => {
                   const isChecked = selectedPromoteItem?._id === cr._id;
-                  const enrolled = cr.acquiredSeats || cr.totalBooked || 0;
-                  const total = cr.totalSeats || 30;
+                  const enrolled = Number(cr.acquiredSeats || cr.totalBooked) || 0;
+                  const total = Number(cr.totalSeats) || 0;
                   const img = cr.posterImage?.[0] ? getFullImageUrl(cr.posterImage[0]) : "/img/sidebar-logo.svg";
+                  const seatText = total > 0 ? ` · ${enrolled}/${total}` : (enrolled > 0 ? ` · ${enrolled} ${isMn ? "бүртгүүлсэн" : "enrolled"}` : "");
 
                   return (
                     <button

@@ -201,7 +201,7 @@ export default function BondyHeader() {
               </button>
 
               {isProfileOpen && (
-                <div className={`bd-profile-dropdown${isOrganizer ? " is-org" : ""}`}>
+                <div className={`bd-profile-dropdown${isOrganizer ? " is-org" : " is-user"}`}>
                   {isOrganizer ? (
                     <>
                       <Link href="/Dashboard" className="bd-menu-org" onClick={() => setIsProfileOpen(false)}>
@@ -217,23 +217,16 @@ export default function BondyHeader() {
                     </>
                   ) : (
                     <>
-                      <div className="bd-profile-dropdown-header">
-                        <div className="bd-profile-dropdown-name">
-                          {userProfile.businessName ||
-                            userProfile.fullname ||
-                            userProfile.firstName ||
-                            "User"}
-                        </div>
-                        <div className="bd-profile-dropdown-role">
-                          {userProfile.role || "CUSTOMER"}
-                        </div>
-                      </div>
-                      <Link
-                        href={userProfile.role === "CUSTOMER" ? "/Personalinfo" : "/completeprofile"}
-                        onClick={() => setIsProfileOpen(false)}
-                      >
+                      <Link href="/Personalinfo" onClick={() => setIsProfileOpen(false)}>
                         {t("profile")}
                       </Link>
+                      <Link href="/MyTickets" onClick={() => setIsProfileOpen(false)}>
+                        {t("bcOrders")}
+                      </Link>
+                      <Link href="/Setting" onClick={() => setIsProfileOpen(false)}>
+                        {t("settings")}
+                      </Link>
+                      <span className="bd-menu-rule" />
                       <button type="button" className="logout-btn" onClick={handleLogout}>
                         {t("logout")}
                       </button>
@@ -314,13 +307,17 @@ export default function BondyHeader() {
                   </Link>
                 </>
               ) : (
-                <Link
-                  href={userProfile.role === "CUSTOMER" ? "/Personalinfo" : "/completeprofile"}
-                  className="bd-mob-link"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {t("profile")}
-                </Link>
+                <>
+                  <Link href="/Personalinfo" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
+                    {t("profile")}
+                  </Link>
+                  <Link href="/MyTickets" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
+                    {t("bcOrders")}
+                  </Link>
+                  <Link href="/Setting" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
+                    {t("settings")}
+                  </Link>
+                </>
               )}
               <button
                 type="button"

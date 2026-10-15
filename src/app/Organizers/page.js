@@ -435,18 +435,24 @@ function OrganizersContent() {
                       height="16"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
                       style={{
                         width: "16px",
                         height: "16px",
                         display: "inline-flex",
                       }}
                     >
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                      <polyline points="22 4 12 14.01 9 11.01" />
+                      <path
+                        d="M 14.78 8.78 C 15.073 8.487 15.073 8.013 14.78 7.72 C 14.487 7.427 14.013 7.427 13.72 7.72 L 9.25 12.189 L 7.78 10.72 C 7.487 10.427 7.013 10.427 6.72 10.72 C 6.427 11.013 6.427 11.487 6.72 11.78 L 8.72 13.78 C 9.013 14.073 9.487 14.073 9.78 13.78 L 14.78 8.78 Z"
+                        fill="currentColor"
+                        fillRule="nonzero"
+                        transform="matrix(1 0 0 1 1.250 1.250)"
+                      />
+                      <path
+                        d="M 10.75 0 C 4.813 0 0 4.813 0 10.75 C 0 16.687 4.813 21.5 10.75 21.5 C 16.687 21.5 21.5 16.687 21.5 10.75 C 21.5 4.813 16.687 0 10.75 0 Z M 1.5 10.75 C 1.5 5.641 5.641 1.5 10.75 1.5 C 15.859 1.5 20 5.641 20 10.75 C 20 15.859 15.859 20 10.75 20 C 5.641 20 1.5 15.859 1.5 10.75 Z"
+                        fill="currentColor"
+                        fillRule="evenodd"
+                        transform="matrix(1 0 0 1 1.250 1.250)"
+                      />
                     </svg>
                   </span>
                 )}

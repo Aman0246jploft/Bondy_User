@@ -924,7 +924,7 @@ function CourseDetailsContent() {
                 )}
                 {analyticsLoading ? <p className="cd-empty">{t("loading")}</p> : (
                   <>
-                    <div className="og-stats">
+                    <div className="cd-stats">
                       <div><span className="og-ico">{statIcon(<><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>)}</span><span>{t("cdViews")}</span><b>{Number(analyticsData?.viewCount || 0).toLocaleString("en-US")}</b></div>
                       <div><span className="og-ico">{statIcon(<><circle cx="12" cy="8" r="3.2" /><path d="M5 19.2c1.2-3 3.6-4.5 7-4.5s5.8 1.5 7 4.5" /></>)}</span><span>{t("cdRegisteredWord")}</span><b>{registered.toLocaleString("en-US")}</b></div>
                       <div><span className="og-ico">{statIcon(<><path d="M19 5 5 19" /><circle cx="7" cy="7" r="2.2" /><circle cx="17" cy="17" r="2.2" /></>)}</span><span>{t("cdConv")}</span><b>{analyticsData?.bookingRate || 0}%</b></div>
