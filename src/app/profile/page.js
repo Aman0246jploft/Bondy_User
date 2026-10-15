@@ -13,6 +13,7 @@ import wishlistApi from "@/api/wishlistApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { formatCategoryName } from "@/utils/formatHelper";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 function formatDateBilingual(dateStr, startTime, endTime, lang) {
@@ -1587,7 +1588,7 @@ function ProfileContent() {
                 </h4>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {(showAllInterests ? userProfile.categories : userProfile.categories.slice(0, 10)).map((cat) => {
-                    const catName = language === "mn" ? (cat?.name_thi || cat?.name) : cat?.name;
+                    const catName = formatCategoryName(cat, language);
                     return (
                       <span
                         key={cat._id || cat.id}

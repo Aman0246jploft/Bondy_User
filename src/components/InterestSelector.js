@@ -1,14 +1,12 @@
 import { getFullImageUrl } from "@/utils/imageHelper";
 import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatCategoryName } from "@/utils/formatHelper";
 
 const InterestSelector = ({ categories = [], selectedIds = [], onToggle, disabled = false }) => {
   const { language } = useLanguage();
 
-  const getCategoryName = (item) => {
-    const localizedName = language === "mn" && item?.name_thi ? item.name_thi : item?.name;
-    return localizedName ? localizedName.charAt(0).toUpperCase() + localizedName.slice(1) : "";
-  };
+  const getCategoryName = (item) => formatCategoryName(item, language);
 
   return (
     <div className="interest-container">

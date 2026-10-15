@@ -13,6 +13,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import DateRangeCalendarPopover from "../../components/DateRangeCalendarPopover";
 import InteractiveMapStage from "../../components/InteractiveMapStage";
 import { useUserLocation } from "@/utils/locationHelper";
+import { formatCategoryName } from "@/utils/formatHelper";
 
 // Helper for distance in km using Haversine formula
 function calcDistanceKm(lat1, lon1, lat2, lon2) {
@@ -608,7 +609,7 @@ function ProgramsListingContent() {
           const list = courseCats.map((c) => ({
             key: c._id,
             slug: (c.name || "").toLowerCase(),
-            label: language === "mn" && c.name_thi ? c.name_thi : c.name,
+            label: formatCategoryName(c, language),
           }));
           setDynamicCategories(list);
         }
@@ -662,7 +663,7 @@ function ProgramsListingContent() {
       const catObj = crs.courseCategory || crs.category || crs.categoryId;
       const catId = catObj?._id ? String(catObj._id) : "";
       const catKey = (catObj?.name || "").toLowerCase();
-      const catName = language === "mn" && catObj?.name_thi ? catObj.name_thi : (catObj?.name || "");
+      const catName = formatCategoryName(catObj, language);
 
       const dateStr = crs.startDate ? crs.startDate.split("T")[0] : "";
       const timeStr = crs.batches?.[0]?.startTime || crs.startTime || "19:00";
