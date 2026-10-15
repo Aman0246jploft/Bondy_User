@@ -213,9 +213,7 @@ export function saveUserLocation(coords) {
  * React hook to get and observe user location across guest, customer, and organizer pages.
  */
 export function useUserLocation() {
-    const [coords, setCoords] = typeof window !== "undefined"
-        ? React.useState(() => getCachedUserLocation())
-        : [null, () => {}];
+    const [coords, setCoords] = React.useState(() => getCachedUserLocation());
 
     React.useEffect(() => {
         if (typeof window === "undefined") return;
