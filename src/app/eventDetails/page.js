@@ -13,6 +13,7 @@ import { formatTime } from "@/utils/timeHelper";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ShareSheet from "@/components/ShareSheet";
+import { useUserLocation, extractCoordinates, calcDistanceKm } from "@/utils/locationHelper";
 
 const FALLBACK_IMG = "/img/sidebar-logo.svg";
 
@@ -670,6 +671,14 @@ function EventDetailsContent() {
     if (event?.venueAddress?.city) parts.push(event.venueAddress.city);
     return parts.join(", ") || (t("defaultVenueCity"));
   }, [event, language]);
+
+  // ─── Real Distance to Venue ──────────────────────────────────────────────
+  const userCoords = useUserLocation();
+  const eventCoords = useMemo(() => extractCoordinates(event), [event]);
+  const realDistanceKm = useMemo(() => {
+    if (!userCoords?.latitude || !userCoords?.longitude || !eventCoords) return null;
+    return calcDistanceKm(userCoords.latitude, userCoords.longitude, eventCoords.latitude, eventCoords.longitude);
+  }, [userCoords, eventCoords]);
 
   // ─── Event Date & Past Status Validation ─────────────────────────────────
   const isPastEvent = useMemo(() => {
@@ -1394,9 +1403,11 @@ function EventDetailsContent() {
                     {event.venueAddress?.address || "Чингэлтэй дүүрэг, Улаанбаатар"}<br />
                     {event.venueAddress?.city ? `${event.venueAddress.city}, ` : ""}Монгол Улс
                   </span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--acc-bright)" }}>
-                    {t("kmFromYou", { km: "5.2" })}
-                  </span>
+                  {realDistanceKm != null && (
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--acc-bright)" }}>
+                      {t("kmFromYou", { km: realDistanceKm })}
+                    </span>
+                  )}
                   <a
                     href={googleMapsUrl}
                     target="_blank"
