@@ -6,9 +6,10 @@ import authApi from "../../../api/authApi";
 import supportTicketApi from "../../../api/supportTicketApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatCategoryName } from "@/utils/formatHelper";
 
 export default function CreateTicket(props) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     category: "",
@@ -128,7 +129,7 @@ export default function CreateTicket(props) {
                     <option value="">{t("selectCategory")}</option>
                     {categories.map((cat) => (
                       <option key={cat._id} value={cat._id}>
-                        {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
+                        {formatCategoryName(cat, language)}
                       </option>
                     ))}
                   </select>

@@ -1,6 +1,7 @@
 import { formatDate } from "@/utils/dateFormater";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import Link from "next/link";
+import { formatCategoryName } from "@/utils/formatHelper";
 import React, { useEffect, useState } from "react";
 import { Col, Row } from "react-bootstrap";
 import { useLanguage } from "@/context/LanguageContext";
@@ -111,7 +112,7 @@ const ProgramCart = ({ programsArray, pagination }) => {
                             {trimTo30CharsNoSpaceCount(program?.courseTitle)}
                           </h4>
                           <span
-                            title={`${program?.courseCategory?.categoryName || ""} • ${program.enrollmentType === "fixedStart" ? t("fixedStartCourse") || "Fixed Start" : t("ongoingClass") || "Ongoing"}`}
+                            title={`${formatCategoryName(program?.courseCategory, language) || ""} • ${program.enrollmentType === "fixedStart" ? t("fixedStartCourse") || "Fixed Start" : t("ongoingClass") || "Ongoing"}`}
                             style={{
                               display: "block",
                               overflow: "hidden",
@@ -122,7 +123,7 @@ const ProgramCart = ({ programsArray, pagination }) => {
 
                             }}
                           >
-                            {program?.courseCategory?.categoryName} • {program.enrollmentType === "fixedStart" ? t("fixedStartCourse") || "Fixed Start" : t("ongoingClass") || "Ongoing"}
+                            {formatCategoryName(program?.courseCategory, language)} • {program.enrollmentType === "fixedStart" ? t("fixedStartCourse") || "Fixed Start" : t("ongoingClass") || "Ongoing"}
                           </span>
                         </div>
                       </Link>

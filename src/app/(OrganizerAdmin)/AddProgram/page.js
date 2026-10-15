@@ -10,6 +10,7 @@ import courseApi from "@/api/courseApi";
 import eventApi from "@/api/eventApi";
 import VenueAutocomplete from "../Components/VenueAutocomplete";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { formatCategoryName } from "@/utils/formatHelper";
 
 // ─── Constants & Fallback Data ────────────────────────────────────────────────
 const DAYS = [
@@ -1206,7 +1207,7 @@ export default function LearningEditorPage() {
                           setDirty(true);
                         }}
                       >
-                        {c.name}
+                        {formatCategoryName(c, isMn ? "mn" : "en")}
                       </button>
                     );
                   })}

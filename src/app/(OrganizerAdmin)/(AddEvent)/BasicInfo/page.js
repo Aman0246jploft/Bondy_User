@@ -8,6 +8,7 @@ import { useEventContext } from "@/context/EventContext";
 import authApi from "@/api/authApi";
 import eventApi from "@/api/eventApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { formatCategoryName, capitalizeWords } from "@/utils/formatHelper";
 
 // ─── Audited Constants from Prototype ─────────────────────────────────────────
 const FALLBACK_CATS = [
@@ -1586,7 +1587,7 @@ function EventEditorContent() {
   // Step Progress Calculation
   const progressPct = step * 20;
   const categoriesList = dbCategories.length > 0
-    ? dbCategories.map((c) => ({ id: c._id, label: c.name, en: c.name }))
+    ? dbCategories.map((c) => ({ id: c._id, label: formatCategoryName(c, isMn ? "mn" : "en"), en: capitalizeWords(c.name) }))
     : FALLBACK_CATS;
 
   const startInPast = Boolean(startDate && startDate < todayISO());
