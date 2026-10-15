@@ -677,6 +677,14 @@ function ProgramDetailsContent() {
     return FALLBACK_IMG;
   }, [mediaItems]);
 
+  // ─── Real Distance to Course Venue ───────────────────────────────────────
+  const userCoords = useUserLocation();
+  const courseCoords = useMemo(() => extractCoordinates(courseDetails), [courseDetails]);
+  const realDistanceKm = useMemo(() => {
+    if (!userCoords?.latitude || !userCoords?.longitude || !courseCoords) return null;
+    return calcDistanceKm(userCoords.latitude, userCoords.longitude, courseCoords.latitude, courseCoords.longitude);
+  }, [userCoords, courseCoords]);
+
   const openGalleryModal = (startIdx = 0, startMode = "carousel") => {
     setGalleryInitialIdx(startIdx);
     setGalleryInitialMode(startMode);
@@ -865,13 +873,6 @@ function ProgramDetailsContent() {
     ? `https://www.google.com/maps/search/?api=1&query=${venueAddress.latitude},${venueAddress.longitude}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullVenue)}`;
 
-  // ─── Real Distance to Course Venue ───────────────────────────────────────
-  const userCoords = useUserLocation();
-  const courseCoords = useMemo(() => extractCoordinates(program), [program]);
-  const realDistanceKm = useMemo(() => {
-    if (!userCoords?.latitude || !userCoords?.longitude || !courseCoords) return null;
-    return calcDistanceKm(userCoords.latitude, userCoords.longitude, courseCoords.latitude, courseCoords.longitude);
-  }, [userCoords, courseCoords]);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bd-ink-900)", color: "var(--bd-white)", display: "flex", flexDirection: "column" }}>
