@@ -594,7 +594,14 @@ function ProgramsListingContent() {
     // Read stored favorites
     try {
       const stored = localStorage.getItem("bondy_favorites");
-      if (stored) setFavs(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setFavs(parsed);
+        } else if (parsed && typeof parsed === "object") {
+          setFavs(Object.keys(parsed).filter((k) => Boolean(parsed[k])));
+        }
+      }
     } catch (e) { }
   }, [searchParams]);
 
@@ -831,12 +838,13 @@ function ProgramsListingContent() {
       e.stopPropagation();
     }
     const id = item.id || item._id;
-    const isFav = favs.includes(id) || favs.includes(item.title);
+    const isFav = Array.isArray(favs) ? (favs.includes(id) || favs.includes(item.title)) : false;
 
     setFavs((prev) => {
+      const arr = Array.isArray(prev) ? prev : [];
       const next = isFav
-        ? prev.filter((t) => t !== id && t !== item.title)
-        : [...prev, id];
+        ? arr.filter((t) => t !== id && t !== item.title)
+        : [...arr, id];
       try {
         localStorage.setItem("bondy_favorites", JSON.stringify(next));
       } catch (err) { }
@@ -1649,7 +1657,7 @@ function ProgramsListingContent() {
             ) : filteredCourses.length > 0 ? (
               <div className="el-grid">
                 {visibleCourses.map((crs) => {
-                  const isFavorited = favs.includes(crs.id) || favs.includes(crs.title);
+                  const isFavorited = Array.isArray(favs) ? (favs.includes(crs.id) || favs.includes(crs.title)) : false;
                   return (
                     <Link
                       href={crs.href}

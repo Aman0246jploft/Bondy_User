@@ -14,18 +14,9 @@ export default function BondyFooter() {
   const pathname = usePathname();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isOrganizer, setIsOrganizer] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("userProfile");
-        if (cached) {
-          const u = JSON.parse(cached);
-          return !!(u?.role === "ORGANIZER" || u?.roleId === 2 || u?.organizerVerificationStatus);
-        }
-      } catch (e) { }
-    }
-    return false;
-  });
+  const [isOrganizer, setIsOrganizer] = useState(false);
+  const [socialLinks, setSocialLinks] = useState({ facebook: "", instagram: "", youtube: "", linkedin: "" });
+  const [footerLinks, setFooterLinks] = useState(null);
 
   useEffect(() => {
     const checkUser = () => {
@@ -41,7 +32,22 @@ export default function BondyFooter() {
         setIsOrganizer(false);
       }
     };
+
+    const loadCachedSettings = () => {
+      if (typeof window !== "undefined") {
+        try {
+          const cachedSocial = localStorage.getItem("bondy_social_links");
+          if (cachedSocial) setSocialLinks(JSON.parse(cachedSocial));
+        } catch (e) { }
+        try {
+          const cachedFooter = localStorage.getItem("bondy_footer_links");
+          if (cachedFooter) setFooterLinks(JSON.parse(cachedFooter));
+        } catch (e) { }
+      }
+    };
+
     checkUser();
+    loadCachedSettings();
     window.addEventListener("storage", checkUser);
     window.addEventListener("focus", checkUser);
     return () => {
@@ -49,26 +55,6 @@ export default function BondyFooter() {
       window.removeEventListener("focus", checkUser);
     };
   }, [pathname]);
-
-  const [socialLinks, setSocialLinks] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("bondy_social_links");
-        if (cached) return JSON.parse(cached);
-      } catch (e) { }
-    }
-    return { facebook: "", instagram: "", youtube: "", linkedin: "" };
-  });
-
-  const [footerLinks, setFooterLinks] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("bondy_footer_links");
-        if (cached) return JSON.parse(cached);
-      } catch (e) { }
-    }
-    return null;
-  });
 
   useEffect(() => {
     const fetchData = async () => {
