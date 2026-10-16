@@ -521,8 +521,13 @@ function EventDetailsContent() {
 
           if (evt?.tickets && evt.tickets.length > 0) {
             const initQtys = {};
+            // Find first available ticket tier that is not sold out
+            const firstAvailIdx = evt.tickets.findIndex((tk) => {
+              const avail = tk.availableQty !== undefined ? Number(tk.availableQty) : Number(tk.qty || 0);
+              return avail > 0;
+            });
             evt.tickets.forEach((tk, idx) => {
-              initQtys[tk._id || idx] = idx === 0 ? 1 : 0;
+              initQtys[tk._id || idx] = (firstAvailIdx !== -1 && idx === firstAvailIdx) ? 1 : 0;
             });
             setTicketQtys(initQtys);
           }
@@ -792,7 +797,9 @@ function EventDetailsContent() {
     let qty = 0;
     let subtotal = 0;
     event.tickets.forEach((tk, idx) => {
-      const q = ticketQtys[tk._id || idx] || 0;
+      const avail = tk.availableQty !== undefined ? Number(tk.availableQty) : Number(tk.qty || 0);
+      const isTierSold = avail <= 0;
+      const q = isTierSold ? 0 : (ticketQtys[tk._id || idx] || 0);
       qty += q;
       subtotal += q * (Number(tk.price) || 0);
     });
@@ -801,9 +808,17 @@ function EventDetailsContent() {
 
   const handleStepTicket = (tkId, delta) => {
     if (isPastEvent || isSoldOut) return;
+    const ticket = event?.tickets?.find((t, i) => (t._id || i) === tkId || String(t._id) === String(tkId));
+    const available = ticket?.availableQty !== undefined ? Number(ticket.availableQty) : Number(ticket?.qty || 0);
+    if (delta > 0 && available <= 0) return;
+
     setTicketQtys((prev) => {
       const cur = prev[tkId] || 0;
-      const next = Math.max(0, cur + delta);
+      let next = cur + delta;
+      if (delta > 0 && available > 0 && next > available) {
+        next = available;
+      }
+      next = Math.max(0, next);
       return { ...prev, [tkId]: next };
     });
   };
@@ -823,7 +838,13 @@ function EventDetailsContent() {
       return;
     }
     const picked = Object.entries(ticketQtys)
-      .filter(([, q]) => Number(q) > 0)
+      .filter(([id, q]) => {
+        const num = Number(q);
+        if (num <= 0) return false;
+        const tk = event?.tickets?.find((t, i) => (t._id || i) === id || String(t._id) === String(id));
+        const avail = tk?.availableQty !== undefined ? Number(tk.availableQty) : Number(tk?.qty || 0);
+        return avail > 0;
+      })
       .map(([id, q]) => `${id}:${q}`)
       .join(",");
     checkAuth(() => {
@@ -1640,10 +1661,11 @@ function EventDetailsContent() {
                     {event.tickets && event.tickets.length > 0 ? (
                       event.tickets.map((ticket, idx) => {
                         const tkId = ticket._id || idx;
-                        const q = ticketQtys[tkId] || 0;
                         const total = ticket.qty || 0;
                         const available = ticket.availableQty !== undefined ? ticket.availableQty : total;
                         const isTierSoldOut = available <= 0;
+                        const rawQ = ticketQtys[tkId] || 0;
+                        const q = isTierSoldOut ? 0 : rawQ;
                         const tPrice = Number(ticket.price) || 0;
 
                         const shortDesc = String(ticket.ticketShortDesc || "").trim();
@@ -1665,7 +1687,7 @@ function EventDetailsContent() {
                                 <button
                                   type="button"
                                   onClick={() => handleStepTicket(tkId, -1)}
-                                  disabled={q <= 0}
+                                  disabled={q <= 0 || isTierSoldOut}
                                   aria-label="Decrease"
                                 >
                                   −
@@ -1674,7 +1696,7 @@ function EventDetailsContent() {
                                 <button
                                   type="button"
                                   onClick={() => handleStepTicket(tkId, 1)}
-                                  disabled={isTierSoldOut || q >= available}
+                                  disabled={isTierSoldOut || (available > 0 && q >= available)}
                                   aria-label="Increase"
                                 >
                                   +

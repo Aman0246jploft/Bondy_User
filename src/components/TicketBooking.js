@@ -280,18 +280,23 @@ export default function TicketBooking({ item, type, scheduleId }) {
         setQpayData(null);
     };
 
-    // Pre-populate ticket selections when event is loaded
+    // Pre-populate ticket selections when event is loaded (never pre-select sold-out tickets)
     useEffect(() => {
         if (item && type === "EVENT" && item.original?.tickets) {
             const initial = {};
             const isFreeEvent = item.price === 0;
+            const firstAvailIdx = item.original.tickets.findIndex((ticket) => {
+                const avail = ticket.availableQty !== undefined ? Number(ticket.availableQty) : Number(ticket.qty || 0);
+                return avail > 0;
+            });
             item.original.tickets.forEach((ticket, idx) => {
-                // If it is a free event, auto-select quantity 1 for the first ticket, else 0
-                initial[ticket._id] = (isFreeEvent && idx === 0) ? 1 : 0;
+                initial[ticket._id] = (isFreeEvent && firstAvailIdx !== -1 && idx === firstAvailIdx) ? 1 : 0;
             });
             setSelectedTickets(initial);
-            if (isFreeEvent) {
+            if (isFreeEvent && firstAvailIdx !== -1) {
                 setQty(1);
+            } else {
+                setQty(0);
             }
         }
     }, [item, type]);
