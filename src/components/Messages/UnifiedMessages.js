@@ -23,13 +23,39 @@ function sameId(a, b) {
 
 function mediaKind(fileType, fileUrl) {
   const type = String(fileType || "").toLowerCase();
-  if (type === "image" || type === "video" || type === "audio") return type;
-  if (type === "document" || type === "file") return "file";
+  if (type === "image" || type.startsWith("image/")) return "image";
+  if (type === "video" || type.startsWith("video/")) return "video";
+  if (type === "audio" || type.startsWith("audio/")) return "audio";
+  if (type === "document" || type === "file" || type.startsWith("application/") || type.startsWith("text/")) return "file";
+
   const path = String(fileUrl || "").split("?")[0].toLowerCase();
-  if (/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(path)) return "image";
-  if (/\.(mp4|webm|mov|m4v)$/.test(path)) return "video";
-  if (/\.(mp3|wav|ogg|m4a)$/.test(path)) return "audio";
+  if (/\.(png|jpe?g|gif|webp|bmp|svg|heic|heif|avif)$/.test(path)) return "image";
+  if (/\.(mp4|webm|mov|m4v|avi|mkv)$/.test(path)) return "video";
+  if (/\.(mp3|wav|ogg|m4a|aac|flac)$/.test(path)) return "audio";
   return fileUrl ? "file" : "";
+}
+
+function getCleanFileName(url) {
+  if (!url) return "Attachment";
+  try {
+    const raw = String(url).split("?")[0];
+    const parts = raw.split("/");
+    const last = parts[parts.length - 1];
+    const clean = last.replace(/^\d+-(?=[a-zA-Z0-9_-])/, "");
+    return decodeURIComponent(clean) || "Attachment";
+  } catch {
+    return "Attachment";
+  }
+}
+
+function getFileExtension(url) {
+  if (!url) return "FILE";
+  try {
+    const match = String(url).split("?")[0].match(/\.([0-9a-z]+)$/i);
+    return match ? match[1].toUpperCase() : "FILE";
+  } catch {
+    return "FILE";
+  }
 }
 
 function parseJwt(token) {
@@ -50,7 +76,7 @@ function parseJwt(token) {
   }
 }
 
-const VideoPlayer = ({ url }) => {
+const VideoPlayer = ({ url, onPreview }) => {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -73,6 +99,8 @@ const VideoPlayer = ({ url }) => {
         maxWidth: "280px",
         marginBottom: "6px",
         cursor: "pointer",
+        borderRadius: "12px",
+        overflow: "hidden",
       }}
       onClick={togglePlay}
     >
@@ -110,12 +138,46 @@ const VideoPlayer = ({ url }) => {
           <Play size={18} fill="currentColor" style={{ marginLeft: "3px" }} />
         </div>
       )}
+      {onPreview && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPreview();
+          }}
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            background: "rgba(0,0,0,0.6)",
+            border: "1px solid rgba(255,255,255,0.2)",
+            color: "#fff",
+            width: "28px",
+            height: "28px",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+          title="Full screen preview"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <polyline points="15 3 21 3 21 9" />
+            <polyline points="9 21 3 21 3 15" />
+            <line x1="21" y1="3" x2="14" y2="10" />
+            <line x1="3" y1="21" x2="10" y2="14" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 };
 
-function ChatImage({ src, label }) {
+function ChatImage({ src, label, onPreview }) {
   const [failed, setFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   if (failed) {
     return (
       <a href={src} target="_blank" rel="noopener noreferrer" className="ms-file-card">
@@ -126,14 +188,67 @@ function ChatImage({ src, label }) {
       </a>
     );
   }
+
   return (
-    <img
-      src={src}
-      alt=""
-      className="ms-img-preview"
-      onClick={() => window.open(src, "_blank")}
-      onError={() => setFailed(true)}
-    />
+    <div
+      className="ms-img-container"
+      onClick={() => onPreview && onPreview({ url: src, type: "image", name: label })}
+      style={{
+        position: "relative",
+        cursor: "pointer",
+        borderRadius: "12px",
+        overflow: "hidden",
+        display: "inline-block",
+        maxWidth: "280px",
+        marginBottom: "6px",
+      }}
+      title="Click to preview"
+    >
+      {loading && (
+        <div
+          style={{
+            width: "220px",
+            height: "160px",
+            background: "rgba(255,255,255,0.06)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "12px",
+          }}
+        >
+          <span className="op-spin" style={{ width: 22, height: 22, borderWidth: 2 }} />
+        </div>
+      )}
+      <img
+        src={src}
+        alt="Attachment"
+        className="ms-img-preview"
+        style={{
+          display: loading ? "none" : "block",
+          maxWidth: "280px",
+          maxHeight: "260px",
+          width: "auto",
+          height: "auto",
+          borderRadius: "12px",
+          objectFit: "cover",
+        }}
+        onLoad={() => setLoading(false)}
+        onError={() => {
+          setLoading(false);
+          setFailed(true);
+        }}
+      />
+      {!loading && !failed && (
+        <div className="ms-img-hover-overlay">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <line x1="11" y1="8" x2="11" y2="14" />
+            <line x1="8" y1="11" x2="14" y2="11" />
+          </svg>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -149,6 +264,17 @@ export default function UnifiedMessages({ organizerMode = false }) {
   const [message, setMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [buyerRefs, setBuyerRefs] = useState({});
+
+  const [previewMedia, setPreviewMedia] = useState(null); // { url, type, name }
+
+  useEffect(() => {
+    if (!previewMedia) return;
+    const handleKey = (e) => {
+      if (e.key === "Escape") setPreviewMedia(null);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [previewMedia]);
 
   // ─── Chat List state ───────────────────────────────────────
   const [chats, setChats] = useState([]);
@@ -1048,6 +1174,9 @@ export default function UnifiedMessages({ organizerMode = false }) {
                       : "";
                     const kind = m.fileUrl ? mediaKind(m.fileType, m.fileUrl) : "";
                     const fileSrc = m.fileUrl ? getFullImageUrl(m.fileUrl) : "";
+                    const fileName = m.fileUrl ? getCleanFileName(m.fileUrl) : "Attachment";
+                    const fileExt = m.fileUrl ? getFileExtension(m.fileUrl) : "FILE";
+                    const isPdf = fileExt === "PDF";
                     const readIds = (m.readBy || []).map((id) => String(id?._id || id));
                     const seenByOther = readIds.some((id) => id && !sameId(id, myId));
 
@@ -1055,24 +1184,75 @@ export default function UnifiedMessages({ organizerMode = false }) {
                       <div key={m._id || idx} className={`ms-msg-wrap ${isOutgoing ? "out" : "in"}`}>
                         <div className="ms-bubble">
                           {fileSrc && kind === "image" && (
-                            <ChatImage src={fileSrc} label={t("downloadFile")} />
+                            <ChatImage
+                              src={fileSrc}
+                              label={fileName}
+                              onPreview={(media) => setPreviewMedia(media)}
+                            />
                           )}
-                          {fileSrc && kind === "video" && <VideoPlayer url={fileSrc} />}
+                          {fileSrc && kind === "video" && (
+                            <VideoPlayer
+                              url={fileSrc}
+                              onPreview={() => setPreviewMedia({ url: fileSrc, type: "video", name: fileName })}
+                            />
+                          )}
                           {fileSrc && kind === "audio" && (
-                            <audio controls src={fileSrc} style={{ maxWidth: "260px", marginBottom: "6px" }} />
+                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "6px" }}>
+                              <span style={{ fontSize: "12px", color: "var(--bd-gray-400)", display: "flex", alignItems: "center", gap: "6px" }}>
+                                <Music size={14} />
+                                {fileName}
+                              </span>
+                              <audio controls src={fileSrc} style={{ maxWidth: "260px" }} />
+                            </div>
                           )}
                           {fileSrc && kind === "file" && (
-                            <a
-                              href={fileSrc}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <div
                               className="ms-file-card"
+                              style={{ cursor: isPdf ? "pointer" : "default" }}
+                              onClick={() => {
+                                if (isPdf) {
+                                  setPreviewMedia({ url: fileSrc, type: "pdf", name: fileName });
+                                }
+                              }}
                             >
                               <span className="ms-file-icon">
                                 <FileIcon size={16} />
                               </span>
-                              <span style={{ fontSize: "13px", fontWeight: 600 }}>{t("downloadFile")}</span>
-                            </a>
+                              <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1, paddingRight: "6px" }}>
+                                <span style={{ fontSize: "13px", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#fff" }} title={fileName}>
+                                  {fileName}
+                                </span>
+                                <span style={{ fontSize: "10.5px", color: "var(--bd-gray-400)", textTransform: "uppercase" }}>
+                                  {fileExt} {isPdf ? `• ${t("preview") || "Click to preview"}` : ""}
+                                </span>
+                              </div>
+                              <a
+                                href={fileSrc}
+                                download={fileName}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: "28px",
+                                  height: "28px",
+                                  borderRadius: "6px",
+                                  background: "rgba(255,255,255,0.1)",
+                                  color: "#fff",
+                                  flexShrink: 0,
+                                  textDecoration: "none"
+                                }}
+                                title={t("downloadFile")}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="7 10 12 15 17 10" />
+                                  <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                              </a>
+                            </div>
                           )}
 
                           {m.content && <span>{m.content}</span>}
@@ -1278,6 +1458,73 @@ export default function UnifiedMessages({ organizerMode = false }) {
           </div>
         </Modal.Body>
       </Modal>
+
+      {/* Media Preview Lightbox Modal */}
+      {previewMedia && (
+        <div
+          className="ms-preview-backdrop"
+          onClick={() => setPreviewMedia(null)}
+        >
+          <div
+            className="ms-preview-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ms-preview-header">
+              <span className="ms-preview-filename" title={previewMedia.name}>
+                {previewMedia.name || "Preview"}
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <a
+                  href={previewMedia.url}
+                  download={previewMedia.name || "download"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ms-preview-action-btn"
+                  title={t("downloadFile") || "Download"}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </a>
+                <button
+                  type="button"
+                  className="ms-preview-close-btn"
+                  onClick={() => setPreviewMedia(null)}
+                  title={t("close") || "Close"}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="ms-preview-body">
+              {previewMedia.type === "image" && (
+                <img
+                  src={previewMedia.url}
+                  alt={previewMedia.name || "Preview"}
+                  className="ms-preview-img"
+                />
+              )}
+              {previewMedia.type === "video" && (
+                <video
+                  src={previewMedia.url}
+                  controls
+                  autoPlay
+                  className="ms-preview-video"
+                />
+              )}
+              {previewMedia.type === "pdf" && (
+                <iframe
+                  src={previewMedia.url}
+                  title={previewMedia.name || "PDF Preview"}
+                  className="ms-preview-iframe"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

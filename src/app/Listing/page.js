@@ -12,6 +12,7 @@ import PaginationComponent from "@/components/PaginationComponent";
 import eventApi from "@/api/eventApi";
 import categoryApi from "@/api/categoryApi";
 import { useLanguage } from "@/context/LanguageContext";
+import GlobalLoader from "@/components/GlobalLoader";
 
 /* ── helpers ───────────────────────────────────────────── */
 const SECTION_META = {
@@ -273,6 +274,10 @@ function ListingContent() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
+
+  if (loading && events.length === 0) {
+    return <GlobalLoader fullScreen />;
+  }
 
   return (
     <>

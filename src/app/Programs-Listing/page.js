@@ -15,6 +15,7 @@ import DateRangeCalendarPopover from "../../components/DateRangeCalendarPopover"
 import InteractiveMapStage from "../../components/InteractiveMapStage";
 import { useUserLocation } from "@/utils/locationHelper";
 import { formatCategoryName } from "@/utils/formatHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 
 // Helper for distance in km using Haversine formula
 function calcDistanceKm(lat1, lon1, lat2, lon2) {
@@ -1072,6 +1073,10 @@ function ProgramsListingContent() {
     }
   };
 
+  if (isLoading && backendCourses.length === 0) {
+    return <GlobalLoader fullScreen />;
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--bd-ink-900)", color: "var(--bd-white)" }}>
       {/* 1. UNIFIED PROTOTYPE HEADER */}
@@ -1782,7 +1787,14 @@ function ProgramsListingContent() {
                     transition: "border-color 200ms var(--bd-ease), background 200ms var(--bd-ease)",
                   }}
                 >
-                  {isLoadingMore ? "..." : t("showMore")}
+                  {isLoadingMore ? (
+                    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                      <span className="op-spin" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                      <span>{language === "mn" ? "Уншиж байна…" : "Loading…"}</span>
+                    </span>
+                  ) : (
+                    t("showMore")
+                  )}
                 </button>
                 <span style={{ fontSize: "13px", color: "var(--bd-gray-600)" }}>
                   {t("resultsOutOf", {
@@ -1867,7 +1879,14 @@ function ProgramsListingContent() {
                       transition: "all 160ms var(--bd-ease)",
                     }}
                   >
-                    {isLoadingMore ? "..." : t("showMore")}
+                    {isLoadingMore ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                        <span className="op-spin" style={{ width: 14, height: 14, borderWidth: 2 }} />
+                        <span>{language === "mn" ? "Уншиж байна…" : "Loading…"}</span>
+                      </span>
+                    ) : (
+                      t("showMore")
+                    )}
                   </button>
                   <span style={{ fontSize: "12px", color: "var(--bd-gray-600)" }}>
                     {t("resultsOutOf", {

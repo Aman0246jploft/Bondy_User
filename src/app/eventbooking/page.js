@@ -13,6 +13,7 @@ import bookingApi from "@/api/bookingApi";
 import toast from "react-hot-toast";
 import { useAuthGuard } from "@/context/AuthGuardContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 
 function formatDateBilingual(dateStr, startTime, endTime, lang) {
   if (!dateStr) return lang === "mn" ? "Тун удахгүй" : "Coming soon";
@@ -486,16 +487,7 @@ function CheckoutContent() {
   };
 
   if (loading) {
-    return (
-      <div style={{ width: "100%", background: "var(--bd-ink-900, #0D0D0D)", minHeight: "100vh", color: "#fff", display: "flex", flexDirection: "column" }}>
-        <Header />
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-          <span className="op-spin" style={{ width: 24, height: 24, borderWidth: 3 }} />
-          <span>{language === "mn" ? "Уншиж байна…" : "Loading…"}</span>
-        </div>
-        <Footer />
-      </div>
-    );
+    return <GlobalLoader fullScreen />;
   }
 
   if (!bookingItem) {

@@ -205,11 +205,88 @@ function HeroSlideBg({ src }) {
 
 // ─── Shared UI sub-components ─────────────────────────────────────────────────
 
-function RailArrow({ dir, onClick }) {
+function RailCarousel({ items, loading, renderItem, emptyText, language }) {
+  const railRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = railRef.current;
+    if (!el) return;
+    const count = items?.length || 0;
+    const max = el.scrollWidth - el.clientWidth;
+    // Hide arrows if there is 1 or 0 items, or if the items do not overflow the rail
+    const hasMultiple = count > 1 && max > 6;
+    setCanScrollLeft(hasMultiple && el.scrollLeft > 6);
+    setCanScrollRight(hasMultiple && el.scrollLeft < max - 6);
+  }, [items]);
+
+  useEffect(() => {
+    checkScroll();
+    const el = railRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [checkScroll, items, loading]);
+
+  useEffect(() => {
+    const t = setTimeout(checkScroll, 200);
+    return () => clearTimeout(t);
+  }, [checkScroll, items]);
+
+  const glide = (dir) => {
+    const el = railRef.current;
+    if (!el) return;
+    const card = el.firstElementChild;
+    const step = card ? (card.getBoundingClientRect().width + 19) * 2 : el.clientWidth * 0.75;
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
+  };
+
+  const hasMultiple = !loading && (items?.length || 0) > 1;
+
   return (
-    <button type="button" className={`op-arw op-arw-${dir}`} onClick={onClick} aria-label={dir === "l" ? "Өмнөх" : "Дараах"}>
-      {dir === "l" ? "‹" : "›"}
-    </button>
+    <div className="op-railwrap">
+      {hasMultiple && canScrollLeft && (
+        <button
+          type="button"
+          className="op-arw op-arw-l"
+          onClick={() => glide(-1)}
+          aria-label={language === "en" ? "Previous" : "Өмнөх"}
+        >
+          ‹
+        </button>
+      )}
+
+      <div className="bd-rail" ref={railRef} onScroll={checkScroll}>
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
+          : items && items.length > 0
+            ? items.map(renderItem)
+            : <p style={{ padding: "40px 20px", color: "var(--bd-gray-500)", fontSize: 14 }}>{emptyText}</p>}
+      </div>
+
+      {hasMultiple && (
+        <>
+          <span className={`op-fade op-fade-l ${canScrollLeft ? "show" : ""}`} />
+          <span className={`op-fade op-fade-r ${canScrollRight ? "show" : ""}`} />
+        </>
+      )}
+
+      {hasMultiple && canScrollRight && (
+        <button
+          type="button"
+          className="op-arw op-arw-r"
+          onClick={() => glide(1)}
+          aria-label={language === "en" ? "Next" : "Дараах"}
+        >
+          ›
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -561,7 +638,7 @@ export default function HomePage() {
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  if (heroLoading && sectionLoading) {
+  if (heroLoading || sectionLoading) {
     return <GlobalLoader fullScreen />;
   }
 
@@ -636,12 +713,16 @@ export default function HomePage() {
                   })}
                 </div>
 
-                <button type="button" className="bd-hero-arw bd-hero-arw-prev" onClick={handlePrevSlide} aria-label="Өмнөх">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
-                </button>
-                <button type="button" className="bd-hero-arw bd-hero-arw-next" onClick={handleNextSlide} aria-label="Дараах">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
-                </button>
+                {heroSlides.length > 1 && (
+                  <>
+                    <button type="button" className="bd-hero-arw bd-hero-arw-prev" onClick={handlePrevSlide} aria-label="Өмнөх">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
+                    </button>
+                    <button type="button" className="bd-hero-arw bd-hero-arw-next" onClick={handleNextSlide} aria-label="Дараах">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
+                    </button>
+                  </>
+                )}
 
                 <div className="bd-hero-bar">
                   <div style={{ padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -744,19 +825,13 @@ export default function HomePage() {
       <section id="upcoming" data-screen-label="Recommended events" style={{ padding: "clamp(28px,2.8vw,40px) 0 clamp(16px,1.6vw,24px)" }}>
         <div className="bd-container">
           <SectionHeader mn="Танд санал болгох" en="Recommended for you" viewAllHref="/Explore?sort=recommended" language={language} />
-          <div className="op-railwrap">
-            <RailArrow dir="l" onClick={() => scrollRail(recommendedRailRef, -1)} />
-            <div className="bd-rail" ref={recommendedRailRef} onScroll={() => updateRailFade(recommendedRailRef, "rec")}>
-              {sectionLoading
-                ? Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
-                : recommendedEvents.length > 0
-                  ? recommendedEvents.map(renderCard)
-                  : <p style={{ padding: "40px 20px", color: "var(--bd-gray-500)", fontSize: 14 }}>{language === "en" ? "No events found." : "Эвент олдсонгүй."}</p>}
-            </div>
-            <span className={`op-fade op-fade-l ${fadeStates["rec-left"] ? "show" : ""}`} />
-            <span className={`op-fade op-fade-r ${fadeStates["rec-right"] ? "show" : ""}`} />
-            <RailArrow dir="r" onClick={() => scrollRail(recommendedRailRef, 1)} />
-          </div>
+          <RailCarousel
+            items={recommendedEvents}
+            loading={sectionLoading}
+            renderItem={renderCard}
+            emptyText={language === "en" ? "No events found." : "Эвент олдсонгүй."}
+            language={language}
+          />
         </div>
       </section>
 
@@ -764,17 +839,13 @@ export default function HomePage() {
       <section id="thisweekend" data-screen-label="This weekend" style={{ padding: "clamp(16px,1.6vw,24px) 0 clamp(16px,1.6vw,24px)" }}>
         <div className="bd-container">
           <SectionHeader mn="Энэ амралтын өдрүүдэд" en="This weekend" viewAllHref="/Explore?date=weekend&sort=soonest" language={language} />
-          <div className="op-railwrap">
-            <RailArrow dir="l" onClick={() => scrollRail(weekendRailRef, -1)} />
-            <div className="bd-rail" ref={weekendRailRef} onScroll={() => updateRailFade(weekendRailRef, "wk")}>
-              {sectionLoading
-                ? Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
-                : weekendEvents.length > 0
-                  ? weekendEvents.map(renderCard)
-                  : <p style={{ padding: "40px 20px", color: "var(--bd-gray-500)", fontSize: 14 }}>{language === "en" ? "No weekend events." : "Амралтын өдрийн эвент олдсонгүй."}</p>}
-            </div>
-            <RailArrow dir="r" onClick={() => scrollRail(weekendRailRef, 1)} />
-          </div>
+          <RailCarousel
+            items={weekendEvents}
+            loading={sectionLoading}
+            renderItem={renderCard}
+            emptyText={language === "en" ? "No weekend events." : "Амралтын өдрийн эвент олдсонгүй."}
+            language={language}
+          />
         </div>
       </section>
 
@@ -782,17 +853,13 @@ export default function HomePage() {
       <section id="courses" data-screen-label="Featured courses" style={{ padding: "clamp(16px,1.6vw,24px) 0 clamp(8px,1vw,14px)" }}>
         <div className="bd-container">
           <SectionHeader mn="Онцлох сургалтууд" en="Featured courses" viewAllHref="/Programs-Listing?sort=recommended" language={language} />
-          <div className="op-railwrap">
-            <RailArrow dir="l" onClick={() => scrollRail(coursesRailRef, -1)} />
-            <div className="bd-rail" ref={coursesRailRef} onScroll={() => updateRailFade(coursesRailRef, "crs")}>
-              {sectionLoading
-                ? Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
-                : featuredCourses.length > 0
-                  ? featuredCourses.map(renderCard)
-                  : <p style={{ padding: "40px 20px", color: "var(--bd-gray-500)", fontSize: 14 }}>{language === "en" ? "No courses found." : "Сургалт олдсонгүй."}</p>}
-            </div>
-            <RailArrow dir="r" onClick={() => scrollRail(coursesRailRef, 1)} />
-          </div>
+          <RailCarousel
+            items={featuredCourses}
+            loading={sectionLoading}
+            renderItem={renderCard}
+            emptyText={language === "en" ? "No courses found." : "Сургалт олдсонгүй."}
+            language={language}
+          />
         </div>
       </section>
 
@@ -1087,9 +1154,14 @@ export default function HomePage() {
               </div>
 
               <button type="submit" disabled={partnerLoading} className="bd-partner-cta">
-                {partnerLoading
-                  ? (language === "en" ? "Submitting..." : "Илгээж байна...")
-                  : (language === "en" ? "Submit request" : "Хүсэлт илгээх")}
+                {partnerLoading ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    <span className="op-spin" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                    <span>{language === "en" ? "Submitting..." : "Илгээж байна..."}</span>
+                  </span>
+                ) : (
+                  language === "en" ? "Submit request" : "Хүсэлт илгээх"
+                )}
               </button>
             </form>
           </div>
