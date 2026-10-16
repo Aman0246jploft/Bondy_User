@@ -119,7 +119,7 @@ function OTPContent() {
         if (response?.data?.token) localStorage.setItem("token", response?.data?.token);
 
         let shouldShowModal = false;
-        let nextPath = userRole === "ORGANIZER" ? "/OrganizerProfile" : "/";
+        let nextPath = userRole === "ORGANIZER" ? "/completeprofile" : "/";
         try {
           const fullProfileRes = await authApi.getSelfProfile();
           const fullProfile = fullProfileRes?.data?.user || profile;
@@ -127,7 +127,8 @@ function OTPContent() {
 
           if (fullProfile) {
             if (userRole === "ORGANIZER") {
-              nextPath = "/OrganizerProfile";
+              const isApproved = fullProfile?.hasBeenApproved === true || fullProfile?.isVerified === true;
+              nextPath = isApproved && flow !== "signup" ? "/OrganizerProfile" : "/completeprofile";
             } else {
               if (!fullProfile?.firstName || !fullProfile?.lastName) {
                 nextPath = "/completeprofile";
@@ -142,7 +143,7 @@ function OTPContent() {
           }
         } catch (err) {
           console.error("Profile check failed:", err);
-          nextPath = profile?.firstName && profile?.lastName ? "/" : "/completeprofile";
+          nextPath = userRole === "ORGANIZER" ? "/completeprofile" : (profile?.firstName && profile?.lastName ? "/" : "/completeprofile");
         }
 
         if (shouldShowModal) {

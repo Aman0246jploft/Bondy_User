@@ -43,22 +43,48 @@ function toneFor(notification) {
 
 function destinationFor(notification) {
   const id = notification.relatedId;
-  if (notification.type === "CHAT") {
+  const title = notification.title || "";
+  const msg = notification.message || "";
+  const type = notification.type || "";
+  const link = `${notification.webLink || ""} ${notification.deepLink || ""}`;
+
+  // 1. Verification-related notifications route directly to /Verifiedprofile
+  if (
+    /verification/i.test(title) ||
+    /verification/i.test(msg) ||
+    /verification/i.test(link) ||
+    /verified/i.test(title) ||
+    type === "VERIFICATION"
+  ) {
+    return "/Verifiedprofile";
+  }
+
+  // 2. Chat
+  if (type === "CHAT") {
     const senderId = notification.sender?._id || notification.sender;
     return senderId ? `/Message?userId=${senderId}` : "/Message";
   }
-  if (notification.type === "FOLLOW" || notification.onModel === "User") return id ? `/profile?id=${id}` : "";
-  if (notification.type === "PAYOUT" || notification.onModel === "Payout") return "/Earnings";
-  if (notification.onModel === "Event") return id ? `/EventDetailOrganiser?eventId=${id}` : "/EventsManagement";
-  if (notification.onModel === "Course") return id ? `/CourseDetailOrganiser?courseId=${id}` : "/CoursesManagement";
-  if (/booking/i.test(notification.title || "") && id) return `/TicketDetailsOrganiser?id=${id}`;
 
-  const link = notification.webLink || notification.deepLink || "";
-  if (/verification/i.test(link)) return "/Verifiedprofile";
-  if (/earning|payout/i.test(link)) return "/Earnings";
+  // 3. Follow
+  if (type === "FOLLOW" || (notification.onModel === "User" && id)) return `/profile?id=${id}`;
+
+  // 4. Payout / Earnings
+  if (type === "PAYOUT" || notification.onModel === "Payout" || /earning|payout/i.test(link)) return "/Earnings";
+
+  // 5. Event
+  if (notification.onModel === "Event") return id ? `/EventDetailOrganiser?eventId=${id}` : "/EventsManagement";
+
+  // 6. Course
+  if (notification.onModel === "Course") return id ? `/CourseDetailOrganiser?courseId=${id}` : "/CoursesManagement";
+
+  // 7. Booking
+  if (/booking/i.test(title) && id) return `/TicketDetailsOrganiser?id=${id}`;
+
+  // 8. Other deep links
   if (/support/i.test(link)) return "/SupportTickets";
   if (/setting/i.test(link)) return "/Settings";
   if (/promotion/i.test(link)) return "/Promotions";
+
   return "";
 }
 
@@ -142,8 +168,9 @@ export default function NotificationPage() {
       }
     }
     const destination = destinationFor(notification);
-    if (destination) router.push(destination);
-    else setDeadLink(true);
+    if (destination) {
+      router.push(destination);
+    }
   };
 
   const formatTime = (value) => {

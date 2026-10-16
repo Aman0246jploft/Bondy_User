@@ -58,20 +58,18 @@ export function AuthGuardProvider({ children }) {
             profile?.socialMediaLink
           );
 
+          const organizerRestrictedRoutes = ["/create-event", "/create-course", "/OrganizerDashboard", "/OrganizerProfile", "/dashboard"];
+          const isRestrictedRoute = organizerRestrictedRoutes.some((r) => pathname.startsWith(r));
+
           if (isOrganizer && !isApproved) {
-            if (hasBusinessDetails) {
-              if (pathname !== "/completeprofile") {
-                localStorage.removeItem("token");
-                localStorage.removeItem("userProfile");
-                setIsLoggedIn(false);
-                router.replace("/");
-                return;
-              }
-            } else {
+            if (!hasBusinessDetails) {
               if (pathname !== "/completeprofile") {
                 router.replace("/completeprofile");
                 return;
               }
+            } else if (isRestrictedRoute) {
+              router.replace("/completeprofile");
+              return;
             }
           }
         } catch (e) {
@@ -103,18 +101,16 @@ export function AuthGuardProvider({ children }) {
             profile?.socialMediaLink
           );
 
+          const organizerRestrictedRoutes = ["/create-event", "/create-course", "/OrganizerDashboard", "/OrganizerProfile", "/dashboard"];
+          const isRestrictedRoute = organizerRestrictedRoutes.some((r) => pathname.startsWith(r));
+
           if (isOrganizer && !isApproved) {
-            if (hasBusinessDetails) {
-              if (pathname !== "/completeprofile") {
-                localStorage.removeItem("token");
-                localStorage.removeItem("userProfile");
-                setIsLoggedIn(false);
-                router.replace("/");
-              }
-            } else {
+            if (!hasBusinessDetails) {
               if (pathname !== "/completeprofile") {
                 router.replace("/completeprofile");
               }
+            } else if (isRestrictedRoute) {
+              router.replace("/completeprofile");
             }
           }
         }

@@ -14,7 +14,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FAQ from "@/components/FAQ";
 import ShareSheet from "@/components/ShareSheet";
-import { useUserLocation, extractCoordinates, calcDistanceKm } from "@/utils/locationHelper";
+import { useUserLocation, extractCoordinates, calcDistanceKm, formatDistance } from "@/utils/locationHelper";
 import GlobalLoader from "@/components/GlobalLoader";
 
 const FALLBACK_IMG = "/img/sidebar-logo.svg";
@@ -1276,7 +1276,7 @@ function ProgramDetailsContent() {
                   </span>
                   {realDistanceKm != null && (
                     <span style={{ fontSize: 14, fontWeight: 600, color: "var(--acc-bright)" }}>
-                      {t("kmFromYou", { km: realDistanceKm })}
+                      {formatDistance(realDistanceKm, language, t)}
                     </span>
                   )}
                   <a
