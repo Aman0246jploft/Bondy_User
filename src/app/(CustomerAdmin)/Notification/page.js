@@ -43,7 +43,21 @@ function toneFor(notification) {
 
 function destinationFor(notification) {
   const id = notification.relatedId;
+  const title = notification.title || "";
+  const msg = notification.message || "";
+  const type = notification.type || "";
   const link = `${notification.webLink || ""} ${notification.deepLink || ""}`;
+
+  // Verification notifications
+  if (
+    /verification/i.test(title) ||
+    /verification/i.test(msg) ||
+    /verification/i.test(link) ||
+    /verified/i.test(title) ||
+    type === "VERIFICATION"
+  ) {
+    return "/Security";
+  }
 
   if (notification.type === "CHAT") {
     const senderId = notification.sender?._id || notification.sender;
@@ -144,8 +158,9 @@ export default function NotificationPage() {
       }
     }
     const destination = destinationFor(notification);
-    if (destination) router.push(destination);
-    else setDeadLink(true);
+    if (destination) {
+      router.push(destination);
+    }
   };
 
   const formatTime = (value) => {

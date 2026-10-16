@@ -132,7 +132,40 @@ export function calcDistanceKm(lat1, lon1, lat2, lon2) {
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const dist = R * c;
-    return dist < 10 ? Math.round(dist * 10) / 10 : Math.round(dist);
+    return Math.round(dist * 1000) / 1000;
+}
+
+/**
+ * Formats distance: shows meters if less than 1 km, and km if >= 1 km.
+ */
+export function formatDistance(distKm, language = "en", t = null) {
+    if (distKm == null || isNaN(distKm)) return null;
+    const num = Number(distKm);
+    const isMn = language === "mn";
+
+    if (num < 1) {
+        const rawMeters = Math.round(num * 1000);
+        let displayMeters;
+        if (rawMeters <= 10) {
+            displayMeters = 10;
+        } else if (rawMeters < 100) {
+            displayMeters = Math.round(rawMeters / 5) * 5;
+        } else {
+            displayMeters = Math.round(rawMeters / 10) * 10;
+        }
+        if (t && typeof t === "function") {
+            const translated = t("mFromYou", { m: displayMeters });
+            if (translated && !translated.startsWith("mFromYou")) return translated;
+        }
+        return isMn ? `Танаас ${displayMeters} м` : `${displayMeters} m from you`;
+    }
+
+    const formattedKm = num < 10 ? Math.round(num * 10) / 10 : Math.round(num);
+    if (t && typeof t === "function") {
+        const translated = t("kmFromYou", { km: formattedKm });
+        if (translated && !translated.startsWith("kmFromYou")) return translated;
+    }
+    return isMn ? `Танаас ${formattedKm} км` : `${formattedKm} km from you`;
 }
 
 /**

@@ -5739,6 +5739,172 @@ a.view-map {
   color: var(--bd-gray-600);
 }
 
+/* ── Top bar, Back button, Eyebrow ── */
+.lg-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.lg-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--bd-border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bd-white);
+  cursor: pointer;
+  transition: border-color 200ms cubic-bezier(.2, .8, .2, 1), transform 150ms ease;
+}
+
+.lg-back:hover {
+  border-color: var(--acc);
+}
+
+.lg-back:active {
+  transform: scale(0.95);
+}
+
+.lg-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--bd-gray-500);
+}
+
+/* ── Field label ── */
+.lg-flabel {
+  display: block;
+  margin: 0 0 10px 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--bd-white);
+}
+
+/* ── Alerts & Notices ── */
+.lg-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 13px 15px;
+  border-radius: 16px;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.lg-alert[data-tone="err"] {
+  background: rgba(255, 90, 90, 0.11);
+  border: 1px solid rgba(255, 90, 90, 0.55);
+  color: #FFC9C9;
+}
+
+.lg-alert[data-tone="warn"] {
+  background: rgba(255, 138, 51, 0.11);
+  border: 1px solid rgba(255, 138, 51, 0.5);
+  color: #FFD9BC;
+}
+
+.lg-alert[data-tone="ok"] {
+  background: rgba(35, 173, 164, 0.12);
+  border: 1px solid var(--acc);
+  color: var(--bd-white);
+}
+
+/* ── Marks / Circular Icon Badges ── */
+.lg-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 22px;
+  border-radius: 999px;
+}
+
+/* ── Step Progress Bars ── */
+.lg-steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.lg-steps span {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--bd-border);
+}
+
+.lg-steps span[data-on="1"] {
+  background: var(--acc);
+}
+
+/* ── Meta summary box ── */
+.lg-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--bd-ink-800);
+  border: 1px solid var(--bd-border);
+}
+
+.lg-meta div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 14px;
+}
+
+.lg-meta dt {
+  margin: 0;
+  color: var(--bd-gray-500);
+}
+
+.lg-meta dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+  color: var(--bd-white);
+}
+
+/* ── Ghost pill button ── */
+.lg-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  margin-top: 12px;
+  border: 1px solid var(--bd-border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bd-white);
+  font-family: var(--bd-font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 200ms cubic-bezier(.2, .8, .2, 1), background 150ms ease;
+  text-decoration: none;
+}
+
+.lg-ghost:hover {
+  border-color: var(--acc);
+}
+
 /* ── Legacy compatibility: keep old classes working elsewhere ── */
 .other_text {
   display: flex;
