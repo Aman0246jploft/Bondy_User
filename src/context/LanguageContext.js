@@ -15,10 +15,15 @@ export const LanguageProvider = ({ children }) => {
       let activeLang = "en";
 
       // 1. Local storage fallback (instant)
-      const savedLang = localStorage.getItem("app_lang");
+      const savedLang = localStorage.getItem("app_lang") || localStorage.getItem("language");
       if (savedLang) {
         activeLang = savedLang;
         setLanguage(savedLang);
+        localStorage.setItem("app_lang", savedLang);
+        localStorage.setItem("language", savedLang);
+      } else {
+        localStorage.setItem("app_lang", "en");
+        localStorage.setItem("language", "en");
       }
 
       // 2. Sync from backend if logged in

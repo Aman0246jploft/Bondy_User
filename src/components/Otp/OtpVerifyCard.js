@@ -138,21 +138,67 @@ export default function OtpVerifyCard({ open, field = "phone", busy = false, onC
             </div>
           )}
 
-          <button type="submit" className="lg-submit" disabled={busy || expired || code.length < 5}>
+          <div
+            className="lg-resend-row"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              marginTop: 22,
+              marginBottom: 6,
+              fontSize: 14,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <span style={{ color: "var(--bd-gray-400, #9ca3af)" }}>
+              {t("didntReceiveCode") || "Didn't receive the code?"}
+            </span>
+            {seconds > 0 ? (
+              <span
+                className="lg-resend-timer"
+                style={{
+                  fontWeight: 600,
+                  color: "var(--bd-gray-400, #9ca3af)",
+                }}
+              >
+                {t("resendIn") || "Resend in"} ({clock})
+              </span>
+            ) : (
+              <button
+                type="button"
+                className="lg-resend-btn"
+                onClick={resend}
+                disabled={busy}
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "var(--acc-bright, #10B981)",
+                  cursor: "pointer",
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  textDecoration: "underline",
+                }}
+              >
+                {t("otpResend") || "Resend OTP"}
+              </button>
+            )}
+          </div>
+
+          <button type="submit" className="lg-submit" style={{ marginTop: 14 }} disabled={busy || expired || code.length < 5}>
             {busy && <span className="lg-spin" />}
             {t("otpVerify")}
           </button>
-        </form>
 
-        <div className="otp-resend">
-          {seconds > 0 ? (
-            <span>{t("otpResendIn", { time: clock })}</span>
-          ) : (
-            <button type="button" className="otp-resend-link" onClick={resend} disabled={busy}>
-              {t("otpResend")}
-            </button>
-          )}
-        </div>
+          <button
+            type="button"
+            className="lg-btn-secondary"
+            onClick={onClose}
+          >
+            {t("goBack") || "Go back"}
+          </button>
+        </form>
       </section>
     </div>
   );

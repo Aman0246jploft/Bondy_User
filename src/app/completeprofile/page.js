@@ -7,8 +7,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Header from "@/components/Header";
 import VerificationModl from "@/components/Modal/VerificationModl";
 import { Upload, Camera, Building2, User } from "lucide-react";
-import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
+import CharCounter from "@/components/CharCounter";
 
 export default function CompleteProfile() {
   return (
@@ -20,7 +20,7 @@ export default function CompleteProfile() {
 
 function CompleteProfileContent() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [isOrganizer, setIsOrganizer] = useState(false);
@@ -217,8 +217,18 @@ function CompleteProfileContent() {
 
   const handleOrganizerSubmit = async (e) => {
     e.preventDefault();
-    if (!organizerData.businessName.trim() || !organizerData.businessCategory) {
+    const nameVal = organizerData.businessName.trim();
+    if (!nameVal || !organizerData.businessCategory) {
       toast.error("Business Name and Primary Category are required");
+      return;
+    }
+    if (nameVal.length < 3 || nameVal.length > 30) {
+      toast.error(language === "mn" ? "Нэр 3–30 тэмдэгттэй байх ёстой" : "Name must be 3–30 characters");
+      return;
+    }
+    const descVal = organizerData.shortDesc.trim();
+    if (descVal && (descVal.length < 10 || descVal.length > 250)) {
+      toast.error(language === "mn" ? "Тайлбар 10–250 тэмдэгттэй байх ёстой" : "Description must be 10–250 characters");
       return;
     }
 
@@ -226,9 +236,9 @@ function CompleteProfileContent() {
       setLoading(true);
       const payload = {
         businessVerification: {
-          businessName: organizerData.businessName.trim(),
+          businessName: nameVal,
           businessCategory: organizerData.businessCategory,
-          shortDesc: organizerData.shortDesc.trim(),
+          shortDesc: descVal,
           socialMediaLink: organizerData.socialMediaLink.trim(),
         },
       };
@@ -297,13 +307,14 @@ function CompleteProfileContent() {
                     <input
                       type="text"
                       name="businessName"
-                      maxLength={50}
+                      maxLength={30}
                       placeholder="Organizer / Business name *"
                       className="lg-in"
                       value={organizerData.businessName}
                       onChange={handleOrganizerChange}
                       required
                     />
+                    <CharCounter current={organizerData.businessName} max={30} lowThreshold={10} language={language} />
                   </label>
 
                   {/* Primary Category */}
@@ -339,7 +350,7 @@ function CompleteProfileContent() {
                     <textarea
                       name="shortDesc"
                       rows={3}
-                      maxLength={150}
+                      maxLength={250}
                       placeholder="Tell us about your organization (short description)"
                       className="lg-in"
                       value={organizerData.shortDesc}
@@ -353,6 +364,7 @@ function CompleteProfileContent() {
                         lineHeight: 1.4,
                       }}
                     />
+                    <CharCounter current={organizerData.shortDesc} max={250} lowThreshold={25} language={language} />
                   </label>
 
                   {/* Social Media Link */}

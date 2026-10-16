@@ -34,21 +34,34 @@ export default function Page() {
     document.title = `${t("login")} - Bondy`;
   }, [t]);
 
-  useEffect(() => {
-    const step = new URLSearchParams(window.location.search).get("step");
-    const email = sessionStorage.getItem("bondyLoginEmail");
-    if (step === "otp" && email) {
-      setFormData({ email, password: "" });
-      setShowCode(true);
-    }
-  }, []);
-
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showCode, setShowCode] = useState(false);
   const [code, setCode] = useState(["", "", "", "", ""]);
   const [codeLoading, setCodeLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [timer, setTimer] = useState(60);
   const codeRefs = useRef([]);
+
+  useEffect(() => {
+    const step = new URLSearchParams(window.location.search).get("step");
+    const email = sessionStorage.getItem("bondyLoginEmail") || localStorage.getItem("loginEmail");
+    if (step === "otp") {
+      if (email) {
+        setFormData((prev) => ({ ...prev, email }));
+      }
+      setShowCode(true);
+      setTimer(60);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!showCode || timer <= 0) return;
+    const interval = setInterval(() => {
+      setTimer((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showCode, timer]);
 
   const validateForm = (data) => {
     const newErrors = {};
@@ -139,6 +152,17 @@ export default function Page() {
           go("/OrganizerProfile");
           return;
         } else {
+          let returnTo = "";
+          try {
+            returnTo = sessionStorage.getItem("bondy.returnTo") || "";
+            sessionStorage.removeItem("bondy.returnTo");
+          } catch (e) {}
+
+          if (returnTo && returnTo.startsWith("/")) {
+            go(returnTo);
+            return;
+          }
+
           if (!profile?.firstName || !profile?.lastName) return go("/completeprofile");
           if (!profile?.categories || profile?.categories.length === 0) return go("/insterest");
           go("/");
@@ -212,6 +236,55 @@ export default function Page() {
     onError: () => toast.error("Google login failed. Please try again."),
   });
 
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 5);
+    if (!pasted) return;
+    const nextCode = ["", "", "", "", ""];
+    for (let i = 0; i < pasted.length; i++) {
+      nextCode[i] = pasted[i];
+    }
+    setCode(nextCode);
+    const nextIdx = Math.min(pasted.length, 4);
+    codeRefs.current[nextIdx]?.focus();
+  };
+
+  const handleResendOtp = async () => {
+    if (timer > 0 || resendLoading) return;
+    const emailToUse =
+      formData.email ||
+      (typeof window !== "undefined" &&
+        (sessionStorage.getItem("bondyLoginEmail") ||
+          localStorage.getItem("loginEmail") ||
+          localStorage.getItem("registerEmail")));
+
+    if (!emailToUse) {
+      toast.error(t("emailNotFound") || "Email not found");
+      return;
+    }
+
+    setResendLoading(true);
+    try {
+      const response = await authApi.resendUniversalOtp({
+        email: emailToUse,
+        type: "LOGIN",
+      });
+      if (response?.status) {
+        toast.success(t("otpResentSuccessfully") || "OTP resent successfully");
+        setTimer(60);
+        setCode(["", "", "", "", ""]);
+        codeRefs.current[0]?.focus();
+      }
+    } catch (error) {
+      // Handled by interceptor
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const mm = String(Math.floor(timer / 60)).padStart(2, "0");
+  const ss = String(timer % 60).padStart(2, "0");
+
   const switchTab = (tab) => {
     setActiveTab(tab);
     setErrors({});
@@ -227,12 +300,39 @@ export default function Page() {
 
           {showCode ? (
             <form onSubmit={handleVerifyCode}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", marginBottom: 16 }}>
+                <button
+                  type="button"
+                  className="lg-back"
+                  onClick={() => setShowCode(false)}
+                  aria-label={t("goBack") || "Go back"}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 38,
+                    height: 38,
+                    borderRadius: "50%",
+                    border: "1px solid var(--bd-border-strong, #333)",
+                    background: "transparent",
+                    color: "var(--bd-white, #fff)",
+                    cursor: "pointer",
+                    transition: "all 150ms ease",
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                  </svg>
+                </button>
+              </div>
+
               <h1 className="lg-h1">{t("enterVerificationCode")}</h1>
               <p className="lg-sub" style={{ marginBottom: 0 }}>{t("weSentCode")}</p>
               <p style={{ margin: "4px 0 0", fontSize: 14, fontWeight: 600, color: "var(--acc-bright)", wordBreak: "break-all" }}>
                 {formData.email}
               </p>
-              <div className="lg-otp">
+              <div className="lg-otp" onPaste={handlePaste}>
                 {code.map((digit, index) => (
                   <input
                     key={index}
@@ -258,15 +358,73 @@ export default function Page() {
                   />
                 ))}
               </div>
-              <button type="submit" disabled={codeLoading} className="lg-submit" style={{ marginTop: 22 }}>
+
+              {/* ── Resend countdown row ── */}
+              <div
+                className="lg-resend-row"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  marginTop: 22,
+                  marginBottom: 6,
+                  fontSize: 14,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <span style={{ color: "var(--bd-gray-400, #9ca3af)" }}>
+                  {t("didntReceiveCode") || "Didn't receive the code?"}
+                </span>
+                {timer > 0 ? (
+                  <span
+                    className="lg-resend-timer"
+                    style={{
+                      fontWeight: 600,
+                      color: "var(--bd-gray-400, #9ca3af)",
+                    }}
+                  >
+                    {t("resendIn") || "Resend in"} ({mm}:{ss})
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="lg-resend-btn"
+                    onClick={handleResendOtp}
+                    disabled={resendLoading}
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: "var(--acc-bright, #10B981)",
+                      cursor: "pointer",
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      textDecoration: "underline",
+                    }}
+                  >
+                    {resendLoading ? (t("sending") || "Sending...") : (t("resendOtp") || "Resend OTP")}
+                  </button>
+                )}
+              </div>
+
+              {/* ── Action Buttons ── */}
+              <button
+                type="submit"
+                disabled={codeLoading || code.join("").length < 5}
+                className="lg-submit"
+                style={{ marginTop: 14 }}
+              >
+                {codeLoading && <span className="lg-spin" />}
                 {codeLoading ? t("verifying") : t("verifyAndContinue")}
               </button>
+
               <button
                 type="button"
-                className="lg-staff-link"
+                className="lg-btn-secondary"
                 onClick={() => setShowCode(false)}
               >
-                {t("goBack")}
+                {t("goBack") || "Go back"}
               </button>
             </form>
           ) : (

@@ -8,6 +8,7 @@ import Footer from "../../components/Footer";
 import categoryApi from "@/api/categoryApi";
 import eventApi from "@/api/eventApi";
 import wishlistApi from "@/api/wishlistApi";
+import { useAuthGuard } from "@/context/AuthGuardContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import DateRangeCalendarPopover from "../../components/DateRangeCalendarPopover";
@@ -543,6 +544,7 @@ function MapRowThumb({ src, fallback = DEFAULT_FALLBACK_IMAGE }) {
 
 function ExploreContent() {
   const { t, language } = useLanguage();
+  const { checkAuth } = useAuthGuard();
   const searchParams = useSearchParams();
   const router = useRouter();
   const userCoords = useUserLocation();
@@ -884,27 +886,29 @@ function ExploreContent() {
       e.preventDefault();
       e.stopPropagation();
     }
-    const id = item.id || item._id;
-    const isFav = Array.isArray(favs) ? (favs.includes(id) || favs.includes(item.title)) : false;
+    checkAuth(async () => {
+      const id = item.id || item._id;
+      const isFav = Array.isArray(favs) ? (favs.includes(id) || favs.includes(item.title)) : false;
 
-    setFavs((prev) => {
-      const arr = Array.isArray(prev) ? prev : [];
-      const next = isFav
-        ? arr.filter((t) => t !== id && t !== item.title)
-        : [...arr, id];
+      setFavs((prev) => {
+        const arr = Array.isArray(prev) ? prev : [];
+        const next = isFav
+          ? arr.filter((t) => t !== id && t !== item.title)
+          : [...arr, id];
+        try {
+          localStorage.setItem("bondy_favorites", JSON.stringify(next));
+        } catch (err) { }
+        return next;
+      });
+
       try {
-        localStorage.setItem("bondy_favorites", JSON.stringify(next));
+        if (isFav) {
+          await wishlistApi.removeFromWishlist({ entityId: id });
+        } else {
+          await wishlistApi.addToWishlist({ entityId: id, entityModel: "Event" });
+        }
       } catch (err) { }
-      return next;
     });
-
-    try {
-      if (isFav) {
-        await wishlistApi.removeFromWishlist({ entityId: id });
-      } else {
-        await wishlistApi.addToWishlist({ entityId: id, entityModel: "Event" });
-      }
-    } catch (err) { }
   };
 
   // Dynamic events from backend (nothing static when backend is used)

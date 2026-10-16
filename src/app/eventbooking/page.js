@@ -11,6 +11,7 @@ import eventApi from "@/api/eventApi";
 import courseApi from "@/api/courseApi";
 import bookingApi from "@/api/bookingApi";
 import toast from "react-hot-toast";
+import { useAuthGuard } from "@/context/AuthGuardContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
 
 function formatDateBilingual(dateStr, startTime, endTime, lang) {
@@ -84,6 +85,20 @@ function CheckoutContent() {
   const [paidBooking, setPaidBooking] = useState(null);
 
   const { t, language } = useLanguage();
+  const { checkAuth } = useAuthGuard();
+
+  // Guard guest users arriving on booking page
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("bondy.returnTo", window.location.pathname + window.location.search);
+        } catch (e) {}
+      }
+      checkAuth();
+    }
+  }, [checkAuth]);
 
   // Fetch Item (Event or Course)
   useEffect(() => {
@@ -159,6 +174,8 @@ function CheckoutContent() {
   // Calculate pricing breakdown via API
   const calculatePricing = useCallback(async () => {
     if (!bookingItem) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) return;
     try {
       if (bookingType === "EVENT") {
         const activeTickets = Object.entries(selectedTickets)
@@ -350,6 +367,17 @@ function CheckoutContent() {
   // Checkout submission
   const handleCheckout = async () => {
     if (!bookingItem || payLoading) return;
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("bondy.returnTo", window.location.pathname + window.location.search);
+        } catch (e) {}
+      }
+      checkAuth();
+      return;
+    }
 
     // Validation
     const isEvent = bookingType === "EVENT";

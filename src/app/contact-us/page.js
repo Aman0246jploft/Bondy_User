@@ -8,9 +8,10 @@ import { useState, useEffect } from "react";
 import contactApi from "@/api/contactApi";
 import categoryApi from "@/api/categoryApi";
 import { toast } from "react-hot-toast";
+import CharCounter from "@/components/CharCounter";
 
 export default function Page() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -52,11 +53,30 @@ export default function Page() {
       toast.error(t("pleaseFillRequiredFields"));
       return;
     }
+    const nameVal = formData.fullName.trim();
+    if (nameVal.length < 3 || nameVal.length > 30) {
+      toast.error(language === "mn" ? "Нэр 3–30 тэмдэгттэй байх ёстой" : "Name must be 3–30 characters");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast.error(language === "mn" ? "И-мэйл хаяг буруу байна" : "Invalid email address");
+      return;
+    }
+    const msgVal = formData.message.trim();
+    if (msgVal.length < 10 || msgVal.length > 250) {
+      toast.error(language === "mn" ? "Тайлбар 10–250 тэмдэгттэй байх ёстой" : "Description must be 10–250 characters");
+      return;
+    }
 
     setLoading(true);
     try {
-      const response = await contactApi.createContact(formData);
-      if (response?.status === true) {
+      const response = await contactApi.createContact({
+        ...formData,
+        fullName: nameVal,
+        message: msgVal,
+      });
+      if (response && response.status !== false) {
         toast.success(t("messageSentSuccess"));
         setFormData({
           fullName: "",
@@ -68,7 +88,6 @@ export default function Page() {
       }
     } catch (error) {
       console.error("Contact error:", error);
-      // Error handled by interceptor usually, manual log here
     } finally {
       setLoading(false);
     }
@@ -101,11 +120,13 @@ export default function Page() {
                       </Form.Label>
                       <Form.Control
                         type="text"
+                        maxLength={30}
                         placeholder={t("fullNamePlaceholder")}
                         name="fullName"
                         value={formData.fullName}
                         onChange={handleChange}
                       />
+                      <CharCounter current={formData.fullName} max={30} lowThreshold={10} language={language} />
                     </Form.Group>
                   </Col>
                   <Col lg={6}>
@@ -137,7 +158,8 @@ export default function Page() {
                   <Col lg={6}>
                     <Form.Group controlId="topic">
                       <Form.Label>{t("selectTopic")}</Form.Label>
-                      <Form.Select
+                      <Form.Control
+                        as="select"
                         name="topic"
                         value={formData.topic}
                         onChange={handleChange}
@@ -148,7 +170,7 @@ export default function Page() {
                             {topic.name}
                           </option>
                         ))}
-                      </Form.Select>
+                      </Form.Control>
                     </Form.Group>
                   </Col>
                   <Col lg={12}>
@@ -159,10 +181,12 @@ export default function Page() {
                       <Form.Control
                         as="textarea"
                         rows={4}
+                        maxLength={250}
                         name="message"
                         value={formData.message}
                         onChange={handleChange}
                       />
+                      <CharCounter current={formData.message} max={250} lowThreshold={25} language={language} />
                     </Form.Group>
                   </Col>
                   <Col lg={12}>

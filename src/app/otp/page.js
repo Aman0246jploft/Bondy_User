@@ -248,19 +248,49 @@ function OTPContent() {
             </div>
 
             {/* ── Resend row ── */}
-            <div className="lg-resend-row">
-              <span>{t("didntReceiveCode")}</span>
+            <div
+              className="lg-resend-row"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                marginTop: 22,
+                marginBottom: 6,
+                fontSize: 14,
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span style={{ color: "var(--bd-gray-400, #9ca3af)" }}>
+                {t("didntReceiveCode") || "Didn't receive the code?"}
+              </span>
               {timer > 0 ? (
-                <span className="lg-resend-timer">
-                  {t("resend")} ({mm}:{ss})
+                <span
+                  className="lg-resend-timer"
+                  style={{
+                    fontWeight: 600,
+                    color: "var(--bd-gray-400, #9ca3af)",
+                  }}
+                >
+                  {t("resendIn") || "Resend in"} ({mm}:{ss})
                 </span>
               ) : (
                 <button
                   type="button"
                   className="lg-resend-btn"
                   onClick={handleResend}
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "var(--acc-bright, #10B981)",
+                    cursor: "pointer",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    textDecoration: "underline",
+                  }}
                 >
-                  {t("resend")}
+                  {t("resendOtp") || t("resend") || "Resend OTP"}
                 </button>
               )}
             </div>
@@ -269,25 +299,22 @@ function OTPContent() {
             <button
               type="submit"
               className="lg-submit"
+              style={{ marginTop: 14 }}
               disabled={loading || !otpFilled}
             >
               {loading && <span className="lg-spin" />}
               {loading ? t("verifying") : t("verifyAndContinue")}
             </button>
-          </form>
 
-          {/* ── Back link ── */}
-          <div className="lg-switch" style={{ marginTop: 20 }}>
-            <span>{t("wrongEmail") || "Wrong email?"}</span>
+            {/* ── Go Back Button ── */}
             <button
               type="button"
-              className="lg-switch-link"
-              style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+              className="lg-btn-secondary"
               onClick={() => router.back()}
             >
               {t("goBack") || "Go back"}
             </button>
-          </div>
+          </form>
         </section>
 
         <VerificationModl

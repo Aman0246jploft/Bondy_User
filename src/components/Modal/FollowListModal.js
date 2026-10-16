@@ -7,9 +7,11 @@ import authApi from "@/api/authApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import VerifyDropdwons from "@/components/VerifyDropdwons";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuthGuard } from "@/context/AuthGuardContext";
 
 const FollowListModal = ({ show, onHide, userId, type }) => {
     const { t } = useLanguage();
+    const { checkAuth } = useAuthGuard();
     const [list, setList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
@@ -64,21 +66,23 @@ const FollowListModal = ({ show, onHide, userId, type }) => {
 
     const handleFollowToggle = async (e, targetUserId, isCurrentlyFollowed, index) => {
         e.stopPropagation();
-        try {
-            const response = isCurrentlyFollowed
-                ? await authApi.unfollowUser({ toUser: targetUserId })
-                : await authApi.followUser({ toUser: targetUserId });
+        checkAuth(async () => {
+            try {
+                const response = isCurrentlyFollowed
+                    ? await authApi.unfollowUser({ toUser: targetUserId })
+                    : await authApi.followUser({ toUser: targetUserId });
 
-            if (response?.status) {
-                setList(prev => {
-                    const newList = [...prev];
-                    newList[index] = { ...newList[index], isFollowed: !isCurrentlyFollowed };
-                    return newList;
-                });
+                if (response?.status) {
+                    setList(prev => {
+                        const newList = [...prev];
+                        newList[index] = { ...newList[index], isFollowed: !isCurrentlyFollowed };
+                        return newList;
+                    });
+                }
+            } catch (error) {
+                console.error("Error toggling follow:", error);
             }
-        } catch (error) {
-            console.error("Error toggling follow:", error);
-        }
+        });
     };
 
     const handleUserClick = (id) => {

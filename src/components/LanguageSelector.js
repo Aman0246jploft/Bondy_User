@@ -8,6 +8,8 @@ export default function LanguageSelector({ className = "", style = {} }) {
   const { language, changeLanguage } = useLanguage();
 
   const handleSelect = (langCode) => {
+    localStorage.setItem("app_lang", langCode);
+    localStorage.setItem("language", langCode);
     if (langCode === language) return;
     changeLanguage(langCode);
     if (langCode === "mn") {

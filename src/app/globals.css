@@ -6173,6 +6173,35 @@ a.view-map {
   color: var(--bd-teal-300);
 }
 
+.lg-btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 50px;
+  margin-top: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--bd-border-strong, #333333);
+  background: transparent;
+  color: var(--bd-white, #ffffff);
+  font-family: var(--bd-font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 180ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.lg-btn-secondary:hover {
+  border-color: var(--acc, #23ada4);
+  color: var(--acc-bright, #2ad1c6);
+  background: rgba(35, 173, 164, 0.08);
+}
+
+.lg-btn-secondary:active {
+  transform: scale(0.98);
+}
+
 /* login page css end */
 
 .grid_sytem {

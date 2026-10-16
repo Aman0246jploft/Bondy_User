@@ -321,19 +321,49 @@ function ResetPasswordContent() {
                   ))}
                 </div>
 
-                <div className="lg-resend-row">
-                  <span>{t("didntReceiveCode")}</span>
+                <div
+                  className="lg-resend-row"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    marginTop: 22,
+                    marginBottom: 6,
+                    fontSize: 14,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <span style={{ color: "var(--bd-gray-400, #9ca3af)" }}>
+                    {t("didntReceiveCode") || "Didn't receive the code?"}
+                  </span>
                   {resendTimer > 0 ? (
-                    <span className="lg-resend-timer">
-                      {t("resend")} ({mm}:{ss})
+                    <span
+                      className="lg-resend-timer"
+                      style={{
+                        fontWeight: 600,
+                        color: "var(--bd-gray-400, #9ca3af)",
+                      }}
+                    >
+                      {t("resendIn") || "Resend in"} ({mm}:{ss})
                     </span>
                   ) : (
                     <button
                       type="button"
                       className="lg-resend-btn"
                       onClick={handleResendOtp}
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "var(--acc-bright, #10B981)",
+                        cursor: "pointer",
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        textDecoration: "underline",
+                      }}
                     >
-                      {t("resend")}
+                      {t("resendOtp") || t("resend") || "Resend OTP"}
                     </button>
                   )}
                 </div>
@@ -341,19 +371,20 @@ function ResetPasswordContent() {
                 <button
                   type="submit"
                   className="lg-submit"
+                  style={{ marginTop: 14 }}
                   disabled={loading || !otpFilled}
                 >
                   {loading && <span className="lg-spin" />}
                   {loading ? t("verifying") : t("verifyAndContinue")}
                 </button>
-              </form>
 
-              <div className="lg-switch" style={{ marginTop: 20 }}>
-                <span>{t("wrongEmail") || "Wrong email?"}</span>
-                <Link href="/forgot-password" className="lg-switch-link">
+                <Link
+                  href="/forgot-password"
+                  className="lg-btn-secondary"
+                >
                   {t("goBack") || "Go back"}
                 </Link>
-              </div>
+              </form>
             </>
           )}
 
@@ -455,31 +486,54 @@ function ResetPasswordContent() {
 
           {/* ── STEP 3: SUCCESS ── */}
           {step === 3 && (
-            <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <div style={{ textAlign: "center", padding: "16px 0 8px" }}>
               <div
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  width: 72,
-                  height: 72,
+                  width: 52,
+                  height: 52,
                   borderRadius: "50%",
-                  background: "rgba(16, 185, 129, 0.15)",
                   color: "#10B981",
-                  marginBottom: 20,
+                  marginBottom: 16,
                 }}
               >
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                  <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="16 9 10 15 7 12" />
                 </svg>
               </div>
 
-              <h1 className="lg-h1">{t("passwordResetSuccessful") || "Password Reset Successful!"}</h1>
-              <p className="lg-sub" style={{ marginBottom: 24 }}>
-                {t("passwordResetSuccessDesc") || "Your password has been reset successfully. Redirecting you to login..."}
+              <h1 className="lg-h1" style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 10px 0" }}>
+                {t("passwordResetSuccessful") || "Password Reset Successful!"}
+              </h1>
+              <p
+                className="lg-sub"
+                style={{
+                  marginBottom: 28,
+                  color: "var(--bd-gray-400, #9ca3af)",
+                  fontSize: "14px",
+                  lineHeight: 1.5,
+                  maxWidth: "420px",
+                  marginLeft: "auto",
+                  marginRight: "auto",
+                }}
+              >
+                {t("passwordResetSuccessDesc") || "Your password has been reset successfully. You can now log in with your new password."}
               </p>
 
-              <Link href="/login" className="lg-submit" style={{ display: "block", textDecoration: "none", textAlign: "center" }}>
+              <Link
+                href="/login"
+                className="lg-submit"
+                style={{
+                  display: "block",
+                  textDecoration: "none",
+                  textAlign: "center",
+                  width: "100%",
+                  padding: "14px 20px",
+                }}
+              >
                 {t("backToLogin") || "Back to Login"}
               </Link>
             </div>

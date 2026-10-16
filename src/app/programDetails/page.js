@@ -15,6 +15,7 @@ import Footer from "@/components/Footer";
 import FAQ from "@/components/FAQ";
 import ShareSheet from "@/components/ShareSheet";
 import { useUserLocation, extractCoordinates, calcDistanceKm } from "@/utils/locationHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 
 const FALLBACK_IMG = "/img/sidebar-logo.svg";
 
@@ -613,24 +614,26 @@ function ProgramDetailsContent() {
   const handleSimilarFavoriteToggle = (courseId, e) => {
     e.preventDefault();
     e.stopPropagation();
-    setFavorites((prev) => {
-      const next = { ...prev, [courseId]: !prev[courseId] };
-      localStorage.setItem("bondy_favorites", JSON.stringify(next));
-      toast.success(next[courseId]
-        ? (language === "en" ? "Saved to favorites" : "Хадгалагдлаа")
-        : (language === "en" ? "Removed from favorites" : "Хасагдлаа"));
-      return next;
-    });
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        if (!favorites[courseId]) {
-          wishlistApi.addToWishlist({ entityId: courseId, entityModel: "Course" }).catch(() => { });
-        } else {
-          wishlistApi.removeFromWishlist({ entityId: courseId }).catch(() => { });
+    checkAuth(() => {
+      setFavorites((prev) => {
+        const next = { ...prev, [courseId]: !prev[courseId] };
+        localStorage.setItem("bondy_favorites", JSON.stringify(next));
+        toast.success(next[courseId]
+          ? (language === "en" ? "Saved to favorites" : "Хадгалагдлаа")
+          : (language === "en" ? "Removed from favorites" : "Хасагдлаа"));
+        return next;
+      });
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          if (!favorites[courseId]) {
+            wishlistApi.addToWishlist({ entityId: courseId, entityModel: "Course" }).catch(() => { });
+          } else {
+            wishlistApi.removeFromWishlist({ entityId: courseId }).catch(() => { });
+          }
         }
-      }
-    } catch (_) { }
+      } catch (_) { }
+    });
   };
 
   const handleShare = () => {
@@ -768,18 +771,7 @@ function ProgramDetailsContent() {
   };
 
   if (loading) {
-    return (
-      <div style={{ minHeight: "100vh", background: "var(--bd-ink-900)", color: "var(--bd-white)", display: "flex", flexDirection: "column" }}>
-        <Header />
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 20px" }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-            <div style={{ width: 44, height: 44, border: "3px solid var(--bd-ink-700)", borderTopColor: "var(--acc)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-            <span style={{ fontSize: 15, color: "var(--bd-gray-400)" }}>{language === "en" ? "Loading course details..." : "Сургалтын мэдээлэл уншиж байна..."}</span>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
+    return <GlobalLoader fullScreen />;
   }
 
   if (!courseDetails) {
