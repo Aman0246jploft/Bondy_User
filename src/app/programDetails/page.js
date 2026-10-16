@@ -530,14 +530,13 @@ function ProgramDetailsContent() {
           setCourseDetails(c);
           setIsWishlisted(Boolean(c.isWishlisted));
 
-          // Set default selected batch to first available batch
+          // Set default selected batch to first available batch (never a sold out batch)
           if (c.batches && c.batches.length > 0) {
-            const firstAvailable = c.batches.find((b) => !b.isFull && !b.bookingCutOffPassed);
-            if (firstAvailable) {
-              setSelectedBatchId(firstAvailable._id);
-            } else {
-              setSelectedBatchId(c.batches[0]._id);
-            }
+            const firstAvailable = c.batches.find((b) => {
+              const full = b.isFull || (b.availableSeats !== undefined && Number(b.availableSeats) <= 0);
+              return !full && !b.bookingCutOffPassed;
+            });
+            setSelectedBatchId(firstAvailable ? firstAvailable._id : "");
           }
         }
       } catch (error) {

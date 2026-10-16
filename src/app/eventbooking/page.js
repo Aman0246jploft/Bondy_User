@@ -113,19 +113,32 @@ function CheckoutContent() {
             setBookingType("EVENT");
             setBookingItem(evt);
 
-            // Pre-seed tickets
+            // Pre-seed tickets (never pre-select sold-out tickets)
             const initial = {};
             const isFree = evt.ticketPrice === 0 || evt.isFreeEvent;
+            const firstAvailIdx = (evt.tickets || []).findIndex((tk) => {
+              const avail = tk.availableQty !== undefined ? Number(tk.availableQty) : Number(tk.qty || 0);
+              return avail > 0;
+            });
+
             if (evt.tickets && evt.tickets.length > 0) {
               evt.tickets.forEach((tk, idx) => {
-                initial[tk._id || idx] = isFree && idx === 0 ? 1 : 0;
+                initial[tk._id || idx] = (isFree && firstAvailIdx !== -1 && idx === firstAvailIdx) ? 1 : 0;
               });
             }
             if (ticketSelection) {
               ticketSelection.split(",").forEach((pair) => {
                 const [id, qty] = pair.split(":");
                 const n = Number(qty);
-                if (id && n > 0) initial[id] = n;
+                if (id && n > 0) {
+                  const tk = evt.tickets?.find((t, i) => (t._id || i) === id || String(t._id) === String(id));
+                  const avail = tk?.availableQty !== undefined ? Number(tk.availableQty) : Number(tk?.qty || 0);
+                  if (avail > 0) {
+                    initial[id] = Math.min(n, avail);
+                  } else {
+                    initial[id] = 0;
+                  }
+                }
               });
             }
             setSelectedTickets(initial);
@@ -143,12 +156,19 @@ function CheckoutContent() {
               if (keys.length > 0) setActiveDayKey(keys[0]);
             }
 
-            // Set preselected batch
+            // Set preselected batch (never select a sold-out batch)
             if (scheduleId) {
-              setSelectedBatchId(scheduleId);
+              const b = crs.batches?.find((item) => item._id === scheduleId);
+              const isFull = b?.isFull || (b?.availableSeats !== undefined && Number(b.availableSeats) <= 0);
+              if (b && !isFull && !b.bookingCutOffPassed) {
+                setSelectedBatchId(scheduleId);
+              } else {
+                const firstAvail = crs.batches?.find((item) => !item.isFull && (item.availableSeats === undefined || Number(item.availableSeats) > 0) && !item.bookingCutOffPassed);
+                setSelectedBatchId(firstAvail ? firstAvail._id : "");
+              }
             } else if (crs.batches && crs.batches.length > 0) {
-              const firstAvail = crs.batches.find((b) => b.availableSeats > 0);
-              if (firstAvail) setSelectedBatchId(firstAvail._id);
+              const firstAvail = crs.batches.find((b) => !b.isFull && (b.availableSeats === undefined || Number(b.availableSeats) > 0) && !b.bookingCutOffPassed);
+              setSelectedBatchId(firstAvail ? firstAvail._id : "");
             }
           }
         }
