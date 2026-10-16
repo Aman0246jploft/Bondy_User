@@ -15,6 +15,9 @@ import organizerApi from "@/api/organizerApi";
 import toast from "react-hot-toast";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import { useAuthGuard } from "@/context/AuthGuardContext";
+import GlobalLoader from "@/components/GlobalLoader";
+import CharCounter from "@/components/CharCounter";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -217,7 +220,7 @@ function SectionHeader({ mn, en, viewAllHref, language }) {
         {language === "en" ? en : mn}
       </h2>
       <Link href={viewAllHref} className="bd-btn-outline">
-        {language === "en" ? "View all" : "Бүгдийг харах"}
+        {language === "en" ? "View All" : "Бүгдийг харах"}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
           <polyline points="9 18 15 12 9 6" />
         </svg>
@@ -231,6 +234,7 @@ function SectionHeader({ mn, en, viewAllHref, language }) {
 export default function HomePage() {
   const router = useRouter();
   const { t, language } = useLanguage();
+  const { checkAuth } = useAuthGuard();
 
   // Hero
   const [heroSlides, setHeroSlides] = useState([]);
@@ -422,24 +426,26 @@ export default function HomePage() {
   const toggleFavorite = (id, e) => {
     e.preventDefault();
     e.stopPropagation();
-    setFavorites((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      localStorage.setItem("bondy_favorites", JSON.stringify(next));
-      toast.success(next[id]
-        ? (language === "en" ? "Saved to favorites" : "Хадгалагдлаа")
-        : (language === "en" ? "Removed from favorites" : "Хасагдлаа"));
-      return next;
-    });
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        if (!favorites[id]) {
-          wishlistApi.addToWishlist({ entityId: id, entityModel: "Event" }).catch(() => { });
-        } else {
-          wishlistApi.removeFromWishlist({ entityId: id }).catch(() => { });
+    checkAuth(() => {
+      setFavorites((prev) => {
+        const next = { ...prev, [id]: !prev[id] };
+        localStorage.setItem("bondy_favorites", JSON.stringify(next));
+        toast.success(next[id]
+          ? (language === "en" ? "Saved to favorites" : "Хадгалагдлаа")
+          : (language === "en" ? "Removed from favorites" : "Хасагдлаа"));
+        return next;
+      });
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          if (!favorites[id]) {
+            wishlistApi.addToWishlist({ entityId: id, entityModel: "Event" }).catch(() => { });
+          } else {
+            wishlistApi.removeFromWishlist({ entityId: id }).catch(() => { });
+          }
         }
-      }
-    } catch (_) { }
+      } catch (_) { }
+    });
   };
 
   // ── Rail helpers ──────────────────────────────────────────────────────────
@@ -464,37 +470,55 @@ export default function HomePage() {
   // ── Partner form ──────────────────────────────────────────────────────────
   const handlePartnerSubmit = async (e) => {
     e.preventDefault();
-    if (!partnerName.trim()) {
+    const nameVal = partnerName.trim();
+    if (!nameVal) {
       toast.error(language === "en" ? "Please enter your name" : "Нэрээ оруулна уу");
       return;
     }
-    if (!partnerEmail.trim()) {
+    if (nameVal.length < 3 || nameVal.length > 30) {
+      toast.error(language === "en" ? "Name must be 3–30 characters" : "Нэр 3–30 тэмдэгттэй байх ёстой");
+      return;
+    }
+    const emailVal = partnerEmail.trim();
+    if (!emailVal) {
       toast.error(language === "en" ? "Please enter your email" : "Имэйл хаягаа оруулна уу");
       return;
     }
-    if (!partnerIntro.trim()) {
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!EMAIL_REGEX.test(emailVal)) {
+      toast.error(language === "en" ? "Invalid email address" : "И-мэйл хаяг буруу байна");
+      return;
+    }
+    const introVal = partnerIntro.trim();
+    if (!introVal) {
       toast.error(language === "en" ? "Please write a brief introduction" : "Товч танилцуулга бичнэ үү");
+      return;
+    }
+    if (introVal.length < 10 || introVal.length > 250) {
+      toast.error(language === "en" ? "Description must be 10–250 characters" : "Тайлбар 10–250 тэмдэгттэй байх ёстой");
       return;
     }
     setPartnerLoading(true);
     try {
-      await contactApi.createContact({
-        fullName: partnerName.trim(),
-        name: partnerName.trim(),
-        email: partnerEmail.trim(),
+      const response = await contactApi.createContact({
+        fullName: nameVal,
+        name: nameVal,
+        email: emailVal,
         phone: partnerPhone && partnerPhone.trim() ? (partnerPhone.startsWith("+") ? partnerPhone.trim() : `+${partnerPhone.trim()}`) : undefined,
         topic: "Organizer Partnership",
-        message: partnerIntro.trim(),
+        message: introVal,
       });
-      toast.success(
-        language === "en"
-          ? "Request submitted! We will contact you soon."
-          : "Хүсэлт амжилттай илгээгдлээ! Манай баг тантай удахгүй холбогдоно."
-      );
-      setPartnerName("");
-      setPartnerEmail("");
-      setPartnerPhone("");
-      setPartnerIntro("");
+      if (response && response.status !== false) {
+        toast.success(
+          language === "en"
+            ? "Request submitted! We will contact you soon."
+            : "Хүсэлт амжилттай илгээгдлээ! Манай баг тантай удахгүй холбогдоно."
+        );
+        setPartnerName("");
+        setPartnerEmail("");
+        setPartnerPhone("");
+        setPartnerIntro("");
+      }
     } catch (err) {
       toast.error(language === "en" ? "Failed to submit. Please try again." : "Алдаа гарлаа. Дахин оролдоно уу.");
     } finally {
@@ -537,6 +561,10 @@ export default function HomePage() {
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
+  if (heroLoading && sectionLoading) {
+    return <GlobalLoader fullScreen />;
+  }
+
   return (
     <div style={{ width: "100%", background: "var(--bd-ink-900)", minHeight: "100vh", overflowX: "hidden" }}>
       <Header />
@@ -571,7 +599,7 @@ export default function HomePage() {
               </div>
             ) : (
               <>
-                <div className="bd-hero-rail" style={{ transform: `translateX(-${slideIndex * 76}%)` }}>
+                <div className="bd-hero-rail" style={{ transform: `translateX(-${slideIndex * 100}%)` }}>
                   {heroSlides.map((slide, idx) => {
                     const isActive = idx === slideIndex;
                     const title = language === "mn" ? (slide.titleMn || slide.title) : slide.title;
@@ -713,7 +741,7 @@ export default function HomePage() {
       </section>
 
       {/* ════ SECTION 1: RECOMMENDED (featured) EVENTS ══════════════════════ */}
-      <section id="upcoming" data-screen-label="Recommended events" style={{ padding: "clamp(46px,4.4vw,68px) 0" }}>
+      <section id="upcoming" data-screen-label="Recommended events" style={{ padding: "clamp(28px,2.8vw,40px) 0 clamp(16px,1.6vw,24px)" }}>
         <div className="bd-container">
           <SectionHeader mn="Танд санал болгох" en="Recommended for you" viewAllHref="/Explore?sort=recommended" language={language} />
           <div className="op-railwrap">
@@ -733,7 +761,7 @@ export default function HomePage() {
       </section>
 
       {/* ════ SECTION 2: THIS WEEKEND ════════════════════════════════════════ */}
-      <section id="thisweekend" data-screen-label="This weekend" style={{ padding: "clamp(52px,5vw,72px) 0 clamp(44px,4.2vw,64px)" }}>
+      <section id="thisweekend" data-screen-label="This weekend" style={{ padding: "clamp(16px,1.6vw,24px) 0 clamp(16px,1.6vw,24px)" }}>
         <div className="bd-container">
           <SectionHeader mn="Энэ амралтын өдрүүдэд" en="This weekend" viewAllHref="/Explore?date=weekend&sort=soonest" language={language} />
           <div className="op-railwrap">
@@ -751,7 +779,7 @@ export default function HomePage() {
       </section>
 
       {/* ════ SECTION 3: FEATURED COURSES ════════════════════════════════════ */}
-      <section id="courses" data-screen-label="Featured courses" style={{ padding: "clamp(44px,4.2vw,64px) 0" }}>
+      <section id="courses" data-screen-label="Featured courses" style={{ padding: "clamp(16px,1.6vw,24px) 0 clamp(8px,1vw,14px)" }}>
         <div className="bd-container">
           <SectionHeader mn="Онцлох сургалтууд" en="Featured courses" viewAllHref="/Programs-Listing?sort=recommended" language={language} />
           <div className="op-railwrap">
@@ -768,10 +796,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════ SECTION 4: HAPPENING SOON — compact row list ══════════════════ */}
-      <section id="weekend" data-screen-label="Happening soon" style={{ padding: "clamp(44px,4.2vw,64px) 0" }}>
+      {/* ════ SECTION 4: UPCOMING — compact row list ═════════════════════════ */}
+      <section id="weekend" data-screen-label="Upcoming" style={{ padding: "clamp(8px,1vw,14px) 0 clamp(20px,2vw,28px)" }}>
         <div className="bd-container">
-          <SectionHeader mn="Удахгүй болох" en="Happening soon" viewAllHref="/Explore?sort=soonest" language={language} />
+          <SectionHeader mn="Удахгүй болох" en="Upcoming" viewAllHref="/Explore?sort=soonest" language={language} />
           <div className="hp-up">
             {sectionLoading
               ? Array.from({ length: 5 }).map((_, i) => (
@@ -812,7 +840,7 @@ export default function HomePage() {
 
       {/* ════ SECTION 5: PROMOTED ORGANIZERS ════════════════════════════════ */}
       {(sectionLoading || promotedOrganizers.length > 0) && (
-        <section id="organizers" data-screen-label="Featured organizers" style={{ padding: "clamp(44px,4.2vw,64px) 0" }}>
+        <section id="organizers" data-screen-label="Featured organizers" style={{ padding: "clamp(20px,2vw,28px) 0 clamp(32px,3.2vw,48px)" }}>
           <div className="bd-container">
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap", marginBottom: 20 }}>
               <h2 className="bd-h2" style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "var(--bd-white)" }}>
@@ -837,7 +865,7 @@ export default function HomePage() {
                   transition: "border-color 200ms cubic-bezier(.2,.8,.2,1), color 200ms cubic-bezier(.2,.8,.2,1)",
                 }}
               >
-                {language === "en" ? "See all" : "Бүгдийг харах"}
+                {language === "en" ? "View All" : "Бүгдийг харах"}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
@@ -997,12 +1025,20 @@ export default function HomePage() {
                 {language === "en" ? "Submit request" : "Хүсэлт илгээх"}
               </h3>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span style={{ fontSize: 14, fontWeight: 500, color: "var(--bd-gray-300)" }}>
                   {language === "en" ? "Full name" : "Бүтэн нэр"}
                 </span>
-                <input type="text" required value={partnerName} onChange={(e) => setPartnerName(e.target.value)}
-                  placeholder={language === "en" ? "Your name" : "Таны нэр"} className="bd-form-input" />
+                <input
+                  type="text"
+                  required
+                  maxLength={30}
+                  value={partnerName}
+                  onChange={(e) => setPartnerName(e.target.value)}
+                  placeholder={language === "en" ? "Your name" : "Таны нэр"}
+                  className="bd-form-input"
+                />
+                <CharCounter current={partnerName} max={30} lowThreshold={10} language={language} />
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1028,17 +1064,26 @@ export default function HomePage() {
                     dropdownClass="phone_input_dropdown"
                     buttonClass="phone_input_button"
                     placeholder={language === "en" ? "Enter phone number" : "Утасны дугаараа оруулна уу"}
+                    inputProps={{
+                      placeholder: language === "en" ? "Enter phone number" : "Утасны дугаараа оруулна уу",
+                    }}
                   />
                 </div>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span style={{ fontSize: 14, fontWeight: 500, color: "var(--bd-gray-300)" }}>
                   {language === "en" ? "Brief introduction" : "Товч танилцуулга"}
                 </span>
-                <textarea rows={3} value={partnerIntro} onChange={(e) => setPartnerIntro(e.target.value)}
+                <textarea
+                  rows={3}
+                  maxLength={250}
+                  value={partnerIntro}
+                  onChange={(e) => setPartnerIntro(e.target.value)}
                   placeholder={language === "en" ? "Briefly describe your organization or activities" : "Үйл ажиллагааныхаа талаар товч танилцуулна уу"}
-                  className="bd-form-textarea" />
+                  className="bd-form-textarea"
+                />
+                <CharCounter current={partnerIntro} max={250} lowThreshold={25} language={language} />
               </div>
 
               <button type="submit" disabled={partnerLoading} className="bd-partner-cta">

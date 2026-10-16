@@ -13,11 +13,21 @@ export default function AuthRequiredModal() {
 
   const handleLogin = () => {
     closeModal();
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem("bondy.returnTo", window.location.pathname + window.location.search);
+      } catch (e) {}
+    }
     router.push("/login");
   };
 
   const handleRegister = () => {
     closeModal();
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem("bondy.returnTo", window.location.pathname + window.location.search);
+      } catch (e) {}
+    }
     router.push("/register");
   };
 

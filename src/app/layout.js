@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import { Toaster } from "react-hot-toast";
+import AppToaster from "@/components/AppToaster";
 import LocationManager from "@/components/LocationManager";
 import { SocketProvider } from "@/context/SocketContext";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -25,7 +25,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Toaster position="top-right" reverseOrder={false} />
+        <AppToaster />
         <LocationManager />
         <GoogleProvider>
           <LanguageProvider>

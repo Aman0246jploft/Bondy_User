@@ -11,9 +11,11 @@ import blockUserApi from "@/api/blockUser";
 import reportUserApi from "@/api/reportUser";
 import wishlistApi from "@/api/wishlistApi";
 import toast from "react-hot-toast";
+import { useAuthGuard } from "@/context/AuthGuardContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatCategoryName } from "@/utils/formatHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 function formatDateBilingual(dateStr, startTime, endTime, lang) {
@@ -236,6 +238,7 @@ function FollowListSheet({ show, onClose, userId, initialTab = "followers", orgN
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const router = useRouter();
+  const { checkAuth } = useAuthGuard();
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -292,23 +295,25 @@ function FollowListSheet({ show, onClose, userId, initialTab = "followers", orgN
 
   const handleFollowToggle = async (e, targetUserId, isCurrentlyFollowed, idx) => {
     e.stopPropagation();
-    try {
-      const response = isCurrentlyFollowed
-        ? await authApi.unfollowUser({ toUser: targetUserId })
-        : await authApi.followUser({ toUser: targetUserId });
+    checkAuth(async () => {
+      try {
+        const response = isCurrentlyFollowed
+          ? await authApi.unfollowUser({ toUser: targetUserId })
+          : await authApi.followUser({ toUser: targetUserId });
 
-      if (response?.status) {
-        setPeople((prev) => {
-          const next = [...prev];
-          if (next[idx]) {
-            next[idx] = { ...next[idx], isFollowed: !isCurrentlyFollowed };
-          }
-          return next;
-        });
+        if (response?.status) {
+          setPeople((prev) => {
+            const next = [...prev];
+            if (next[idx]) {
+              next[idx] = { ...next[idx], isFollowed: !isCurrentlyFollowed };
+            }
+            return next;
+          });
+        }
+      } catch (err) {
+        console.error("Error toggling follow:", err);
       }
-    } catch (err) {
-      console.error("Error toggling follow:", err);
-    }
+    });
   };
 
   if (!show) return null;
@@ -567,6 +572,7 @@ function ProfileContent() {
   const userId = searchParams.get("id");
   const router = useRouter();
   const { t, language } = useLanguage();
+  const { checkAuth } = useAuthGuard();
 
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -611,27 +617,29 @@ function ProfileContent() {
       e.preventDefault();
       e.stopPropagation();
     }
-    const id = item._id || item.id;
-    if (!id) return;
-    const isFav = Boolean(favorites[id]);
-    const nextMap = { ...favorites, [id]: !isFav };
-    if (isFav) delete nextMap[id];
-    setFavorites(nextMap);
+    checkAuth(async () => {
+      const id = item._id || item.id;
+      if (!id) return;
+      const isFav = Boolean(favorites[id]);
+      const nextMap = { ...favorites, [id]: !isFav };
+      if (isFav) delete nextMap[id];
+      setFavorites(nextMap);
 
-    try {
-      localStorage.setItem("bondy_favorites", JSON.stringify(Object.keys(nextMap)));
-    } catch { }
+      try {
+        localStorage.setItem("bondy_favorites", JSON.stringify(Object.keys(nextMap)));
+      } catch { }
 
-    try {
-      if (isFav) {
-        await wishlistApi.removeFromWishlist({ entityId: id });
-      } else {
-        const isCourse = Boolean(item.courseTitle || item.schedules);
-        await wishlistApi.addToWishlist({ entityId: id, entityModel: isCourse ? "Course" : "Event" });
+      try {
+        if (isFav) {
+          await wishlistApi.removeFromWishlist({ entityId: id });
+        } else {
+          const isCourse = Boolean(item.courseTitle || item.schedules);
+          await wishlistApi.addToWishlist({ entityId: id, entityModel: isCourse ? "Course" : "Event" });
+        }
+      } catch (err) {
+        console.error("Failed to update wishlist:", err);
       }
-    } catch (err) {
-      console.error("Failed to update wishlist:", err);
-    }
+    });
   };
 
   // Click outside to close menu
@@ -695,62 +703,68 @@ function ProfileContent() {
 
   // Follow/Unfollow Handler
   const handleFollowToggle = async () => {
-    if (followBusy || !userId) return;
-    setFollowBusy(true);
-    const isCurrentlyFollowed = Boolean(userProfile?.isFollowed);
-    try {
-      if (isCurrentlyFollowed) {
-        const response = await authApi.unfollowUser({ toUser: userId });
-        if (response?.status) {
-          setUserProfile((prev) => ({
-            ...prev,
-            isFollowed: false,
-            totalFollowers: Math.max((prev.totalFollowers || 0) - 1, 0),
-          }));
+    checkAuth(async () => {
+      if (followBusy || !userId) return;
+      setFollowBusy(true);
+      const isCurrentlyFollowed = Boolean(userProfile?.isFollowed);
+      try {
+        if (isCurrentlyFollowed) {
+          const response = await authApi.unfollowUser({ toUser: userId });
+          if (response?.status) {
+            setUserProfile((prev) => ({
+              ...prev,
+              isFollowed: false,
+              totalFollowers: Math.max((prev.totalFollowers || 0) - 1, 0),
+            }));
+          }
+        } else {
+          const response = await authApi.followUser({ toUser: userId });
+          if (response?.status) {
+            setUserProfile((prev) => ({
+              ...prev,
+              isFollowed: true,
+              totalFollowers: (prev.totalFollowers || 0) + 1,
+            }));
+          }
         }
-      } else {
-        const response = await authApi.followUser({ toUser: userId });
-        if (response?.status) {
-          setUserProfile((prev) => ({
-            ...prev,
-            isFollowed: true,
-            totalFollowers: (prev.totalFollowers || 0) + 1,
-          }));
-        }
+      } catch (error) {
+        console.error("Error toggling follow:", error);
+      } finally {
+        setFollowBusy(false);
       }
-    } catch (error) {
-      console.error("Error toggling follow:", error);
-    } finally {
-      setFollowBusy(false);
-    }
+    });
   };
 
   // Organizers chat in the organizer portal, everyone else in the customer one.
   // The role may still be loading when the button is pressed, so resolve it first.
   const openChat = async () => {
-    if (!userId) return;
-    let role = currentUserRole;
-    if (!role) {
-      try {
-        const response = await authApi.getSelfProfile();
-        role = response?.data?.user?.role || null;
-        if (role) setCurrentUserRole(role);
-      } catch {
-        return;
+    checkAuth(async () => {
+      if (!userId) return;
+      let role = currentUserRole;
+      if (!role) {
+        try {
+          const response = await authApi.getSelfProfile();
+          role = response?.data?.user?.role || null;
+          if (role) setCurrentUserRole(role);
+        } catch {
+          return;
+        }
       }
-    }
-    router.push(role === "ORGANIZER" ? `/Message?userId=${userId}` : `/Messagee?userId=${userId}`);
+      router.push(role === "ORGANIZER" ? `/Message?userId=${userId}` : `/Messagee?userId=${userId}`);
+    });
   };
 
   // Block/Unblock Confirm Action
   const handleAction = (type) => {
-    setActionType(type);
-    setShowMenu(false);
-    if (type === "report") {
-      setShowReportModal(true);
-    } else {
-      setShowConfirm(true);
-    }
+    checkAuth(() => {
+      setActionType(type);
+      setShowMenu(false);
+      if (type === "report") {
+        setShowReportModal(true);
+      } else {
+        setShowConfirm(true);
+      }
+    });
   };
 
   const handleConfirm = async () => {
@@ -810,16 +824,7 @@ function ProfileContent() {
   };
 
   if (loading) {
-    return (
-      <div style={{ minHeight: "100vh", backgroundColor: "var(--bd-ink-900, #0D0D0D)", color: "#fff", display: "flex", flexDirection: "column" }}>
-        <Header />
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-          <span className="op-spin" style={{ width: 24, height: 24, borderWidth: 3 }} />
-          <span>{t("loadingProfile") || "Уншиж байна…"}</span>
-        </div>
-        <Footer />
-      </div>
-    );
+    return <GlobalLoader fullScreen />;
   }
 
   if (!userProfile && !loading) {

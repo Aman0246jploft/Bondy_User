@@ -14,6 +14,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ShareSheet from "@/components/ShareSheet";
 import { useUserLocation, extractCoordinates, calcDistanceKm } from "@/utils/locationHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 
 const FALLBACK_IMG = "/img/sidebar-logo.svg";
 
@@ -578,24 +579,26 @@ function EventDetailsContent() {
   const handleSimilarFavoriteToggle = (id, e) => {
     e.preventDefault();
     e.stopPropagation();
-    setFavorites((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      localStorage.setItem("bondy_favorites", JSON.stringify(next));
-      toast.success(next[id]
-        ? (t("savedFavoritesShort"))
-        : (t("removedFromFavorites")));
-      return next;
-    });
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        if (!favorites[id]) {
-          wishlistApi.addToWishlist({ entityId: id, entityModel: "Event" }).catch(() => { });
-        } else {
-          wishlistApi.removeFromWishlist({ entityId: id }).catch(() => { });
+    checkAuth(() => {
+      setFavorites((prev) => {
+        const next = { ...prev, [id]: !prev[id] };
+        localStorage.setItem("bondy_favorites", JSON.stringify(next));
+        toast.success(next[id]
+          ? (t("savedFavoritesShort"))
+          : (t("removedFromFavorites")));
+        return next;
+      });
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          if (!favorites[id]) {
+            wishlistApi.addToWishlist({ entityId: id, entityModel: "Event" }).catch(() => { });
+          } else {
+            wishlistApi.removeFromWishlist({ entityId: id }).catch(() => { });
+          }
         }
-      }
-    } catch (_) { }
+      } catch (_) { }
+    });
   };
 
   const handleShare = () => {
@@ -823,7 +826,9 @@ function EventDetailsContent() {
       .filter(([, q]) => Number(q) > 0)
       .map(([id, q]) => `${id}:${q}`)
       .join(",");
-    router.push(`/eventbooking?eventId=${eventId}${picked ? `&tickets=${encodeURIComponent(picked)}` : ""}`);
+    checkAuth(() => {
+      router.push(`/eventbooking?eventId=${eventId}${picked ? `&tickets=${encodeURIComponent(picked)}` : ""}`);
+    });
   };
 
   const openGalleryModal = (startIdx = 0, startMode = "carousel") => {
@@ -894,23 +899,7 @@ function EventDetailsContent() {
   }, [event, refundPolicy, language]);
 
   if (loading) {
-    return (
-      <div style={{ width: "100%", background: "var(--bd-ink-900)", minHeight: "100vh" }}>
-        <Header />
-        <main style={{ maxWidth: 1224, margin: "0 auto", padding: "40px 24px" }}>
-          <div style={{ height: 320, borderRadius: 24, background: "var(--bd-ink-850)", animation: "pulse 1.5s infinite" }} />
-          <div style={{ marginTop: 32, display: "grid", gridTemplateColumns: "1fr 396px", gap: 32 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <div style={{ height: 40, width: "60%", borderRadius: 8, background: "rgba(255,255,255,0.06)" }} />
-              <div style={{ height: 90, borderRadius: 16, background: "rgba(255,255,255,0.04)" }} />
-              <div style={{ height: 160, borderRadius: 16, background: "rgba(255,255,255,0.04)" }} />
-            </div>
-            <div style={{ height: 340, borderRadius: 24, background: "var(--bd-ink-850)" }} />
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
+    return <GlobalLoader fullScreen />;
   }
 
   if (!event) {

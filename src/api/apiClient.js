@@ -14,7 +14,7 @@ apiClient.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-        const lang = typeof window !== "undefined" ? (localStorage.getItem("app_lang") || localStorage.getItem("language") || "mn") : "mn";
+        const lang = typeof window !== "undefined" ? (localStorage.getItem("app_lang") || localStorage.getItem("language") || "en") : "en";
         config.headers["Accept-Language"] = lang;
         config.headers["language"] = lang;
         return config;
@@ -25,29 +25,119 @@ apiClient.interceptors.request.use(
 );
 
 import toast from "react-hot-toast";
+import { backendMessages } from "@/utils/backendMessages";
 
-const localizeMessage = (message) => {
+const mongolianToEnglishBackend = {};
+if (backendMessages) {
+    Object.entries(backendMessages).forEach(([enMsg, mnMsg]) => {
+        if (mnMsg && enMsg) {
+            mongolianToEnglishBackend[mnMsg] = enMsg;
+        }
+    });
+}
+
+export const localizeMessage = (message) => {
     if (!message || typeof message !== "string") return message;
     let lang = "en";
     try {
         if (typeof window !== "undefined") {
-            lang = localStorage.getItem("app_lang") || "en";
+            lang = localStorage.getItem("app_lang") || localStorage.getItem("language") || "en";
         }
     } catch (e) {
         lang = "en";
     }
 
+    // 1. Direct translation key match in UI translations
     if (translations[lang] && translations[lang][message]) return translations[lang][message];
 
-    const enEntries = Object.entries(translations.en || {});
-    const found = enEntries.find(([k, v]) => v === message);
-    if (found) {
-        const key = found[0];
-        return translations[lang]?.[key] || translations.en?.[key] || message;
+    // 2. If target language is English
+    if (lang === "en") {
+        if (mongolianToEnglishBackend[message]) return mongolianToEnglishBackend[message];
+        const mnEntries = Object.entries(translations.mn || {});
+        const foundMn = mnEntries.find(([, v]) => v === message);
+        if (foundMn) {
+            const key = foundMn[0];
+            return translations.en?.[key] || message;
+        }
+    }
+
+    // 3. If target language is Mongolian
+    if (lang === "mn") {
+        if (backendMessages[message]) return backendMessages[message];
+        const enEntries = Object.entries(translations.en || {});
+        const foundEn = enEntries.find(([, v]) => v === message);
+        if (foundEn) {
+            const key = foundEn[0];
+            return translations.mn?.[key] || message;
+        }
     }
 
     return message;
 };
+
+const TITLE_KEYS = new Set([
+    "eventTitle",
+    "courseTitle",
+    "title",
+    "titleMn",
+    "eventName",
+    "courseName",
+    "ticketTitle",
+    "ticketName",
+    "bookingTitle",
+    "entityTitle",
+    "entityName",
+    "name",
+    "fullName",
+    "businessName",
+    "categoryName",
+    "venue",
+    "venueName",
+]);
+
+export function toTitleCase(str) {
+    if (!str || typeof str !== "string") return str;
+    const trimmed = str.trim();
+    if (
+        trimmed.startsWith("http://") ||
+        trimmed.startsWith("https://") ||
+        trimmed.startsWith("/") ||
+        trimmed.startsWith("data:") ||
+        trimmed.startsWith("<") ||
+        trimmed.includes("@") ||
+        /^[0-9a-fA-F]{24}$/.test(trimmed) ||
+        /^\d{4}-\d{2}-\d{2}/.test(trimmed)
+    ) {
+        return str;
+    }
+    return str.replace(/(?:^|[\s\-\/\(\[\'\"\u2018\u201c])\S/g, (char) => char.toUpperCase());
+}
+
+export function deepCapitalizeTitles(obj, seen = new WeakSet()) {
+    if (!obj || typeof obj !== "object") return obj;
+    if (seen.has(obj)) return obj;
+    seen.add(obj);
+
+    if (Array.isArray(obj)) {
+        for (let i = 0; i < obj.length; i++) {
+            obj[i] = deepCapitalizeTitles(obj[i], seen);
+        }
+        return obj;
+    }
+
+    for (const key of Object.keys(obj)) {
+        const val = obj[key];
+        if (typeof val === "string") {
+            if (TITLE_KEYS.has(key)) {
+                obj[key] = toTitleCase(val);
+            }
+        } else if (typeof val === "object" && val !== null) {
+            obj[key] = deepCapitalizeTitles(val, seen);
+        }
+    }
+
+    return obj;
+}
 
 apiClient.interceptors.response.use(
     (response) => {
@@ -73,6 +163,9 @@ apiClient.interceptors.response.use(
             } else if (response.data?.status === false && response.data?.message) {
                 toast.error(localizeMessage(response.data.message));
             }
+        }
+        if (response.data) {
+            response.data = deepCapitalizeTitles(response.data);
         }
         return response.data;
     },

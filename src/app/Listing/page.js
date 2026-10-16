@@ -27,7 +27,7 @@ const SECTION_META = {
   },
   week: {
     filter: "thisWeek",
-    title: "Happening Soon",
+    title: "Upcoming",
     subtitle: "Don't miss out — these events are right around the corner 🗓️🔥",
   },
   thisWeek: {
@@ -82,7 +82,7 @@ const SECTION_META = {
   },
   happeningSoon: {
     filter: "happeningSoon",
-    title: "Happening Soon",
+    title: "Upcoming",
     subtitle: "Don't miss out — these events are right around the corner 🗓️🔥",
   },
   all: {
