@@ -8,6 +8,7 @@ import { FaSearch, FaArrowLeft } from "react-icons/fa";
 import Header from "@/components/Header";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
+import GlobalLoader from "@/components/GlobalLoader";
 
 
 function EventAttendeesContent() {
@@ -52,6 +53,10 @@ function EventAttendeesContent() {
       document.title = `${t("eventAttendeesTitle")} | Bondy`;
     }
   }, [eventTitle, t]);
+
+  if (loading && attendees.length === 0) {
+    return <GlobalLoader fullScreen />;
+  }
 
   return (
     <>

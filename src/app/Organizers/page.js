@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import organizerApi from "@/api/organizerApi";
 import { useLanguage } from "@/context/LanguageContext";
+import GlobalLoader from "@/components/GlobalLoader";
 
 function OrganizersContent() {
   const { t } = useLanguage();
@@ -74,6 +75,10 @@ function OrganizersContent() {
   });
 
   const isEmpty = !loading && filteredOrganizers.length === 0;
+
+  if (loading && organizers.length === 0) {
+    return <GlobalLoader fullScreen />;
+  }
 
   return (
     <main

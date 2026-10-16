@@ -8106,3 +8106,21 @@ input.footer-email-input::placeholder {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Global Button / Inline Spinner */
+.op-spin {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  border-top-color: currentColor;
+  animation: opSpin 700ms linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes opSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

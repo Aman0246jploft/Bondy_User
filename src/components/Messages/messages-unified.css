@@ -858,3 +858,146 @@ textarea.ms-composer::-webkit-scrollbar-corner {
 .ms-dialog-btn:hover {
   filter: brightness(1.06);
 }
+
+/* ─── Media Preview Lightbox Modal ─── */
+.ms-preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: msFadeIn 200ms ease;
+}
+
+.ms-preview-modal {
+  position: relative;
+  max-width: 92vw;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+}
+
+.ms-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ms-preview-filename {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60vw;
+}
+
+.ms-preview-action-btn,
+.ms-preview-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 160ms ease;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.ms-preview-action-btn:hover,
+.ms-preview-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.06);
+  color: #fff;
+}
+
+.ms-preview-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow: auto;
+  max-height: calc(90vh - 70px);
+}
+
+.ms-preview-img {
+  max-width: 100%;
+  max-height: calc(85vh - 80px);
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: block;
+}
+
+.ms-preview-video {
+  max-width: 80vw;
+  max-height: calc(85vh - 80px);
+  border-radius: 10px;
+  background: #000;
+  display: block;
+}
+
+.ms-preview-iframe {
+  width: 78vw;
+  height: 75vh;
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+}
+
+/* Image container and hover icon */
+.ms-img-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.ms-img-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.ms-img-container:hover .ms-img-hover-overlay {
+  opacity: 1;
+}
+
+.ms-img-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+@keyframes msFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+

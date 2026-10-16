@@ -195,7 +195,14 @@ export default function Page() {
                       type="submit"
                       disabled={loading}
                     >
-                      {loading ? t("sending") : t("sendMessage")}
+                      {loading ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                          <span className="op-spin" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                          <span>{t("sending")}</span>
+                        </span>
+                      ) : (
+                        t("sendMessage")
+                      )}
                     </button>
                   </Col>
                 </Row>

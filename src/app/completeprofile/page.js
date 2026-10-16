@@ -9,6 +9,7 @@ import VerificationModl from "@/components/Modal/VerificationModl";
 import { Upload, Camera, Building2, User } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import CharCounter from "@/components/CharCounter";
+import GlobalLoader from "@/components/GlobalLoader";
 
 export default function CompleteProfile() {
   return (
@@ -255,16 +256,7 @@ function CompleteProfileContent() {
   };
 
   if (isChecking) {
-    return (
-      <>
-        <Header />
-        <div className="lg-shell">
-          <div className="lg-panel" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 280 }}>
-            <span className="lg-spin" />
-          </div>
-        </div>
-      </>
-    );
+    return <GlobalLoader fullScreen />;
   }
 
   return (
