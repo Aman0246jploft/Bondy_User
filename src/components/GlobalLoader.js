@@ -86,27 +86,6 @@ export default function GlobalLoader({ fullScreen = true, message = "" }) {
           {message}
         </p>
       )}
-
-      <style jsx global>{`
-        @keyframes bondyPulse {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1.05);
-            opacity: 0.85;
-          }
-        }
-        @keyframes bondyLoaderBar {
-          0% {
-            left: -45%;
-          }
-          100% {
-            left: 100%;
-          }
-        }
-      `}</style>
     </div>
   );
 }
