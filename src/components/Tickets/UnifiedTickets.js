@@ -207,20 +207,27 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
     }
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
+  const getStatusBadge = (ticket) => {
+    const isEvent = ticket.bookingType === "EVENT";
+    const item = isEvent ? ticket.eventId : ticket.courseId;
+    const isCancelled = String(item?.status || "").toLowerCase() === "cancelled" || ticket.status === "CANCELLED" || ticket.status === "FAILED" || Boolean(ticket.cancelledAt) || (typeof ticket.refundReason === "string" && /cancel/i.test(ticket.refundReason));
+    if (isCancelled) {
+      return <span className="ac-status-badge cancelled">{t("canceled") || "Cancelled"}</span>;
+    }
+    switch (ticket.status) {
       case "PAID":
         return <span className="ac-status-badge paid">{t("confirmed") || "Confirmed"}</span>;
       case "PENDING":
         return <span className="ac-status-badge pending">{t("pending") || "Pending"}</span>;
       case "CANCELLED":
-        return <span className="ac-status-badge cancelled">{t("canceled") || "Canceled"}</span>;
+        return <span className="ac-status-badge cancelled">{t("canceled") || "Cancelled"}</span>;
       case "FAILED":
         return <span className="ac-status-badge failed">{t("failed") || "Failed"}</span>;
       case "REFUND_INITIATED":
+      case "REFUNDED":
         return <span className="ac-status-badge cancelled">{t("refunded") || "Refunded"}</span>;
       default:
-        return <span className="ac-status-badge pending">{status}</span>;
+        return <span className="ac-status-badge pending">{ticket.status}</span>;
     }
   };
 
@@ -324,7 +331,10 @@ export default function UnifiedTickets({ role = "CUSTOMER" }) {
 
                   {/* Content */}
                   <div className="ac-book-content">
-                    <h4 className="ac-book-t" title={title}>{title}</h4>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "wrap", marginBottom: "4px" }}>
+                      <h4 className="ac-book-t" style={{ margin: 0 }} title={title}>{title}</h4>
+                      {getStatusBadge(ticket)}
+                    </div>
                     {sub && <span className="ac-book-sub">{sub}</span>}
 
                     {dateStr && (

@@ -82,8 +82,16 @@ export default function BookingDetailView({ data, ordersHref = "/MyTicketsOrgani
   const endMs = endSource ? new Date(endSource).getTime() : NaN;
   const ended = !Number.isNaN(endMs) && endMs < now;
 
+  const isItemCancelled = String(course?.status || "").toLowerCase() === "cancelled";
+  const isCancelled = isItemCancelled || ticket.status === "CANCELLED" || ticket.status === "FAILED" || Boolean(ticket.cancelledAt) || (typeof ticket.refundReason === "string" && /cancel/i.test(ticket.refundReason));
+
   let state = { label: t("bdOngoing"), tone: "ok" };
-  if (ticket.status === "CANCELLED" || ticket.status === "FAILED") state = { label: t("obCancelled"), tone: "danger" };
+  if (isCancelled) {
+    state = {
+      label: isItemCancelled ? (language === "mn" ? "Курс цуцлагдсан" : "Course Cancelled") : (t("obCancelled") || "Cancelled"),
+      tone: "danger",
+    };
+  } else if (ticket.status === "CANCELLED" || ticket.status === "FAILED") state = { label: t("obCancelled"), tone: "danger" };
   else if (ticket.status === "REFUND_INITIATED") state = { label: t("tdRefunding"), tone: "warn" };
   else if (ticket.status === "REFUNDED") state = { label: t("tdRefunded"), tone: "muted" };
   else if (ticket.status === "PENDING") state = { label: t("obPending"), tone: "warn" };
@@ -120,10 +128,15 @@ export default function BookingDetailView({ data, ordersHref = "/MyTicketsOrgani
   let notice = null;
   if (ticket.status === "REFUND_INITIATED") {
     notice = { text: t("bdNoticeRefunding"), tone: "warn", icon: "clock" };
-  } else if (ticket.status === "CANCELLED" || ticket.status === "FAILED" || ticket.status === "REFUNDED") {
+  } else if (isCancelled || ticket.status === "CANCELLED" || ticket.status === "FAILED" || ticket.status === "REFUNDED") {
     const refundedOn = ticket.refundedAt ? ymd(ticket.refundedAt) : "";
+    const reason = ticket.refundReason ? ` (${ticket.refundReason})` : "";
     notice = {
-      text: [t("bdNoticeCancelled"), refundedOn ? t("bdNoticeRefunded", { date: refundedOn }) : ""].filter(Boolean).join(" "),
+      text: [
+        isItemCancelled ? (language === "mn" ? "Курс цуцлагдсан." : "Course was cancelled.") : t("bdNoticeCancelled"),
+        reason,
+        refundedOn ? t("bdNoticeRefunded", { date: refundedOn }) : "",
+      ].filter(Boolean).join(" "),
       tone: "danger",
       icon: "alert",
     };
