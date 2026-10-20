@@ -9,6 +9,7 @@ import bookingApi from "@/api/bookingApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import PromotionPlanModal from "@/components/Promotion/PromotionPlanModal";
+import GlobalLoader from "@/components/GlobalLoader";
 
 const money = (n) => `₮${Number(n || 0).toLocaleString("en-US")}`;
 
@@ -380,11 +381,7 @@ function EventDetailsContent() {
   };
 
   if (loading) {
-    return (
-      <div className="d-flex justify-content-center py-5">
-        <Spinner animation="border" style={{ color: "#23ada4" }} />
-      </div>
-    );
+    return <GlobalLoader fullScreen={false} />;
   }
 
   if (!event) {

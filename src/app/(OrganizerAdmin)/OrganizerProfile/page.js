@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import authApi from "@/api/authApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
+import GlobalLoader from "@/components/GlobalLoader";
 
 const EMPTY_FORM = {
   logo: "",
@@ -481,6 +482,10 @@ export default function OrganizerProfilePage() {
   const geo = getGeometry();
   const fr = imgSheet ? frameOf(imgSheet) : { w: 220, h: 220 };
   const displayName = form.name || (isMn ? "Зохион байгуулагч" : "Organizer");
+
+  if (loadingInitial) {
+    return <GlobalLoader fullScreen={false} />;
+  }
 
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "16px" }}>

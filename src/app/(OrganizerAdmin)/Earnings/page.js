@@ -7,6 +7,7 @@ import organizerApi from "@/api/organizerApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import DateRangeCalendarPopover from "@/components/DateRangeCalendarPopover";
+import GlobalLoader from "@/components/GlobalLoader";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -452,6 +453,10 @@ function Page() {
     ["refund", "pyRefund"],
     ["promo", "pyPromo"],
   ];
+
+  if (loading && !txs.length) {
+    return <GlobalLoader fullScreen={false} />;
+  }
 
   return (
     <div className="py-page">

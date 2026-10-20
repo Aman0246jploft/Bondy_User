@@ -5,6 +5,7 @@ import organizerApi from "@/api/organizerApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import DateRangeCalendarPopover from "@/components/DateRangeCalendarPopover";
+import GlobalLoader from "@/components/GlobalLoader";
 
 const TOP_N = 5;
 const MONTHS = ["monthJan", "monthFeb", "monthMar", "monthApr", "monthMay", "monthJun", "monthJul", "monthAug", "monthSep", "monthOct", "monthNov", "monthDec"];
@@ -90,6 +91,10 @@ function page() {
     if (String(src).startsWith("http") || String(src).startsWith("/")) return src;
     return getFullImageUrl(src);
   };
+
+  if (loading && !listings.length) {
+    return <GlobalLoader fullScreen={false} />;
+  }
 
   return (
     <div className="an-page">

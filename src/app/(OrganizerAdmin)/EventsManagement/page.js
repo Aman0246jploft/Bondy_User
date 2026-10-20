@@ -8,6 +8,7 @@ import { useEventContext } from "@/context/EventContext";
 import eventApi from "@/api/eventApi";
 import promotionsApi from "@/api/promotionsApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 function formatMoney(amount) {
@@ -554,9 +555,7 @@ export default function EventsManagementPage() {
 
             {/* Table Rows */}
             {loading ? (
-              <div style={{ padding: "40px", textAlign: "center", color: "var(--bd-gray-500)" }}>
-                {isMn ? "Уншиж байна..." : "Loading events..."}
-              </div>
+              <GlobalLoader fullScreen={false} message={isMn ? "Уншиж байна..." : "Loading events..."} />
             ) : currentList.length === 0 ? (
               <p
                 data-empty

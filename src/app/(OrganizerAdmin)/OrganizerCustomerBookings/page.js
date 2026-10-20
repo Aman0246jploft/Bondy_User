@@ -6,6 +6,7 @@ import bookingApi from "@/api/bookingApi";
 import { useLanguage } from "@/context/LanguageContext";
 import DateRangeCalendarPopover from "@/components/DateRangeCalendarPopover";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 import "./bookings.css";
 
 function money(amount) {
@@ -206,7 +207,7 @@ function BookingsBody() {
 
   let body = null;
   if (loading && rows.length === 0) {
-    body = <div className="ob-state"><b>{t("loading")}</b></div>;
+    body = <GlobalLoader fullScreen={false} message={t("loading")} />;
   } else if (failed) {
     body = (
       <div className="ob-state">

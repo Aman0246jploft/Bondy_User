@@ -11,6 +11,7 @@ import eventApi from "@/api/eventApi";
 import VenueAutocomplete from "../Components/VenueAutocomplete";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatCategoryName } from "@/utils/formatHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 
 // ─── Constants & Fallback Data ────────────────────────────────────────────────
 const DAYS = [
@@ -409,7 +410,7 @@ export default function LearningEditorPage() {
   // ─── Initial Load ──────────────────────────────────────────────────────────
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("courseId");
+    const id = params.get("courseId") || params.get("id");
     if (id) {
       setCourseId(id);
     }
@@ -1018,6 +1019,10 @@ export default function LearningEditorPage() {
   };
 
   const posterPreviewUrl = formData.posterImage?.[0] ? getFullImageUrl(formData.posterImage[0]) : "";
+
+  if (loading) {
+    return <GlobalLoader fullScreen={false} />;
+  }
 
   return (
     <main

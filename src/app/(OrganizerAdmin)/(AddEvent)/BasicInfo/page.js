@@ -9,6 +9,7 @@ import authApi from "@/api/authApi";
 import eventApi from "@/api/eventApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatCategoryName, capitalizeWords } from "@/utils/formatHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 
 // ─── Audited Constants from Prototype ─────────────────────────────────────────
 const FALLBACK_CATS = [
@@ -1613,12 +1614,7 @@ function EventEditorContent() {
   const pinAt = pinPercents(lat, lng);
 
   if (initialLoading) {
-    return (
-      <main style={{ flex: 1, padding: "80px 20px", textAlign: "center", color: "var(--bd-gray-400)" }}>
-        <span className="ew-sp" style={{ width: "24px", height: "24px", margin: "0 auto 16px" }} />
-        <p style={{ margin: 0, fontSize: "15px" }}>{isMn ? "Уншиж байна..." : "Loading event editor..."}</p>
-      </main>
-    );
+    return <GlobalLoader fullScreen={false} message={isMn ? "Уншиж байна..." : "Loading event editor..."} />;
   }
 
   return (

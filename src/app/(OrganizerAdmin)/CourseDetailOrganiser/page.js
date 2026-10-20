@@ -10,6 +10,7 @@ import { formatTime } from "@/utils/timeHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import DateRangeCalendarPopover from "@/components/DateRangeCalendarPopover";
 import PromotionPlanModal from "@/components/Promotion/PromotionPlanModal";
+import GlobalLoader from "@/components/GlobalLoader";
 import toast from "react-hot-toast";
 
 function ExpandableText({ text, limit = 200, className = "" }) {
@@ -365,12 +366,7 @@ function CourseDetailsContent() {
   };
 
   if (loading) {
-    return (
-      <div className="d-flex flex-column align-items-center justify-content-center py-5">
-        <Spinner animation="border" style={{ color: "#23ada4" }} />
-        <p className="mt-3 text-secondary">Loading course details...</p>
-      </div>
-    );
+    return <GlobalLoader fullScreen={false} message={isMn ? "Уншиж байна..." : "Loading course details..."} />;
   }
 
   if (!course) {

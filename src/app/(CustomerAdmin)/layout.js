@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import Sidebar from "./Components/Sidebar";
 import authApi from "@/api/authApi";
 import { useLanguage } from "@/context/LanguageContext";
+import GlobalLoader from "@/components/GlobalLoader";
 import "./customer-admin.css";
 
 export default function RootLayout({ children }) {
@@ -66,7 +67,9 @@ export default function RootLayout({ children }) {
     return t("account") || "Account";
   };
 
-  if (!authorized) return null;
+  if (!authorized) {
+    return <GlobalLoader fullScreen />;
+  }
 
   const isDetail = pathname.includes("/TicketDetails");
 
