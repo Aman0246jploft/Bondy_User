@@ -16,6 +16,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 const STRONG_PASSWORD_REGEX =
   /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$&*~%^()_+=\[\]{};:<>|./?,-]).{8,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NAME_REGEX = /^(?=.*[a-zA-Z\u0400-\u04FF])[a-zA-Z\u0400-\u04FF\s'-]+$/;
 
 function RegisterForm() {
   const router = useRouter();
@@ -81,8 +82,18 @@ function RegisterForm() {
 
   const validateCustomerForm = (data) => {
     const errors = {};
-    if (!data.firstName?.trim()) errors.firstName = t("firstNameRequired") || "Name is required";
-    if (!data.lastName?.trim()) errors.lastName = t("lastNameRequired") || "Surname is required";
+    if (!data.firstName?.trim()) {
+      errors.firstName = t("firstNameRequired") || "Name is required";
+    } else if (!NAME_REGEX.test(data.firstName.trim())) {
+      errors.firstName = t("nameOnlyLetters") || "Name can only contain letters";
+    }
+
+    if (!data.lastName?.trim()) {
+      errors.lastName = t("lastNameRequired") || "Surname is required";
+    } else if (!NAME_REGEX.test(data.lastName.trim())) {
+      errors.lastName = t("lastNameOnlyLetters") || "Surname can only contain letters";
+    }
+
     const emailError = validateEmail(data.email);
     if (emailError) errors.email = emailError;
     if (!data.contactNumber) errors.contactNumber = t("contactNumberRequired");
@@ -99,7 +110,11 @@ function RegisterForm() {
 
   const validateOrganizerForm = (data) => {
     const errors = {};
-    if (!data.fullname?.trim()) errors.fullname = t("fullNameRequired") || "Full Name is required";
+    if (!data.fullname?.trim()) {
+      errors.fullname = t("fullNameRequired") || "Full Name is required";
+    } else if (!NAME_REGEX.test(data.fullname.trim())) {
+      errors.fullname = t("fullNameOnlyLetters") || "Full name can only contain letters";
+    }
     const emailError = validateEmail(data.email);
     if (emailError) errors.email = emailError;
     if (!data.contactNumber) errors.contactNumber = t("contactNumberRequired");
@@ -120,8 +135,24 @@ function RegisterForm() {
       const nextValue = type === "checkbox" ? checked : value;
       const next = { ...prev, [name]: nextValue };
       const nextErrors = { ...customerErrors };
-      if (name === "firstName") nextErrors.firstName = value.trim() ? "" : (t("firstNameRequired") || "Name is required");
-      if (name === "lastName") nextErrors.lastName = value.trim() ? "" : (t("lastNameRequired") || "Surname is required");
+      if (name === "firstName") {
+        if (!value.trim()) {
+          nextErrors.firstName = t("firstNameRequired") || "Name is required";
+        } else if (!NAME_REGEX.test(value.trim())) {
+          nextErrors.firstName = t("nameOnlyLetters") || "Name can only contain letters";
+        } else {
+          nextErrors.firstName = "";
+        }
+      }
+      if (name === "lastName") {
+        if (!value.trim()) {
+          nextErrors.lastName = t("lastNameRequired") || "Surname is required";
+        } else if (!NAME_REGEX.test(value.trim())) {
+          nextErrors.lastName = t("lastNameOnlyLetters") || "Surname can only contain letters";
+        } else {
+          nextErrors.lastName = "";
+        }
+      }
       if (name === "email") nextErrors.email = validateEmail(value);
       if (name === "password") {
         nextErrors.password = validatePassword(value);
@@ -146,7 +177,15 @@ function RegisterForm() {
       const nextValue = type === "checkbox" ? checked : value;
       const next = { ...prev, [name]: nextValue };
       const nextErrors = { ...organizerErrors };
-      if (name === "fullname") nextErrors.fullname = value.trim() ? "" : (t("fullNameRequired") || "Full Name is required");
+      if (name === "fullname") {
+        if (!value.trim()) {
+          nextErrors.fullname = t("fullNameRequired") || "Full Name is required";
+        } else if (!NAME_REGEX.test(value.trim())) {
+          nextErrors.fullname = t("fullNameOnlyLetters") || "Full name can only contain letters";
+        } else {
+          nextErrors.fullname = "";
+        }
+      }
       if (name === "email") nextErrors.email = validateEmail(value);
       if (name === "password") {
         nextErrors.password = validatePassword(value);
@@ -250,7 +289,12 @@ function RegisterForm() {
         router.push("/otp?flow=signup");
       }
     } catch (error) {
-      // toast handled by interceptor
+      const errMsg = error?.response?.data?.message || "";
+      if (errMsg.toLowerCase().includes("name") || errMsg.includes("Нэр")) {
+        setCustomerErrors((prev) => ({ ...prev, firstName: errMsg }));
+      } else if (errMsg.toLowerCase().includes("surname") || errMsg.includes("Овог")) {
+        setCustomerErrors((prev) => ({ ...prev, lastName: errMsg }));
+      }
     } finally {
       setLoading(false);
     }
@@ -285,7 +329,10 @@ function RegisterForm() {
         router.push("/otp?flow=signup");
       }
     } catch (error) {
-      // toast handled by interceptor
+      const errMsg = error?.response?.data?.message || "";
+      if (errMsg.toLowerCase().includes("name") || errMsg.includes("нэр")) {
+        setOrganizerErrors((prev) => ({ ...prev, fullname: errMsg }));
+      }
     } finally {
       setLoading(false);
     }

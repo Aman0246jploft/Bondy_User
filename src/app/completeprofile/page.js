@@ -14,6 +14,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import GlobalLoader from "@/components/GlobalLoader";
 import { getFullImageUrl } from "@/utils/imageHelper";
 
+const NAME_REGEX = /^(?=.*[a-zA-Z\u0400-\u04FF])[a-zA-Z\u0400-\u04FF\s'-]+$/;
+
 export default function CompleteProfile() {
   return (
     <ProtectedRoute>
@@ -327,6 +329,10 @@ function CompleteProfileContent() {
     e.preventDefault();
     if (!customerData.firstName.trim() || !customerData.lastName.trim()) {
       toast.error(isMn ? "Нэр, овгоо оруулна уу" : "Please enter your first and last name");
+      return;
+    }
+    if (!NAME_REGEX.test(customerData.firstName.trim()) || !NAME_REGEX.test(customerData.lastName.trim())) {
+      toast.error(isMn ? "Нэр, овог зөвхөн үсгээс бүрдэх ёстой" : "Name and surname can only contain letters");
       return;
     }
     if (!customerData.dob) {
