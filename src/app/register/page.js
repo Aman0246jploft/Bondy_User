@@ -352,7 +352,7 @@ function RegisterForm() {
         <section className="lg-panel">
           {/* ── Title ── */}
           <h1 className="lg-h1">{t("getStarted")}</h1>
-          <p className="lg-sub">{t("registerForEventsDesc")}</p>
+          {/* <p className="lg-sub">{t("registerForEventsDesc")}</p> */}
 
           {/* ── Customer / Organizer segment ── */}
           <div className="lg-seg" role="tablist">
@@ -481,11 +481,11 @@ function RegisterForm() {
                       {language === "mn" ? (
                         <>
                           Би{" "}
-                          <Link href="/terms" target="_blank" onClick={(e) => e.stopPropagation()}>
+                          <Link href="/terms" target="_blank" style={{ color: "#23ada4", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>
                             Үйлчилгээний нөхцөл
                           </Link>{" "}
                           болон{" "}
-                          <Link href="/privacy-policy" target="_blank" onClick={(e) => e.stopPropagation()}>
+                          <Link href="/privacy-policy" target="_blank" style={{ color: "#23ada4", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>
                             Нууцлалын бодлогыг
                           </Link>{" "}
                           зөвшөөрч байна
@@ -493,11 +493,11 @@ function RegisterForm() {
                       ) : (
                         <>
                           I agree to the{" "}
-                          <Link href="/terms" target="_blank" className="text-decoration-underline text-primary" onClick={(e) => e.stopPropagation()}>
+                          <Link href="/terms" target="_blank" style={{ color: "#23ada4", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>
                             Terms & Conditions
                           </Link>{" "}
                           and{" "}
-                          <Link href="/privacy-policy" target="_blank" className="text-decoration-underline text-primary" onClick={(e) => e.stopPropagation()}>
+                          <Link href="/privacy-policy" target="_blank" style={{ color: "#23ada4", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>
                             Privacy Policy
                           </Link>
                         </>
@@ -636,11 +636,11 @@ function RegisterForm() {
                       {language === "mn" ? (
                         <>
                           Би{" "}
-                          <Link href="/terms" target="_blank" onClick={(e) => e.stopPropagation()}>
+                          <Link href="/terms" target="_blank" style={{ color: "#23ada4", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>
                             Үйлчилгээний нөхцөл
                           </Link>{" "}
                           болон{" "}
-                          <Link href="/privacy-policy" target="_blank" onClick={(e) => e.stopPropagation()}>
+                          <Link href="/privacy-policy" target="_blank" style={{ color: "#23ada4", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>
                             Нууцлалын бодлогыг
                           </Link>{" "}
                           зөвшөөрч байна
@@ -648,11 +648,11 @@ function RegisterForm() {
                       ) : (
                         <>
                           I agree to the{" "}
-                          <Link href="/terms" target="_blank" className="text-decoration-underline text-primary" onClick={(e) => e.stopPropagation()}>
+                          <Link href="/terms" target="_blank" style={{ color: "#23ada4", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>
                             Terms & Conditions
                           </Link>{" "}
                           and{" "}
-                          <Link href="/privacy-policy" target="_blank" className="text-decoration-underline text-primary" onClick={(e) => e.stopPropagation()}>
+                          <Link href="/privacy-policy" target="_blank" style={{ color: "#23ada4", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>
                             Privacy Policy
                           </Link>
                         </>
