@@ -10,6 +10,7 @@ import courseApi from "../../../api/courseApi";
 import authApi from "../../../api/authApi";
 import DateRangeCalendarPopover from "@/components/DateRangeCalendarPopover";
 import { getFullImageUrl } from "../../../utils/imageHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 
 // ─── Number & Date Formatters ──────────────────────────────────────────────────
 function formatMoney(amount, isMn = false) {
@@ -345,6 +346,8 @@ export default function OrganizerDashboardPage() {
       if (!e.target.closest("[data-menuwrap]")) {
         setCreateMenuOpen(false);
         setRangeMenuOpen(false);
+      }
+      if (!e.target.closest(".og-pop") && !e.target.closest(".og-kebab")) {
         setActiveKebab(null);
       }
       if (hoverIndex !== null && !e.target.closest(".og-chart-plot")) {
@@ -578,6 +581,10 @@ export default function OrganizerDashboardPage() {
     const type = selectedPromoteItem.eventType || selectedPromoteItem.eventTitle ? "event" : "course";
     router.push(`/Promotions?id=${selectedPromoteItem._id}&type=${type}`);
   };
+
+  if (loading) {
+    return <GlobalLoader fullScreen={false} />;
+  }
 
   return (
     <div style={{ width: "100%", paddingBottom: "48px" }}>
@@ -1107,8 +1114,9 @@ export default function OrganizerDashboardPage() {
             return (
               <article
                 key={ev._id}
-                className="og-card og-menuwrap"
+                className={`og-card og-menuwrap ${isMenuThis ? "open" : ""}`}
                 data-menuwrap
+                data-open={isMenuThis ? "1" : "0"}
                 onClick={() => router.push(`/EventDetailOrganiser?eventId=${ev._id}`)}
                 role="link"
                 tabIndex={0}
@@ -1192,13 +1200,17 @@ export default function OrganizerDashboardPage() {
                 {/* Popover Actions */}
                 {isMenuThis && (
                   <div
-                    className="og-pop"
-                    style={{ top: "44px", right: "12px" }}
+                    className={`og-pop ${isMenuThis ? "open" : ""}`}
+                    style={{ top: "44px", right: "12px", display: "flex", zIndex: 100 }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
                       type="button"
-                      onClick={() => openPromoteWith(ev)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveKebab(null);
+                        openPromoteWith(ev);
+                      }}
                     >
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <circle cx="12" cy="12" r="10" />
@@ -1209,7 +1221,11 @@ export default function OrganizerDashboardPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => router.push(`/BasicInfo?eventId=${ev._id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveKebab(null);
+                        router.push(`/BasicInfo?eventId=${ev._id}`);
+                      }}
                     >
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M12 20h9" />
@@ -1219,7 +1235,11 @@ export default function OrganizerDashboardPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => router.push(`/EventDetailOrganiser?eventId=${ev._id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveKebab(null);
+                        router.push(`/EventDetailOrganiser?eventId=${ev._id}`);
+                      }}
                     >
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -1283,9 +1303,10 @@ export default function OrganizerDashboardPage() {
             return (
               <article
                 key={cr._id}
-                className="og-card og-menuwrap"
+                className={`og-card og-menuwrap ${isMenuThis ? "open" : ""}`}
                 data-menuwrap
-                onClick={() => router.push(`/programDetails?id=${cr._id}`)}
+                data-open={isMenuThis ? "1" : "0"}
+                onClick={() => router.push(`/CourseDetailOrganiser?courseId=${cr._id}`)}
                 role="link"
                 tabIndex={0}
                 aria-label={cr.courseTitle || cr.title || ""}
@@ -1368,13 +1389,17 @@ export default function OrganizerDashboardPage() {
                 {/* Popover Actions */}
                 {isMenuThis && (
                   <div
-                    className="og-pop"
-                    style={{ top: "44px", right: "12px" }}
+                    className={`og-pop ${isMenuThis ? "open" : ""}`}
+                    style={{ top: "44px", right: "12px", display: "flex", zIndex: 100 }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
                       type="button"
-                      onClick={() => openPromoteWith(cr)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveKebab(null);
+                        openPromoteWith(cr);
+                      }}
                     >
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <circle cx="12" cy="12" r="10" />
@@ -1385,7 +1410,11 @@ export default function OrganizerDashboardPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => router.push(`/AddProgram?id=${cr._id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveKebab(null);
+                        router.push(`/AddProgram?courseId=${cr._id}`);
+                      }}
                     >
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M12 20h9" />
@@ -1395,7 +1424,11 @@ export default function OrganizerDashboardPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => router.push(`/programDetails?id=${cr._id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveKebab(null);
+                        router.push(`/CourseDetailOrganiser?courseId=${cr._id}`);
+                      }}
                     >
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />

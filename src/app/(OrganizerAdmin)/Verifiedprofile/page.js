@@ -8,6 +8,7 @@ import authApi from "@/api/authApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import GlobalLoader from "@/components/GlobalLoader";
 
 const OTP_LEN = 5;
 const MAX_FILE = 5 * 1024 * 1024;
@@ -465,13 +466,7 @@ function VerificationPageContent() {
   const meta = sheet ? { label: statusMetaLabel(items[sheet]?.status, t), tone: statusTone(items[sheet]?.status) } : null;
 
   if (loading && !profile) {
-    return (
-      <div className="vf-page">
-        <div className="vf-skel" />
-        <div className="vf-skel" />
-        <div className="vf-skel" style={{ height: 280 }} />
-      </div>
-    );
+    return <GlobalLoader fullScreen={false} message={t("loading")} />;
   }
   if (failed && !profile) {
     return (

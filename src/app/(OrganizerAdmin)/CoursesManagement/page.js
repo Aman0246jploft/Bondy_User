@@ -7,6 +7,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import courseApi from "@/api/courseApi";
 import promotionsApi from "@/api/promotionsApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 const MONTH_KEYS = ["monthJan", "monthFeb", "monthMar", "monthApr", "monthMay", "monthJun", "monthJul", "monthAug", "monthSep", "monthOct", "monthNov", "monthDec"];
@@ -517,22 +518,7 @@ export default function CoursesManagementPage() {
 
           {/* Loading State */}
           {loading && (
-            <div style={{ padding: "48px 18px", textAlign: "center", color: "var(--bd-gray-500)" }}>
-              <div
-                className="lm-sp"
-                style={{
-                  width: "24px",
-                  height: "24px",
-                  borderWidth: "2.5px",
-                  margin: "0 auto 12px",
-                  borderColor: "rgba(35, 173, 164, 0.25)",
-                  borderTopColor: "var(--acc-bright)",
-                }}
-              />
-              <p style={{ margin: 0, fontSize: "14px" }}>
-                {isMn ? "Сургалтын жагсаалтыг уншиж байна..." : "Loading courses..."}
-              </p>
-            </div>
+            <GlobalLoader fullScreen={false} message={isMn ? "Сургалтын жагсаалтыг уншиж байна..." : "Loading courses..."} />
           )}
 
           {/* Empty State */}

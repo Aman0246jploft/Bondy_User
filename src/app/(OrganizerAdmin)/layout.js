@@ -8,6 +8,7 @@ import { EventProvider } from "@/context/EventContext";
 import authApi from "@/api/authApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 import "./organizer-admin.css";
 
 export default function RootLayout({ children }) {
@@ -171,7 +172,9 @@ export default function RootLayout({ children }) {
     ? getFullImageUrl(profile.profileImage)
     : "/img/default-user.png";
 
-  if (!authorized) return null;
+  if (!authorized) {
+    return <GlobalLoader fullScreen />;
+  }
 
   return (
     <div className="og-shell">

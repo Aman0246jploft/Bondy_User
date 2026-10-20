@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import notificationApi from "@/api/notificationApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSocket } from "@/context/SocketContext";
+import GlobalLoader from "@/components/GlobalLoader";
 import "./notifications.css";
 
 const PAGE_SIZE = 10;
@@ -229,11 +230,7 @@ export default function NotificationPage() {
       </div>
 
       {loading ? (
-        <div className="on-skels">
-          <div className="on-skel" />
-          <div className="on-skel" />
-          <div className="on-skel" />
-        </div>
+        <GlobalLoader fullScreen={false} message={t("loading")} />
       ) : failed ? (
         <div className="on-state">
           <b>{t("failedToLoadNotifications")}</b>

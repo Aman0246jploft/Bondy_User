@@ -8,6 +8,7 @@ import eventApi from "@/api/eventApi";
 import courseApi from "@/api/courseApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 
 function StaffPage() {
   const { t } = useLanguage();
@@ -898,11 +899,7 @@ function StaffPage() {
       </div>
 
       {loadingStaff ? (
-        <div className="sf-list">
-          <div className="sf-skel" style={{ height: 74 }} />
-          <div className="sf-skel" style={{ height: 74 }} />
-          <div className="sf-skel" style={{ height: 74 }} />
-        </div>
+        <GlobalLoader fullScreen={false} message={t("loading")} />
       ) : staffList.length === 0 ? (
         <div className="sf-state">
           <span className="sf-stateI">
