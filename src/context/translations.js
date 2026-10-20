@@ -117,7 +117,7 @@ export const translations = {
     exploreEventsEffortlesslyDesc: "Discover, book, and track events seamlessly with calendar integration and personalized event curation",
     discoverBookTrack: "Discover, book, and track events seamlessly. Whether it's a concert, workshop, or retreat — Bondy is your guide to unforgettable experiences.",
     goodToSeeYou: "Good to See You Again",
-    goodToSeeYouAgain: "Welcome Back,",
+    goodToSeeYouAgain: "Welcome Back",
     smartTravelPlans: "Sign in to continue discovering events, classes, and courses.",
     getStarted: "Sign up",
     registerForEvents: "Register for events and create images. Sign up to continue",
