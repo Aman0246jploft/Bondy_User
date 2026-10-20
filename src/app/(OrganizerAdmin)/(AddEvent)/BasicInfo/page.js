@@ -454,7 +454,16 @@ function EventEditorContent() {
         } else if (ev.accessAndPrivacy !== undefined) {
           setVisibility(ev.accessAndPrivacy ? "public" : "private");
         }
-        if (ev.ageRestriction) setAgeRestriction(String(ev.ageRestriction).replace("+", ""));
+        if (ev.ageRestriction) {
+          const ar = String(ev.ageRestriction).toUpperCase();
+          if (ar === "ALL" || ar === "ALL+") {
+            setAgeRestriction("all");
+          } else if (ar.includes("21")) {
+            setAgeRestriction("21");
+          } else {
+            setAgeRestriction("18");
+          }
+        }
         if (ev.dressCode) setDressCode(ev.dressCode);
         if (typeof ev.notes === "string" && ev.notes.trim()) {
           setEntryNotes(ev.notes);
@@ -1341,7 +1350,7 @@ function EventEditorContent() {
       refundPolicy: isFree ? "" : (policy || ""),
       visibility: visibility === "public" ? "PUBLIC" : "PRIVATE",
       accessAndPrivacy: visibility === "public",
-      ageRestriction: `${ageRestriction}+`,
+      ageRestriction: (ageRestriction === "all" || ageRestriction === "ALL") ? "ALL" : (String(ageRestriction).endsWith("+") ? ageRestriction : `${ageRestriction}+`),
       dressCode: dressCode.trim(),
       notes: entryNotes.trim(),
       tags: entryNotes.trim() ? [entryNotes.trim()] : [],
@@ -2644,7 +2653,7 @@ function EventEditorContent() {
                   <button
                     type="button"
                     className="ew-pk"
-                    aria-selected={ageRestriction === "all"}
+                    aria-selected={ageRestriction === "all" || ageRestriction === "ALL"}
                     onClick={() => setAgeRestriction("all")}
                   >
                     {isMn ? "Бүх насныханд" : "All Ages"}
@@ -2652,7 +2661,7 @@ function EventEditorContent() {
                   <button
                     type="button"
                     className="ew-pk"
-                    aria-selected={ageRestriction === "18"}
+                    aria-selected={ageRestriction === "18" || ageRestriction === "18+"}
                     onClick={() => setAgeRestriction("18")}
                   >
                     18+
@@ -2660,7 +2669,7 @@ function EventEditorContent() {
                   <button
                     type="button"
                     className="ew-pk"
-                    aria-selected={ageRestriction === "21"}
+                    aria-selected={ageRestriction === "21" || ageRestriction === "21+"}
                     onClick={() => setAgeRestriction("21")}
                   >
                     21+
@@ -2938,7 +2947,7 @@ function EventEditorContent() {
                 </span>
                 <span className="ew-kv2">
                   <span>{isMn ? "Насны хязгаарлалт" : "Age restriction"}</span>
-                  <span>{ageRestriction === "all" ? (isMn ? "Бүх насныханд" : "All ages") : `${ageRestriction}+`}</span>
+                  <span>{(ageRestriction === "all" || ageRestriction === "ALL") ? (isMn ? "Бүх насныханд" : "All ages") : (String(ageRestriction).endsWith("+") ? ageRestriction : `${ageRestriction}+`)}</span>
                 </span>
                 <span className="ew-kv2">
                   <span>{isMn ? "Оролцогчдыг харуулах" : "Show attendees"}</span>
