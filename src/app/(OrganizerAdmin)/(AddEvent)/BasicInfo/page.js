@@ -1123,12 +1123,22 @@ function EventEditorContent() {
   const validateStep = (s) => {
     const errs = {};
     if (s === 1) {
-      if (!title.trim()) errs.title = isMn ? "Эвентийн нэрээ бичнэ үү." : "Event title is required.";
+      if (!title.trim()) {
+        errs.title = isMn ? "Эвентийн нэрээ бичнэ үү." : "Event title is required.";
+      } else if (title.trim().length < 3) {
+        errs.title = isMn
+          ? "Талбар хамгийн багадаа 3 тэмдэгттэй байх ёстой."
+          : "The field must contain a minimum of 3 characters.";
+      }
       if (!shortDesc.trim() || shortDesc.length < 10) {
         errs.short = isMn ? "Хамгийн багадаа 10 тэмдэгт бичнэ үү." : "At least 10 characters required.";
       }
-      if (!longDesc.trim() || longDesc.length < 20) {
-        errs.long = isMn ? "Хамгийн багадаа 20 тэмдэгт бичнэ үү." : "At least 20 characters required.";
+      if (!longDesc.trim()) {
+        errs.long = isMn ? "Дэлгэрэнгүй тайлбар шаардлагатай" : "Detailed description is required";
+      } else if (longDesc.trim().length < 40 || longDesc.trim().length > 800) {
+        errs.long = isMn
+          ? "Талбар хамгийн багадаа 40, хамгийн ихдээ 800 тэмдэгттэй байх ёстой."
+          : "The field must contain a minimum of 40 characters and a maximum of 800 characters.";
       }
       if (!categoryId) errs.category = isMn ? "Ангиллаа сонгоно уу." : "Category is required.";
       if (!poster) errs.poster = isMn ? "Постер зургаа оруулна уу." : "Poster image is required.";
@@ -1358,6 +1368,28 @@ function EventEditorContent() {
     if (!title.trim()) {
       flashToast(isMn ? "Эвентийн нэр оруулна уу" : "Event title is required to save draft");
       setErrors((prev) => ({ ...prev, title: isMn ? "Эвентийн нэрээ бичнэ үү." : "Title required" }));
+      return;
+    }
+    if (title.trim().length < 3) {
+      flashToast(isMn ? "Талбар хамгийн багадаа 3 тэмдэгттэй байх ёстой." : "The field must contain a minimum of 3 characters.");
+      setErrors((prev) => ({
+        ...prev,
+        title: isMn ? "Талбар хамгийн багадаа 3 тэмдэгттэй байх ёстой." : "The field must contain a minimum of 3 characters.",
+      }));
+      return;
+    }
+    if (longDesc.trim().length > 0 && (longDesc.trim().length < 40 || longDesc.trim().length > 800)) {
+      flashToast(
+        isMn
+          ? "Талбар хамгийн багадаа 40, хамгийн ихдээ 800 тэмдэгттэй байх ёстой."
+          : "The field must contain a minimum of 40 characters and a maximum of 800 characters."
+      );
+      setErrors((prev) => ({
+        ...prev,
+        long: isMn
+          ? "Талбар хамгийн багадаа 40, хамгийн ихдээ 800 тэмдэгттэй байх ёстой."
+          : "The field must contain a minimum of 40 characters and a maximum of 800 characters.",
+      }));
       return;
     }
 
@@ -1716,8 +1748,33 @@ function EventEditorContent() {
                   className="ew-in"
                   value={title}
                   onChange={(e) => {
-                    setTitle(e.target.value.slice(0, 80));
-                    if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
+                    const val = e.target.value.slice(0, 80);
+                    setTitle(val);
+                    if (val.trim() && val.trim().length < 3) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        title: isMn
+                          ? "Талбар хамгийн багадаа 3 тэмдэгттэй байх ёстой."
+                          : "The field must contain a minimum of 3 characters.",
+                      }));
+                    } else if (errors.title) {
+                      setErrors((prev) => ({ ...prev, title: "" }));
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!title.trim()) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        title: isMn ? "Эвентийн нэрээ бичнэ үү." : "Event title is required.",
+                      }));
+                    } else if (title.trim().length < 3) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        title: isMn
+                          ? "Талбар хамгийн багадаа 3 тэмдэгттэй байх ёстой."
+                          : "The field must contain a minimum of 3 characters.",
+                      }));
+                    }
                   }}
                   maxLength={80}
                   aria-invalid={Boolean(errors.title)}
@@ -1760,8 +1817,33 @@ function EventEditorContent() {
                   style={{ minHeight: "140px" }}
                   value={longDesc}
                   onChange={(e) => {
-                    setLongDesc(e.target.value.slice(0, 800));
-                    if (errors.long) setErrors((prev) => ({ ...prev, long: "" }));
+                    const val = e.target.value.slice(0, 800);
+                    setLongDesc(val);
+                    if (val.trim().length > 0 && (val.trim().length < 40 || val.trim().length > 800)) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        long: isMn
+                          ? "Талбар хамгийн багадаа 40, хамгийн ихдээ 800 тэмдэгттэй байх ёстой."
+                          : "The field must contain a minimum of 40 characters and a maximum of 800 characters.",
+                      }));
+                    } else if (errors.long) {
+                      setErrors((prev) => ({ ...prev, long: "" }));
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!longDesc.trim()) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        long: isMn ? "Дэлгэрэнгүй тайлбар шаардлагатай" : "Detailed description is required",
+                      }));
+                    } else if (longDesc.trim().length < 40 || longDesc.trim().length > 800) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        long: isMn
+                          ? "Талбар хамгийн багадаа 40, хамгийн ихдээ 800 тэмдэгттэй байх ёстой."
+                          : "The field must contain a minimum of 40 characters and a maximum of 800 characters.",
+                      }));
+                    }
                   }}
                   maxLength={800}
                   aria-invalid={Boolean(errors.long)}
@@ -2658,139 +2740,139 @@ function EventEditorContent() {
                 : "After you submit, Bondy reviews the event and publishes it once it is approved."}
             </p>
             <div className="ew-r4">
-            <div className="ew-rcard">
-              <div className="ew-rcH">
-                <b>{isMn ? "Үндсэн мэдээлэл" : "Basic info"}</b>
-                <button type="button" className="ew-edit" onClick={() => handleGotoStep(1)}>
-                  {isMn ? "Засах" : "Edit"}
-                </button>
-              </div>
-
-              <div className="ew-topRow">
-                {poster ? (
-                  <span
-                    className="ew-poster ew-posterR"
-                    style={{ backgroundImage: `url("${getFullImageUrl(poster)}")` }}
-                  />
-                ) : (
-                  <span className="ew-poster ew-posterR" />
-                )}
-                <div style={{ flex: "1 1 230px", minWidth: 0 }}>
-                  <span className="ew-kv2">
-                    <span>{isMn ? "Эвентийн нэр" : "Event name"}</span>
-                    <span>{title.trim() ? titleCaseWords(title.trim()) : "—"}</span>
-                  </span>
-                  <span className="ew-kv2">
-                    <span>{isMn ? "Ангилал" : "Category"}</span>
-                    <span>{categoryName || "—"}</span>
-                  </span>
-                  <span className="ew-kv2 ew-clamp">
-                    <span>{isMn ? "Товч танилцуулга" : "Overview"}</span>
-                    <span>{shortDesc.trim() ? sentenceCaseText(shortDesc.trim()) : "—"}</span>
-                  </span>
-                  <span className="ew-kv2 ew-clamp">
-                    <span>{isMn ? "Дэлгэрэнгүй тайлбар" : "Description"}</span>
-                    <span>{longDesc.trim() ? sentenceCaseText(longDesc.trim()) : "—"}</span>
-                  </span>
+              <div className="ew-rcard">
+                <div className="ew-rcH">
+                  <b>{isMn ? "Үндсэн мэдээлэл" : "Basic info"}</b>
+                  <button type="button" className="ew-edit" onClick={() => handleGotoStep(1)}>
+                    {isMn ? "Засах" : "Edit"}
+                  </button>
                 </div>
-              </div>
 
-              <div className="ew-media">
-                <b>{isMn ? "Медиа" : "Media"}</b>
-                <span className="ew-mrow">
-                  <span>{isMn ? "Постер" : "Poster"}</span>
-                  <b>{poster ? (isMn ? "Оруулсан" : "Added") : "—"}</b>
-                </span>
-                {/* {poster && (
+                <div className="ew-topRow">
+                  {poster ? (
+                    <span
+                      className="ew-poster ew-posterR"
+                      style={{ backgroundImage: `url("${getFullImageUrl(poster)}")` }}
+                    />
+                  ) : (
+                    <span className="ew-poster ew-posterR" />
+                  )}
+                  <div style={{ flex: "1 1 230px", minWidth: 0 }}>
+                    <span className="ew-kv2">
+                      <span>{isMn ? "Эвентийн нэр" : "Event name"}</span>
+                      <span>{title.trim() ? titleCaseWords(title.trim()) : "—"}</span>
+                    </span>
+                    <span className="ew-kv2">
+                      <span>{isMn ? "Ангилал" : "Category"}</span>
+                      <span>{categoryName || "—"}</span>
+                    </span>
+                    <span className="ew-kv2 ew-clamp">
+                      <span>{isMn ? "Товч танилцуулга" : "Overview"}</span>
+                      <span>{shortDesc.trim() ? sentenceCaseText(shortDesc.trim()) : "—"}</span>
+                    </span>
+                    <span className="ew-kv2 ew-clamp">
+                      <span>{isMn ? "Дэлгэрэнгүй тайлбар" : "Description"}</span>
+                      <span>{longDesc.trim() ? sentenceCaseText(longDesc.trim()) : "—"}</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="ew-media">
+                  <b>{isMn ? "Медиа" : "Media"}</b>
+                  <span className="ew-mrow">
+                    <span>{isMn ? "Постер" : "Poster"}</span>
+                    <b>{poster ? (isMn ? "Оруулсан" : "Added") : "—"}</b>
+                  </span>
+                  {/* {poster && (
                   <span
                     className="ew-poster ew-posterR ew-reviewPoster"
                     style={{ backgroundImage: `url("${getFullImageUrl(poster)}")` }}
                   />
                 )} */}
-                <span className="ew-mrow">
-                  <span>{isMn ? "Зургийн цомог" : "Photo gallery"}</span>
-                  <b>
-                    {gallery.length
-                      ? (isMn ? `${gallery.length} зураг` : (gallery.length === 1 ? "1 image" : `${gallery.length} images`))
-                      : "—"}
-                  </b>
-                </span>
-                {gallery.length > 0 && (
-                  <div className="ew-gal ew-reviewGal">
-                    {gallery.map((imgUrl, idx) => (
-                      <span
-                        key={`${imgUrl}-${idx}`}
-                        className="ew-gi"
-                        role="img"
-                        aria-label={isMn ? `Зураг ${idx + 1}` : `Gallery image ${idx + 1}`}
-                        style={{ backgroundImage: `url("${getFullImageUrl(imgUrl)}")` }}
-                      />
-                    ))}
-                  </div>
-                )}
-                <span className="ew-mrow">
-                  <span>{isMn ? "Тизер видео" : "Teaser video"}</span>
-                  <b>{teaserVideo ? (teaserName || (isMn ? "Оруулсан" : "Added")) : "—"}</b>
-                </span>
-                {teaserVideo && (
-                  <video
-                    className="ew-reviewVideo"
-                    controls
-                    playsInline
-                    preload="metadata"
-                    src={getFullImageUrl(teaserVideo)}
-                  />
-                )}
+                  <span className="ew-mrow">
+                    <span>{isMn ? "Зургийн цомог" : "Photo gallery"}</span>
+                    <b>
+                      {gallery.length
+                        ? (isMn ? `${gallery.length} зураг` : (gallery.length === 1 ? "1 image" : `${gallery.length} images`))
+                        : "—"}
+                    </b>
+                  </span>
+                  {gallery.length > 0 && (
+                    <div className="ew-gal ew-reviewGal">
+                      {gallery.map((imgUrl, idx) => (
+                        <span
+                          key={`${imgUrl}-${idx}`}
+                          className="ew-gi"
+                          role="img"
+                          aria-label={isMn ? `Зураг ${idx + 1}` : `Gallery image ${idx + 1}`}
+                          style={{ backgroundImage: `url("${getFullImageUrl(imgUrl)}")` }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  <span className="ew-mrow">
+                    <span>{isMn ? "Тизер видео" : "Teaser video"}</span>
+                    <b>{teaserVideo ? (teaserName || (isMn ? "Оруулсан" : "Added")) : "—"}</b>
+                  </span>
+                  {teaserVideo && (
+                    <video
+                      className="ew-reviewVideo"
+                      controls
+                      playsInline
+                      preload="metadata"
+                      src={getFullImageUrl(teaserVideo)}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="ew-rcard">
-              <div className="ew-rcH">
-                <b>{isMn ? "Огноо ба байршил" : "Date and location"}</b>
-                <button type="button" className="ew-edit" onClick={() => handleGotoStep(2)}>
-                  {isMn ? "Засах" : "Edit"}
-                </button>
-              </div>
-              <div className="ew-topRow">
-                {address ? (
-                  <span className="ew-mapS ew-mapP">
-                    <span className="ew-pin" style={{ left: pinAt.left, top: pinAt.top }}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <div className="ew-rcard">
+                <div className="ew-rcH">
+                  <b>{isMn ? "Огноо ба байршил" : "Date and location"}</b>
+                  <button type="button" className="ew-edit" onClick={() => handleGotoStep(2)}>
+                    {isMn ? "Засах" : "Edit"}
+                  </button>
+                </div>
+                <div className="ew-topRow">
+                  {address ? (
+                    <span className="ew-mapS ew-mapP">
+                      <span className="ew-pin" style={{ left: pinAt.left, top: pinAt.top }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" stroke="currentColor" strokeWidth="1.6" />
+                          <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.6" />
+                        </svg>
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="ew-mapS">
+                      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" stroke="currentColor" strokeWidth="1.6" />
                         <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.6" />
                       </svg>
                     </span>
-                  </span>
-                ) : (
-                  <span className="ew-mapS">
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" stroke="currentColor" strokeWidth="1.6" />
-                      <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.6" />
-                    </svg>
-                  </span>
-                )}
-                <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                  <span className="ew-kv2">
-                    <span>{isMn ? "Байршлын нэр" : "Venue name"}</span>
-                    <span>{venueName || "—"}</span>
-                  </span>
-                  <span className="ew-kv2">
-                    <span>{isMn ? "Хаяг" : "Address"}</span>
-                    <span>{address || "—"}</span>
-                  </span>
+                  )}
+                  <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                    <span className="ew-kv2">
+                      <span>{isMn ? "Байршлын нэр" : "Venue name"}</span>
+                      <span>{venueName || "—"}</span>
+                    </span>
+                    <span className="ew-kv2">
+                      <span>{isMn ? "Хаяг" : "Address"}</span>
+                      <span>{address || "—"}</span>
+                    </span>
+                  </div>
                 </div>
+                <span className="ew-kv2">
+                  <span>{isMn ? "Эхлэх" : "Starts"}</span>
+                  <span>{startDate ? formatReviewWhen(startDate, isMn, startTime) : "—"}</span>
+                </span>
+                <span className="ew-kv2">
+                  <span>{isMn ? "Дуусах" : "Ends"}</span>
+                  <span>{endDate ? formatReviewWhen(endDate, isMn, endTime) : "—"}</span>
+                </span>
               </div>
-              <span className="ew-kv2">
-                <span>{isMn ? "Эхлэх" : "Starts"}</span>
-                <span>{startDate ? formatReviewWhen(startDate, isMn, startTime) : "—"}</span>
-              </span>
-              <span className="ew-kv2">
-                <span>{isMn ? "Дуусах" : "Ends"}</span>
-                <span>{endDate ? formatReviewWhen(endDate, isMn, endTime) : "—"}</span>
-              </span>
-            </div>
 
-            {/* Tickets */}
+              {/* Tickets */}
               <div className="ew-rcard">
                 <div className="ew-rcH">
                   <b>{isFree ? (isMn ? "Бүртгэл" : "Registrations") : (isMn ? "Тасалбарууд" : "Tickets")}</b>
@@ -2804,15 +2886,13 @@ function EventEditorContent() {
                     <span className="ew-tkRowT">
                       <b>{isMn ? "Бүртгэл" : "Registrations"}</b>
                       <small>
-                        {`${freeCap || 0} ${isMn ? "орон" : "spots"} · ${
-                          freeSs
-                            ? formatReviewWhen(freeSs, isMn)
-                            : (isMn ? "Нийтлэгдсэн даруй" : "As soon as it is published")
-                        } – ${
-                          freeSe
+                        {`${freeCap || 0} ${isMn ? "орон" : "spots"} · ${freeSs
+                          ? formatReviewWhen(freeSs, isMn)
+                          : (isMn ? "Нийтлэгдсэн даруй" : "As soon as it is published")
+                          } – ${freeSe
                             ? formatReviewWhen(freeSe, isMn)
                             : (isMn ? "Эвент эхлэх хүртэл" : "Until the event starts")
-                        }`}
+                          }`}
                       </small>
                     </span>
                     <span className="ew-tkRowV">{isMn ? "Үнэгүй" : "Free"}</span>
@@ -2823,9 +2903,8 @@ function EventEditorContent() {
                       <span className="ew-tkRowT">
                         <b>{t.name || (isMn ? "Нэргүй тасалбар" : "Untitled ticket")}</b>
                         <small>
-                          {`${t.cap || 0} ${isMn ? "ширхэг" : "tickets"}${
-                            t.ss ? ` · ${formatReviewWhen(t.ss, isMn)} – ${t.se ? formatReviewWhen(t.se, isMn) : "—"}` : ""
-                          }`}
+                          {`${t.cap || 0} ${isMn ? "ширхэг" : "tickets"}${t.ss ? ` · ${formatReviewWhen(t.ss, isMn)} – ${t.se ? formatReviewWhen(t.se, isMn) : "—"}` : ""
+                            }`}
                         </small>
                       </span>
                       <span className="ew-tkRowV">
