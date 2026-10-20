@@ -456,7 +456,7 @@ export default function Page() {
                 aria-selected={activeTab === "Customer" ? "true" : "false"}
                 onClick={() => switchTab("Customer")}
               >
-                {t("customer")}
+                {t("user") || "User"}
               </button>
               <button
                 type="button"

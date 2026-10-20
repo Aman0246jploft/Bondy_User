@@ -5653,8 +5653,12 @@ a.view-map {
 }
 
 .lg-terms a {
-  color: var(--acc-bright);
+  color: #23ada4 !important;
   text-decoration: underline;
+}
+
+.lg-terms a:hover {
+  color: #1ea29a !important;
 }
 
 /* ── Staff login link ── */
