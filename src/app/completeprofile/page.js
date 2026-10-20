@@ -9,11 +9,6 @@ import Header from "@/components/Header";
 import {
   Upload,
   Camera,
-  ArrowLeft,
-  ShieldCheck,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import GlobalLoader from "@/components/GlobalLoader";
@@ -406,7 +401,14 @@ function CompleteProfileContent() {
                       className="lg-back"
                       aria-label="Back"
                     >
-                      <ArrowLeft size={18} />
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                          d="M 7.238 0.181 C 7.553 0.45 7.589 0.924 7.319 1.238 L 1.738 7.75 L 7.319 14.262 C 7.589 14.576 7.553 15.05 7.238 15.319 C 6.924 15.589 6.45 15.553 6.181 15.238 L 0.181 8.238 C -0.06 7.957 -0.06 7.543 0.181 7.262 L 6.181 0.262 C 6.45 -0.053 6.924 -0.089 7.238 0.181 Z"
+                          fill="currentColor"
+                          fillRule="evenodd"
+                          transform="matrix(1 0 0 1 8.250 4.250)"
+                        />
+                      </svg>
                     </button>
                     <span className="lg-eyebrow">
                       {isMn ? "Зохион байгуулагчийн хүсэлт · 1/2" : "Organizer application · 1/2"}
@@ -529,7 +531,14 @@ function CompleteProfileContent() {
                       className="lg-back"
                       aria-label="Back"
                     >
-                      <ArrowLeft size={18} />
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                          d="M 7.238 0.181 C 7.553 0.45 7.589 0.924 7.319 1.238 L 1.738 7.75 L 7.319 14.262 C 7.589 14.576 7.553 15.05 7.238 15.319 C 6.924 15.589 6.45 15.553 6.181 15.238 L 0.181 8.238 C -0.06 7.957 -0.06 7.543 0.181 7.262 L 6.181 0.262 C 6.45 -0.053 6.924 -0.089 7.238 0.181 Z"
+                          fill="currentColor"
+                          fillRule="evenodd"
+                          transform="matrix(1 0 0 1 8.250 4.250)"
+                        />
+                      </svg>
                     </button>
                     <span className="lg-eyebrow">
                       {isMn ? "Зохион байгуулагчийн хүсэлт · 2/2" : "Organizer application · 2/2"}
@@ -591,7 +600,20 @@ function CompleteProfileContent() {
                   {/* Verification Note Banner */}
                   <div className="lg-alert" data-tone="ok" style={{ marginTop: 20 }}>
                     <span style={{ display: "inline-flex", flexShrink: 0, color: "var(--acc-bright)" }}>
-                      <ShieldCheck size={18} />
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                          d="M 12.809 9.25 C 13.085 8.941 13.058 8.466 12.75 8.191 C 12.441 7.915 11.966 7.942 11.691 8.25 L 8.679 11.624 L 7.809 10.65 C 7.534 10.342 7.059 10.315 6.75 10.591 C 6.442 10.866 6.415 11.341 6.691 11.65 L 8.119 13.25 C 8.261 13.409 8.465 13.5 8.679 13.5 C 8.892 13.5 9.096 13.409 9.238 13.25 L 12.809 9.25 Z"
+                          fill="currentColor"
+                          fillRule="nonzero"
+                          transform="matrix(1 0 0 1 2.250 1.250)"
+                        />
+                        <path
+                          d="M 9.75 0 C 8.812 0 7.917 0.307 6.473 0.801 L 5.746 1.05 C 4.265 1.557 3.121 1.949 2.303 2.281 C 1.891 2.448 1.536 2.611 1.251 2.776 C 0.976 2.936 0.701 3.135 0.514 3.402 C 0.329 3.665 0.233 3.989 0.173 4.301 C 0.11 4.626 0.073 5.015 0.048 5.461 C 0 6.348 0 7.564 0 9.14 L 0 10.741 C 0 16.842 4.608 19.768 7.348 20.965 L 7.375 20.976 C 7.715 21.125 8.035 21.264 8.402 21.358 C 8.789 21.458 9.201 21.5 9.75 21.5 C 10.299 21.5 10.711 21.458 11.098 21.358 C 11.465 21.264 11.785 21.125 12.125 20.976 L 12.152 20.965 C 14.892 19.768 19.5 16.842 19.5 10.741 L 19.5 9.14 C 19.5 7.564 19.5 6.348 19.452 5.461 C 19.427 5.015 19.39 4.626 19.327 4.301 C 19.267 3.989 19.171 3.665 18.986 3.402 C 18.799 3.135 18.524 2.936 18.249 2.776 C 17.964 2.611 17.609 2.448 17.197 2.281 C 16.379 1.949 15.235 1.557 13.754 1.05 L 13.027 0.801 C 11.583 0.307 10.688 0 9.75 0 Z M 6.831 2.264 C 8.445 1.712 9.092 1.5 9.75 1.5 C 10.408 1.5 11.055 1.712 12.669 2.264 L 13.242 2.46 C 14.755 2.978 15.858 3.356 16.632 3.671 C 17.019 3.828 17.299 3.959 17.496 4.074 C 17.593 4.13 17.66 4.176 17.704 4.213 C 17.742 4.243 17.757 4.261 17.759 4.263 C 17.761 4.267 17.773 4.287 17.791 4.337 C 17.811 4.393 17.833 4.473 17.854 4.585 C 17.898 4.812 17.931 5.123 17.954 5.543 C 18 6.384 18 7.558 18 9.167 L 18 10.741 C 18 15.916 14.13 18.463 11.551 19.59 C 11.18 19.752 10.965 19.844 10.726 19.905 C 10.498 19.964 10.22 20 9.75 20 C 9.28 20 9.002 19.964 8.774 19.905 C 8.535 19.844 8.32 19.752 7.949 19.59 C 5.37 18.463 1.5 15.916 1.5 10.741 L 1.5 9.167 C 1.5 7.558 1.5 6.384 1.546 5.543 C 1.569 5.123 1.602 4.812 1.646 4.585 C 1.667 4.473 1.689 4.393 1.709 4.337 C 1.727 4.287 1.739 4.267 1.741 4.263 C 1.743 4.261 1.758 4.244 1.796 4.213 C 1.84 4.176 1.907 4.13 2.004 4.074 C 2.201 3.959 2.481 3.828 2.868 3.671 C 3.642 3.356 4.745 2.978 6.258 2.46 L 6.831 2.264 Z\"
+                          fill="currentColor"
+                          fillRule="evenodd"
+                          transform="matrix(1 0 0 1 2.250 1.250)"
+                        />
+                      </svg>
                     </span>
                     <span>
                       {isMn ? (
@@ -632,7 +654,7 @@ function CompleteProfileContent() {
 
               {/* ──────────────── 3. APPLICATION UNDER REVIEW ──────────────── */}
               {orgStep === "review" && (
-                <div>
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   <div className="lg-top">
                     <button
                       type="button"
@@ -640,7 +662,14 @@ function CompleteProfileContent() {
                       className="lg-back"
                       aria-label="Back"
                     >
-                      <ArrowLeft size={18} />
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                          d="M 7.238 0.181 C 7.553 0.45 7.589 0.924 7.319 1.238 L 1.738 7.75 L 7.319 14.262 C 7.589 14.576 7.553 15.05 7.238 15.319 C 6.924 15.589 6.45 15.553 6.181 15.238 L 0.181 8.238 C -0.06 7.957 -0.06 7.543 0.181 7.262 L 6.181 0.262 C 6.45 -0.053 6.924 -0.089 7.238 0.181 Z"
+                          fill="currentColor"
+                          fillRule="evenodd"
+                          transform="matrix(1 0 0 1 8.250 4.250)"
+                        />
+                      </svg>
                     </button>
                     <span className="lg-eyebrow">
                       {isMn ? "ЗОХИОН БАЙГУУЛАГЧИЙН ХҮСЭЛТ" : "ORGANIZER APPLICATION"}
@@ -649,9 +678,21 @@ function CompleteProfileContent() {
 
                   <span
                     className="lg-mark"
-                    style={{ background: "rgba(255, 138, 51, 0.14)", color: "#FF8A33" }}
+                    style={{
+                      display: "flex",
+                      margin: "0 auto 22px",
+                      background: "rgba(255, 138, 51, 0.14)",
+                      color: "#FF8A33",
+                    }}
                   >
-                    <Clock size={34} />
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M 7 0.75 C 7 0.336 7.336 0 7.75 0 L 11.75 0 C 12.164 0 12.5 0.336 12.5 0.75 C 12.5 1.164 12.164 1.5 11.75 1.5 L 7.75 1.5 C 7.336 1.5 7 1.164 7 0.75 Z M 9.75 3.5 C 5.194 3.5 1.5 7.194 1.5 11.75 C 1.5 16.306 5.194 20 9.75 20 C 14.306 20 18 16.306 18 11.75 C 18 7.194 14.306 3.5 9.75 3.5 Z M 0 11.75 C 0 6.365 4.365 2 9.75 2 C 15.135 2 19.5 6.365 19.5 11.75 C 19.5 17.135 15.135 21.5 9.75 21.5 C 4.365 21.5 0 17.135 0 11.75 Z M 9.75 7 C 10.164 7 10.5 7.336 10.5 7.75 L 10.5 11.75 C 10.5 12.164 10.164 12.5 9.75 12.5 C 9.336 12.5 9 12.164 9 11.75 L 9 7.75 C 9 7.336 9.336 7 9.75 7 Z"
+                        fill="currentColor"
+                        fillRule="evenodd"
+                        transform="matrix(1 0 0 1 2.250 1.250)"
+                      />
+                    </svg>
                   </span>
 
                   <h1 className="lg-h1" style={{ textAlign: "center" }}>
@@ -696,7 +737,7 @@ function CompleteProfileContent() {
 
               {/* ──────────────── 4. APPLICATION APPROVED ──────────────── */}
               {orgStep === "approved" && (
-                <div>
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   <div className="lg-top">
                     <button
                       type="button"
@@ -704,7 +745,14 @@ function CompleteProfileContent() {
                       className="lg-back"
                       aria-label="Back"
                     >
-                      <ArrowLeft size={18} />
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                          d="M 7.238 0.181 C 7.553 0.45 7.589 0.924 7.319 1.238 L 1.738 7.75 L 7.319 14.262 C 7.589 14.576 7.553 15.05 7.238 15.319 C 6.924 15.589 6.45 15.553 6.181 15.238 L 0.181 8.238 C -0.06 7.957 -0.06 7.543 0.181 7.262 L 6.181 0.262 C 6.45 -0.053 6.924 -0.089 7.238 0.181 Z"
+                          fill="currentColor"
+                          fillRule="evenodd"
+                          transform="matrix(1 0 0 1 8.250 4.250)"
+                        />
+                      </svg>
                     </button>
                     <span className="lg-eyebrow">
                       {isMn ? "ЗОХИОН БАЙГУУЛАГЧИЙН ХҮСЭЛТ" : "ORGANIZER APPLICATION"}
@@ -713,9 +761,27 @@ function CompleteProfileContent() {
 
                   <span
                     className="lg-mark"
-                    style={{ background: "rgba(35, 173, 164, 0.14)", color: "var(--acc-bright)" }}
+                    style={{
+                      display: "flex",
+                      margin: "0 auto 22px",
+                      background: "rgba(35, 173, 164, 0.14)",
+                      color: "var(--acc-bright)",
+                    }}
                   >
-                    <CheckCircle2 size={34} />
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M 14.78 8.78 C 15.073 8.487 15.073 8.013 14.78 7.72 C 14.487 7.427 14.013 7.427 13.72 7.72 L 9.25 12.189 L 7.78 10.72 C 7.487 10.427 7.013 10.427 6.72 10.72 C 6.427 11.013 6.427 11.487 6.72 11.78 L 8.72 13.78 C 9.013 14.073 9.487 14.073 9.78 13.78 L 14.78 8.78 Z"
+                        fill="currentColor"
+                        fillRule="nonzero"
+                        transform="matrix(1 0 0 1 1.250 1.250)"
+                      />
+                      <path
+                        d="M 10.75 0 C 4.813 0 0 4.813 0 10.75 C 0 16.687 4.813 21.5 10.75 21.5 C 16.687 21.5 21.5 16.687 21.5 10.75 C 21.5 4.813 16.687 0 10.75 0 Z M 1.5 10.75 C 1.5 5.641 5.641 1.5 10.75 1.5 C 15.859 1.5 20 5.641 20 10.75 C 20 15.859 15.859 20 10.75 20 C 5.641 20 1.5 15.859 1.5 10.75 Z"
+                        fill="currentColor"
+                        fillRule="evenodd"
+                        transform="matrix(1 0 0 1 1.250 1.250)"
+                      />
+                    </svg>
                   </span>
 
                   <h1 className="lg-h1" style={{ textAlign: "center" }}>
@@ -752,7 +818,7 @@ function CompleteProfileContent() {
 
               {/* ──────────────── 5. APPLICATION REJECTED ──────────────── */}
               {orgStep === "rejected" && (
-                <div>
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   <div className="lg-top">
                     <button
                       type="button"
@@ -760,7 +826,14 @@ function CompleteProfileContent() {
                       className="lg-back"
                       aria-label="Back"
                     >
-                      <ArrowLeft size={18} />
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                          d="M 7.238 0.181 C 7.553 0.45 7.589 0.924 7.319 1.238 L 1.738 7.75 L 7.319 14.262 C 7.589 14.576 7.553 15.05 7.238 15.319 C 6.924 15.589 6.45 15.553 6.181 15.238 L 0.181 8.238 C -0.06 7.957 -0.06 7.543 0.181 7.262 L 6.181 0.262 C 6.45 -0.053 6.924 -0.089 7.238 0.181 Z"
+                          fill="currentColor"
+                          fillRule="evenodd"
+                          transform="matrix(1 0 0 1 8.250 4.250)"
+                        />
+                      </svg>
                     </button>
                     <span className="lg-eyebrow">
                       {isMn ? "ЗОХИОН БАЙГУУЛАГЧИЙН ХҮСЭЛТ" : "ORGANIZER APPLICATION"}
@@ -769,9 +842,27 @@ function CompleteProfileContent() {
 
                   <span
                     className="lg-mark"
-                    style={{ background: "rgba(255, 90, 90, 0.13)", color: "#FF5A5A" }}
+                    style={{
+                      display: "flex",
+                      margin: "0 auto 22px",
+                      background: "rgba(255, 90, 90, 0.13)",
+                      color: "#FF5A5A",
+                    }}
                   >
-                    <AlertCircle size={34} />
+                    <svg
+                      width="34"
+                      height="34"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
                   </span>
 
                   <h1 className="lg-h1" style={{ textAlign: "center" }}>
@@ -785,7 +876,20 @@ function CompleteProfileContent() {
 
                   <div className="lg-alert" data-tone="err" style={{ marginTop: 22 }}>
                     <span style={{ display: "inline-flex", flexShrink: 0 }}>
-                      <AlertCircle size={18} />
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
                     </span>
                     <span>
                       {rejectionReason ||
@@ -828,7 +932,14 @@ function CompleteProfileContent() {
                   className="lg-back"
                   aria-label="Back"
                 >
-                  <ArrowLeft size={18} />
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M 7.238 0.181 C 7.553 0.45 7.589 0.924 7.319 1.238 L 1.738 7.75 L 7.319 14.262 C 7.589 14.576 7.553 15.05 7.238 15.319 C 6.924 15.589 6.45 15.553 6.181 15.238 L 0.181 8.238 C -0.06 7.957 -0.06 7.543 0.181 7.262 L 6.181 0.262 C 6.45 -0.053 6.924 -0.089 7.238 0.181 Z"
+                      fill="currentColor"
+                      fillRule="evenodd"
+                      transform="matrix(1 0 0 1 8.250 4.250)"
+                    />
+                  </svg>
                 </button>
                 <span className="lg-eyebrow">
                   {isMn ? "ХЭРЭГЛЭГЧИЙН БҮРТГЭЛ" : "COMPLETE PROFILE"}

@@ -5824,12 +5824,12 @@ a.view-map {
 
 /* ── Marks / Circular Icon Badges ── */
 .lg-mark {
-  display: inline-flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   width: 76px;
   height: 76px;
-  margin: 0 auto 22px;
+  margin: 0 auto 22px !important;
   border-radius: 999px;
 }
 
