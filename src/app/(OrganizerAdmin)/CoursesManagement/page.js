@@ -46,7 +46,7 @@ function getCourseBadge(course, tab, t) {
 function getEnrolledString(course) {
   const taken = Number(course.totalEnrollments ?? course.totalBooked ?? course.acquiredSeats ?? 0);
   const cap = Number(course.totalSeats ?? 0);
-  return cap > 0 ? `${taken} / ${cap}` : `${taken}`;
+  return cap > 0 ? `${taken} / ${Math.max(cap, taken)}` : `${taken}`;
 }
 
 export default function CoursesManagementPage() {
