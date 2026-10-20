@@ -448,7 +448,9 @@ function EventEditorContent() {
         if (ev.refundPolicy) {
           setPolicy(canonicalRefundPolicy(ev.refundPolicy));
         }
-        if (ev.accessAndPrivacy !== undefined) {
+        if (ev.visibility) {
+          setVisibility(String(ev.visibility).toLowerCase() === "private" ? "private" : "public");
+        } else if (ev.accessAndPrivacy !== undefined) {
           setVisibility(ev.accessAndPrivacy ? "public" : "private");
         }
         if (ev.ageRestriction) setAgeRestriction(String(ev.ageRestriction).replace("+", ""));
@@ -1326,6 +1328,7 @@ function EventEditorContent() {
       tickets: formattedTickets,
       totalTickets: totalTicketsCount,
       refundPolicy: isFree ? "" : (policy || ""),
+      visibility: visibility === "public" ? "PUBLIC" : "PRIVATE",
       accessAndPrivacy: visibility === "public",
       ageRestriction: `${ageRestriction}+`,
       dressCode: dressCode.trim(),
