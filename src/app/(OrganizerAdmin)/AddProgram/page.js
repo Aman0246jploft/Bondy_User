@@ -533,6 +533,10 @@ export default function LearningEditorPage() {
     // Step 1 Validation
     if (!formData.courseTitle.trim()) {
       errs.courseTitle = isMn ? "Сургалтын нэрээ оруулна уу." : "Course title is required.";
+    } else if (formData.courseTitle.trim().length < 3) {
+      errs.courseTitle = isMn
+        ? "Талбар хамгийн багадаа 3 тэмдэгттэй байх ёстой."
+        : "The field must contain a minimum of 3 characters.";
     }
     if (formData.shortdesc.trim().length < 20) {
       errs.shortdesc = isMn ? "Хамгийн багадаа 20 тэмдэгт бичнэ үү." : "Short description must be at least 20 characters.";
@@ -1126,6 +1130,12 @@ export default function LearningEditorPage() {
                   onChange={(e) => {
                     setFormData((prev) => ({ ...prev, courseTitle: e.target.value }));
                     setDirty(true);
+                    if (e.target.value.trim().length < 3) {
+                      setTouched((prev) => ({ ...prev, 1: true }));
+                    }
+                  }}
+                  onBlur={() => {
+                    setTouched((prev) => ({ ...prev, 1: true }));
                   }}
                 />
                 <span className="lw-count">{formData.courseTitle.length} / 80</span>

@@ -1123,7 +1123,13 @@ function EventEditorContent() {
   const validateStep = (s) => {
     const errs = {};
     if (s === 1) {
-      if (!title.trim()) errs.title = isMn ? "Эвентийн нэрээ бичнэ үү." : "Event title is required.";
+      if (!title.trim()) {
+        errs.title = isMn ? "Эвентийн нэрээ бичнэ үү." : "Event title is required.";
+      } else if (title.trim().length < 3) {
+        errs.title = isMn
+          ? "Талбар хамгийн багадаа 3 тэмдэгттэй байх ёстой."
+          : "The field must contain a minimum of 3 characters.";
+      }
       if (!shortDesc.trim() || shortDesc.length < 10) {
         errs.short = isMn ? "Хамгийн багадаа 10 тэмдэгт бичнэ үү." : "At least 10 characters required.";
       }
@@ -1358,6 +1364,14 @@ function EventEditorContent() {
     if (!title.trim()) {
       flashToast(isMn ? "Эвентийн нэр оруулна уу" : "Event title is required to save draft");
       setErrors((prev) => ({ ...prev, title: isMn ? "Эвентийн нэрээ бичнэ үү." : "Title required" }));
+      return;
+    }
+    if (title.trim().length < 3) {
+      flashToast(isMn ? "Талбар хамгийн багадаа 3 тэмдэгттэй байх ёстой." : "The field must contain a minimum of 3 characters.");
+      setErrors((prev) => ({
+        ...prev,
+        title: isMn ? "Талбар хамгийн багадаа 3 тэмдэгттэй байх ёстой." : "The field must contain a minimum of 3 characters.",
+      }));
       return;
     }
 
@@ -1716,8 +1730,33 @@ function EventEditorContent() {
                   className="ew-in"
                   value={title}
                   onChange={(e) => {
-                    setTitle(e.target.value.slice(0, 80));
-                    if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
+                    const val = e.target.value.slice(0, 80);
+                    setTitle(val);
+                    if (val.trim() && val.trim().length < 3) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        title: isMn
+                          ? "Талбар хамгийн багадаа 3 тэмдэгттэй байх ёстой."
+                          : "The field must contain a minimum of 3 characters.",
+                      }));
+                    } else if (errors.title) {
+                      setErrors((prev) => ({ ...prev, title: "" }));
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!title.trim()) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        title: isMn ? "Эвентийн нэрээ бичнэ үү." : "Event title is required.",
+                      }));
+                    } else if (title.trim().length < 3) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        title: isMn
+                          ? "Талбар хамгийн багадаа 3 тэмдэгттэй байх ёстой."
+                          : "The field must contain a minimum of 3 characters.",
+                      }));
+                    }
                   }}
                   maxLength={80}
                   aria-invalid={Boolean(errors.title)}
