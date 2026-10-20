@@ -541,8 +541,12 @@ export default function LearningEditorPage() {
     if (formData.shortdesc.trim().length < 20) {
       errs.shortdesc = isMn ? "Хамгийн багадаа 20 тэмдэгт бичнэ үү." : "Short description must be at least 20 characters.";
     }
-    if (formData.longdesc.trim().length < 40) {
-      errs.longdesc = isMn ? "Хамгийн багадаа 40 тэмдэгт бичнэ үү." : "Detailed description must be at least 40 characters.";
+    if (!formData.longdesc.trim()) {
+      errs.longdesc = isMn ? "Дэлгэрэнгүй тайлбар шаардлагатай." : "Detailed description is required.";
+    } else if (formData.longdesc.trim().length < 40 || formData.longdesc.trim().length > 800) {
+      errs.longdesc = isMn
+        ? "Талбар хамгийн багадаа 40, хамгийн ихдээ 800 тэмдэгттэй байх ёстой."
+        : "The field must contain a minimum of 40 characters and a maximum of 800 characters.";
     }
     if (formData.whatYouWillLearn.trim().length < 20) {
       errs.whatYouWillLearn = isMn ? "Суралцах үр дүнгээ бичнэ үү (дор хаяж 20 тэмдэгт)." : "Learning outcomes required (min 20 chars).";
