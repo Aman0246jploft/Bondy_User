@@ -363,7 +363,13 @@ function ForgotPasswordContent() {
   const formattedTimer = `${mm}:${ss}`;
 
   // Eyebrow label
-  const eyebrowText = isMn ? "НУУЦ ҮГ СЭРГЭЭХ" : "RESET PASSWORD";
+  const eyebrowText =
+    {
+      forgot: t("forgotEyebrow") || (isMn ? "НУУЦ ҮГ СЭРГЭЭХ" : "RESET PASSWORD"),
+      otp: t("otpEyebrow") || (isMn ? "НУУЦ ҮГ СЭРГЭЭХ" : "RESET PASSWORD"),
+      newpw: t("newPwEyebrow") || (isMn ? "НУУЦ ҮГ СЭРГЭЭХ" : "RESET PASSWORD"),
+      pwdone: t("pwDoneEyebrow") || (isMn ? "НУУЦ ҮГ СЭРГЭЭХ" : "RESET PASSWORD"),
+    }[step] || (isMn ? "НУУЦ ҮГ СЭРГЭЭХ" : "RESET PASSWORD");
 
   // Step 3 progress indicators: 1 = forgot, 2 = otp, 3 = newpw
   const stepIdx = { forgot: 1, otp: 2, newpw: 3, pwdone: 0 }[step] || 0;
