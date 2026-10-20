@@ -86,12 +86,29 @@ export default function CustomerBookingDetail() {
   const endMs = endSource ? new Date(endSource).getTime() : NaN;
   const ended = !Number.isNaN(endMs) && endMs < now;
 
+  const isItemCancelled = String(item?.status || "").toLowerCase() === "cancelled";
+  const isTicketCancelled = ticket.status === "CANCELLED" || ticket.status === "FAILED" || Boolean(ticket.cancelledAt) || (typeof ticket.refundReason === "string" && /cancel/i.test(ticket.refundReason));
+  const isCancelled = isItemCancelled || isTicketCancelled;
+
   let state = { label: isEvent ? t("ordConfirmed") : t("ordActive"), tone: "ok" };
-  if (ticket.status === "CANCELLED" || ticket.status === "FAILED") state = { label: t("obCancelled"), tone: "danger" };
-  else if (ticket.status === "REFUND_INITIATED") state = { label: t("tdRefunding"), tone: "warn" };
-  else if (ticket.status === "REFUNDED") state = { label: t("tdRefunded"), tone: "muted" };
-  else if (ticket.status === "PENDING") state = { label: t("obPending"), tone: "warn" };
-  else if (ended) state = { label: t("bdCompleted"), tone: "muted" };
+  if (isCancelled) {
+    state = {
+      label: isItemCancelled
+        ? (isEvent ? (language === "mn" ? "Эвент цуцлагдсан" : "Event Cancelled") : (language === "mn" ? "Курс цуцлагдсан" : "Course Cancelled"))
+        : (t("obCancelled") || "Cancelled"),
+      tone: "danger",
+    };
+  } else if (ticket.status === "CANCELLED" || ticket.status === "FAILED") {
+    state = { label: t("obCancelled"), tone: "danger" };
+  } else if (ticket.status === "REFUND_INITIATED") {
+    state = { label: t("tdRefunding"), tone: "warn" };
+  } else if (ticket.status === "REFUNDED") {
+    state = { label: t("tdRefunded"), tone: "muted" };
+  } else if (ticket.status === "PENDING") {
+    state = { label: t("obPending"), tone: "warn" };
+  } else if (ended) {
+    state = { label: t("bdCompleted"), tone: "muted" };
+  }
 
   const paid = ticket.status === "PAID";
   const free = ticket.paymentMethod === "FREE" || !Number(ticket.totalAmount);
@@ -150,6 +167,42 @@ export default function CustomerBookingDetail() {
         </div>
         <span className="bk-thumb" style={image ? { backgroundImage: `url(${image})` } : undefined} />
       </div>
+
+      {isCancelled && (
+        <div className="bk-notice danger" style={{ marginTop: "18px" }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div>
+            <b style={{ display: "block", fontSize: "15px" }}>
+              {isItemCancelled
+                ? (isEvent
+                    ? (language === "mn" ? "Энэ эвент цуцлагдсан байна" : "This event has been cancelled")
+                    : (language === "mn" ? "Энэ курс цуцлагдсан байна" : "This course has been cancelled"))
+                : (language === "mn" ? "Энэ захиалга цуцлагдсан байна" : "This booking has been cancelled")}
+            </b>
+            {ticket.refundReason && (
+              <p style={{ margin: "4px 0 0", opacity: 0.95 }}>
+                <span style={{ opacity: 0.8 }}>{language === "mn" ? "Шалтгаан: " : "Reason: "}</span>
+                {ticket.refundReason}
+              </p>
+            )}
+            {ticket.status === "REFUNDED" && (
+              <p style={{ margin: "4px 0 0", opacity: 0.9, fontSize: "12.5px" }}>
+                {language === "mn"
+                  ? (ticket.refundedAt
+                      ? `Төлбөр ${shortDate(ticket.refundedAt, language)}-нд буцаагдсан.`
+                      : "Тасалбарын төлбөр буцаагдсан.")
+                  : (ticket.refundedAt
+                      ? `Payment was refunded on ${shortDate(ticket.refundedAt, language)}.`
+                      : "Ticket payment has been refunded.")}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="bk-split">
         <div className="bk-main">
@@ -239,13 +292,85 @@ export default function CustomerBookingDetail() {
               <Link href={qrHref} className="bk-primary">{isEvent ? t("ordViewTicket") : t("bdShowQr")}</Link>
             </div>
           )}
+          {isCancelled && (
+            <div className="bk-mobile-actions">
+              <Link
+                href={qrHref}
+                className="bk-primary"
+                style={{
+                  background: "rgba(255, 90, 90, 0.15)",
+                  color: "#ff8a8a",
+                  border: "1px solid rgba(255, 90, 90, 0.35)",
+                }}
+              >
+                {isEvent ? t("ordViewTicket") : t("bdShowQr")}
+              </Link>
+            </div>
+          )}
         </div>
 
-        {paid && (
-          <aside className="bk-side bk-card">
+        <aside className="bk-side bk-card">
+          {paid && (
             <Link href={qrHref} className="bk-primary">{isEvent ? t("ordViewTicket") : t("bdShowQr")}</Link>
-          </aside>
-        )}
+          )}
+          {isCancelled && (
+            <div style={{ textAlign: "center", padding: "10px 4px" }}>
+              <div style={{
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: "rgba(255, 90, 90, 0.15)",
+                color: "#ff8a8a",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 10px",
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </div>
+              <b style={{ display: "block", fontSize: "15px", marginBottom: "6px", color: "#ff8a8a" }}>
+                {isItemCancelled
+                  ? (isEvent ? (language === "mn" ? "Эвент цуцлагдсан" : "Event Cancelled") : (language === "mn" ? "Курс цуцлагдсан" : "Course Cancelled"))
+                  : (language === "mn" ? "Захиалга цуцлагдсан" : "Booking Cancelled")}
+              </b>
+              <p style={{ fontSize: "13px", color: "var(--bd-gray-400)", margin: "0 0 14px", lineHeight: 1.45 }}>
+                {ticket.status === "REFUNDED"
+                  ? (language === "mn" ? "Энэ тасалбар цуцлагдаж, төлбөр буцаагдсан байна." : "This ticket has been cancelled and refunded.")
+                  : (ticket.refundReason || (language === "mn" ? "Энэ тасалбар хүчингүй болсон байна." : "This ticket is no longer valid."))}
+              </p>
+              <Link
+                href={qrHref}
+                className="bk-mini line"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  width: "100%",
+                  color: "#ff8a8a",
+                  borderColor: "rgba(255, 90, 90, 0.4)",
+                  textDecoration: "none",
+                }}
+              >
+                {isEvent ? t("ordViewTicket") : t("bdShowQr")}
+              </Link>
+            </div>
+          )}
+          {!paid && !isCancelled && (
+            <div style={{ textAlign: "center", padding: "10px 4px" }}>
+              <span className={`bk-pill ${state.tone}`} style={{ marginBottom: "8px" }}>{state.label}</span>
+              <p style={{ fontSize: "13px", color: "var(--bd-gray-400)", margin: "8px 0 12px" }}>
+                {state.label}
+              </p>
+              <Link href={qrHref} className="bk-mini line" style={{ display: "block", textAlign: "center" }}>
+                {isEvent ? t("ordViewTicket") : t("bdShowQr")}
+              </Link>
+            </div>
+          )}
+        </aside>
       </div>
     </div>
   );

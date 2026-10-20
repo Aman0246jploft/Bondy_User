@@ -158,7 +158,9 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
   const option = ticket.ticketName || tickets[0]?.ticketName || "";
   const qty = ticket.qty || tickets.length || 1;
   const free = ticket.paymentMethod === "FREE" || !Number(ticket.totalAmount);
-  const dead = ["CANCELLED", "FAILED", "REFUND_INITIATED", "REFUNDED"].includes(ticket.status);
+  const isItemCancelled = String(item?.status || "").toLowerCase() === "cancelled";
+  const isCancelled = isItemCancelled || ticket.status === "CANCELLED" || ticket.status === "FAILED" || Boolean(ticket.cancelledAt) || (typeof ticket.refundReason === "string" && /cancel/i.test(ticket.refundReason));
+  const dead = isCancelled || ["CANCELLED", "FAILED", "REFUND_INITIATED", "REFUNDED"].includes(ticket.status);
   const current = tickets[selected] || null;
   const person = `${current?.firstName || ""} ${current?.lastName || ""}`.trim() || buyerName;
   const code = current?.ticketNumber || ticket.bookingId || "";
@@ -171,7 +173,18 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
   let stateLabel = t("tdValid");
   let stateNote = isCourse ? t("tdScanCourse") : t("tdScanEvent");
   let stateClass = "ok";
-  if (ticket.status === "CANCELLED" || ticket.status === "FAILED") {
+  if (isCancelled) {
+    stateLabel = isItemCancelled
+      ? (isCourse
+          ? (language === "mn" ? "Курс цуцлагдсан" : "Course Cancelled")
+          : (language === "mn" ? "Эвент цуцлагдсан" : "Event Cancelled"))
+      : (t("obCancelled") || "Cancelled");
+    stateNote = ticket.refundReason
+      || (isItemCancelled
+          ? (language === "mn" ? "Зохион байгуулагч уг эвент/курсийг цуцалсан тул тасалбар хүчингүй болсон байна." : "This event/course was cancelled by the organizer. The ticket is no longer valid.")
+          : t("tdCancelledNote"));
+    stateClass = "bad";
+  } else if (ticket.status === "CANCELLED" || ticket.status === "FAILED") {
     stateLabel = t("obCancelled");
     stateNote = t("tdCancelledNote");
     stateClass = "bad";
@@ -315,19 +328,40 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
             </div>
             <div className="td-qr">
               {qr && (
-                <span className={`td-qr-box ${dead ? "dead" : ""}`}>
+                <span className={`td-qr-box ${dead ? "dead" : ""}`} style={{ position: "relative" }}>
                   <QRCode value={qr} size={150} style={{ width: "100%", height: "100%" }} />
+                  {isCancelled && (
+                    <span style={{
+                      position: "absolute",
+                      inset: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "rgba(20, 20, 20, 0.82)",
+                      borderRadius: "12px",
+                      color: "#ff6b6b",
+                      fontWeight: 800,
+                      fontSize: "14px",
+                      letterSpacing: "1px",
+                      textTransform: "uppercase",
+                      border: "2px solid #ff6b6b",
+                      transform: "rotate(-12deg)",
+                      pointerEvents: "none",
+                    }}>
+                      {language === "mn" ? "ЦУЦЛАГДСАН" : "CANCELLED"}
+                    </span>
+                  )}
                 </span>
               )}
-              {!dead && <span className={`td-pill ${stateClass}`}>{stateLabel}</span>}
+              <span className={`td-pill ${stateClass}`}>{stateLabel}</span>
               {checkedIn && <span className="td-pill check">{t("tdCheckedIn")}</span>}
-              {!dead && stateNote && <p>{stateNote}</p>}
+              {stateNote && <p>{stateNote}</p>}
             </div>
           </div>
         </div>
       </section>
 
-      {showCustomerNav && qr && (
+      {showCustomerNav && qr && !dead && (
         <button
           type="button"
           className="td-save"

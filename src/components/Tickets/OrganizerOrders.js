@@ -59,7 +59,12 @@ function describe(ticket, t) {
   return { isCourse, title, image, when, venue: item.venueName || "", address, sub };
 }
 
-function statusTag(status, t) {
+function statusTag(ticket, t) {
+  const isCourse = ticket.bookingType === "COURSE";
+  const item = isCourse ? ticket.courseId : ticket.eventId;
+  const isCancelled = String(item?.status || "").toLowerCase() === "cancelled" || ticket.status === "CANCELLED" || ticket.status === "FAILED" || Boolean(ticket.cancelledAt) || (typeof ticket.refundReason === "string" && /cancel/i.test(ticket.refundReason));
+  if (isCancelled) return { label: t("obCancelled"), tone: "bad" };
+  const status = ticket.status;
   if (status === "CANCELLED" || status === "FAILED") return { label: t("obCancelled"), tone: "bad" };
   if (status === "REFUND_INITIATED") return { label: t("tdRefunding"), tone: "wait" };
   if (status === "REFUNDED") return { label: t("obRefunded"), tone: "muted" };
@@ -176,7 +181,7 @@ export default function OrganizerOrders() {
         <div className="mo-list">
           {rows.map((ticket) => {
             const info = describe(ticket, t);
-            const tag = statusTag(ticket.status, t);
+            const tag = statusTag(ticket, t);
             return (
               <Link key={ticket._id} href={`/TicketDetailsOrganiser?id=${ticket._id}`} className="mo-card">
                 <span className="mo-thumb" style={info.image ? { backgroundImage: `url(${info.image})` } : undefined} />

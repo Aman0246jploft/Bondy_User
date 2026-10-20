@@ -22,11 +22,14 @@ function getCourseBadge(course, tab, t) {
   if (tab === "draft") {
     return { hasStatus: false, status: "", statusColor: "gray" };
   }
+  if (course.status?.toLowerCase() === "cancelled") {
+    return { hasStatus: true, status: t("obCancelled") || "Cancelled", statusColor: "danger" };
+  }
+  if (course.closed) {
+    return { hasStatus: true, status: t("lmClosed"), statusColor: "gray" };
+  }
   if (tab === "past" || course.status?.toLowerCase() === "past") {
     return { hasStatus: true, status: t("lmCompleted"), statusColor: "gray" };
-  }
-  if (course.status?.toLowerCase() === "cancelled" || course.closed) {
-    return { hasStatus: true, status: t("lmClosed"), statusColor: "gray" };
   }
 
   const taken = Number(course.totalEnrollments ?? course.totalBooked ?? course.acquiredSeats ?? 0);
@@ -89,8 +92,8 @@ export default function CoursesManagementPage() {
         courseApi.getOrganizerCourses({ isDraft: "false", status: "Upcoming,Live", limit: 50 }),
         // Drafts
         courseApi.getOrganizerCourses({ isDraft: "true", limit: 50 }),
-        // Past
-        courseApi.getOrganizerCourses({ isDraft: "false", status: "Past", limit: 50 }),
+        // Past & Cancelled
+        courseApi.getOrganizerCourses({ isDraft: "false", status: "Past,Cancelled", limit: 50 }),
       ]);
 
       if (pubRes.status === "fulfilled" && pubRes.value?.data) {
@@ -629,6 +632,12 @@ export default function CoursesManagementPage() {
                                 background: "rgba(255, 170, 0, 0.12)",
                                 color: "#ffaa00",
                                 border: "1px solid rgba(255, 170, 0, 0.28)",
+                              }
+                            : badge.statusColor === "danger"
+                            ? {
+                                background: "rgba(255, 90, 90, 0.16)",
+                                color: "#ff8a8a",
+                                border: "1px solid rgba(255, 90, 90, 0.3)",
                               }
                             : {
                                 background: "rgba(255, 255, 255, 0.08)",

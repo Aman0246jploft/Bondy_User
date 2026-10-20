@@ -14,6 +14,7 @@ export const SocketProvider = ({ children }) => {
     const [isSocketConnected, setIsSocketConnected] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState(new Set());
     const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+    const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
     useEffect(() => {
         let socketInstance;
@@ -36,6 +37,10 @@ export const SocketProvider = ({ children }) => {
 
             socketInstance.on("unread_notification_count", ({ count }) => {
                 setUnreadNotificationCount(count ?? 0);
+            });
+
+            socketInstance.on("unread_message_count", ({ count }) => {
+                setUnreadMessageCount(count ?? 0);
             });
 
             socketInstance.on("online_users_list", ({ userIds }) => {
@@ -83,8 +88,16 @@ export const SocketProvider = ({ children }) => {
         }
     };
 
+    const fetchUnreadMessageCount = () => {
+        if (socket) {
+            socket.emit("get_unread_message_count", {}, (res) => {
+                if (res?.count !== undefined) setUnreadMessageCount(res.count);
+            });
+        }
+    };
+
     return (
-        <SocketContext.Provider value={{ socket, isSocketConnected, onlineUsers, unreadNotificationCount, fetchUnreadNotificationCount }}>
+        <SocketContext.Provider value={{ socket, isSocketConnected, onlineUsers, unreadNotificationCount, fetchUnreadNotificationCount, unreadMessageCount, fetchUnreadMessageCount }}>
             {children}
         </SocketContext.Provider>
     );

@@ -98,8 +98,8 @@ export default function EventsManagementPage() {
         eventApi.getOrganizerEvents({ isDraft: "false", status: "Upcoming,Live", limit: 50 }),
         // Drafts
         eventApi.getOrganizerEvents({ isDraft: "true", limit: 50 }),
-        // Past
-        eventApi.getOrganizerEvents({ isDraft: "false", status: "Past", limit: 50 }),
+        // Past & Cancelled
+        eventApi.getOrganizerEvents({ isDraft: "false", status: "Past,Cancelled", limit: 50 }),
       ]);
 
       if (pubRes.status === "fulfilled" && pubRes.value?.data) {
@@ -628,11 +628,31 @@ export default function EventsManagementPage() {
                         >
                           {ev.eventTitle}
                         </b>
-                        {ev.eventCategory?.name && (
-                          <span style={{ fontSize: "11.5px", color: "var(--bd-gray-500)", textTransform: "capitalize" }}>
-                            {ev.eventCategory.name}
-                          </span>
-                        )}
+                        <span style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                          {ev.eventCategory?.name && (
+                            <span style={{ fontSize: "11.5px", color: "var(--bd-gray-500)", textTransform: "capitalize" }}>
+                              {ev.eventCategory.name}
+                            </span>
+                          )}
+                          {String(ev.status || "").toLowerCase() === "cancelled" && (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                height: "18px",
+                                padding: "0 7px",
+                                borderRadius: "999px",
+                                fontSize: "10.5px",
+                                fontWeight: 700,
+                                background: "rgba(255, 90, 90, 0.16)",
+                                color: "#ff8a8a",
+                                border: "1px solid rgba(255, 90, 90, 0.3)",
+                              }}
+                            >
+                              {isMn ? "Цуцлагдсан" : "Cancelled"}
+                            </span>
+                          )}
+                        </span>
                       </span>
                     </span>
 
