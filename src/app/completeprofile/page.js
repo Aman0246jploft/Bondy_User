@@ -69,7 +69,7 @@ function CompleteProfileContent() {
   const coverInputRef = useRef(null);
 
   useEffect(() => {
-    document.title = isMn ? "Бүртгэл баталгаажуулах - Bondy" : "Complete Profile - Bondy";
+    document.title = isMn ? "Профайлаа дүүргэх - Bondy" : "Complete your profile - Bondy";
 
     const fetchInitialData = async () => {
       try {
@@ -546,7 +546,7 @@ function CompleteProfileContent() {
                   </div>
 
                   <h1 className="lg-h1">
-                    {isMn ? "Профайлаа дүүргэх" : "Complete Profile"}
+                    {isMn ? "Профайлаа дүүргэх" : "Complete your profile"}
                   </h1>
                   <p className="lg-sub">
                     {isMn
@@ -942,13 +942,13 @@ function CompleteProfileContent() {
                   </svg>
                 </button>
                 <span className="lg-eyebrow">
-                  {isMn ? "ХЭРЭГЛЭГЧИЙН БҮРТГЭЛ" : "COMPLETE PROFILE"}
+                  {isMn ? "ХЭРЭГЛЭГЧИЙН БҮРТГЭЛ" : "COMPLETE YOUR PROFILE"}
                 </span>
               </div>
 
               {/* Title & Subtitle */}
               <h1 className="lg-h1">
-                {isMn ? "Профайлаа дүүргэх" : "Complete Profile"}
+                {isMn ? "Профайлаа дүүргэх" : "Complete your profile"}
               </h1>
               <p className="lg-sub" style={{ marginBottom: 20 }}>
                 {isMn
