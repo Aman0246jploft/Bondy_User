@@ -578,7 +578,7 @@ export default function EventsManagementPage() {
                 const sold = (ev.totalBooked !== undefined && ev.totalBooked !== null)
                   ? Number(ev.totalBooked)
                   : Math.max(0, (Number(ev.totalTickets) || 0) - (Number(ev.ticketQtyAvailable) || 0));
-                const total = Number(ev.totalTickets) || (sold > 0 ? sold : 0);
+                const total = Math.max(Number(ev.totalTickets) || 0, sold);
                 const pct = total > 0 ? Math.min(100, Math.round((sold / total) * 100)) : 0;
                 const revenueText = ev.totalRevenue !== undefined ? formatMoney(ev.totalRevenue) : "—";
 
