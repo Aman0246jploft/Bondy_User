@@ -33,6 +33,8 @@ function RegisterForm() {
 
   // Customer Form State
   const [customerData, setCustomerData] = useState({
+    firstName: "",
+    lastName: "",
     email: "",
     contactNumber: "",
     countryCode: "",
@@ -79,6 +81,8 @@ function RegisterForm() {
 
   const validateCustomerForm = (data) => {
     const errors = {};
+    if (!data.firstName?.trim()) errors.firstName = t("firstNameRequired") || "Name is required";
+    if (!data.lastName?.trim()) errors.lastName = t("lastNameRequired") || "Surname is required";
     const emailError = validateEmail(data.email);
     if (emailError) errors.email = emailError;
     if (!data.contactNumber) errors.contactNumber = t("contactNumberRequired");
@@ -116,6 +120,8 @@ function RegisterForm() {
       const nextValue = type === "checkbox" ? checked : value;
       const next = { ...prev, [name]: nextValue };
       const nextErrors = { ...customerErrors };
+      if (name === "firstName") nextErrors.firstName = value.trim() ? "" : (t("firstNameRequired") || "Name is required");
+      if (name === "lastName") nextErrors.lastName = value.trim() ? "" : (t("lastNameRequired") || "Surname is required");
       if (name === "email") nextErrors.email = validateEmail(value);
       if (name === "password") {
         nextErrors.password = validatePassword(value);
@@ -201,6 +207,8 @@ function RegisterForm() {
   const handleCustomerSignup = async (e) => {
     e.preventDefault();
     const trimmedData = {
+      firstName: customerData.firstName ? customerData.firstName.trim() : "",
+      lastName: customerData.lastName ? customerData.lastName.trim() : "",
       email: customerData.email ? customerData.email.trim() : "",
       contactNumber: customerData.contactNumber ? customerData.contactNumber.trim() : "",
       password: customerData.password ? customerData.password.trim() : "",
@@ -224,6 +232,10 @@ function RegisterForm() {
         }
       }
       const payload = {
+        firstName: trimmedData.firstName,
+        lastName: trimmedData.lastName,
+        name: trimmedData.firstName,
+        surname: trimmedData.lastName,
         email: customerData.email,
         contactNumber: finalContactNumber,
         countryCode: finalCountryCode,
@@ -354,7 +366,7 @@ function RegisterForm() {
           <h1 className="lg-h1">{t("getStarted")}</h1>
           {/* <p className="lg-sub">{t("registerForEventsDesc")}</p> */}
 
-          {/* ── Customer / Organizer segment ── */}
+          {/* ── User / Organizer segment ── */}
           <div className="lg-seg" role="tablist">
             <button
               type="button"
@@ -363,7 +375,7 @@ function RegisterForm() {
               aria-selected={selectedTab === "Customer" ? "true" : "false"}
               onClick={() => switchTab("Customer")}
             >
-              {t("customer")}
+              {t("user") || "User"}
             </button>
             <button
               type="button"
@@ -376,10 +388,42 @@ function RegisterForm() {
             </button>
           </div>
 
-          {/* ════════════════ CUSTOMER FORM ════════════════ */}
+          {/* ════════════════ CUSTOMER / USER FORM ════════════════ */}
           {selectedTab === "Customer" && (
             <form className="login_field" noValidate onSubmit={handleCustomerSignup}>
               <div className="lg-fields">
+
+                {/* Name */}
+                <label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    maxLength={50}
+                    placeholder={t("name") || t("firstName") || "Name"}
+                    value={customerData.firstName}
+                    onChange={handleCustomerChange}
+                    className="lg-in"
+                    aria-invalid={!!customerErrors.firstName}
+                    aria-required="true"
+                  />
+                  {customerErrors.firstName && <span className="lg-err">{customerErrors.firstName}</span>}
+                </label>
+
+                {/* Surname */}
+                <label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    maxLength={50}
+                    placeholder={t("surname") || t("lastName") || "Surname"}
+                    value={customerData.lastName}
+                    onChange={handleCustomerChange}
+                    className="lg-in"
+                    aria-invalid={!!customerErrors.lastName}
+                    aria-required="true"
+                  />
+                  {customerErrors.lastName && <span className="lg-err">{customerErrors.lastName}</span>}
+                </label>
 
                 {/* Email */}
                 <label>
@@ -520,13 +564,13 @@ function RegisterForm() {
             <form className="login_field" noValidate onSubmit={handleOrganizerSignup}>
               <div className="lg-fields">
 
-                {/* Full Name */}
+                {/* Organizer Name */}
                 <label>
                   <input
                     type="text"
                     name="fullname"
-                    maxLength={25}
-                    placeholder={t("fullName") || "Full Name"}
+                    maxLength={50}
+                    placeholder={t("organizerName") || "Organizer name"}
                     value={organizerData.fullname || ""}
                     onChange={handleOrganizerChange}
                     className="lg-in"
