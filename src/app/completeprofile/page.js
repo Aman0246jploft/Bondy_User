@@ -633,9 +633,17 @@ function CompleteProfileContent() {
               {/* ──────────────── 3. APPLICATION UNDER REVIEW ──────────────── */}
               {orgStep === "review" && (
                 <div>
-                  <div className="lg-top" style={{ justifyContent: "center" }}>
+                  <div className="lg-top">
+                    <button
+                      type="button"
+                      onClick={() => router.push("/")}
+                      className="lg-back"
+                      aria-label="Back"
+                    >
+                      <ArrowLeft size={18} />
+                    </button>
                     <span className="lg-eyebrow">
-                      {isMn ? "Зохион байгуулагчийн хүсэлт" : "Organizer Application"}
+                      {isMn ? "ЗОХИОН БАЙГУУЛАГЧИЙН ХҮСЭЛТ" : "ORGANIZER APPLICATION"}
                     </span>
                   </div>
 
@@ -647,12 +655,12 @@ function CompleteProfileContent() {
                   </span>
 
                   <h1 className="lg-h1" style={{ textAlign: "center" }}>
-                    {isMn ? "Хүсэлт хянагдаж байна" : "Application Under Review"}
+                    {isMn ? "Хүсэлт хянагдаж байна" : "Application in review"}
                   </h1>
                   <p className="lg-sub" style={{ textAlign: "center", marginLeft: "auto", marginRight: "auto" }}>
                     {isMn
                       ? "Батлагдмагц имэйлээр мэдэгдэнэ. Түүнээс өмнө хэрэглэгчээр үзэж болно."
-                      : "You will be notified by email once approved. Until then, you can explore as a user."}
+                      : "We will email you once it is approved. Until then you can browse as a user."}
                   </p>
 
                   <div className="lg-meta">
@@ -665,13 +673,13 @@ function CompleteProfileContent() {
                       <dd>{isMn ? "Хянагдаж байна" : "Under review"}</dd>
                     </div>
                     <div>
-                      <dt>{isMn ? "Хугацаа" : "Timeframe"}</dt>
+                      <dt>{isMn ? "Хугацаа" : "Timing"}</dt>
                       <dd>{isMn ? "1–2 ажлын өдөр" : "1–2 business days"}</dd>
                     </div>
                   </div>
 
                   <Link href="/" className="lg-submit" style={{ textDecoration: "none" }}>
-                    {isMn ? "Нүүр хуудас руу" : "Go to Homepage"}
+                    {isMn ? "Нүүр хуудас руу" : "Back to home"}
                   </Link>
 
                   <button
@@ -681,7 +689,7 @@ function CompleteProfileContent() {
                     onClick={handleCheckStatus}
                   >
                     {checkingStatus && <span className="lg-spin" />}
-                    {isMn ? "Хүсэлтийн төлөвийг шалгах" : "Check Application Status"}
+                    {isMn ? "Хүсэлтийн төлөвийг шалгах" : "Check application status"}
                   </button>
                 </div>
               )}
@@ -689,9 +697,17 @@ function CompleteProfileContent() {
               {/* ──────────────── 4. APPLICATION APPROVED ──────────────── */}
               {orgStep === "approved" && (
                 <div>
-                  <div className="lg-top" style={{ justifyContent: "center" }}>
+                  <div className="lg-top">
+                    <button
+                      type="button"
+                      onClick={() => router.push("/")}
+                      className="lg-back"
+                      aria-label="Back"
+                    >
+                      <ArrowLeft size={18} />
+                    </button>
                     <span className="lg-eyebrow">
-                      {isMn ? "Зохион байгуулагчийн хүсэлт" : "Organizer Application"}
+                      {isMn ? "ЗОХИОН БАЙГУУЛАГЧИЙН ХҮСЭЛТ" : "ORGANIZER APPLICATION"}
                     </span>
                   </div>
 
@@ -703,7 +719,7 @@ function CompleteProfileContent() {
                   </span>
 
                   <h1 className="lg-h1" style={{ textAlign: "center" }}>
-                    {isMn ? "Хүсэлт батлагдлаа" : "Application Approved"}
+                    {isMn ? "Хүсэлт батлагдлаа" : "Application approved"}
                   </h1>
                   <p className="lg-sub" style={{ textAlign: "center", marginLeft: "auto", marginRight: "auto" }}>
                     {isMn
@@ -724,12 +740,12 @@ function CompleteProfileContent() {
                     </div>
                   </div>
 
-                  <Link href="/OrganizerProfile" className="lg-submit" style={{ textDecoration: "none" }}>
-                    {isMn ? "Хяналтын самбар руу" : "Go to Dashboard"}
+                  <Link href="/(OrganizerAdmin)/dashboard" className="lg-submit" style={{ textDecoration: "none" }}>
+                    {isMn ? "Хяналтын самбар руу" : "Go to dashboard"}
                   </Link>
 
                   <Link href="/OrganizerProfile" className="lg-ghost" style={{ textDecoration: "none" }}>
-                    {isMn ? "Баталгаажуулалтаа дүүргэх" : "Complete Verification"}
+                    {isMn ? "Баталгаажуулалтаа дүүргэх" : "Complete verification"}
                   </Link>
                 </div>
               )}
@@ -737,9 +753,17 @@ function CompleteProfileContent() {
               {/* ──────────────── 5. APPLICATION REJECTED ──────────────── */}
               {orgStep === "rejected" && (
                 <div>
-                  <div className="lg-top" style={{ justifyContent: "center" }}>
+                  <div className="lg-top">
+                    <button
+                      type="button"
+                      onClick={() => router.push("/")}
+                      className="lg-back"
+                      aria-label="Back"
+                    >
+                      <ArrowLeft size={18} />
+                    </button>
                     <span className="lg-eyebrow">
-                      {isMn ? "Зохион байгуулагчийн хүсэлт" : "Organizer Application"}
+                      {isMn ? "ЗОХИОН БАЙГУУЛАГЧИЙН ХҮСЭЛТ" : "ORGANIZER APPLICATION"}
                     </span>
                   </div>
 
@@ -751,7 +775,7 @@ function CompleteProfileContent() {
                   </span>
 
                   <h1 className="lg-h1" style={{ textAlign: "center" }}>
-                    {isMn ? "Хүсэлт батлагдсангүй" : "Application Not Approved"}
+                    {isMn ? "Хүсэлт батлагдсангүй" : "Application not approved"}
                   </h1>
                   <p className="lg-sub" style={{ textAlign: "center", marginLeft: "auto", marginRight: "auto" }}>
                     {isMn
@@ -776,11 +800,11 @@ function CompleteProfileContent() {
                     className="lg-submit"
                     onClick={() => setOrgStep("orgabout")}
                   >
-                    {isMn ? "Мэдээллээ засаад дахин илгээх" : "Edit Details & Re-submit"}
+                    {isMn ? "Мэдээллээ засаад дахин илгээх" : "Edit details and resubmit"}
                   </button>
 
-                  <Link href="/contact-us" className="lg-ghost" style={{ textDecoration: "none" }}>
-                    {isMn ? "Тусламж авах" : "Get Help"}
+                  <Link href="/help#contact" className="lg-ghost" style={{ textDecoration: "none" }}>
+                    {isMn ? "Тусламж авах" : "Get help"}
                   </Link>
 
                   <p className="lg-switch">
@@ -797,6 +821,20 @@ function CompleteProfileContent() {
                CUSTOMER COMPLETE PROFILE (Customer user role)
                ══════════════════════════════════════════════════ */
             <>
+              <div className="lg-top">
+                <button
+                  type="button"
+                  onClick={() => router.push("/")}
+                  className="lg-back"
+                  aria-label="Back"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <span className="lg-eyebrow">
+                  {isMn ? "ХЭРЭГЛЭГЧИЙН БҮРТГЭЛ" : "COMPLETE PROFILE"}
+                </span>
+              </div>
+
               {/* Title & Subtitle */}
               <h1 className="lg-h1">
                 {isMn ? "Профайлаа дүүргэх" : "Complete Profile"}

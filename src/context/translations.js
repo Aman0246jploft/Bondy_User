@@ -102,7 +102,7 @@ export const translations = {
     emailRequired: "Email is required",
     passwordRequired: "Password is required",
     invalidEmail: "Please enter a valid email address",
-    forgotPasswordQuestion: "Forgot Password?",
+    forgotPasswordQuestion: "Forgot your password?",
     orSignUpWith: "or sign up with",
     orSignInWith: "or sign in with",
     dontHaveAccount: "Don't have an account?",
