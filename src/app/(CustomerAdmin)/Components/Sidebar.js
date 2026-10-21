@@ -38,7 +38,18 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
     fetchUser();
   }, [pathname]);
 
-  const isActive = (path) => pathname === path;
+  const isActive = (path) => {
+    if (path === "/Personalinfo") {
+      return pathname.startsWith("/Personalinfo");
+    }
+    if (path === "/MyTickets") {
+      return pathname.startsWith("/MyTickets") || pathname.startsWith("/TicketDetails");
+    }
+    if (path === "/Security") {
+      return pathname.startsWith("/Security") || pathname.startsWith("/ChangePassword");
+    }
+    return pathname.startsWith(path);
+  };
 
   const handleLogout = (e) => {
     e.preventDefault();

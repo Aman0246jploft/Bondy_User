@@ -1474,7 +1474,7 @@ function EventEditorContent() {
         tileBg: "rgba(35, 173, 164, 0.14)",
         tileColor: "var(--acc-bright)",
         icon: "check",
-        title: isMn ? "Ноорогт хадгалагдлаа" : "Saved to drafts",
+        title: isMn ? "Ноорогт хадгалагдлаа" : "Saved to draft",
         body: isMn ? "Дараа үргэлжлүүлэн засах боломжтой." : "You can keep editing later.",
         acts: [
           { key: "continue", label: isMn ? "Үргэлжлүүлэн засах" : "Keep editing", cls: "ew-go" },
@@ -2045,22 +2045,57 @@ function EventEditorContent() {
                   {isMn ? "Тизер видео" : "Teaser Video"}{" "}
                   <span className="ew-opt-b">({isMn ? "заавал биш" : "optional"})</span>
                 </span>
-                <div className="ew-drop">
-                  <span className="ew-dropT">
-                    {teaserName || (isMn ? "Тизер видео оруулах" : "Upload Teaser Video")}
-                  </span>
-                  <span className="ew-dropS">MP4, MOV (Max 50MB)</span>
-                  <label className="ew-gh ew-sm" style={{ position: "relative", overflow: "hidden" }}>
-                    {uploadingVideo ? <span className="ew-sp" /> : isMn ? "Видео сонгох" : "Choose Video"}
-                    <input
-                      type="file"
-                      accept="video/*"
-                      onChange={handleVideoUpload}
-                      disabled={uploadingVideo}
-                      style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                {teaserVideo ? (
+                  <div className="ew-video-box" style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid var(--bd-border, rgba(255,255,255,0.1))" }}>
+                    <video
+                      controls
+                      playsInline
+                      preload="metadata"
+                      src={getFullImageUrl(teaserVideo)}
+                      style={{ width: "100%", maxHeight: "180px", background: "#000", display: "block", objectFit: "contain" }}
                     />
-                  </label>
-                </div>
+                    <div style={{ display: "flex", gap: "8px", padding: "8px 12px", background: "var(--bd-ink-800, #181818)", alignItems: "center", justifyContent: "space-between" }}>
+                      <label className="ew-gh ew-sm" style={{ position: "relative", overflow: "hidden", cursor: "pointer" }}>
+                        {uploadingVideo ? <span className="ew-sp" /> : isMn ? "Видео солих" : "Replace Video"}
+                        <input
+                          type="file"
+                          accept="video/*"
+                          onChange={handleVideoUpload}
+                          disabled={uploadingVideo}
+                          style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="ew-gh ew-sm"
+                        style={{ color: "#FF5A5A" }}
+                        onClick={() => {
+                          setTeaserVideo("");
+                          setTeaserName("");
+                        }}
+                      >
+                        {isMn ? "Устгах" : "Remove"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="ew-drop">
+                    <span className="ew-dropT">
+                      {isMn ? "Тизер видео оруулах" : "Upload Teaser Video"}
+                    </span>
+                    <span className="ew-dropS">MP4, MOV (Max 50MB)</span>
+                    <label className="ew-gh ew-sm" style={{ position: "relative", overflow: "hidden" }}>
+                      {uploadingVideo ? <span className="ew-sp" /> : isMn ? "Видео сонгох" : "Choose Video"}
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={handleVideoUpload}
+                        disabled={uploadingVideo}
+                        style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
             </section>
           </div>
