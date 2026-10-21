@@ -993,6 +993,11 @@ export default function LearningEditorPage() {
         if (createdId) setCourseId(createdId);
       }
 
+      if (!res || res.status === false) {
+        flashToast(res?.message || (isMn ? "Хадгалж чадсангүй." : "Could not save draft."));
+        return;
+      }
+
       setDirty(false);
       setDoneModal({
         type: "draft",

@@ -1460,6 +1460,11 @@ function EventEditorContent() {
         savedId = res?.data?.data?._id || res?.data?.event?._id || res?.data?._id;
       }
 
+      if (!res || res.status === false) {
+        flashToast(res?.message || (isMn ? "Хадгалж чадсангүй." : "Could not save draft."));
+        return;
+      }
+
       if (savedId) {
         setCreatedEventId(savedId);
       }
