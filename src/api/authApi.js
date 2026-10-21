@@ -3,19 +3,11 @@ import apiClient from "./apiClient";
 const authApi = {
     customerSignup: (data) => apiClient.post("/user/customer/signup", data),
     organizerSignup: (data) => apiClient.post("/user/organizer/signup", data),
-    uploadFile: (formData, onProgress, config = {}) =>
+    uploadFile: (formData) =>
         apiClient.post("/user/upload", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
-            timeout: 600000, // 10 minutes timeout for 50MB files
-            onUploadProgress: (progressEvent) => {
-                if (typeof onProgress === "function" && progressEvent.total) {
-                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    onProgress(percentCompleted);
-                }
-            },
-            ...config,
         }),
     getSelfProfile: (config = {}) => apiClient.get("/user/selfProfile", { skipToast: true, ...config }),
     updateProfile: (data) => apiClient.post("/user/update-profile", data, { skipToast: true }),
