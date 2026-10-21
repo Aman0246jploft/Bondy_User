@@ -6141,7 +6141,7 @@ section > .og-row:first-child {
   overflow: hidden;
 }
 /* Өнгөрсөн: the tab already states the completed status, so the column goes */
-.lm-panel[data-past="1"] .lm-row > :nth-child(4) {
+.lm-panel[data-past="1"] .lm-row > :nth-child(4):not(.lm-acts) {
   display: none;
 }
 @media (min-width: 881px) {
@@ -6163,7 +6163,7 @@ section > .og-row:first-child {
 button.lm-row,
 .lm-row {
   display: grid;
-  grid-template-columns: minmax(0, 2.5fr) 186px 104px 88px 48px;
+  grid-template-columns: minmax(0, 2.5fr) 196px 104px 52px;
   align-items: center;
   gap: 16px;
   padding: 13px 18px;
@@ -6228,7 +6228,7 @@ button.lm-row,
 }
 @media (max-width: 1240px) {
   .lm-row {
-    grid-template-columns: minmax(0, 2.1fr) 148px 94px 84px 44px;
+    grid-template-columns: minmax(0, 2fr) 156px 96px 48px;
     gap: 11px;
   }
 }
@@ -6282,9 +6282,10 @@ button.lm-row,
     align-self: center;
     justify-self: end;
   }
-  .lm-row > :nth-child(4) {
+  .lm-row > :nth-child(4):not(.lm-acts) {
     display: none;
   }
+  .lm-row > .lm-acts,
   .lm-row > :nth-child(5) {
     grid-row: 1 / span 2;
     grid-column: 3;
