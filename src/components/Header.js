@@ -56,7 +56,29 @@ export default function BondyHeader() {
         .then((response) => {
           if (response?.status && response?.data?.user) {
             const profile = response.data.user;
-            localStorage.setItem("userProfile", JSON.stringify(profile));
+            // Store only essential fields to avoid localStorage QuotaExceededError
+            const slim = {
+              _id: profile._id,
+              name: profile.name,
+              email: profile.email,
+              role: profile.role,
+              profileImage: profile.profileImage,
+              isOrganizer: profile.isOrganizer,
+              isVerified: profile.isVerified,
+              organizerName: profile.organizerName,
+              organizerLogo: profile.organizerLogo,
+            };
+            try {
+              localStorage.setItem("userProfile", JSON.stringify(slim));
+            } catch (e) {
+              // Quota exceeded – clear stale data and retry once
+              try {
+                localStorage.removeItem("userProfile");
+                localStorage.setItem("userProfile", JSON.stringify(slim));
+              } catch (_) {
+                // ignore if still fails
+              }
+            }
             setUserProfile(profile);
           }
         })

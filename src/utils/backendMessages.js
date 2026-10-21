@@ -403,6 +403,8 @@ export const backendMessages = {
 
   // ── controllerCourse ─────────────────────────────────────────────────────────
   "Cannot edit a course that has already ended": "Аль хэдийн дууссан курсийг засварлах боломжгүй.",
+  "Cannot edit a cancelled course.": "Цуцлагдсан курсийг засварлах боломжгүй.",
+  "Your course is already live": "Таны сургалт аль хэдийн явагдаж байна.",
   "Once a course is published, it cannot be changed back to a draft": "Нийтлэгдсэн курсийг ноорог болгох боломжгүй.",
   "Course title is required for a published course": "Нийтлэгдсэн курст гарчиг шаардлагатай.",
   "Cannot modify the start date/time of a course that is already live": "Аль хэдийн эхэлсэн курсийн эхлэх огноо/цагийг өөрчлөх боломжгүй.",
@@ -414,6 +416,8 @@ export const backendMessages = {
   "Venue address with valid latitude and longitude is required for a published course": "Нийтлэгдсэн курст хүчинтэй байршлын хаяг шаардлагатай.",
 
   // ── controllerEvent ──────────────────────────────────────────────────────────
+  "Cannot edit an event that has already ended": "Аль хэдийн дууссан арга хэмжээг засварлах боломжгүй.",
+  "Cannot edit a cancelled event.": "Цуцлагдсан арга хэмжээг засварлах боломжгүй.",
   "You are not authorized to delete this event": "Энэ арга хэмжээг устгах эрх байхгүй.",
   "Only draft events can be deleted": "Зөвхөн ноорог арга хэмжээг устгах боломжтой.",
   "Draft event deleted successfully": "Ноорог арга хэмжээ амжилттай устгагдлаа.",

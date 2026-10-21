@@ -259,6 +259,7 @@ function EventEditorContent() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDraftMode, setIsDraftMode] = useState(modeParam === "draft");
   const [initialLoading, setInitialLoading] = useState(false);
+  const [blockedModal, setBlockedModal] = useState(null);
 
   // ─── Form State ───────────────────────────────────────────────────────────
   const [title, setTitle] = useState("");
@@ -380,6 +381,50 @@ function EventEditorContent() {
         const res = await eventApi.getEventDetails(eventIdParam);
         const ev = res?.data?.event || res?.data?.data;
         if (!ev) return;
+
+        const now = new Date();
+        const isLive = !ev.isDraft && (
+          String(ev.status || "").toLowerCase() === "live" ||
+          Boolean(ev.isLive) ||
+          (ev.startDate && ev.endDate && new Date(ev.startDate) <= now && new Date(ev.endDate) >= now)
+        );
+        const isPast = !ev.isDraft && (
+          String(ev.status || "").toLowerCase() === "past" ||
+          (ev.endDate && new Date(ev.endDate) < now)
+        );
+        const isCancelled = !ev.isDraft && (
+          String(ev.status || "").toLowerCase() === "cancelled" ||
+          String(ev.status || "").toLowerCase() === "canceled"
+        );
+
+        if (isLive) {
+          setBlockedModal({
+            open: true,
+            kind: "live",
+            title: isMn ? "Арга хэмжээ шууд явагдаж байна" : "Event is Currently Live",
+            body: isMn
+              ? "Таны арга хэмжээ шууд явагдаж байгаа тул засах боломжгүй."
+              : "Your event is live, you cannot edit this.",
+          });
+        } else if (isPast) {
+          setBlockedModal({
+            open: true,
+            kind: "past",
+            title: isMn ? "Арга хэмжээ дууссан байна" : "Event Has Ended",
+            body: isMn
+              ? "Энэхүү арга хэмжээ аль хэдийн дууссан тул засах боломжгүй."
+              : "This event has already ended, you cannot edit this.",
+          });
+        } else if (isCancelled) {
+          setBlockedModal({
+            open: true,
+            kind: "cancelled",
+            title: isMn ? "Арга хэмжээ цуцлагдсан байна" : "Event is Cancelled",
+            body: isMn
+              ? "Энэхүү арга хэмжээ цуцлагдсан тул засах боломжгүй."
+              : "This event has been cancelled, you cannot edit this.",
+          });
+        }
 
         setIsDraftMode(Boolean(ev.isDraft));
         setTitle(ev.eventTitle || "");
@@ -1402,6 +1447,7 @@ function EventEditorContent() {
       return;
     }
 
+    if (blockedModal?.open) return;
     setDraftBusy(true);
     try {
       const payload = buildPayload(true);
@@ -1563,6 +1609,7 @@ function EventEditorContent() {
 
   // ─── Publish / Save Changes (Step 5) ──────────────────────────────────────
   const handlePublish = async () => {
+    if (blockedModal?.open) return;
     // Final check across all steps
     const failedStep = [1, 2, 3, 4].find((n) => !validateStep(n));
     if (failedStep) {
@@ -3162,6 +3209,113 @@ function EventEditorContent() {
                   {a.label}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ─── Cannot Edit / Live Event Modal ───────────────────────────────── */}
+      {blockedModal?.open && (
+        <div
+          className="ew-scrim"
+          style={{
+            zIndex: 99999,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            className="ew-sheet"
+            style={{
+              maxWidth: "460px",
+              width: "90%",
+              padding: "34px 28px 30px",
+              textAlign: "center",
+              background: "#161b26",
+              border: "1px solid rgba(255, 82, 82, 0.35)",
+              borderRadius: "18px",
+              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.8)",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "64px",
+                height: "64px",
+                borderRadius: "50%",
+                background: "rgba(255, 82, 82, 0.15)",
+                color: "#ff5252",
+                margin: "0 auto 18px",
+              }}
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </span>
+            <b
+              style={{
+                display: "block",
+                fontSize: "20px",
+                fontWeight: 700,
+                color: "var(--bd-white)",
+                letterSpacing: "-0.015em",
+                marginBottom: "10px",
+              }}
+            >
+              {blockedModal.title}
+            </b>
+            <p
+              style={{
+                margin: "0 0 26px",
+                fontSize: "14.5px",
+                lineHeight: 1.6,
+                color: "var(--bd-gray-300)",
+              }}
+            >
+              {blockedModal.body}
+            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="button"
+                className="ew-gh"
+                onClick={() => router.push("/EventsManagement")}
+                style={{
+                  padding: "11px 22px",
+                  fontSize: "14px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                }}
+              >
+                {isMn ? "Буцах" : "Back to Events"}
+              </button>
+              {eventIdParam && (
+                <button
+                  type="button"
+                  className="ew-go"
+                  onClick={() => router.push(`/EventDetailOrganiser?eventId=${eventIdParam}`)}
+                  style={{
+                    padding: "11px 22px",
+                    fontSize: "14px",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {isMn ? "Эвент харах" : "View Event"}
+                </button>
+              )}
             </div>
           </div>
         </div>

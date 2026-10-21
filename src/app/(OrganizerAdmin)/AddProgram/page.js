@@ -185,6 +185,7 @@ export default function LearningEditorPage() {
   const [cohortError, setCohortError] = useState("");
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [doneModal, setDoneModal] = useState(null); // { type: 'published' | 'updated' | 'draft', title, msg }
+  const [blockedModal, setBlockedModal] = useState(null);
 
   // ─── Toast Helper ──────────────────────────────────────────────────────────
   const flashToast = (msg) => {
@@ -440,6 +441,52 @@ export default function LearningEditorPage() {
           const courseRes = await courseApi.getCourseDetails(id);
           if (courseRes?.data) {
             const c = courseRes.data;
+
+            const now = new Date();
+            const isOngoing = c.enrollmentType === "Ongoing" || c.endDate === "2099-12-31";
+            const isLive = !c.isDraft && (
+              String(c.status || "").toLowerCase() === "live" ||
+              Boolean(c.isLive) ||
+              (c.startDate && new Date(c.startDate) <= now && (!c.endDate || new Date(c.endDate) >= now))
+            );
+            const isPast = !c.isDraft && (
+              String(c.status || "").toLowerCase() === "past" ||
+              (!isOngoing && c.endDate && new Date(c.endDate) < now)
+            );
+            const isCancelled = !c.isDraft && (
+              String(c.status || "").toLowerCase() === "cancelled" ||
+              String(c.status || "").toLowerCase() === "canceled"
+            );
+
+            if (isLive) {
+              setBlockedModal({
+                open: true,
+                kind: "live",
+                title: isMn ? "Сургалт явагдаж байна" : "Course is Currently Live",
+                body: isMn
+                  ? "Таны сургалт шууд явагдаж байгаа тул засах боломжгүй."
+                  : "Your course is live, you cannot edit this.",
+              });
+            } else if (isPast) {
+              setBlockedModal({
+                open: true,
+                kind: "past",
+                title: isMn ? "Сургалт дууссан байна" : "Course Has Ended",
+                body: isMn
+                  ? "Энэхүү сургалт аль хэдийн дууссан тул засах боломжгүй."
+                  : "This course has already ended, you cannot edit this.",
+              });
+            } else if (isCancelled) {
+              setBlockedModal({
+                open: true,
+                kind: "cancelled",
+                title: isMn ? "Сургалт цуцлагдсан байна" : "Course is Cancelled",
+                body: isMn
+                  ? "Энэхүү сургалт цуцлагдсан тул засах боломжгүй."
+                  : "This course has been cancelled, you cannot edit this.",
+              });
+            }
+
             setMode(c.isDraft ? "draft" : "published");
 
             let lat = null;
@@ -905,6 +952,7 @@ export default function LearningEditorPage() {
 
   // ─── Save Draft Handler ────────────────────────────────────────────────────
   const handleSaveDraft = async () => {
+    if (blockedModal?.open) return;
     setSavingDraft(true);
     try {
       const payload = {
@@ -966,6 +1014,7 @@ export default function LearningEditorPage() {
       return;
     }
 
+    if (blockedModal?.open) return;
     setPublishing(true);
     try {
       const payload = {
@@ -2193,6 +2242,114 @@ export default function LearningEditorPage() {
                   onClick={() => router.push("/Dashboard")}
                 >
                   {t("dashboard")}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Cannot Edit / Live Course Modal ───────────────────────────────── */}
+      {blockedModal?.open && (
+        <div
+          className="lw-scrim"
+          style={{
+            zIndex: 99999,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            className="lw-sheet"
+            style={{
+              maxWidth: "460px",
+              width: "90%",
+              padding: "34px 28px 30px",
+              textAlign: "center",
+              background: "#161b26",
+              border: "1px solid rgba(255, 82, 82, 0.35)",
+              borderRadius: "18px",
+              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.8)",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "64px",
+                height: "64px",
+                borderRadius: "50%",
+                background: "rgba(255, 82, 82, 0.15)",
+                color: "#ff5252",
+                margin: "0 auto 18px",
+              }}
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </span>
+            <b
+              style={{
+                display: "block",
+                fontSize: "20px",
+                fontWeight: 700,
+                color: "var(--bd-white)",
+                letterSpacing: "-0.015em",
+                marginBottom: "10px",
+              }}
+            >
+              {blockedModal.title}
+            </b>
+            <p
+              style={{
+                margin: "0 0 26px",
+                fontSize: "14.5px",
+                lineHeight: 1.6,
+                color: "var(--bd-gray-300)",
+              }}
+            >
+              {blockedModal.body}
+            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="button"
+                className="lw-gh"
+                onClick={() => router.push("/CoursesManagement")}
+                style={{
+                  padding: "11px 22px",
+                  fontSize: "14px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                }}
+              >
+                {isMn ? "Буцах" : "Back to Courses"}
+              </button>
+              {courseId && (
+                <button
+                  type="button"
+                  className="lw-go"
+                  onClick={() => router.push(`/CourseDetailOrganiser?courseId=${courseId}`)}
+                  style={{
+                    padding: "11px 22px",
+                    fontSize: "14px",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {isMn ? "Сургалт харах" : "View Course"}
                 </button>
               )}
             </div>

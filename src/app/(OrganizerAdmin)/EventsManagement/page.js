@@ -734,18 +734,26 @@ export default function EventsManagementPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Edit */}
-            <button
-              type="button"
-              className="oe-mi"
-              data-mi="edit"
-              onClick={() => {
-                setActiveMenu(null);
-                router.push(`/BasicInfo?eventId=${activeMenu.event._id}`);
-              }}
-            >
-              {isMn ? "Засах" : "Edit"}
-            </button>
+            {/* Edit — hidden for past and cancelled events */}
+            {(activeMenu.event.isDraft || (
+              activeTab !== "past" &&
+              String(activeMenu.event.status || "").toLowerCase() !== "past" &&
+              String(activeMenu.event.status || "").toLowerCase() !== "cancelled" &&
+              String(activeMenu.event.status || "").toLowerCase() !== "canceled" &&
+              (!activeMenu.event.endDate || new Date(activeMenu.event.endDate) >= new Date())
+            )) && (
+              <button
+                type="button"
+                className="oe-mi"
+                data-mi="edit"
+                onClick={() => {
+                  setActiveMenu(null);
+                  router.push(`/BasicInfo?eventId=${activeMenu.event._id}`);
+                }}
+              >
+                {isMn ? "Засах" : "Edit"}
+              </button>
+            )}
 
             {/* View */}
             {!activeMenu.event.isDraft && (

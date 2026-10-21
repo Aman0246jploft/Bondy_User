@@ -421,6 +421,16 @@ function EventDetailsContent() {
   const hover = chart && hoverIndex != null ? chart.coords[hoverIndex] : null;
   const hoverPoint = hover ? analyticsData.salesSeries[hoverIndex] : null;
 
+  const canEdit = Boolean(
+    event &&
+    (event.isDraft || (
+      String(event.status || "").toLowerCase() !== "past" &&
+      String(event.status || "").toLowerCase() !== "cancelled" &&
+      String(event.status || "").toLowerCase() !== "canceled" &&
+      (!event.endDate || new Date(event.endDate) >= new Date())
+    ))
+  );
+
   return (
     <div className="ed-page">
       <div className="ed-mobbar">
@@ -451,7 +461,9 @@ function EventDetailsContent() {
           <Link href={`/eventDetails?id=${event._id}`} className="ed-primary ed-ctaWide"><Icon name="eye" />{copy.publicPage}</Link>
           <div className="ed-heroPair">
             <button type="button" className="ed-secondary ed-ctaWide" onClick={() => setPromoOpen(true)}><Icon name="promote" />{copy.promote}</button>
-            <button type="button" className="ed-secondary ed-ctaWide" onClick={() => router.push(`/BasicInfo?eventId=${event._id}`)}><Icon name="edit" />{copy.edit}</button>
+            {canEdit && (
+              <button type="button" className="ed-secondary ed-ctaWide" onClick={() => router.push(`/BasicInfo?eventId=${event._id}`)}><Icon name="edit" />{copy.edit}</button>
+            )}
               </div>
               </div>
       </section>
@@ -521,8 +533,10 @@ function EventDetailsContent() {
           <section className="ed-card">
             <div className="ed-cardH">
               <h2>{copy.types}</h2>
-              <button type="button" className="ed-mini" onClick={() => router.push(`/BasicInfo?eventId=${event._id}&step=3`)}>{copy.edit}</button>
-                  </div>
+              {canEdit && (
+                <button type="button" className="ed-mini" onClick={() => router.push(`/BasicInfo?eventId=${event._id}&step=3`)}>{copy.edit}</button>
+              )}
+            </div>
             <div className="og-table og-t1 ed-ttable">
               <div className="og-table-inner" style={{ minWidth: 760 }}>
                 <div className="og-row og-head ed-grid6">
