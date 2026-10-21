@@ -404,6 +404,7 @@ export const backendMessages = {
   // ── controllerCourse ─────────────────────────────────────────────────────────
   "Cannot edit a course that has already ended": "Аль хэдийн дууссан курсийг засварлах боломжгүй.",
   "Cannot edit a cancelled course.": "Цуцлагдсан курсийг засварлах боломжгүй.",
+  "Your course is already live": "Таны сургалт аль хэдийн явагдаж байна.",
   "Once a course is published, it cannot be changed back to a draft": "Нийтлэгдсэн курсийг ноорог болгох боломжгүй.",
   "Course title is required for a published course": "Нийтлэгдсэн курст гарчиг шаардлагатай.",
   "Cannot modify the start date/time of a course that is already live": "Аль хэдийн эхэлсэн курсийн эхлэх огноо/цагийг өөрчлөх боломжгүй.",
