@@ -615,6 +615,13 @@ export default function LearningEditorPage() {
     }
     if (!formData.startDate) {
       errs.startDate = isMn ? "Эхлэх огноогоо сонгоно уу." : "Start date is required.";
+    } else {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selected = new Date(formData.startDate);
+      if (selected < today) {
+        errs.startDate = isMn ? "Эхлэх огноо өнгөрсөн байна." : "The start date is in the past.";
+      }
     }
     if (!formData.endDate) {
       errs.endDate = isMn ? "Дуусах огноогоо сонгоно уу." : "End date is required.";
@@ -840,6 +847,22 @@ export default function LearningEditorPage() {
     }
   };
 
+  const handleRemoveGalleryImage = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      mediaLinks: (prev.mediaLinks || []).filter((_, i) => i !== index),
+    }));
+    setDirty(true);
+  };
+
+  const handleRemoveTeaser = () => {
+    setFormData((prev) => ({
+      ...prev,
+      shortTeaserVideo: [],
+    }));
+    setDirty(true);
+  };
+
   // ─── Cohort / Batch Management ─────────────────────────────────────────────
   const handleOpenAddCohort = () => {
     setEditingCohortIndex(null);
@@ -1001,7 +1024,7 @@ export default function LearningEditorPage() {
       setDirty(false);
       setDoneModal({
         type: "draft",
-        title: isMn ? "Ноорогт хадгалагдлаа" : "Saved to drafts",
+        title: isMn ? "Ноорогт хадгалагдлаа" : "Saved to draft",
         msg: isMn ? "Дараа үргэлжлүүлэн засах боломжтой." : "You can keep editing later.",
       });
     } catch (err) {
@@ -1347,51 +1370,114 @@ export default function LearningEditorPage() {
                   <span className="lw-lb">
                     {t("apGallery")} <span className="lw-opt-b">{t("apOptional")}</span>
                   </span>
-                  <div className="lw-drop" style={{ padding: "16px 12px" }}>
-                    <span className="lw-dropT">
-                      {formData.mediaLinks?.length
-                        ? t("apGalleryCount", { count: formData.mediaLinks.length })
-                        : t("apGalleryEmpty")}
-                    </span>
-                    <span className="lw-dropS" style={{ fontSize: "11.5px" }}>
-                      {t("apGalleryMax")}
-                    </span>
-                    <label className="lw-gh lw-sm" style={{ position: "relative", overflow: "hidden", cursor: "pointer", marginTop: "8px" }}>
-                      {uploadingGallery ? (isMn ? "Хуулж байна..." : "Uploading...") : t("apAddPhotos")}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleGalleryUpload}
-                        style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
-                      />
-                    </label>
-                  </div>
+                  {formData.mediaLinks && formData.mediaLinks.length > 0 ? (
+                    <div>
+                      <div className="ew-gal" style={{ marginBottom: "10px" }}>
+                        {formData.mediaLinks.map((imgUrl, idx) => (
+                          <span
+                            key={idx}
+                            className="ew-gi"
+                            style={{ backgroundImage: `url("${getFullImageUrl(imgUrl)}")` }}
+                          >
+                            <button
+                              type="button"
+                              className="ew-gx"
+                              onClick={() => handleRemoveGalleryImage(idx)}
+                              aria-label={isMn ? "Хасах" : "Remove"}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                        {formData.mediaLinks.length < 5 && (
+                          <label className="ew-gadd" title={isMn ? "Зураг нэмэх" : "Add Photo"}>
+                            {uploadingGallery ? <span className="ew-sp" /> : "+"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={handleGalleryUpload}
+                              disabled={uploadingGallery}
+                              style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                            />
+                          </label>
+                        )}
+                      </div>
+                      <span className="lw-dropS" style={{ fontSize: "11.5px" }}>
+                        {t("apGalleryMax")}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="lw-drop" style={{ padding: "16px 12px" }}>
+                      <span className="lw-dropT">{t("apGalleryEmpty")}</span>
+                      <span className="lw-dropS" style={{ fontSize: "11.5px" }}>
+                        {t("apGalleryMax")}
+                      </span>
+                      <label className="lw-gh lw-sm" style={{ position: "relative", overflow: "hidden", cursor: "pointer", marginTop: "8px" }}>
+                        {uploadingGallery ? (isMn ? "Хуулж байна..." : "Uploading...") : t("apAddPhotos")}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleGalleryUpload}
+                          style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                        />
+                      </label>
+                    </div>
+                  )}
                 </div>
 
                 <div className="lw-f">
                   <span className="lw-lb">
                     {t("apTeaser")} <span className="lw-opt-b">{t("apOptional")}</span>
                   </span>
-                  <div className="lw-drop" style={{ padding: "16px 12px" }}>
-                    <span className="lw-dropT">
-                      {formData.shortTeaserVideo?.length
-                        ? t("apTeaserAttached")
-                        : t("apTeaserEmpty")}
-                    </span>
-                    <span className="lw-dropS" style={{ fontSize: "11.5px" }}>
-                      {t("apTeaserHint")}
-                    </span>
-                    <label className="lw-gh lw-sm" style={{ position: "relative", overflow: "hidden", cursor: "pointer", marginTop: "8px" }}>
-                      {uploadingTeaser ? (isMn ? "Хуулж байна..." : "Uploading...") : t("apAddVideo")}
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={handleTeaserUpload}
-                        style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                  {formData.shortTeaserVideo && formData.shortTeaserVideo.length > 0 && formData.shortTeaserVideo[0] ? (
+                    <div className="lw-video-box" style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid var(--bd-border)" }}>
+                      <video
+                        controls
+                        playsInline
+                        preload="metadata"
+                        src={getFullImageUrl(formData.shortTeaserVideo[0])}
+                        style={{ width: "100%", maxHeight: "160px", background: "#000", display: "block", objectFit: "contain" }}
                       />
-                    </label>
-                  </div>
+                      <div style={{ display: "flex", gap: "8px", padding: "8px 12px", background: "var(--bd-ink-800)", alignItems: "center", justifyContent: "space-between" }}>
+                        <label className="lw-gh lw-sm" style={{ position: "relative", overflow: "hidden", cursor: "pointer" }}>
+                          {uploadingTeaser ? (isMn ? "Хуулж байна..." : "Uploading...") : (isMn ? "Видео солих" : "Replace Video")}
+                          <input
+                            type="file"
+                            accept="video/*"
+                            onChange={handleTeaserUpload}
+                            disabled={uploadingTeaser}
+                            style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="lw-gh lw-sm"
+                          style={{ color: "#FF5A5A" }}
+                          onClick={handleRemoveTeaser}
+                        >
+                          {isMn ? "Устгах" : "Remove"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="lw-drop" style={{ padding: "16px 12px" }}>
+                      <span className="lw-dropT">{t("apTeaserEmpty")}</span>
+                      <span className="lw-dropS" style={{ fontSize: "11.5px" }}>
+                        {t("apTeaserHint")}
+                      </span>
+                      <label className="lw-gh lw-sm" style={{ position: "relative", overflow: "hidden", cursor: "pointer", marginTop: "8px" }}>
+                        {uploadingTeaser ? (isMn ? "Хуулж байна..." : "Uploading...") : t("apAddVideo")}
+                        <input
+                          type="file"
+                          accept="video/*"
+                          onChange={handleTeaserUpload}
+                          style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                        />
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -1525,6 +1611,7 @@ export default function LearningEditorPage() {
                     <input
                       type="date"
                       className="lw-in"
+                      min={new Date().toISOString().split("T")[0]}
                       aria-invalid={Boolean(touched[2] && errors.startDate)}
                       value={formData.startDate}
                       onChange={(e) => {
@@ -1828,6 +1915,17 @@ export default function LearningEditorPage() {
                         </svg>
                       </span>
                     </span>
+                    {formData.mediaLinks && formData.mediaLinks.length > 0 && (
+                      <div className="ew-gal" style={{ margin: "6px 0 10px" }}>
+                        {formData.mediaLinks.map((imgUrl, idx) => (
+                          <span
+                            key={idx}
+                            className="ew-gi"
+                            style={{ width: "80px", height: "60px", backgroundImage: `url("${getFullImageUrl(imgUrl)}")` }}
+                          />
+                        ))}
+                      </div>
+                    )}
                     <span className="lw-mrow">
                       <span>{t("apTeaser")}</span>
                       <b>{formData.shortTeaserVideo?.length ? t("apUploaded") : t("apNotUploaded")}</b>
@@ -1838,6 +1936,15 @@ export default function LearningEditorPage() {
                         </svg>
                       </span>
                     </span>
+                    {formData.shortTeaserVideo && formData.shortTeaserVideo[0] && (
+                      <video
+                        className="ew-reviewVideo"
+                        controls
+                        playsInline
+                        preload="metadata"
+                        src={getFullImageUrl(formData.shortTeaserVideo[0])}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -2089,40 +2196,40 @@ export default function LearningEditorPage() {
               <div className="lw-f">
                 <span className="lw-lb">{t("apSeats")} <i>*</i></span>
                 <span className="lw-stepn">
-                <span className="lw-stepbox">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCohortForm((prev) => ({
-                        ...prev,
-                        seats: prev.seats ? Math.max(1, Number(prev.seats) - 1) : "",
-                      }))
-                    }
-                  >
-                    −
-                  </button>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={4}
-                    value={cohortForm.seats}
-                    onChange={(e) =>
-                      setCohortForm((prev) => ({ ...prev, seats: clipDigits(e.target.value, 4) }))
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCohortForm((prev) => ({
-                        ...prev,
-                        seats: Math.min(9999, (Number(prev.seats) || 0) + 1),
-                      }))
-                    }
-                  >
-                    +
-                  </button>
-                </span>
-                <span className="lw-suffix">{t("apStudent")}</span>
+                  <span className="lw-stepbox">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCohortForm((prev) => ({
+                          ...prev,
+                          seats: prev.seats ? Math.max(1, Number(prev.seats) - 1) : "",
+                        }))
+                      }
+                    >
+                      −
+                    </button>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={cohortForm.seats}
+                      onChange={(e) =>
+                        setCohortForm((prev) => ({ ...prev, seats: clipDigits(e.target.value, 4) }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCohortForm((prev) => ({
+                          ...prev,
+                          seats: Math.min(9999, (Number(prev.seats) || 0) + 1),
+                        }))
+                      }
+                    >
+                      +
+                    </button>
+                  </span>
+                  <span className="lw-suffix">{t("apStudent")}</span>
                 </span>
                 <p className="lw-fh">{t("apSeatsHint")}</p>
               </div>

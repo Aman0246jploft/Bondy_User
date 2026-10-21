@@ -148,77 +148,96 @@ export default function OrganizerSidebar({ mobileOpen = false, onCloseMobile }) 
       label: isMn ? "Эвент" : "Event",
       glyph: "ticket",
       href: "/EventsManagement",
-      active: pathname.startsWith("/EventsManagement") || pathname.startsWith("/EventDetailOrganiser") || pathname.startsWith("/BasicInfo"),
+      active:
+        pathname.startsWith("/EventsManagement") ||
+        pathname.startsWith("/EventDetailOrganiser") ||
+        pathname.startsWith("/BasicInfo") ||
+        pathname.startsWith("/DateTime") ||
+        pathname.startsWith("/TicketsPricing") ||
+        pathname.startsWith("/Agerestraction") ||
+        pathname.startsWith("/Gallery") ||
+        pathname.startsWith("/EventPreview"),
     },
     {
       id: "learning",
       label: isMn ? "Сургалт" : "Course",
       glyph: "book",
       href: "/CoursesManagement",
-      active: pathname.startsWith("/CoursesManagement") || pathname.startsWith("/CourseDetailOrganiser"),
+      active:
+        pathname.startsWith("/CoursesManagement") ||
+        pathname.startsWith("/CourseDetailOrganiser") ||
+        pathname.startsWith("/AddProgram"),
     },
     {
       id: "bookings",
       label: t("obNav"),
       glyph: "orders",
       href: "/OrganizerCustomerBookings",
-      active: pathname.startsWith("/OrganizerCustomerBookings") || pathname.startsWith("/OrganizerBookingDetail"),
+      active:
+        pathname.startsWith("/OrganizerCustomerBookings") ||
+        pathname.startsWith("/OrganizerBookingDetail"),
     },
     {
       id: "staff",
       label: isMn ? "Ажилтнууд" : "Staff",
       glyph: "users",
       href: "/Staff",
-      active: pathname === "/Staff",
+      active: pathname.startsWith("/Staff"),
     },
     {
       id: "messages",
       label: isMn ? "Зурвас" : "Messages",
       glyph: "mail",
       href: "/Message",
-      active: pathname === "/Message",
+      active: pathname.startsWith("/Message"),
     },
     {
       id: "payouts",
       label: isMn ? "Орлого ба татан авалт" : "Earnings & payouts",
       glyph: "wallet",
       href: "/Earnings",
-      active: pathname === "/Earnings",
+      active: pathname.startsWith("/Earnings"),
     },
     {
       id: "analytics",
       label: isMn ? "Аналитик" : "Analytics",
       glyph: "analytics",
       href: "/Analytics",
-      active: pathname === "/Analytics" || pathname === "/Analytic",
+      active: pathname.startsWith("/Analytics") || pathname.startsWith("/Analytic"),
     },
     {
       id: "verify",
       label: isMn ? "Баталгаажуулалт" : "Verification",
       glyph: "verify",
       href: "/Verifiedprofile",
-      active: pathname === "/Verifiedprofile",
+      active: pathname.startsWith("/Verifiedprofile"),
     },
     {
       id: "myorders",
       label: isMn ? "Миний захиалга" : "My bookings",
       glyph: "orders",
       href: "/MyTicketsOrganiser",
-      active: pathname === "/MyTicketsOrganiser" || pathname === "/TicketDetailsOrganiser",
+      active:
+        pathname.startsWith("/MyTicketsOrganiser") ||
+        pathname.startsWith("/TicketDetailsOrganiser") ||
+        pathname.startsWith("/MyFavoriteOrganiser"),
     },
     {
       id: "profile",
       label: isMn ? "Профайл" : "Profile",
       glyph: "profile",
       href: "/OrganizerProfile",
-      active: pathname === "/OrganizerProfile" || pathname === "/OrganizerPersonalInfo",
+      active:
+        pathname.startsWith("/OrganizerProfile") ||
+        pathname.startsWith("/OrganizerPersonalInfo") ||
+        pathname.startsWith("/OrganizerReferral"),
     },
     {
       id: "notifications",
       label: isMn ? "Мэдэгдэл" : "Notifications",
       glyph: "bell",
       href: "/Notifications",
-      active: pathname === "/Notifications",
+      active: pathname.startsWith("/Notifications"),
     },
   ];
 
@@ -228,14 +247,19 @@ export default function OrganizerSidebar({ mobileOpen = false, onCloseMobile }) 
       label: isMn ? "Тусламж" : "Help",
       glyph: "help",
       href: "/SupportTickets",
-      active: pathname === "/SupportTickets",
+      active: pathname.startsWith("/SupportTickets"),
     },
     {
       id: "settings",
       label: isMn ? "Тохиргоо" : "Settings",
       glyph: "settings",
       href: "/Settings",
-      active: pathname === "/Settings" || pathname === "/OrganizerChangePassword",
+      active:
+        pathname.startsWith("/Settings") ||
+        pathname.startsWith("/OrganizerChangePassword") ||
+        pathname.startsWith("/SecurityOrganiser") ||
+        pathname.startsWith("/SubscriptionBilling") ||
+        pathname.startsWith("/Promotions"),
     },
     {
       id: "public",
