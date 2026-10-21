@@ -51,6 +51,14 @@ function getEnrolledString(course) {
   return cap > 0 ? `${taken} / ${Math.max(cap, taken)}` : `${taken}`;
 }
 
+export function formatTitleBilingual(title, isMn) {
+  if (!title || typeof title !== "string") return title;
+  if (isMn) {
+    return title.replace(/\s*\((?:copy)\)/gi, " (хуулбар)");
+  }
+  return title.replace(/\s*\((?:хуулбар)\)/gi, " (Copy)");
+}
+
 export default function CoursesManagementPage() {
   const router = useRouter();
   const { language, t } = useLanguage();
@@ -207,7 +215,11 @@ export default function CoursesManagementPage() {
   // Duplicate / Copy Action
   const handleDuplicateCourse = async (course) => {
     setActiveMenu(null);
-    const cloneTitle = `${course.courseTitle || course.title || "Сургалт"} (хуулбар)`;
+    const baseTitle = (course.courseTitle || course.title || "").replace(/\s*\((?:хуулбар|copy)\)/gi, "").trim();
+    const fallbackTitle = isMn ? "Сургалт" : "Course";
+    const cloneTitle = isMn
+      ? `${baseTitle || fallbackTitle} (хуулбар)`
+      : `${baseTitle || fallbackTitle} (Copy)`;
     try {
       const payload = {
         courseTitle: cloneTitle,
@@ -530,7 +542,7 @@ export default function CoursesManagementPage() {
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {course.courseTitle || course.title || t("lmUntitled")}
+                        {formatTitleBilingual(course.courseTitle || course.title, isMn) || t("lmUntitled")}
                       </b>
                     </span>
                   </span>
@@ -818,7 +830,7 @@ export default function CoursesManagementPage() {
                 </b>
                 <p style={{ margin: "9px 0 0", fontSize: "14px", lineHeight: 1.6, color: "var(--bd-gray-400)" }}>
                   <span style={{ color: "var(--bd-white)", fontWeight: 600 }}>
-                    {deleteDraftModal.courseTitle || deleteDraftModal.title || (isMn ? "Энэ сургалт" : "This course")}
+                    {formatTitleBilingual(deleteDraftModal.courseTitle || deleteDraftModal.title, isMn) || (isMn ? "Энэ сургалт" : "This course")}
                   </span>{" "}
                   — {isMn ? "бөглөсөн мэдээлэл бүрмөсөн устна. Үйлдлийг буцаах боломжгүй." : "all data will be permanently removed. This action cannot be undone."}
                 </p>
@@ -900,7 +912,7 @@ export default function CoursesManagementPage() {
           open={showPromoModal}
           kind="course"
           listingId={selectedCourseForPromo._id}
-          title={selectedCourseForPromo.courseTitle || selectedCourseForPromo.title}
+          title={formatTitleBilingual(selectedCourseForPromo.courseTitle || selectedCourseForPromo.title, isMn)}
           viewHref={`/programDetails?id=${selectedCourseForPromo._id}`}
           running={Boolean(
             selectedCourseForPromo.isFeatured &&

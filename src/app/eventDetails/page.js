@@ -799,7 +799,11 @@ function EventDetailsContent() {
     event.tickets.forEach((tk, idx) => {
       const avail = tk.availableQty !== undefined ? Number(tk.availableQty) : Number(tk.qty || 0);
       const isTierSold = avail <= 0;
-      const q = isTierSold ? 0 : (ticketQtys[tk._id || idx] || 0);
+      const now = new Date();
+      const salesStarted = tk.salesStart ? now >= new Date(tk.salesStart) : true;
+      const salesEnded = tk.salesEnd ? now > new Date(tk.salesEnd) : false;
+      const isSalesActive = salesStarted && !salesEnded;
+      const q = (isTierSold || !isSalesActive) ? 0 : (ticketQtys[tk._id || idx] || 0);
       qty += q;
       subtotal += q * (Number(tk.price) || 0);
     });
@@ -811,6 +815,18 @@ function EventDetailsContent() {
     const ticket = event?.tickets?.find((t, i) => (t._id || i) === tkId || String(t._id) === String(tkId));
     const available = ticket?.availableQty !== undefined ? Number(ticket.availableQty) : Number(ticket?.qty || 0);
     if (delta > 0 && available <= 0) return;
+
+    if (ticket && delta > 0) {
+      const now = new Date();
+      if (ticket.salesStart && now < new Date(ticket.salesStart)) {
+        toast.error(language === "mn" ? `Тасалбарын борлуулалт эхлээгүй байна: ${ticket.ticketName}` : `Sales not started for ticket: ${ticket.ticketName}`);
+        return;
+      }
+      if (ticket.salesEnd && now > new Date(ticket.salesEnd)) {
+        toast.error(language === "mn" ? `Тасалбарын борлуулалт дууссан: ${ticket.ticketName}` : `Sales ended for ticket: ${ticket.ticketName}`);
+        return;
+      }
+    }
 
     setTicketQtys((prev) => {
       const cur = prev[tkId] || 0;
@@ -837,13 +853,16 @@ function EventDetailsContent() {
       toast.error(t("selectAtLeastOneTicket"));
       return;
     }
+    const now = new Date();
     const picked = Object.entries(ticketQtys)
       .filter(([id, q]) => {
         const num = Number(q);
         if (num <= 0) return false;
         const tk = event?.tickets?.find((t, i) => (t._id || i) === id || String(t._id) === String(id));
         const avail = tk?.availableQty !== undefined ? Number(tk.availableQty) : Number(tk?.qty || 0);
-        return avail > 0;
+        const salesStarted = tk?.salesStart ? now >= new Date(tk.salesStart) : true;
+        const salesEnded = tk?.salesEnd ? now > new Date(tk.salesEnd) : false;
+        return avail > 0 && salesStarted && !salesEnded;
       })
       .map(([id, q]) => `${id}:${q}`)
       .join(",");
@@ -1664,19 +1683,29 @@ function EventDetailsContent() {
                         const total = ticket.qty || 0;
                         const available = ticket.availableQty !== undefined ? ticket.availableQty : total;
                         const isTierSoldOut = available <= 0;
+                        const now = new Date();
+                        const salesStarted = ticket.salesStart ? now >= new Date(ticket.salesStart) : true;
+                        const salesEnded = ticket.salesEnd ? now > new Date(ticket.salesEnd) : false;
+                        const isSalesActive = salesStarted && !salesEnded;
                         const rawQ = ticketQtys[tkId] || 0;
-                        const q = isTierSoldOut ? 0 : rawQ;
+                        const q = (!isSalesActive || isTierSoldOut) ? 0 : rawQ;
                         const tPrice = Number(ticket.price) || 0;
 
                         const shortDesc = String(ticket.ticketShortDesc || "").trim();
 
                         return (
-                          <div key={tkId} className={`bs-tk${q > 0 ? " is-on" : ""}${isTierSoldOut ? " is-off" : ""}`}>
+                          <div key={tkId} className={`bs-tk${q > 0 ? " is-on" : ""}${isTierSoldOut || !isSalesActive ? " is-off" : ""}`}>
                             <div className="bs-tk-l">
                               <span className="bs-tk-nm">{ticket.ticketName}</span>
                               {shortDesc ? <span className="bs-tk-nt">{shortDesc}</span> : null}
-                              <span className={`bs-tk-flag${isTierSoldOut ? " is-sold" : available <= 6 ? " is-low" : ""}`}>
-                                {isTierSoldOut ? t("soldOut") : `${Number(available).toLocaleString()} ${t("left")}`}
+                              <span className={`bs-tk-flag${isTierSoldOut || salesEnded ? " is-sold" : !salesStarted ? " is-pending" : available <= 6 ? " is-low" : ""}`}>
+                                {isTierSoldOut
+                                  ? t("soldOut")
+                                  : !salesStarted
+                                    ? (language === "mn" ? `Борлуулалт: ${new Date(ticket.salesStart).toLocaleDateString()}` : `Sales start on ${new Date(ticket.salesStart).toLocaleDateString()}`)
+                                    : salesEnded
+                                      ? (language === "mn" ? "Борлуулалт дууссан" : "Sales ended")
+                                      : `${Number(available).toLocaleString()} ${t("left")}`}
                               </span>
                             </div>
                             <div className="bs-tk-r">
@@ -1687,7 +1716,7 @@ function EventDetailsContent() {
                                 <button
                                   type="button"
                                   onClick={() => handleStepTicket(tkId, -1)}
-                                  disabled={q <= 0 || isTierSoldOut}
+                                  disabled={q <= 0 || isTierSoldOut || !isSalesActive}
                                   aria-label="Decrease"
                                 >
                                   −
@@ -1696,7 +1725,7 @@ function EventDetailsContent() {
                                 <button
                                   type="button"
                                   onClick={() => handleStepTicket(tkId, 1)}
-                                  disabled={isTierSoldOut || (available > 0 && q >= available)}
+                                  disabled={!isSalesActive || isTierSoldOut || (available > 0 && q >= available)}
                                   aria-label="Increase"
                                 >
                                   +

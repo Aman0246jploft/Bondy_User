@@ -133,7 +133,10 @@ function CheckoutContent() {
                 if (id && n > 0) {
                   const tk = evt.tickets?.find((t, i) => (t._id || i) === id || String(t._id) === String(id));
                   const avail = tk?.availableQty !== undefined ? Number(tk.availableQty) : Number(tk?.qty || 0);
-                  if (avail > 0) {
+                  const now = new Date();
+                  const salesStarted = tk?.salesStart ? now >= new Date(tk.salesStart) : true;
+                  const salesEnded = tk?.salesEnd ? now > new Date(tk.salesEnd) : false;
+                  if (avail > 0 && salesStarted && !salesEnded) {
                     initial[id] = Math.min(n, avail);
                   } else {
                     initial[id] = 0;
@@ -296,6 +299,21 @@ function CheckoutContent() {
       }
     } catch (err) {
       console.error("Calculate booking error:", err);
+      // Local fallback calculation so prices don't show 0/free on preview error
+      if (bookingType === "EVENT") {
+        const activeTickets = Object.entries(selectedTickets)
+          .filter(([_, q]) => q > 0)
+          .map(([ticketId, q]) => ({ ticketId, qty: q }));
+        const subtotal = activeTickets.reduce((sum, item) => {
+          const tk = bookingItem?.tickets?.find((t) => (t._id || t.id) === item.ticketId || String(t._id || t.id) === String(item.ticketId));
+          return sum + (Number(tk?.price) || 0) * item.qty;
+        }, 0);
+        setPriceBreakdown((prev) => ({
+          ...prev,
+          basePrice: subtotal,
+          totalAmount: subtotal,
+        }));
+      }
     }
   }, [bookingItem, bookingType, selectedTickets, appliedPromoCode, qty, selectedBatchId, selectedPassType, selectedSlots]);
 
@@ -305,6 +323,18 @@ function CheckoutContent() {
 
   // Stepper handlers
   const handleTicketStep = (ticketId, delta, maxAvailable) => {
+    const ticket = bookingItem?.tickets?.find((t) => (t._id || t.id) === ticketId || String(t._id || t.id) === String(ticketId));
+    if (ticket && delta > 0) {
+      const now = new Date();
+      if (ticket.salesStart && now < new Date(ticket.salesStart)) {
+        toast.error(language === "mn" ? `Тасалбарын борлуулалт эхлээгүй байна: ${ticket.ticketName}` : `Sales not started for ticket: ${ticket.ticketName}`);
+        return;
+      }
+      if (ticket.salesEnd && now > new Date(ticket.salesEnd)) {
+        toast.error(language === "mn" ? `Тасалбарын борлуулалт дууссан: ${ticket.ticketName}` : `Sales ended for ticket: ${ticket.ticketName}`);
+        return;
+      }
+    }
     setSelectedTickets((prev) => {
       const cur = prev[ticketId] || 0;
       const next = Math.max(0, Math.min(maxAvailable, cur + delta));
@@ -567,7 +597,15 @@ function CheckoutContent() {
     );
   }
 
-  const isFree = priceBreakdown.totalAmount === 0 && (isEvent ? Object.values(selectedTickets).some((q) => q > 0) : true);
+  const hasSelectedPaidTicket = isEvent
+    ? Object.entries(selectedTickets).some(([tkId, q]) => {
+        if (q <= 0) return false;
+        const tk = bookingItem?.tickets?.find((t) => (t._id || t.id) === tkId || String(t._id || t.id) === String(tkId));
+        return tk && Number(tk.price) > 0;
+      })
+    : ((Number(bookingItem?.price) || Number(bookingItem?.courseFee) || 0) > 0);
+
+  const isFree = !hasSelectedPaidTicket && priceBreakdown.totalAmount === 0 && (isEvent ? Object.values(selectedTickets).some((q) => q > 0) : true);
   const totalQuantity = isEvent ? Object.values(selectedTickets).reduce((a, b) => a + b, 0) : qty;
   const canProceed = totalQuantity > 0;
 
@@ -807,6 +845,10 @@ function CheckoutContent() {
                       const totalSeats = ticket.qty || 0;
                       const available = ticket.availableQty !== undefined ? ticket.availableQty : totalSeats;
                       const isSoldOut = available <= 0;
+                      const now = new Date();
+                      const salesStarted = ticket.salesStart ? now >= new Date(ticket.salesStart) : true;
+                      const salesEnded = ticket.salesEnd ? now > new Date(ticket.salesEnd) : false;
+                      const isSalesActive = salesStarted && !salesEnded;
                       const priceNum = Number(ticket.price) || 0;
                       const priceLabel = priceNum === 0 ? (language === "mn" ? "Үнэгүй" : "Free") : `₮${priceNum.toLocaleString()}`;
                       const isSelected = q > 0;
@@ -823,6 +865,7 @@ function CheckoutContent() {
                             borderRadius: 16,
                             background: isSelected ? "rgba(35,173,164,.09)" : "var(--bd-ink-800, #1A1A1A)",
                             border: isSelected ? "1px solid var(--acc, #23ADA4)" : "1px solid var(--bd-border, rgba(255,255,255,.08))",
+                            opacity: !isSalesActive || isSoldOut ? 0.6 : 1,
                             transition: "border-color 200ms ease, background 200ms ease",
                           }}
                         >
@@ -833,11 +876,19 @@ function CheckoutContent() {
                             <span style={{ fontSize: 12.5, color: "var(--bd-gray-600, #979797)" }}>
                               {ticket.ticketShortDesc || (isSoldOut ? (language === "mn" ? "Дууссан" : "Sold out") : (language === "mn" ? "Суудал чөлөөтэй" : "Free seating"))}
                             </span>
-                            {available > 0 && available <= 12 && (
+                            {!salesStarted ? (
+                              <span style={{ fontSize: 12.5, color: "#23ada4", fontWeight: 600 }}>
+                                {language === "mn" ? `Борлуулалт: ${new Date(ticket.salesStart).toLocaleDateString()}` : `Sales start on ${new Date(ticket.salesStart).toLocaleDateString()}`}
+                              </span>
+                            ) : salesEnded ? (
+                              <span style={{ fontSize: 12.5, color: "#FFA143", fontWeight: 600 }}>
+                                {language === "mn" ? "Борлуулалт дууссан" : "Sales ended"}
+                              </span>
+                            ) : available > 0 && available <= 12 ? (
                               <span style={{ fontSize: 12.5, color: "#FFA143", fontWeight: 600 }}>
                                 {language === "mn" ? `Ердөө ${available} үлдлээ` : `Only ${available} left`}
                               </span>
-                            )}
+                            ) : null}
                           </div>
 
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 9, flexShrink: 0, marginLeft: "auto" }}>
@@ -849,7 +900,7 @@ function CheckoutContent() {
                               <button
                                 type="button"
                                 onClick={() => handleTicketStep(tkId, -1, available)}
-                                disabled={q <= 0}
+                                disabled={q <= 0 || !isSalesActive}
                                 aria-label="Decrease"
                                 style={{
                                   width: 34,
@@ -860,8 +911,8 @@ function CheckoutContent() {
                                   color: "var(--bd-white)",
                                   fontSize: 18,
                                   lineHeight: 1,
-                                  cursor: q > 0 ? "pointer" : "default",
-                                  opacity: q > 0 ? 1 : 0.35,
+                                  cursor: q > 0 && isSalesActive ? "pointer" : "default",
+                                  opacity: q > 0 && isSalesActive ? 1 : 0.35,
                                 }}
                               >
                                 −
@@ -872,7 +923,7 @@ function CheckoutContent() {
                               <button
                                 type="button"
                                 onClick={() => handleTicketStep(tkId, 1, available)}
-                                disabled={isSoldOut || q >= available}
+                                disabled={isSoldOut || !isSalesActive || q >= available}
                                 aria-label="Increase"
                                 style={{
                                   width: 34,
@@ -883,8 +934,8 @@ function CheckoutContent() {
                                   color: "var(--acc-bright)",
                                   fontSize: 18,
                                   lineHeight: 1,
-                                  cursor: !isSoldOut && q < available ? "pointer" : "default",
-                                  opacity: !isSoldOut && q < available ? 1 : 0.35,
+                                  cursor: !isSoldOut && isSalesActive && q < available ? "pointer" : "default",
+                                  opacity: !isSoldOut && isSalesActive && q < available ? 1 : 0.35,
                                 }}
                               >
                                 +

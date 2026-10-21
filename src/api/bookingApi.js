@@ -15,7 +15,7 @@ const bookingApi = {
     checkQpayStatus: (data) => apiClient.post("/booking/qpay/check", data),
 
     // Calculate pricing preview (optional, if needed for dynamic price updates before booking)
-    calculateBooking: (data) => apiClient.post("/booking/calculate", data),
+    calculateBooking: (data) => apiClient.post("/booking/calculate", data, { skipToast: true }),
 
     getTicketList: (params) => apiClient.get("/booking/list", { params }),
 

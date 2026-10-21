@@ -53,6 +53,11 @@ export const localizeMessage = (message) => {
     // 2. If target language is English
     if (lang === "en") {
         if (mongolianToEnglishBackend[message]) return mongolianToEnglishBackend[message];
+        for (const [mnKey, enVal] of Object.entries(mongolianToEnglishBackend)) {
+            if (mnKey && message.startsWith(mnKey)) {
+                return message.replace(mnKey, enVal);
+            }
+        }
         const mnEntries = Object.entries(translations.mn || {});
         const foundMn = mnEntries.find(([, v]) => v === message);
         if (foundMn) {
@@ -64,6 +69,11 @@ export const localizeMessage = (message) => {
     // 3. If target language is Mongolian
     if (lang === "mn") {
         if (backendMessages[message]) return backendMessages[message];
+        for (const [enKey, mnVal] of Object.entries(backendMessages)) {
+            if (enKey && message.startsWith(enKey)) {
+                return message.replace(enKey, mnVal);
+            }
+        }
         const enEntries = Object.entries(translations.en || {});
         const foundEn = enEntries.find(([, v]) => v === message);
         if (foundEn) {
