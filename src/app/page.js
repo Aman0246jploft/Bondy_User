@@ -261,13 +261,29 @@ function RailCarousel({ items, loading, renderItem, emptyText, language }) {
         </button>
       )}
 
-      <div className="bd-rail" ref={railRef} onScroll={checkScroll}>
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
-          : items && items.length > 0
-            ? items.map(renderItem)
-            : <p style={{ padding: "40px 20px", color: "var(--bd-gray-500)", fontSize: 14 }}>{emptyText}</p>}
-      </div>
+      {!loading && (!items || items.length === 0) ? (
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            padding: "54px 20px",
+            color: "var(--bd-gray-500)",
+            fontSize: "15px",
+            fontWeight: 500,
+          }}
+        >
+          {emptyText}
+        </div>
+      ) : (
+        <div className="bd-rail" ref={railRef} onScroll={checkScroll}>
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
+            : items?.map(renderItem)}
+        </div>
+      )}
 
       {hasMultiple && (
         <>
@@ -508,8 +524,8 @@ export default function HomePage() {
         const next = { ...prev, [id]: !prev[id] };
         localStorage.setItem("bondy_favorites", JSON.stringify(next));
         toast.success(next[id]
-          ? (language === "en" ? "Saved to favorites" : "Хадгалагдлаа")
-          : (language === "en" ? "Removed from favorites" : "Хасагдлаа"));
+          ? (language === "mn" ? "Хадгалсан жагсаалтад нэмэгдлээ" : "Added to Favourites")
+          : (language === "mn" ? "Хадгалсан жагсаалтаас хасагдлаа" : "Removed from Favourites"));
         return next;
       });
       try {
@@ -900,7 +916,23 @@ export default function HomePage() {
                     </Link>
                   );
                 })
-                : <p style={{ color: "var(--bd-gray-500)", fontSize: 14 }}>{language === "en" ? "No upcoming events." : "Удахгүй болох эвент олдсонгүй."}</p>}
+                : (
+                  <div
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      padding: "44px 20px",
+                      color: "var(--bd-gray-500)",
+                      fontSize: "15px",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {language === "en" ? "No upcoming events found." : "Удахгүй болох эвент олдсонгүй."}
+                  </div>
+                )}
           </div>
         </div>
       </section>

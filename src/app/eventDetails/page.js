@@ -560,7 +560,7 @@ function EventDetailsContent() {
         if (isWishlisted) {
           const response = await wishlistApi.removeFromWishlist({ entityId: eventId });
           if (response?.status === true) {
-            toast.success(response?.message || (t("removedFromSaved")));
+            toast.success(t("removedFromFavourites") || "Removed from Favourites");
             setIsWishlisted(false);
           }
         } else {
@@ -570,7 +570,7 @@ function EventDetailsContent() {
           });
           if (response?.status === true) {
             setIsWishlisted(true);
-            toast.success(response?.message || (t("savedToFavorites")));
+            toast.success(t("addedToFavourites") || "Added to Favourites");
           }
         }
       } catch (error) {
@@ -589,8 +589,8 @@ function EventDetailsContent() {
         const next = { ...prev, [id]: !prev[id] };
         localStorage.setItem("bondy_favorites", JSON.stringify(next));
         toast.success(next[id]
-          ? (t("savedFavoritesShort"))
-          : (t("removedFromFavorites")));
+          ? (t("addedToFavourites") || "Added to Favourites")
+          : (t("removedFromFavourites") || "Removed from Favourites"));
         return next;
       });
       try {

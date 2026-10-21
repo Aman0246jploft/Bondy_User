@@ -70,7 +70,7 @@ export default function UnifiedFavorites({ titleKey = "myFavorite" }) {
     try {
       const response = await wishlistApi.removeFromWishlist({ entityId });
       if (response?.status) {
-        toast.success(t("removedFromWishlist") || "Removed from saved items");
+        toast.success(t("removedFromFavourites") || "Removed from Favourites");
         setWishlistItems((prev) => prev.filter((item) => item.entityId?._id !== entityId));
       } else {
         toast.error(response?.message || t("failedToRemoveItem") || "Failed to remove item");
