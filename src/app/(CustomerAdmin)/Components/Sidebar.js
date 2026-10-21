@@ -11,7 +11,7 @@ import authApi from "@/api/authApi";
 
 export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
   const { t } = useLanguage();
-  const { unreadNotificationCount } = useSocket();
+  const { unreadNotificationCount, unreadMessageCount } = useSocket();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -38,7 +38,18 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
     fetchUser();
   }, [pathname]);
 
-  const isActive = (path) => pathname === path;
+  const isActive = (path) => {
+    if (path === "/Personalinfo") {
+      return pathname.startsWith("/Personalinfo");
+    }
+    if (path === "/MyTickets") {
+      return pathname.startsWith("/MyTickets") || pathname.startsWith("/TicketDetails");
+    }
+    if (path === "/Security") {
+      return pathname.startsWith("/Security") || pathname.startsWith("/ChangePassword");
+    }
+    return pathname.startsWith(path);
+  };
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -117,6 +128,31 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
             </svg>
           </span>
           <span>{t("messages")}</span>
+          {unreadMessageCount > 0 && (
+            <span
+              className="bd-badge-count"
+              style={{
+                position: "static",
+                marginLeft: "auto",
+                top: "auto",
+                right: "auto",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minWidth: "unset",
+                height: "auto",
+                padding: "2px 8px",
+                fontSize: 11,
+                fontWeight: 700,
+                lineHeight: 1.3,
+                borderRadius: 999,
+                background: "var(--bd-teal-500, #23ada4)",
+                color: "#fff",
+              }}
+            >
+              {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+            </span>
+          )}
         </Link>
 
         <Link
@@ -176,7 +212,27 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
           </span>
           <span>{t("notifications")}</span>
           {unreadNotificationCount > 0 && (
-            <span className="bd-badge-count">
+            <span
+              className="bd-badge-count"
+              style={{
+                position: "static",
+                marginLeft: "auto",
+                top: "auto",
+                right: "auto",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minWidth: "unset",
+                height: "auto",
+                padding: "2px 8px",
+                fontSize: 11,
+                fontWeight: 700,
+                lineHeight: 1.3,
+                borderRadius: 999,
+                background: "var(--bd-teal-500, #23ada4)",
+                color: "#fff",
+              }}
+            >
               {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
             </span>
           )}

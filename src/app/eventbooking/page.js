@@ -88,6 +88,38 @@ function CheckoutContent() {
   const { t, language } = useLanguage();
   const { checkAuth } = useAuthGuard();
 
+  const isSalesPending = useMemo(() => {
+    if (!bookingItem) return false;
+    const now = new Date();
+    if (bookingType === "EVENT") {
+      if (!bookingItem.tickets || bookingItem.tickets.length === 0) return false;
+      return bookingItem.tickets.every((tk) => tk.salesStart && now < new Date(tk.salesStart));
+    }
+    if (bookingType === "COURSE") {
+      if (bookingItem.salesStart && now < new Date(bookingItem.salesStart)) return true;
+      const b = bookingItem.batches?.find((item) => item._id === selectedBatchId);
+      if (b?.salesStart && now < new Date(b.salesStart)) return true;
+    }
+    return false;
+  }, [bookingItem, bookingType, selectedBatchId]);
+
+  const salesPendingDate = useMemo(() => {
+    if (!bookingItem) return null;
+    const now = new Date();
+    if (bookingType === "EVENT") {
+      const starts = (bookingItem.tickets || [])
+        .filter((tk) => tk.salesStart && now < new Date(tk.salesStart))
+        .map((tk) => new Date(tk.salesStart));
+      return starts.length ? new Date(Math.min(...starts)) : null;
+    }
+    if (bookingType === "COURSE") {
+      const b = bookingItem.batches?.find((item) => item._id === selectedBatchId);
+      if (b?.salesStart && now < new Date(b.salesStart)) return new Date(b.salesStart);
+      if (bookingItem.salesStart && now < new Date(bookingItem.salesStart)) return new Date(bookingItem.salesStart);
+    }
+    return null;
+  }, [bookingItem, bookingType, selectedBatchId]);
+
   // Guard guest users arriving on booking page
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -327,11 +359,20 @@ function CheckoutContent() {
     if (ticket && delta > 0) {
       const now = new Date();
       if (ticket.salesStart && now < new Date(ticket.salesStart)) {
-        toast.error(language === "mn" ? `Тасалбарын борлуулалт эхлээгүй байна: ${ticket.ticketName}` : `Sales not started for ticket: ${ticket.ticketName}`);
+        const startStr = new Date(ticket.salesStart).toLocaleDateString();
+        toast.error(
+          language === "mn"
+            ? `Тасалбарын борлуулалт ${startStr}-нд эхэлнэ: ${ticket.ticketName}`
+            : `Sales start on ${startStr} for ticket: ${ticket.ticketName}`
+        );
         return;
       }
       if (ticket.salesEnd && now > new Date(ticket.salesEnd)) {
-        toast.error(language === "mn" ? `Тасалбарын борлуулалт дууссан: ${ticket.ticketName}` : `Sales ended for ticket: ${ticket.ticketName}`);
+        toast.error(
+          language === "mn"
+            ? `Тасалбарын борлуулалт дууссан: ${ticket.ticketName}`
+            : `Sales ended for ticket: ${ticket.ticketName}`
+        );
         return;
       }
     }
@@ -432,6 +473,14 @@ function CheckoutContent() {
 
     // Validation
     const isEvent = bookingType === "EVENT";
+    if (isSalesPending && salesPendingDate) {
+      toast.error(
+        language === "mn"
+          ? `${isEvent ? "Тасалбарын борлуулалт" : "Сургалтын бүртгэл"} ${salesPendingDate.toLocaleDateString()}-нд эхэлнэ.`
+          : `${isEvent ? "Ticket sales" : "Registration"} starts on ${salesPendingDate.toLocaleDateString()}.`
+      );
+      return;
+    }
     let activeTickets = [];
     if (isEvent) {
       activeTickets = Object.entries(selectedTickets)
@@ -816,6 +865,33 @@ function CheckoutContent() {
                   </span>
                 </div>
               </div>
+
+              {isSalesPending && salesPendingDate && (
+                <div style={{
+                  width: "100%",
+                  marginTop: 10,
+                  padding: "10px 14px",
+                  borderRadius: 14,
+                  background: "rgba(35, 173, 164, 0.1)",
+                  border: "1px solid rgba(35, 173, 164, 0.28)",
+                  color: "var(--acc-bright, #36CEC2)",
+                  fontSize: 13,
+                  lineHeight: 1.45,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <span>
+                    {language === "mn"
+                      ? `${isEvent ? "Тасалбарын борлуулалт" : "Сургалтын бүртгэл"} ${salesPendingDate.toLocaleDateString()}-нд эхэлнэ.`
+                      : `${isEvent ? "Ticket sales" : "Registration"} will open on ${salesPendingDate.toLocaleDateString()}.`}
+                  </span>
+                </div>
+              )}
             </section>
 
             {/* Ticket picker stays in the file and is not shown.
@@ -1470,6 +1546,8 @@ function CheckoutContent() {
                   <span className="op-spin" style={{ width: 16, height: 16 }} />
                   <span>{language === "mn" ? "Боловсруулж байна…" : "Processing…"}</span>
                 </>
+              ) : isSalesPending ? (
+                language === "mn" ? `Борлуулалт ${salesPendingDate?.toLocaleDateString()} эхэлнэ` : `Opens ${salesPendingDate?.toLocaleDateString()}`
               ) : isFree ? (
                 t("ckConfirmFree")
               ) : canProceed ? (
@@ -1499,6 +1577,8 @@ function CheckoutContent() {
           >
             {payLoading ? (
               <span className="op-spin" style={{ width: 16, height: 16 }} />
+            ) : isSalesPending ? (
+              language === "mn" ? `Борлуулалт ${salesPendingDate?.toLocaleDateString()} эхэлнэ` : `Opens ${salesPendingDate?.toLocaleDateString()}`
             ) : isFree ? (
               language === "mn" ? "Үнэгүй бүртгүүлэх" : "Register Free"
             ) : canProceed ? (
