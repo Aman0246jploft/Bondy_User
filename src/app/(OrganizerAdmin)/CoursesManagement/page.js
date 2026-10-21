@@ -712,7 +712,7 @@ export default function CoursesManagementPage() {
                 className="lm-mi"
                 onClick={() => openPromoModal(activeMenu.course)}
               >
-                ⭐ {isMn ? "Сурталчилгаа" : "Promote"}
+                {isMn ? "Сурталчилгаа" : "Promote"}
               </button>
             )}
 
