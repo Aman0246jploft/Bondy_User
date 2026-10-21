@@ -178,7 +178,7 @@ export default function OrganizerReferralPage() {
         <p className="text-secondary mb-3" style={{ fontSize: "13px" }}>
           {t("referralPageBenefitDesc") || "Get ₮75,000 coupon credit for every organizer who joins and hosts their first event or friend who books their first experience."}
         </p>
-        <div className="form-control d-flex align-items-center bg-black p-2 rounded-2" style={{ border: "1px solid rgba(255,255,255,0.06)", Background:" #242424 !important;" }}>
+        <div className="form-control d-flex align-items-center bg-black p-2 rounded-2" style={{ border: "1px solid rgba(255,255,255,0.06)", Background: " #242424 !important;" }}>
           {loadingCode ? (
             <Spinner animation="border" size="sm" className="text-info mx-auto" />
           ) : (
@@ -187,7 +187,7 @@ export default function OrganizerReferralPage() {
               <input
                 type="text"
                 className="form-control text-white border-0 p-0 shadow-none"
-                style={{ fontSize: "13px", border:"0px !important" }}
+                style={{ fontSize: "13px", border: "0px !important" }}
                 value={referralLink}
                 readOnly
               />
@@ -313,8 +313,8 @@ export default function OrganizerReferralPage() {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5 className="m-0 fw-bold text-white" style={{ fontSize: "18px" }}>{t("recentReferrals") || "Recent Referrals"}</h5>
         {history.length > 5 && (
-          <span 
-            className="text-info" 
+          <span
+            className="text-info"
             style={{ fontSize: "13px", cursor: "pointer" }}
             onClick={() => setShowAllReferrals(!showAllReferrals)}
           >

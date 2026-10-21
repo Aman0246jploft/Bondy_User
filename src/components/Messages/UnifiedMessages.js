@@ -255,7 +255,7 @@ function ChatImage({ src, label, onPreview }) {
 export default function UnifiedMessages({ organizerMode = false }) {
   const { t } = useLanguage();
   const router = useRouter();
-  const { socket, isSocketConnected, onlineUsers } = useSocket();
+  const { socket, isSocketConnected, onlineUsers, fetchUnreadNotificationCount, fetchUnreadMessageCount } = useSocket();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("userId");
 
@@ -389,6 +389,8 @@ export default function UnifiedMessages({ organizerMode = false }) {
         });
       }
       setChatListReady(true);
+      fetchUnreadNotificationCount?.();
+      fetchUnreadMessageCount?.();
     });
 
     const handleChatListUpdate = (newChat) => {
@@ -397,7 +399,11 @@ export default function UnifiedMessages({ organizerMode = false }) {
       const active = activeChatRef.current;
       const isOpen = active && !active.isVirtual && sameId(active._id, newChat._id);
       const nextChat = isOpen ? { ...newChat, unreadCount: 0 } : newChat;
-      if (isOpen) socket.emit("mark_messages_read", { chatId: newChat._id });
+      if (isOpen) {
+        socket.emit("mark_messages_read", { chatId: newChat._id });
+        fetchUnreadNotificationCount?.();
+        fetchUnreadMessageCount?.();
+      }
       setChats((prev) => {
         const exists = prev.some((c) => sameId(c._id, nextChat._id));
         if (exists) {
@@ -477,6 +483,8 @@ export default function UnifiedMessages({ organizerMode = false }) {
     setShowJump(false);
     socket.emit("join_chat", { chatId: activeChat._id });
     socket.emit("mark_messages_read", { chatId: activeChat._id });
+    fetchUnreadNotificationCount?.();
+    fetchUnreadMessageCount?.();
     setChats((prev) => prev.map((c) => (sameId(c._id, activeChat._id) ? { ...c, unreadCount: 0 } : c)));
     setTypingUsers({});
 
@@ -537,7 +545,11 @@ export default function UnifiedMessages({ organizerMode = false }) {
           }
           el.scrollTop = el.scrollHeight;
         }, 60);
-        if (!fromMe) socket.emit("mark_messages_read", { chatId: chat._id });
+        if (!fromMe) {
+          socket.emit("mark_messages_read", { chatId: chat._id });
+          fetchUnreadNotificationCount?.();
+          fetchUnreadMessageCount?.();
+        }
       }
 
       setChats((prev) =>

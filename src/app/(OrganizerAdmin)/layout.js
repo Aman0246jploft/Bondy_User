@@ -7,6 +7,7 @@ import OrganizerSidebar from "./Components/OrganizerSidebar";
 import { EventProvider } from "@/context/EventContext";
 import authApi from "@/api/authApi";
 import { useLanguage } from "@/context/LanguageContext";
+import { useSocket } from "@/context/SocketContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import GlobalLoader from "@/components/GlobalLoader";
 import "./organizer-admin.css";
@@ -16,6 +17,7 @@ export default function RootLayout({ children }) {
   const pathname = usePathname();
   const [editorQuery, setEditorQuery] = useState("");
   const { language, changeLanguage, t } = useLanguage();
+  const { unreadNotificationCount } = useSocket();
   const isMn = language === "mn";
 
   const [authorized, setAuthorized] = useState(false);
@@ -342,18 +344,20 @@ export default function RootLayout({ children }) {
                   <path d="M18 16V11a6 6 0 0 0-12 0v5l-1.5 2.2h15Z" />
                   <path d="M10 19.5a2.2 2.2 0 0 0 4 0" />
                 </svg>
-                <span
-                  style={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "9px",
-                    width: "7px",
-                    height: "7px",
-                    borderRadius: "50%",
-                    background: "var(--acc-bright)",
-                    boxShadow: "0 0 0 2px var(--bd-ink-850)",
-                  }}
-                />
+                {Boolean(unreadNotificationCount && unreadNotificationCount > 0) && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "8px",
+                      right: "9px",
+                      width: "7px",
+                      height: "7px",
+                      borderRadius: "50%",
+                      background: "var(--acc-bright)",
+                      boxShadow: "0 0 0 2px var(--bd-ink-850)",
+                    }}
+                  />
+                )}
               </Link>
 
               {/* Organizer Profile Pill with Dropdown Menu */}
