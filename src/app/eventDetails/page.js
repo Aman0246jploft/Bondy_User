@@ -810,23 +810,49 @@ function EventDetailsContent() {
     return { qty, subtotal };
   }, [event, ticketQtys, minPrice, isPastEvent, isSoldOut]);
 
+  const allSalesPending = useMemo(() => {
+    if (!event?.tickets || event.tickets.length === 0) return false;
+    const now = new Date();
+    return event.tickets.every((tk) => tk.salesStart && now < new Date(tk.salesStart));
+  }, [event]);
+
+  const earliestSalesStart = useMemo(() => {
+    if (!event?.tickets || event.tickets.length === 0) return null;
+    const now = new Date();
+    const futureStarts = event.tickets
+      .filter((tk) => tk.salesStart && now < new Date(tk.salesStart))
+      .map((tk) => new Date(tk.salesStart));
+    if (futureStarts.length === 0) return null;
+    return new Date(Math.min(...futureStarts));
+  }, [event]);
+
   const handleStepTicket = (tkId, delta) => {
     if (isPastEvent || isSoldOut) return;
     const ticket = event?.tickets?.find((t, i) => (t._id || i) === tkId || String(t._id) === String(tkId));
     const available = ticket?.availableQty !== undefined ? Number(ticket.availableQty) : Number(ticket?.qty || 0);
-    if (delta > 0 && available <= 0) return;
 
     if (ticket && delta > 0) {
       const now = new Date();
       if (ticket.salesStart && now < new Date(ticket.salesStart)) {
-        toast.error(language === "mn" ? `Тасалбарын борлуулалт эхлээгүй байна: ${ticket.ticketName}` : `Sales not started for ticket: ${ticket.ticketName}`);
+        const startStr = new Date(ticket.salesStart).toLocaleDateString();
+        toast.error(
+          language === "mn"
+            ? `Тасалбарын борлуулалт ${startStr}-нд эхэлнэ: ${ticket.ticketName}`
+            : `Sales start on ${startStr} for ${ticket.ticketName}`
+        );
         return;
       }
       if (ticket.salesEnd && now > new Date(ticket.salesEnd)) {
-        toast.error(language === "mn" ? `Тасалбарын борлуулалт дууссан: ${ticket.ticketName}` : `Sales ended for ticket: ${ticket.ticketName}`);
+        toast.error(
+          language === "mn"
+            ? `Тасалбарын борлуулалт дууссан: ${ticket.ticketName}`
+            : `Sales ended for ticket: ${ticket.ticketName}`
+        );
         return;
       }
     }
+
+    if (delta > 0 && available <= 0) return;
 
     setTicketQtys((prev) => {
       const cur = prev[tkId] || 0;
@@ -847,6 +873,15 @@ function EventDetailsContent() {
     }
     if (isSoldOut) {
       toast.error(t("allTicketsSoldOut"));
+      return;
+    }
+    if (allSalesPending) {
+      const dateStr = earliestSalesStart ? earliestSalesStart.toLocaleDateString() : "";
+      toast.error(
+        language === "mn"
+          ? `Энэ эвентийн тасалбарын борлуулалт хараахан эхлээгүй байна (${dateStr}-нд эхэлнэ).`
+          : `Ticket sales have not started yet. Sales start on ${dateStr}.`
+      );
       return;
     }
     if (event?.tickets && event.tickets.length > 0 && ticketTotals.qty <= 0) {
@@ -1676,6 +1711,40 @@ function EventDetailsContent() {
               {/* Tickets Stepper List (Shown when event is active) */}
               {!isPastEvent && !isSoldOut && (
                 <>
+                  {/* Future Sales Start Notice Banner */}
+                  {allSalesPending && earliestSalesStart && (
+                    <div
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: 14,
+                        background: "rgba(35, 173, 164, 0.1)",
+                        border: "1px solid rgba(35, 173, 164, 0.28)",
+                        color: "var(--acc-bright, #36CEC2)",
+                        fontSize: 13,
+                        lineHeight: 1.45,
+                        marginTop: 14,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                      }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      <div>
+                        <b style={{ display: "block", color: "var(--bd-white, #fff)", fontSize: 13.5 }}>
+                          {language === "mn" ? "Борлуулалт хараахан эхлээгүй байна" : "Ticket Sales Not Started"}
+                        </b>
+                        <span>
+                          {language === "mn"
+                            ? `Тасалбарын борлуулалт ${earliestSalesStart.toLocaleDateString()} өдөр эхэлнэ.`
+                            : `Sales will open on ${earliestSalesStart.toLocaleDateString()}.`}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="bs-opts" style={{ marginTop: 14 }}>
                     {event.tickets && event.tickets.length > 0 ? (
                       event.tickets.map((ticket, idx) => {
@@ -1694,7 +1763,20 @@ function EventDetailsContent() {
                         const shortDesc = String(ticket.ticketShortDesc || "").trim();
 
                         return (
-                          <div key={tkId} className={`bs-tk${q > 0 ? " is-on" : ""}${isTierSoldOut || !isSalesActive ? " is-off" : ""}`}>
+                          <div
+                            key={tkId}
+                            className={`bs-tk${q > 0 ? " is-on" : ""}${isTierSoldOut || !isSalesActive ? " is-off" : ""}`}
+                            onClick={() => {
+                              if (!salesStarted && ticket.salesStart) {
+                                const startStr = new Date(ticket.salesStart).toLocaleDateString();
+                                toast.error(
+                                  language === "mn"
+                                    ? `Тасалбарын борлуулалт ${startStr}-нд эхэлнэ: ${ticket.ticketName}`
+                                    : `Sales start on ${startStr} for ${ticket.ticketName}`
+                                );
+                              }
+                            }}
+                          >
                             <div className="bs-tk-l">
                               <span className="bs-tk-nm">{ticket.ticketName}</span>
                               {shortDesc ? <span className="bs-tk-nt">{shortDesc}</span> : null}
@@ -1715,8 +1797,11 @@ function EventDetailsContent() {
                               <span className="bs-stp">
                                 <button
                                   type="button"
-                                  onClick={() => handleStepTicket(tkId, -1)}
-                                  disabled={q <= 0 || isTierSoldOut || !isSalesActive}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStepTicket(tkId, -1);
+                                  }}
+                                  disabled={q <= 0 || isTierSoldOut}
                                   aria-label="Decrease"
                                 >
                                   −
@@ -1724,8 +1809,11 @@ function EventDetailsContent() {
                                 <b>{q}</b>
                                 <button
                                   type="button"
-                                  onClick={() => handleStepTicket(tkId, 1)}
-                                  disabled={!isSalesActive || isTierSoldOut || (available > 0 && q >= available)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStepTicket(tkId, 1);
+                                  }}
+                                  disabled={isTierSoldOut || (available > 0 && q >= available && isSalesActive)}
                                   aria-label="Increase"
                                 >
                                   +
@@ -1757,24 +1845,26 @@ function EventDetailsContent() {
                 type="button"
                 className="bs-go"
                 onClick={handleGoToBooking}
-                disabled={isPastEvent || isSoldOut || ticketTotals.qty <= 0}
+                disabled={isPastEvent || isSoldOut}
                 style={{
                   width: "100%",
                   marginTop: 14,
                   borderRadius: 14,
-                  background: isPastEvent || isSoldOut ? "var(--bd-ink-800)" : undefined,
-                  border: isPastEvent || isSoldOut ? "1px solid var(--bd-border)" : undefined,
-                  color: isPastEvent || isSoldOut ? "var(--bd-gray-500)" : undefined,
-                  cursor: isPastEvent || isSoldOut ? "not-allowed" : undefined,
+                  background: isPastEvent || isSoldOut || allSalesPending ? "var(--bd-ink-800)" : undefined,
+                  border: isPastEvent || isSoldOut || allSalesPending ? "1px solid var(--bd-border)" : undefined,
+                  color: isPastEvent || isSoldOut || allSalesPending ? "var(--bd-gray-400)" : undefined,
+                  cursor: isPastEvent || isSoldOut ? "not-allowed" : "pointer",
                 }}
               >
                 {isPastEvent
                   ? (t("endedShort"))
                   : isSoldOut
                     ? (t("seatsFull"))
-                    : ticketTotals.qty > 0 && ticketTotals.subtotal === 0
-                      ? (t("registerForFree"))
-                      : (t("getTickets"))}
+                    : allSalesPending
+                      ? (language === "mn" ? `Борлуулалт ${earliestSalesStart ? earliestSalesStart.toLocaleDateString() : ""} эхэлнэ` : `Sales Start on ${earliestSalesStart ? earliestSalesStart.toLocaleDateString() : ""}`)
+                      : ticketTotals.qty > 0 && ticketTotals.subtotal === 0
+                        ? (t("registerForFree"))
+                        : (t("getTickets"))}
               </button>
             </div>
           </aside>
@@ -1894,8 +1984,8 @@ function EventDetailsContent() {
             padding: "0 24px",
             borderRadius: 14,
             border: "none",
-            background: isPastEvent || isSoldOut ? "var(--bd-ink-800)" : "var(--acc)",
-            color: isPastEvent || isSoldOut ? "var(--bd-gray-500)" : "var(--bd-white)",
+            background: isPastEvent || isSoldOut || allSalesPending ? "var(--bd-ink-800)" : "var(--acc)",
+            color: isPastEvent || isSoldOut || allSalesPending ? "var(--bd-gray-400)" : "var(--bd-white)",
             fontSize: 15,
             fontWeight: 700,
             cursor: isPastEvent || isSoldOut ? "not-allowed" : "pointer",
@@ -1905,7 +1995,9 @@ function EventDetailsContent() {
             ? (t("endedShort"))
             : isSoldOut
               ? (t("seatsFull"))
-              : (t("getTickets"))}
+              : allSalesPending
+                ? (language === "mn" ? `Борлуулалт ${earliestSalesStart ? earliestSalesStart.toLocaleDateString() : ""} эхэлнэ` : `Starts ${earliestSalesStart ? earliestSalesStart.toLocaleDateString() : ""}`)
+                : (t("getTickets"))}
         </button>
       </div>
 
