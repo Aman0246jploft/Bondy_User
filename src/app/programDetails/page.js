@@ -709,6 +709,26 @@ function ProgramDetailsContent() {
 
       const { batches, enrollmentType, currentSchedule, bookingCutOffPassed } = courseDetails;
 
+      const now = new Date();
+      const courseSalesStart = courseDetails.salesStart ? new Date(courseDetails.salesStart) : null;
+      const isCourseSalesPending = courseSalesStart && now < courseSalesStart;
+
+      const activeBatchCheck = batches?.find((b) => b._id === selectedBatchId);
+      const batchSalesStart = activeBatchCheck?.salesStart ? new Date(activeBatchCheck.salesStart) : null;
+      const isBatchSalesPending = batchSalesStart && now < batchSalesStart;
+
+      const isSalesPendingCheck = isCourseSalesPending || isBatchSalesPending;
+      const pendingDateCheck = batchSalesStart || courseSalesStart;
+
+      if (isSalesPendingCheck && pendingDateCheck) {
+        toast.error(
+          language === "en"
+            ? `Registration for this course has not started yet. Opens on ${pendingDateCheck.toLocaleDateString()}.`
+            : `Энэ сургалтын бүртгэл хараахан эхлээгүй байна (${pendingDateCheck.toLocaleDateString()}-нд эхэлнэ).`
+        );
+        return;
+      }
+
       // Check 1: Course-level cutoff
       if (bookingCutOffPassed) {
         toast.error(language === "en" ? "Booking is closed for this course" : "Энэ сургалтын бүртгэл хаагдсан байна");
@@ -840,6 +860,17 @@ function ProgramDetailsContent() {
     : false;
 
   const isBookingClosed = allBatchesCutOff || allBatchesFull;
+
+  const now = new Date();
+  const courseSalesStart = courseDetails.salesStart ? new Date(courseDetails.salesStart) : null;
+  const isCourseSalesPending = courseSalesStart && now < courseSalesStart;
+
+  const activeBatch = batches?.find((b) => b._id === selectedBatchId);
+  const batchSalesStart = activeBatch?.salesStart ? new Date(activeBatch.salesStart) : null;
+  const isBatchSalesPending = batchSalesStart && now < batchSalesStart;
+
+  const isSalesPending = isCourseSalesPending || isBatchSalesPending;
+  const pendingDate = batchSalesStart || courseSalesStart;
 
   const durationText = formatCourseDuration(
     courseDetails.startDate || currentSchedule?.startDate,
@@ -1546,7 +1577,38 @@ function ProgramDetailsContent() {
               </div>
             )}
 
-            {bookingCutOff && !isBookingClosed && (
+            {/* Sales Start in Future notice */}
+            {!isBookingClosed && isSalesPending && pendingDate && (
+              <div style={{
+                padding: "12px 14px",
+                borderRadius: 14,
+                background: "rgba(35, 173, 164, 0.1)",
+                border: "1px solid rgba(35, 173, 164, 0.28)",
+                color: "var(--acc-bright, #36CEC2)",
+                fontSize: 13,
+                lineHeight: 1.45,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <div>
+                  <b style={{ display: "block", color: "var(--bd-white, #fff)", fontSize: 13.5 }}>
+                    {language === "mn" ? "Бүртгэл хараахан эхлээгүй байна" : "Registration Not Started"}
+                  </b>
+                  <span>
+                    {language === "mn"
+                      ? `Энэ сургалтын бүртгэл ${pendingDate.toLocaleDateString()} өдөр эхэлнэ.`
+                      : `Registration opens on ${pendingDate.toLocaleDateString()}.`}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {bookingCutOff && !isBookingClosed && !isSalesPending && (
               <div style={{ fontSize: 12, color: "var(--bd-gray-500)", textAlign: "center" }}>
                 ⏱ {language === "en" ? "Cut-off" : "Бүртгэл хаагдах"}: <b>{bookingCutOff}</b>
               </div>
@@ -1565,9 +1627,9 @@ function ProgramDetailsContent() {
                 width: "100%",
                 height: 48,
                 borderRadius: 14,
-                border: "none",
-                background: isBookingClosed ? "var(--bd-ink-700)" : "var(--acc)",
-                color: "var(--bd-white)",
+                border: isSalesPending ? "1px solid var(--bd-border)" : "none",
+                background: isBookingClosed || isSalesPending ? "var(--bd-ink-700)" : "var(--acc)",
+                color: isSalesPending ? "var(--bd-gray-400)" : "var(--bd-white)",
                 fontSize: 15,
                 fontWeight: 700,
                 cursor: isBookingClosed ? "not-allowed" : "pointer",
@@ -1577,7 +1639,9 @@ function ProgramDetailsContent() {
             >
               {isBookingClosed
                 ? (language === "en" ? "Registration Closed" : "Бүртгэл хаагдсан")
-                : t("pdEnroll")}
+                : isSalesPending
+                  ? (language === "en" ? `Starts on ${pendingDate?.toLocaleDateString()}` : `Бүртгэл ${pendingDate?.toLocaleDateString()} эхэлнэ`)
+                  : t("pdEnroll")}
             </button>
           </aside>
         </div>
@@ -1688,9 +1752,9 @@ function ProgramDetailsContent() {
             minWidth: "calc(60% - 14px)",
             height: 48,
             borderRadius: 14,
-            border: "none",
-            background: isBookingClosed ? "var(--bd-ink-700)" : "var(--acc)",
-            color: "var(--bd-white)",
+            border: isSalesPending ? "1px solid var(--bd-border)" : "none",
+            background: isBookingClosed || isSalesPending ? "var(--bd-ink-700)" : "var(--acc)",
+            color: isSalesPending ? "var(--bd-gray-400)" : "var(--bd-white)",
             fontSize: 15,
             fontWeight: 700,
             cursor: isBookingClosed ? "not-allowed" : "pointer",
@@ -1698,7 +1762,9 @@ function ProgramDetailsContent() {
         >
           {isBookingClosed
             ? (language === "en" ? "Closed" : "Хаагдсан")
-            : t("pdEnroll")}
+            : isSalesPending
+              ? (language === "en" ? `Starts ${pendingDate?.toLocaleDateString()}` : `Бүртгэл ${pendingDate?.toLocaleDateString()}`)
+              : t("pdEnroll")}
         </button>
       </div>
 
