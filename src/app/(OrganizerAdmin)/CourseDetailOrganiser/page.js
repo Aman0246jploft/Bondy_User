@@ -385,7 +385,8 @@ function CourseDetailsContent() {
   const isPastOrEnded =
     course.status?.toLowerCase() === "past" ||
     (!isOngoing && new Date(course.endDate) < new Date());
-  const isCancelled = course.status?.toLowerCase() === "cancelled";
+  const isCancelled = course.status?.toLowerCase() === "cancelled" || course.status?.toLowerCase() === "canceled";
+  const canEdit = course.isDraft || (!isPastOrEnded && !isCancelled);
   const enrolledPercent =
     course.totalSeats > 0
       ? Math.round((course.acquiredSeats / course.totalSeats) * 100)
@@ -583,10 +584,12 @@ function CourseDetailsContent() {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>
                 {t("cdViewPublic")}
               </Link>
-              <Link href={`/AddProgram?courseId=${course._id}`} className="cd-cta cd-cta-out">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z" /></svg>
-                {t("edit")}
-              </Link>
+              {canEdit && (
+                <Link href={`/AddProgram?courseId=${course._id}`} className="cd-cta cd-cta-out">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z" /></svg>
+                  {t("edit")}
+                </Link>
+              )}
               <button type="button" className="cd-cta cd-cta-out" onClick={() => setPromoOpen(true)}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 10.4v3.2a1.6 1.6 0 0 0 1.6 1.6h1.7L14 19.4V4.6L7.3 8.8H5.6A1.6 1.6 0 0 0 4 10.4Z" /><path d="M17.2 8.6a4.6 4.6 0 0 1 0 6.8" /><path d="M7.6 15.4 8.9 20" /></svg>
                 {t("cdPromote")}

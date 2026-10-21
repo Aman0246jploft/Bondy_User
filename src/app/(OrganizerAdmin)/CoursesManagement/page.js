@@ -647,18 +647,26 @@ export default function CoursesManagementPage() {
               top: `${activeMenu.top}px`,
             }}
           >
-            {/* Edit */}
-            <button
-              type="button"
-              className="lm-mi"
-              onClick={() => {
-                const c = activeMenu.course;
-                setActiveMenu(null);
-                router.push(`/AddProgram?courseId=${c._id}`);
-              }}
-            >
-              {isMn ? "Засах" : "Edit"}
-            </button>
+            {/* Edit — hidden for past and cancelled courses */}
+            {(activeMenu.course.isDraft || (
+              activeTab !== "past" &&
+              String(activeMenu.course.status || "").toLowerCase() !== "past" &&
+              String(activeMenu.course.status || "").toLowerCase() !== "cancelled" &&
+              String(activeMenu.course.status || "").toLowerCase() !== "canceled" &&
+              (!activeMenu.course.endDate || new Date(activeMenu.course.endDate) >= new Date())
+            )) && (
+              <button
+                type="button"
+                className="lm-mi"
+                onClick={() => {
+                  const c = activeMenu.course;
+                  setActiveMenu(null);
+                  router.push(`/AddProgram?courseId=${c._id}`);
+                }}
+              >
+                {isMn ? "Засах" : "Edit"}
+              </button>
+            )}
 
             {/* View */}
             <button

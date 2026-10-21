@@ -440,6 +440,19 @@ export default function LearningEditorPage() {
           const courseRes = await courseApi.getCourseDetails(id);
           if (courseRes?.data) {
             const c = courseRes.data;
+
+            const isOngoing = c.enrollmentType === "Ongoing" || c.endDate === "2099-12-31";
+            const isPastOrEnded =
+              c.status?.toLowerCase() === "past" ||
+              (!isOngoing && c.endDate && new Date(c.endDate) < new Date());
+            const isCancelled = c.status?.toLowerCase() === "cancelled" || c.status?.toLowerCase() === "canceled";
+
+            if (!c.isDraft && (isPastOrEnded || isCancelled)) {
+              flashToast(isMn ? "Өнгөрсөн эсвэл цуцлагдсан сургалтыг засах боломжгүй" : "Cannot edit a past or cancelled course");
+              router.replace("/CoursesManagement");
+              return;
+            }
+
             setMode(c.isDraft ? "draft" : "published");
 
             let lat = null;

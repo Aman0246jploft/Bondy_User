@@ -381,6 +381,16 @@ function EventEditorContent() {
         const ev = res?.data?.event || res?.data?.data;
         if (!ev) return;
 
+        if (!ev.isDraft && (
+          String(ev.status || "").toLowerCase() === "past" ||
+          String(ev.status || "").toLowerCase() !== "" && (String(ev.status).toLowerCase() === "cancelled" || String(ev.status).toLowerCase() === "canceled") ||
+          (ev.endDate && new Date(ev.endDate) < new Date())
+        )) {
+          flashToast(isMn ? "Өнгөрсөн эсвэл цуцлагдсан эвентийг засах боломжгүй" : "Cannot edit a past or cancelled event");
+          router.replace("/EventsManagement");
+          return;
+        }
+
         setIsDraftMode(Boolean(ev.isDraft));
         setTitle(ev.eventTitle || "");
         setShortDesc(ev.shortdesc || "");
