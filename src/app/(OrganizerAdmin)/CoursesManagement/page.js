@@ -476,8 +476,8 @@ export default function CoursesManagementPage() {
             <span>{isMn ? "Нэр" : "Course"}</span>
             <span>{dateColHeader}</span>
             <span>{isMn ? "Бүртгүүлсэн" : "Registered"}</span>
-            <span></span>
-            <span></span>
+            <span>{isMn ? "Төлөв" : "Status"}</span>
+            <span style={{ textAlign: "right", paddingRight: "8px" }}>{isMn ? "Үйлдэл" : "Action"}</span>
           </div>
 
           {/* Loading State */}

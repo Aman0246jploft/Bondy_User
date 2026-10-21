@@ -509,7 +509,7 @@ export default function EventsManagementPage() {
               <span>{isMn ? "Байршил" : "Location"}</span>
               <span>{isMn ? "Зарагдсан" : "Sold"}</span>
               <span>{isMn ? "Орлого" : "Revenue"}</span>
-              <span />
+              <span style={{ textAlign: "right", paddingRight: "8px" }}>{isMn ? "Үйлдэл" : "Action"}</span>
             </div>
 
             {/* Table Rows */}
