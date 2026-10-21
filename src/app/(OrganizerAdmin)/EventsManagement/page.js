@@ -56,6 +56,14 @@ function formatDateBilingual(dateStr, timeStr, isMn, isDraft, updatedAtStr, t) {
   };
 }
 
+export function formatTitleBilingual(title, isMn) {
+  if (!title || typeof title !== "string") return title;
+  if (isMn) {
+    return title.replace(/\s*\((?:copy)\)/gi, " (хуулбар)");
+  }
+  return title.replace(/\s*\((?:хуулбар)\)/gi, " (Copy)");
+}
+
 export default function EventsManagementPage() {
   const router = useRouter();
   const { language, t } = useLanguage();
@@ -213,11 +221,16 @@ export default function EventsManagementPage() {
   // Duplicate / Copy Action
   const handleDuplicateEvent = async (event) => {
     setActiveMenu(null);
-    const cloneTitle = `${event.eventTitle || "Эвент"} (хуулбар)`;
+    const baseTitle = (event.eventTitle || "").replace(/\s*\((?:хуулбар|copy)\)/gi, "").trim();
+    const fallbackTitle = isMn ? "Эвент" : "Event";
+    const cloneTitle = isMn
+      ? `${baseTitle || fallbackTitle} (хуулбар)`
+      : `${baseTitle || fallbackTitle} (Copy)`;
     try {
       const payload = {
         eventTitle: cloneTitle,
-        description: event.description || "",
+        shortdesc: event.shortdesc || event.description || "",
+        longdesc: event.longdesc || event.description || "",
         eventCategory: event.eventCategory?._id || event.eventCategory,
         startDate: event.startDate,
         startTime: event.startTime,
@@ -228,6 +241,7 @@ export default function EventsManagementPage() {
         latitude: event.latitude,
         longitude: event.longitude,
         posterImage: event.posterImage || [],
+        tickets: event.tickets,
         isDraft: true,
       };
 
@@ -582,9 +596,9 @@ export default function EventsManagementPage() {
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap",
                           }}
-                          title={ev.eventTitle}
+                          title={formatTitleBilingual(ev.eventTitle, isMn)}
                         >
-                          {ev.eventTitle}
+                          {formatTitleBilingual(ev.eventTitle, isMn)}
                         </b>
                         {String(ev.status || "").toLowerCase() === "cancelled" && (
                           <span
@@ -895,7 +909,7 @@ export default function EventsManagementPage() {
                   {isMn ? "Ноорогийг устгах уу?" : "Delete draft?"}
                 </b>
                 <p style={{ margin: "9px 0 0", fontSize: "14px", lineHeight: 1.6, color: "var(--bd-gray-400)" }}>
-                  {deleteDraftModal.eventTitle || (isMn ? "Энэ ноорог" : "This draft")} —{" "}
+                  {formatTitleBilingual(deleteDraftModal.eventTitle, isMn) || (isMn ? "Энэ ноорог" : "This draft")} —{" "}
                   {isMn
                     ? "бөглөсөн мэдээлэл бүрмөсөн устана. Үйлдлийг буцаах боломжгүй."
                     : "all filled details will be permanently lost. This action cannot be undone."}
@@ -978,7 +992,7 @@ export default function EventsManagementPage() {
           open={showPromoModal}
           kind="event"
           listingId={selectedEventForPromo._id}
-          title={selectedEventForPromo.eventTitle || selectedEventForPromo.title}
+          title={formatTitleBilingual(selectedEventForPromo.eventTitle || selectedEventForPromo.title, isMn)}
           viewHref={`/eventDetails?id=${selectedEventForPromo._id}`}
           running={Boolean(
             selectedEventForPromo.isFeatured &&

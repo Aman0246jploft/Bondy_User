@@ -589,7 +589,7 @@ function ProgramDetailsContent() {
         if (isWishlisted) {
           const response = await wishlistApi.removeFromWishlist({ entityId: id });
           if (response?.status === true) {
-            toast.success(response?.message || (language === "en" ? "Removed from saved" : "Хадгалснаас хасагдлаа"));
+            toast.success(language === "mn" ? "Хадгалсан жагсаалтаас хасагдлаа" : "Removed from Favourites");
             setIsWishlisted(false);
           }
         } else {
@@ -599,7 +599,7 @@ function ProgramDetailsContent() {
           });
           if (response?.status === true) {
             setIsWishlisted(true);
-            toast.success(response?.message || (language === "en" ? "Saved to favorites" : "Амжилттай хадгалагдлаа"));
+            toast.success(language === "mn" ? "Хадгалсан жагсаалтад нэмэгдлээ" : "Added to Favourites");
           }
         }
       } catch (error) {
@@ -618,8 +618,8 @@ function ProgramDetailsContent() {
         const next = { ...prev, [courseId]: !prev[courseId] };
         localStorage.setItem("bondy_favorites", JSON.stringify(next));
         toast.success(next[courseId]
-          ? (language === "en" ? "Saved to favorites" : "Хадгалагдлаа")
-          : (language === "en" ? "Removed from favorites" : "Хасагдлаа"));
+          ? (language === "mn" ? "Хадгалсан жагсаалтад нэмэгдлээ" : "Added to Favourites")
+          : (language === "mn" ? "Хадгалсан жагсаалтаас хасагдлаа" : "Removed from Favourites"));
         return next;
       });
       try {

@@ -8,6 +8,7 @@ import Footer from "../../components/Footer";
 import categoryApi from "@/api/categoryApi";
 import courseApi from "@/api/courseApi";
 import wishlistApi from "@/api/wishlistApi";
+import toast from "react-hot-toast";
 import { useAuthGuard } from "@/context/AuthGuardContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
@@ -852,6 +853,13 @@ function ProgramsListingContent() {
         try {
           localStorage.setItem("bondy_favorites", JSON.stringify(next));
         } catch (err) { }
+
+        if (isFav) {
+          toast.success(language === "mn" ? "Хадгалсан жагсаалтаас хасагдлаа" : "Removed from Favourites");
+        } else {
+          toast.success(language === "mn" ? "Хадгалсан жагсаалтад нэмэгдлээ" : "Added to Favourites");
+        }
+
         return next;
       });
 

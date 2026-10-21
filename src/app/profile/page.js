@@ -629,6 +629,12 @@ function ProfileContent() {
         localStorage.setItem("bondy_favorites", JSON.stringify(Object.keys(nextMap)));
       } catch { }
 
+      if (isFav) {
+        toast.success(language === "mn" ? "Хадгалсан жагсаалтаас хасагдлаа" : "Removed from Favourites");
+      } else {
+        toast.success(language === "mn" ? "Хадгалсан жагсаалтад нэмэгдлээ" : "Added to Favourites");
+      }
+
       try {
         if (isFav) {
           await wishlistApi.removeFromWishlist({ entityId: id });
