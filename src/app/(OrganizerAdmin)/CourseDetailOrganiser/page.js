@@ -120,7 +120,8 @@ function CourseDetailsContent() {
   const [cxlReason, setCxlReason] = useState("");
   const [cxlBusy, setCxlBusy] = useState(false);
   const { t, language } = useLanguage();
-  const locale = language === "mn" ? "mn-MN" : "en-GB";
+  const isMn = language === "mn";
+  const locale = isMn ? "mn-MN" : "en-GB";
 
   const fetchSlotAttendees = async (slot) => {
     setSelectedSlot(slot);
