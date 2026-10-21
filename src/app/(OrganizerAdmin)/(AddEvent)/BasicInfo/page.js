@@ -278,6 +278,8 @@ function EventEditorContent() {
   const [uploadingPoster, setUploadingPoster] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videoPct, setVideoPct] = useState(0);
+  const [liveBlockedModal, setLiveBlockedModal] = useState(false);
   const [upPct, setUpPct] = useState(0);
 
   // Date, Time, Location
@@ -380,6 +382,16 @@ function EventEditorContent() {
         const res = await eventApi.getEventDetails(eventIdParam);
         const ev = res?.data?.event || res?.data?.data;
         if (!ev) return;
+
+        const now = new Date();
+        const isLive = !ev.isDraft && (
+          String(ev.status).toLowerCase() === "live" ||
+          Boolean(ev.isLive) ||
+          (ev.startDate && ev.endDate && new Date(ev.startDate) <= now && new Date(ev.endDate) >= now)
+        );
+        if (isLive) {
+          setLiveBlockedModal(true);
+        }
 
         setIsDraftMode(Boolean(ev.isDraft));
         setTitle(ev.eventTitle || "");
@@ -1110,11 +1122,20 @@ function EventEditorContent() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 50 * 1024 * 1024) {
+      flashToast(isMn ? "Видеоны хэмжээ 50MB-аас ихгүй байх ёстой" : "Video size must not exceed 50MB");
+      if (e.target) e.target.value = "";
+      return;
+    }
+
     setUploadingVideo(true);
+    setVideoPct(0);
     try {
       const formData = new FormData();
       formData.append("files", file);
-      const res = await authApi.uploadFile(formData);
+      const res = await authApi.uploadFile(formData, (pct) => {
+        setVideoPct(pct);
+      });
       if (res?.data?.files?.[0]) {
         setTeaserVideo(res.data.files[0]);
         setTeaserName(file.name);
@@ -1125,7 +1146,14 @@ function EventEditorContent() {
       flashToast(isMn ? "Видео хуулж чадсангүй" : "Failed to upload video");
     } finally {
       setUploadingVideo(false);
+      setVideoPct(0);
+      if (e.target) e.target.value = "";
     }
+  };
+
+  const removeTeaserVideo = () => {
+    setTeaserVideo("");
+    setTeaserName("");
   };
 
   // ─── Step Validation ──────────────────────────────────────────────────────
@@ -1374,6 +1402,10 @@ function EventEditorContent() {
   };
 
   const executeSaveDraft = async () => {
+    if (liveBlockedModal) {
+      flashToast(isMn ? "Таны эвент шууд явагдаж байгаа тул засах боломжгүй." : "Your event is live, you cannot edit this.");
+      return;
+    }
     if (!title.trim()) {
       flashToast(isMn ? "Эвентийн нэр оруулна уу" : "Event title is required to save draft");
       setErrors((prev) => ({ ...prev, title: isMn ? "Эвентийн нэрээ бичнэ үү." : "Title required" }));
@@ -1563,6 +1595,10 @@ function EventEditorContent() {
 
   // ─── Publish / Save Changes (Step 5) ──────────────────────────────────────
   const handlePublish = async () => {
+    if (liveBlockedModal) {
+      flashToast(isMn ? "Таны эвент шууд явагдаж байгаа тул засах боломжгүй." : "Your event is live, you cannot edit this.");
+      return;
+    }
     // Final check across all steps
     const failedStep = [1, 2, 3, 4].find((n) => !validateStep(n));
     if (failedStep) {
@@ -1995,22 +2031,81 @@ function EventEditorContent() {
                   {isMn ? "Тизер видео" : "Teaser Video"}{" "}
                   <span className="ew-opt-b">({isMn ? "заавал биш" : "optional"})</span>
                 </span>
-                <div className="ew-drop">
-                  <span className="ew-dropT">
-                    {teaserName || (isMn ? "Тизер видео оруулах" : "Upload Teaser Video")}
-                  </span>
-                  <span className="ew-dropS">MP4, MOV (Max 50MB)</span>
-                  <label className="ew-gh ew-sm" style={{ position: "relative", overflow: "hidden" }}>
-                    {uploadingVideo ? <span className="ew-sp" /> : isMn ? "Видео сонгох" : "Choose Video"}
-                    <input
-                      type="file"
-                      accept="video/*"
-                      onChange={handleVideoUpload}
-                      disabled={uploadingVideo}
-                      style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
-                    />
-                  </label>
-                </div>
+                {teaserVideo ? (
+                  <div className="ew-up" style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)" }}>
+                    <div style={{ position: "relative", width: 68, height: 68, borderRadius: 10, overflow: "hidden", background: "#0a0d14", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <video src={getFullImageUrl(teaserVideo)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <span style={{ position: "absolute", color: "#fff", pointerEvents: "none", fontSize: 16, background: "rgba(0,0,0,0.5)", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>▶</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+                      <b style={{ fontSize: 13.5, color: "var(--bd-white)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {teaserName || "teaser-video.mp4"}
+                      </b>
+                      <span style={{ fontSize: 12, color: "var(--acc-bright, #36CEC2)", fontWeight: 500 }}>
+                        {isMn ? "Амжилттай хуулагдсан" : "Uploaded successfully"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                      <button
+                        type="button"
+                        onClick={removeTeaserVideo}
+                        className="ew-gh ew-sm"
+                        style={{ color: "#ff5252", borderColor: "rgba(255,82,82,0.25)", padding: "6px 12px", fontSize: 12.5 }}
+                      >
+                        {isMn ? "Устгах" : "Remove"}
+                      </button>
+                      <label className="ew-gh ew-sm" style={{ position: "relative", overflow: "hidden", cursor: "pointer", padding: "6px 12px", fontSize: 12.5 }}>
+                        {uploadingVideo ? `${videoPct}%` : isMn ? "Солих" : "Replace"}
+                        <input
+                          type="file"
+                          accept="video/mp4,video/quicktime,video/*"
+                          onChange={handleVideoUpload}
+                          disabled={uploadingVideo}
+                          style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="ew-drop" style={{ padding: "20px 16px" }}>
+                    <span className="ew-dropT">
+                      {uploadingVideo
+                        ? (isMn ? `Хуулж байна... ${videoPct}%` : `Uploading... ${videoPct}%`)
+                        : (isMn ? "Тизер видео оруулах" : "Upload Teaser Video")}
+                    </span>
+                    <span className="ew-dropS">MP4, MOV (Max 50MB)</span>
+                    {uploadingVideo && (
+                      <div style={{ width: "85%", maxWidth: 280, height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 999, overflow: "hidden", margin: "10px auto 6px" }}>
+                        <div
+                          style={{
+                            width: `${videoPct}%`,
+                            height: "100%",
+                            background: "var(--acc-bright, #36CEC2)",
+                            borderRadius: 999,
+                            transition: "width 0.2s ease",
+                          }}
+                        />
+                      </div>
+                    )}
+                    <label className="ew-gh ew-sm" style={{ position: "relative", overflow: "hidden", marginTop: uploadingVideo ? 6 : 4 }}>
+                      {uploadingVideo ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
+                          <span className="ew-sp" />
+                          <span>{videoPct}%</span>
+                        </span>
+                      ) : (
+                        isMn ? "Видео сонгох" : "Choose Video"
+                      )}
+                      <input
+                        type="file"
+                        accept="video/mp4,video/quicktime,video/*"
+                        onChange={handleVideoUpload}
+                        disabled={uploadingVideo}
+                        style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
             </section>
           </div>
@@ -3162,6 +3257,78 @@ function EventEditorContent() {
                   {a.label}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Live Event Blocked Modal */}
+      {liveBlockedModal && (
+        <div className="ew-cov" role="dialog" aria-modal="true" style={{ zIndex: 9999 }}>
+          <div
+            className="ew-ask"
+            style={{
+              maxWidth: 440,
+              padding: "32px 24px 28px",
+              textAlign: "center",
+              border: "1px solid rgba(255, 82, 82, 0.3)",
+              background: "#161b26",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.7)",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                background: "rgba(255, 82, 82, 0.15)",
+                color: "#ff5252",
+                margin: "0 auto",
+              }}
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </span>
+            <b
+              style={{
+                display: "block",
+                marginTop: 18,
+                fontSize: 18,
+                fontWeight: 700,
+                color: "var(--bd-white)",
+              }}
+            >
+              {isMn ? "Арга хэмжээ шууд явагдаж байна" : "Event is Currently Live"}
+            </b>
+            <p style={{ margin: "10px 0 24px", fontSize: 14, lineHeight: 1.6, color: "var(--bd-gray-300)" }}>
+              {isMn
+                ? "Таны эвент шууд явагдаж байгаа тул засах боломжгүй."
+                : "Your event is live, you cannot edit this."}
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <button
+                type="button"
+                className="ew-gh"
+                onClick={() => router.push("/EventsManagement")}
+                style={{ padding: "10px 20px", fontSize: 13.5 }}
+              >
+                {isMn ? "Буцах" : "Back to Events"}
+              </button>
+              {eventIdParam && (
+                <button
+                  type="button"
+                  className="ew-ac"
+                  onClick={() => router.push(`/EventDetails/${eventIdParam}`)}
+                  style={{ padding: "10px 20px", fontSize: 13.5 }}
+                >
+                  {isMn ? "Эвент харах" : "View Event"}
+                </button>
+              )}
             </div>
           </div>
         </div>

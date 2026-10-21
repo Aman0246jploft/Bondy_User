@@ -238,7 +238,7 @@ export default function RootLayout({ children }) {
                           ? t("vfPageSub")
                           : pathname.includes("/MyTicketsOrganiser") || pathname.includes("/TicketDetailsOrganiser")
                             ? t("moPageSub")
-                            : `${orgName} · ${isMn ? "ерөнхий тойм" : "overview"}`}
+                            : orgName}
                 </p>
               )}
             </div>
