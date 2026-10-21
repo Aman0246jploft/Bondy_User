@@ -1896,7 +1896,7 @@ export default function OrganizerDashboardPage() {
           </div>
         </div>
       )}
-      {promoteTarget && (
+      {promoTarget && (
         <PromotionPlanModal
           open={Boolean(promoTarget)}
           kind={promoTarget.kind}
