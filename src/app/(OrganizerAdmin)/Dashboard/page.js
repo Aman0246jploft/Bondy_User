@@ -11,6 +11,7 @@ import authApi from "../../../api/authApi";
 import DateRangeCalendarPopover from "@/components/DateRangeCalendarPopover";
 import { getFullImageUrl } from "../../../utils/imageHelper";
 import GlobalLoader from "@/components/GlobalLoader";
+import PromotionPlanModal from "@/components/Promotion/PromotionPlanModal";
 
 // ─── Number & Date Formatters ──────────────────────────────────────────────────
 function formatMoney(amount, isMn = false) {
@@ -169,6 +170,7 @@ export default function OrganizerDashboardPage() {
   const [activeKebab, setActiveKebab] = useState(null); // 'e-ID' or 'c-ID'
   const [promoteOpen, setPromoteOpen] = useState(false);
   const [selectedPromoteItem, setSelectedPromoteItem] = useState(null);
+  const [promoTarget, setPromoTarget] = useState(null);
   const [selectedBookingDetail, setSelectedBookingDetail] = useState(null);
 
   // Chart hover interaction
@@ -569,8 +571,14 @@ export default function OrganizerDashboardPage() {
     : "";
 
   // ─── Promote Modal Action ──────────────────────────────────────────────────
-  const openPromoteWith = (item) => {
-    setSelectedPromoteItem(item || events[0] || courses[0] || null);
+  const openPromoteWith = (item, kind = null) => {
+    if (item) {
+      const resolvedKind = kind || ((item.eventType || item.eventTitle) ? "event" : "course");
+      setPromoTarget({ item, kind: resolvedKind });
+      setActiveKebab(null);
+      return;
+    }
+    setSelectedPromoteItem(events[0] || courses[0] || null);
     setPromoteOpen(true);
     setActiveKebab(null);
   };
@@ -578,8 +586,8 @@ export default function OrganizerDashboardPage() {
   const handlePromoteSubmit = () => {
     if (!selectedPromoteItem?._id) return;
     setPromoteOpen(false);
-    const type = selectedPromoteItem.eventType || selectedPromoteItem.eventTitle ? "event" : "course";
-    router.push(`/Promotions?id=${selectedPromoteItem._id}&type=${type}`);
+    const kind = (selectedPromoteItem.eventType || selectedPromoteItem.eventTitle) ? "event" : "course";
+    setPromoTarget({ item: selectedPromoteItem, kind });
   };
 
   if (loading) {
@@ -673,7 +681,15 @@ export default function OrganizerDashboardPage() {
         <button
           type="button"
           className="og-btn-ghost og-promote"
-          onClick={() => openPromoteWith(events[0] || courses[0])}
+          onClick={() => {
+            if (events.length === 1 && courses.length === 0) {
+              openPromoteWith(events[0], "event");
+            } else if (courses.length === 1 && events.length === 0) {
+              openPromoteWith(courses[0], "course");
+            } else if (events.length > 0 || courses.length > 0) {
+              openPromoteWith(null);
+            }
+          }}
         >
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M4 10.4v3.2a1.6 1.6 0 0 0 1.6 1.6h1.7L14 19.4V4.6L7.3 8.8H5.6A1.6 1.6 0 0 0 4 10.4Z" />
@@ -1209,7 +1225,7 @@ export default function OrganizerDashboardPage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveKebab(null);
-                        openPromoteWith(ev);
+                        openPromoteWith(ev, "event");
                       }}
                     >
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1398,7 +1414,7 @@ export default function OrganizerDashboardPage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveKebab(null);
-                        openPromoteWith(cr);
+                        openPromoteWith(cr, "course");
                       }}
                     >
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1879,6 +1895,27 @@ export default function OrganizerDashboardPage() {
             </div>
           </div>
         </div>
+      )}
+      {promoTarget && (
+        <PromotionPlanModal
+          open={Boolean(promoTarget)}
+          kind={promoTarget.kind}
+          listingId={promoTarget.item._id}
+          title={promoTarget.kind === "event" ? (promoTarget.item.eventTitle || promoTarget.item.title) : (promoTarget.item.courseTitle || promoTarget.item.title)}
+          viewHref={promoTarget.kind === "event" ? `/eventDetails?id=${promoTarget.item._id}` : `/programDetails?id=${promoTarget.item._id}`}
+          running={Boolean(
+            promoTarget.item.isFeatured &&
+            promoTarget.item.featuredExpiry &&
+            new Date(promoTarget.item.featuredExpiry) > new Date()
+          )}
+          ineligible={
+            Boolean(promoTarget.item.status && String(promoTarget.item.status).toLowerCase() === "cancelled") ||
+            Boolean(promoTarget.item.status && String(promoTarget.item.status).toLowerCase() === "past") ||
+            Boolean(promoTarget.item.endDate && new Date(promoTarget.item.endDate) < new Date(new Date().setHours(0, 0, 0, 0)))
+          }
+          onClose={() => setPromoTarget(null)}
+          onPurchased={fetchAllData}
+        />
       )}
     </div>
   );

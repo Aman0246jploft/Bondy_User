@@ -9,6 +9,7 @@ import eventApi from "@/api/eventApi";
 import promotionsApi from "@/api/promotionsApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import GlobalLoader from "@/components/GlobalLoader";
+import PromotionPlanModal from "@/components/Promotion/PromotionPlanModal";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 function formatMoney(amount) {
@@ -286,49 +287,10 @@ export default function EventsManagementPage() {
   };
 
   // Open Promotion Modal
-  const openPromoModal = async (event) => {
+  const openPromoModal = (event) => {
     setActiveMenu(null);
     setSelectedEventForPromo(event);
     setShowPromoModal(true);
-    setSelectedPackage(null);
-
-    try {
-      setLoadingPackages(true);
-      const res = await promotionsApi.getEventPackages();
-      if (res?.data?.data) {
-        setPromoPackages(res.data.data);
-      } else if (Array.isArray(res?.data)) {
-        setPromoPackages(res.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch promo packages:", err);
-    } finally {
-      setLoadingPackages(false);
-    }
-  };
-
-  // Checkout Promotion
-  const handleCheckoutPromo = async () => {
-    if (!selectedPackage || !selectedEventForPromo) return;
-    try {
-      setCheckingOut(true);
-      const res = await promotionsApi.checkoutEventPromotion({
-        eventId: selectedEventForPromo._id,
-        packageId: selectedPackage._id,
-      });
-
-      if (res?.data?.invoiceUrl || res?.data?.paymentUrl) {
-        window.location.href = res.data.invoiceUrl || res.data.paymentUrl;
-      } else {
-        flashToast(isMn ? "Сурталчилгаа амжилттай захиалагдлаа!" : "Promotion activated successfully!");
-        setShowPromoModal(false);
-      }
-    } catch (err) {
-      console.error("Failed to checkout promotion:", err);
-      flashToast(isMn ? "Алдаа гарлаа. Дахин оролдоно уу." : "Checkout failed. Please try again.");
-    } finally {
-      setCheckingOut(false);
-    }
   };
 
   return (
@@ -1019,126 +981,30 @@ export default function EventsManagementPage() {
         </div>
       )}
 
-      {/* ─── Promotion Packages Modal ────────────────────────────────────── */}
-      {showPromoModal && (
-        <div className="oe-scrim" onClick={() => setShowPromoModal(false)}>
-          <div
-            className="oe-sheet"
-            style={{ maxWidth: "560px" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-              <b style={{ fontSize: "18px", fontWeight: 700, color: "var(--bd-white)", fontFamily: "var(--bd-font-ui)" }}>
-                ⭐ {isMn ? "Сурталчилгаа идэвхжүүлэх" : "Promote Event"}
-              </b>
-              <button
-                type="button"
-                onClick={() => setShowPromoModal(false)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "999px",
-                  border: "1px solid var(--bd-border)",
-                  background: "transparent",
-                  color: "var(--bd-gray-400)",
-                  cursor: "pointer",
-                }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <p style={{ margin: "0 0 16px", fontSize: "13.5px", color: "var(--bd-gray-400)", lineHeight: 1.5 }}>
-              {isMn
-                ? "Нүүр хуудас болон Explore хэсэгт илүү олон хүнд харуулах багцаа сонгоно уу."
-                : "Select a plan to boost visibility on the Discover feed and Homepage."}
-            </p>
-
-            {loadingPackages ? (
-              <div style={{ padding: "30px", textAlign: "center", color: "var(--bd-gray-500)" }}>
-                {isMn ? "Уншиж байна..." : "Loading packages..."}
-              </div>
-            ) : promoPackages.length === 0 ? (
-              <div style={{ padding: "30px", textAlign: "center", color: "var(--bd-gray-500)" }}>
-                {isMn ? "Идэвхтэй багц байхгүй байна." : "No promotion packages available."}
-              </div>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "12px", marginBottom: "20px" }}>
-                {promoPackages.map((pkg) => {
-                  const isSelected = selectedPackage?._id === pkg._id;
-                  return (
-                    <div
-                      key={pkg._id}
-                      onClick={() => setSelectedPackage(pkg)}
-                      style={{
-                        background: isSelected ? "rgba(35, 173, 164, 0.12)" : "var(--bd-ink-800)",
-                        border: `1.5px solid ${isSelected ? "var(--acc)" : "var(--bd-border)"}`,
-                        borderRadius: "16px",
-                        padding: "16px",
-                        cursor: "pointer",
-                        transition: "all 180ms ease",
-                      }}
-                    >
-                      <b style={{ color: "var(--bd-white)", fontSize: "14px", display: "block", marginBottom: "6px" }}>
-                        {pkg.name}
-                      </b>
-                      <h4 style={{ color: "var(--acc-bright)", margin: "0 0 6px", fontSize: "17px", fontWeight: 700 }}>
-                        ₮{pkg.price?.toLocaleString()}
-                      </h4>
-                      <span style={{ fontSize: "12px", color: "var(--bd-gray-500)", display: "block" }}>
-                        {pkg.durationInDays} {isMn ? "хоног" : "days"}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-              <button
-                type="button"
-                onClick={() => setShowPromoModal(false)}
-                style={{
-                  height: "44px",
-                  padding: "0 20px",
-                  border: "1px solid var(--bd-border-strong)",
-                  borderRadius: "999px",
-                  background: "transparent",
-                  color: "var(--bd-white)",
-                  fontFamily: "var(--bd-font-ui)",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                {isMn ? "Болих" : "Cancel"}
-              </button>
-              <button
-                type="button"
-                disabled={!selectedPackage || checkingOut}
-                onClick={handleCheckoutPromo}
-                style={{
-                  height: "44px",
-                  padding: "0 24px",
-                  border: "none",
-                  borderRadius: "999px",
-                  background: "var(--acc)",
-                  color: "var(--bd-white)",
-                  fontFamily: "var(--bd-font-ui)",
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  cursor: selectedPackage ? "pointer" : "not-allowed",
-                  opacity: selectedPackage ? 1 : 0.5,
-                }}
-              >
-                {checkingOut ? (isMn ? "Төлж байна..." : "Processing...") : (isMn ? "Баталгаажуулах" : "Confirm & Pay")}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* ─── Promotion Plan Modal ────────────────────────────────────── */}
+      {showPromoModal && selectedEventForPromo && (
+        <PromotionPlanModal
+          open={showPromoModal}
+          kind="event"
+          listingId={selectedEventForPromo._id}
+          title={selectedEventForPromo.eventTitle || selectedEventForPromo.title}
+          viewHref={`/eventDetails?id=${selectedEventForPromo._id}`}
+          running={Boolean(
+            selectedEventForPromo.isFeatured &&
+            selectedEventForPromo.featuredExpiry &&
+            new Date(selectedEventForPromo.featuredExpiry) > new Date()
+          )}
+          ineligible={
+            Boolean(selectedEventForPromo.status && String(selectedEventForPromo.status).toLowerCase() === "cancelled") ||
+            Boolean(selectedEventForPromo.status && String(selectedEventForPromo.status).toLowerCase() === "past") ||
+            Boolean(selectedEventForPromo.endDate && new Date(selectedEventForPromo.endDate) < new Date(new Date().setHours(0, 0, 0, 0)))
+          }
+          onClose={() => {
+            setShowPromoModal(false);
+            setSelectedEventForPromo(null);
+          }}
+          onPurchased={fetchAllEvents}
+        />
       )}
     </main>
   );
