@@ -325,7 +325,7 @@ export default function CoursesManagementPage() {
       </div>
       <div className="lm-wrap">
         {/* ─── Tabs List ────────────────────────────────────────────────────── */}
-        <div className="og-tabs bd-scroll" role="tablist">
+        <div className="og-tabs bd-scroll" role="tablist" style={{ marginBottom: "10px" }}>
           <button
             type="button"
             className="og-tab"

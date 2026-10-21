@@ -1789,8 +1789,10 @@ function EventEditorContent() {
                   aria-invalid={Boolean(errors.title)}
                   placeholder={isMn ? "Эвентийн нэр оруулна уу" : "Enter event title"}
                 />
-                <span className="ew-count">{title.length} / 80</span>
-                {errors.title && <span className="ew-er">{errors.title}</span>}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                  {errors.title ? <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>{errors.title}</span> : <span />}
+                  <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>{title.length} / 80</span>
+                </div>
               </label>
 
               {/* Overview */}
@@ -1809,8 +1811,10 @@ function EventEditorContent() {
                   aria-invalid={Boolean(errors.short)}
                   placeholder={isMn ? "Эвентээ товчхон танилцуулна уу" : "Brief summary of your event"}
                 />
-                <span className="ew-count">{shortDesc.length} / 160</span>
-                {errors.short && <span className="ew-er">{errors.short}</span>}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                  {errors.short ? <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>{errors.short}</span> : <span />}
+                  <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>{shortDesc.length} / 160</span>
+                </div>
               </label>
 
               {/* Detailed Description */}
@@ -2343,8 +2347,16 @@ function EventEditorContent() {
                           aria-invalid={Boolean(errors[`tkName_${idx}`])}
                           placeholder={isMn ? "Жишээ: Энгийн суудал" : "Example: Standard seat"}
                         />
-                        <span className="ew-count">{String(t.name || "").trim().length} / 150</span>
-                        {errors[`tkName_${idx}`] && <span className="ew-er">{errors[`tkName_${idx}`]}</span>}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                          {errors[`tkName_${idx}`] ? (
+                            <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>
+                              {errors[`tkName_${idx}`]}
+                            </span>
+                          ) : <span />}
+                          <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>
+                            {String(t.name || "").trim().length} / 150
+                          </span>
+                        </div>
                       </label>
 
                       <label className="ew-f">
@@ -2363,8 +2375,16 @@ function EventEditorContent() {
                           }}
                           placeholder={isMn ? "Энэ тасалбарт юу багтахыг тайлбарлана уу" : "Describe what this ticket includes"}
                         />
-                        <span className="ew-count">{String(t.desc || "").trim().length} / 200</span>
-                        {errors[`tkDesc_${idx}`] && <span className="ew-er">{errors[`tkDesc_${idx}`]}</span>}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                          {errors[`tkDesc_${idx}`] ? (
+                            <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>
+                              {errors[`tkDesc_${idx}`]}
+                            </span>
+                          ) : <span />}
+                          <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>
+                            {String(t.desc || "").trim().length} / 200
+                          </span>
+                        </div>
                       </label>
 
                       <div className="ew-2">
@@ -2388,8 +2408,16 @@ function EventEditorContent() {
                             aria-invalid={Boolean(errors[`tkPrice_${idx}`])}
                             placeholder="30000"
                           />
-                          <span className="ew-count">{digitsOf(t.price)?.replace(/^0$/, "").length || 0} / 10</span>
-                          {errors[`tkPrice_${idx}`] && <span className="ew-er">{errors[`tkPrice_${idx}`]}</span>}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                            {errors[`tkPrice_${idx}`] ? (
+                              <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>
+                                {errors[`tkPrice_${idx}`]}
+                              </span>
+                            ) : <span />}
+                            <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>
+                              {digitsOf(t.price)?.replace(/^0$/, "").length || 0} / 10
+                            </span>
+                          </div>
                         </label>
 
                         <label className="ew-f">
@@ -2412,8 +2440,16 @@ function EventEditorContent() {
                             aria-invalid={Boolean(errors[`tkCap_${idx}`])}
                             placeholder="100"
                           />
-                          <span className="ew-count">{digitsOf(t.cap)?.replace(/^0$/, "").length || 0} / 10</span>
-                          {errors[`tkCap_${idx}`] && <span className="ew-er">{errors[`tkCap_${idx}`]}</span>}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                            {errors[`tkCap_${idx}`] ? (
+                              <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>
+                                {errors[`tkCap_${idx}`]}
+                              </span>
+                            ) : <span />}
+                            <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>
+                              {digitsOf(t.cap)?.replace(/^0$/, "").length || 0} / 10
+                            </span>
+                          </div>
                         </label>
 
                         <label className="ew-f">
@@ -2474,7 +2510,7 @@ function EventEditorContent() {
                 <button
                   type="button"
                   className="ew-gh"
-                  style={{ alignSelf: "flex-start", marginTop: "4px" }}
+                  style={{ alignSelf: "flex-start", marginTop: "0px" }}
                   onClick={() => setTickets((prev) => [...prev, blankTicket()])}
                 >
                   {isMn ? "Өөр тасалбарын төрөл нэмэх" : "Add another ticket type"}
