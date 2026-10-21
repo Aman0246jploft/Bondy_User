@@ -1793,10 +1793,10 @@ function EventEditorContent() {
                 {errors.title && <span className="ew-er">{errors.title}</span>}
               </label>
 
-              {/* Short Description */}
+              {/* Overview */}
               <label className="ew-f">
                 <span className="ew-lb">
-                  {isMn ? "Товч танилцуулга" : "Short Description"} <i>*</i>
+                  {isMn ? "Товч танилцуулга" : "Overview"} <i>*</i>
                 </span>
                 <textarea
                   className="ew-ta"
