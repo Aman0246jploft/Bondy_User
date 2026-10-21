@@ -287,7 +287,9 @@ export default function CoursesManagementPage() {
   };
 
   const isPastTab = activeTab === "past";
-  const dateColHeader = isPastTab ? t("lmEndDate") : t("startDate");
+  const dateColHeader = isPastTab
+    ? (isMn ? "Дууссан огноо" : "End date")
+    : (isMn ? "Эхлэх огноо" : "Start date");
 
   return (
     <main
@@ -471,9 +473,9 @@ export default function CoursesManagementPage() {
         <section className="lm-panel" data-past={isPastTab ? "1" : "0"}>
           {/* Header Row */}
           <div className="lm-row og-head">
-            <span>{t("lmName")}</span>
+            <span>{isMn ? "Нэр" : "Course"}</span>
             <span>{dateColHeader}</span>
-            <span>{t("lmEnrolled")}</span>
+            <span>{isMn ? "Бүртгүүлсэн" : "Registered"}</span>
             <span></span>
             <span></span>
           </div>

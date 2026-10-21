@@ -114,7 +114,10 @@ export default function RootLayout({ children }) {
     if (pathname.includes("/Dashboard")) {
       return isMn ? "Хянах самбар" : "Dashboard";
     }
-    if (pathname.includes("/EventsManagement") || pathname.includes("/EventDetailOrganiser")) {
+    if (pathname.includes("/EventsManagement")) {
+      return isMn ? "Эвентийн удирдлага" : "Event management";
+    }
+    if (pathname.includes("/EventDetailOrganiser")) {
       return isMn ? "Эвент" : "Events";
     }
     if (pathname.includes("/BasicInfo")) {
