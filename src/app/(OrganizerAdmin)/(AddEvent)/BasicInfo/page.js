@@ -1929,7 +1929,7 @@ function EventEditorContent() {
                     <span className="ew-dropT">{isMn ? "Постер зураг оруулах" : "Upload Poster Image"}</span>
                     <span className="ew-dropS">PNG, JPG (Max 5MB)</span>
                     <label className="ew-gh ew-sm" style={{ position: "relative", overflow: "hidden" }}>
-                      {uploadingPoster ? <span className="ew-sp" /> : isMn ? "Зураг сонгох" : "Select Image"}
+                      {uploadingPoster ? <span className="ew-sp" /> : isMn ? "Зураг сонгох" : "Choose Image"}
                       <input
                         type="file"
                         accept="image/*"
