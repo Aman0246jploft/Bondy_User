@@ -1589,26 +1589,28 @@ function ProgramDetailsContent() {
               <h2 className="bd-h2" style={{ margin: 0, fontFamily: "var(--bd-font-ui)", fontSize: 26, fontWeight: 700, lineHeight: 1.2, letterSpacing: "-.016em", color: "var(--bd-white)" }}>
                 {t("pdSimilar")}
               </h2>
-              <Link
-                href="/Programs-Listing"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  height: 38,
-                  padding: "0 16px",
-                  borderRadius: 999,
-                  border: "1px solid var(--bd-border)",
-                  color: "var(--bd-gray-300)",
-                  fontSize: 12,
-                  fontWeight: 550,
-                  whiteSpace: "nowrap",
-                  textDecoration: "none",
-                  transition: "border-color 200ms ease, color 200ms ease",
-                }}
-              >
-                {t("pdSeeAll")}
-              </Link>
+              {similarCourses.length > 2 && (
+                <Link
+                  href="/Programs-Listing"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    height: 38,
+                    padding: "0 16px",
+                    borderRadius: 999,
+                    border: "1px solid var(--bd-border)",
+                    color: "var(--bd-gray-300)",
+                    fontSize: 12,
+                    fontWeight: 550,
+                    whiteSpace: "nowrap",
+                    textDecoration: "none",
+                    transition: "border-color 200ms ease, color 200ms ease",
+                  }}
+                >
+                  {t("pdSeeAll")}
+                </Link>
+              )}
             </div>
 
             <div className="bd-rail" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(258px, 1fr))", gap: 20 }}>

@@ -1673,7 +1673,7 @@ export default function LearningEditorPage() {
             STEP 4: Хянах (Review & Confirm)
             ═══════════════════════════════════════════════════════════════════ */}
         {step === 4 && (
-          <div style={{ marginTop: "18px" }}>
+          <div style={{ marginTop: "10px" }}>
             <p className="lw-note2">
               <i className="lw-i">i</i>
               {t("apReviewNote")}

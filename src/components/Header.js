@@ -26,51 +26,71 @@ export default function BondyHeader() {
     setIsProfileOpen(false);
   }, [pathname]);
 
-  // Fetch self profile if token exists
+  // Load user profile from localStorage immediately and sync with backend
   useEffect(() => {
-    const fetchUser = async () => {
+    const syncProfileFromStorage = () => {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      if (token) {
-        try {
-          const response = await authApi.getSelfProfile();
-          if (response?.status) {
-            const profile = response?.data?.user;
-            const isApproved = profile?.hasBeenApproved === true || profile?.isVerified === true;
-            const isOrganizer = profile?.roleId === 2 || profile?.organizerVerificationStatus;
-            const hasBusinessDetails = !!(
-              profile?.businessName ||
-              profile?.businessCategory ||
-              profile?.shortDesc ||
-              profile?.socialMediaLink
-            );
-
-            if (isOrganizer && !isApproved) {
-              if (hasBusinessDetails) {
-                if (pathname !== "/completeprofile") {
-                  localStorage.removeItem("token");
-                  localStorage.removeItem("userProfile");
-                  setUserProfile(null);
-                  return;
-                }
-              } else {
-                if (pathname !== "/completeprofile") {
-                  setUserProfile(null);
-                  return;
-                }
-              }
-            }
-            setUserProfile(profile);
-          }
-        } catch (error) {
-          console.error("Header Profile Fetch Error:", error);
-        }
-      } else {
+      if (!token) {
         setUserProfile(null);
+        return;
+      }
+      const cached = localStorage.getItem("userProfile");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed) setUserProfile(parsed);
+        } catch (e) {
+          // ignore
+        }
       }
     };
 
-    fetchUser();
-  }, [pathname]);
+    // 1. Immediately read cache on mount
+    syncProfileFromStorage();
+
+    // 2. Fetch fresh profile in background if token exists
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (token) {
+      authApi
+        .getSelfProfile()
+        .then((response) => {
+          if (response?.status && response?.data?.user) {
+            const profile = response.data.user;
+            localStorage.setItem("userProfile", JSON.stringify(profile));
+            setUserProfile(profile);
+          }
+        })
+        .catch((error) => {
+          console.error("Header Profile Sync Error:", error);
+        });
+    }
+
+    // 3. Listen for cross-tab or auth events
+    const handleAuthChange = () => syncProfileFromStorage();
+    window.addEventListener("storage", handleAuthChange);
+    window.addEventListener("auth-change", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("storage", handleAuthChange);
+      window.removeEventListener("auth-change", handleAuthChange);
+    };
+  }, []);
+
+  // On pathname change, ensure userProfile matches localStorage without resetting
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      setUserProfile(null);
+    } else if (!userProfile) {
+      const cached = localStorage.getItem("userProfile");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed) setUserProfile(parsed);
+        } catch (e) {}
+      }
+    }
+  }, [pathname, userProfile]);
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -99,6 +119,9 @@ export default function BondyHeader() {
     setUserProfile(null);
     setIsProfileOpen(false);
     setIsMenuOpen(false);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("auth-change"));
+    }
     router.push("/login");
   };
 

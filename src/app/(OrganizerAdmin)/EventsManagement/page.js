@@ -320,7 +320,7 @@ export default function EventsManagementPage() {
       </div>
 
       {/* ─── Tabs List ────────────────────────────────────────────────────── */}
-      <div className="og-tabs bd-scroll" role="tablist">
+      <div className="og-tabs bd-scroll" role="tablist" style={{ marginBottom: "10px" }}>
         <button
           type="button"
           className="og-tab"
@@ -357,7 +357,7 @@ export default function EventsManagementPage() {
           aria-selected={activeTab === "past"}
           onClick={() => setActiveTab("past")}
         >
-          {isMn ? "Өнгөрсөн" : "Past"}
+          {isMn ? "Өнгөрсөн" : "Past events"}
           <span className="og-tab-n" data-tab-n="past">
             {pastEvents.length}
           </span>
@@ -471,7 +471,7 @@ export default function EventsManagementPage() {
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span>{isMn ? "Эвент үүсгэх" : "Create Event"}</span>
+            <span>{isMn ? "Эвент үүсгэх" : "Create event"}</span>
           </Link>
         </span>
       </div>
@@ -489,9 +489,6 @@ export default function EventsManagementPage() {
           <h2 style={{ margin: 0, fontFamily: "var(--bd-font-ui)", fontSize: "18px", fontWeight: 700, color: "var(--bd-white)" }}>
             {isMn ? "Эвентүүд" : "Events"}
           </h2>
-          <span style={{ fontSize: "13px", color: "var(--bd-gray-500)" }} data-count>
-            {currentList.length} {isMn ? "эвент" : "events"}
-          </span>
         </div>
 
         <div className="og-table">
@@ -508,11 +505,11 @@ export default function EventsManagementPage() {
               }}
             >
               <span>{isMn ? "Эвент" : "Event"}</span>
-              <span>{isMn ? "Огноо, цаг" : "Date, Time"}</span>
-              <span>{isMn ? "Байршил" : "Venue"}</span>
+              <span>{isMn ? "Огноо, цаг" : "Date and time"}</span>
+              <span>{isMn ? "Байршил" : "Location"}</span>
               <span>{isMn ? "Зарагдсан" : "Sold"}</span>
               <span>{isMn ? "Орлого" : "Revenue"}</span>
-              <span />
+              <span style={{ textAlign: "right", paddingRight: "8px" }}>{isMn ? "Үйлдэл" : "Action"}</span>
             </div>
 
             {/* Table Rows */}
@@ -589,31 +586,25 @@ export default function EventsManagementPage() {
                         >
                           {ev.eventTitle}
                         </b>
-                        <span style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                          {ev.eventCategory?.name && (
-                            <span style={{ fontSize: "11.5px", color: "var(--bd-gray-500)", textTransform: "capitalize" }}>
-                              {ev.eventCategory.name}
-                            </span>
-                          )}
-                          {String(ev.status || "").toLowerCase() === "cancelled" && (
-                            <span
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                height: "18px",
-                                padding: "0 7px",
-                                borderRadius: "999px",
-                                fontSize: "10.5px",
-                                fontWeight: 700,
-                                background: "rgba(255, 90, 90, 0.16)",
-                                color: "#ff8a8a",
-                                border: "1px solid rgba(255, 90, 90, 0.3)",
-                              }}
-                            >
-                              {isMn ? "Цуцлагдсан" : "Cancelled"}
-                            </span>
-                          )}
-                        </span>
+                        {String(ev.status || "").toLowerCase() === "cancelled" && (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              height: "18px",
+                              padding: "0 7px",
+                              borderRadius: "999px",
+                              fontSize: "10.5px",
+                              fontWeight: 700,
+                              background: "rgba(255, 90, 90, 0.16)",
+                              color: "#ff8a8a",
+                              border: "1px solid rgba(255, 90, 90, 0.3)",
+                              width: "fit-content",
+                            }}
+                          >
+                            {isMn ? "Цуцлагдсан" : "Cancelled"}
+                          </span>
+                        )}
                       </span>
                     </span>
 

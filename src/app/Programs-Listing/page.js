@@ -1083,6 +1083,8 @@ function ProgramsListingContent() {
       <Header />
 
       <main
+        id="top"
+        data-screen-label="Courses listing"
         style={{
           maxWidth: "1224px",
           margin: "0 auto",

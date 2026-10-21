@@ -1789,14 +1789,16 @@ function EventEditorContent() {
                   aria-invalid={Boolean(errors.title)}
                   placeholder={isMn ? "Эвентийн нэр оруулна уу" : "Enter event title"}
                 />
-                <span className="ew-count">{title.length} / 80</span>
-                {errors.title && <span className="ew-er">{errors.title}</span>}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                  {errors.title ? <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>{errors.title}</span> : <span />}
+                  <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>{title.length} / 80</span>
+                </div>
               </label>
 
-              {/* Short Description */}
+              {/* Overview */}
               <label className="ew-f">
                 <span className="ew-lb">
-                  {isMn ? "Товч танилцуулга" : "Short Description"} <i>*</i>
+                  {isMn ? "Товч танилцуулга" : "Overview"} <i>*</i>
                 </span>
                 <textarea
                   className="ew-ta"
@@ -1809,8 +1811,10 @@ function EventEditorContent() {
                   aria-invalid={Boolean(errors.short)}
                   placeholder={isMn ? "Эвентээ товчхон танилцуулна уу" : "Brief summary of your event"}
                 />
-                <span className="ew-count">{shortDesc.length} / 160</span>
-                {errors.short && <span className="ew-er">{errors.short}</span>}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                  {errors.short ? <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>{errors.short}</span> : <span />}
+                  <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>{shortDesc.length} / 160</span>
+                </div>
               </label>
 
               {/* Detailed Description */}
@@ -1929,7 +1933,7 @@ function EventEditorContent() {
                     <span className="ew-dropT">{isMn ? "Постер зураг оруулах" : "Upload Poster Image"}</span>
                     <span className="ew-dropS">PNG, JPG (Max 5MB)</span>
                     <label className="ew-gh ew-sm" style={{ position: "relative", overflow: "hidden" }}>
-                      {uploadingPoster ? <span className="ew-sp" /> : isMn ? "Зураг сонгох" : "Select Image"}
+                      {uploadingPoster ? <span className="ew-sp" /> : isMn ? "Зураг сонгох" : "Choose Image"}
                       <input
                         type="file"
                         accept="image/*"
@@ -2343,8 +2347,16 @@ function EventEditorContent() {
                           aria-invalid={Boolean(errors[`tkName_${idx}`])}
                           placeholder={isMn ? "Жишээ: Энгийн суудал" : "Example: Standard seat"}
                         />
-                        <span className="ew-count">{String(t.name || "").trim().length} / 150</span>
-                        {errors[`tkName_${idx}`] && <span className="ew-er">{errors[`tkName_${idx}`]}</span>}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                          {errors[`tkName_${idx}`] ? (
+                            <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>
+                              {errors[`tkName_${idx}`]}
+                            </span>
+                          ) : <span />}
+                          <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>
+                            {String(t.name || "").trim().length} / 150
+                          </span>
+                        </div>
                       </label>
 
                       <label className="ew-f">
@@ -2363,8 +2375,16 @@ function EventEditorContent() {
                           }}
                           placeholder={isMn ? "Энэ тасалбарт юу багтахыг тайлбарлана уу" : "Describe what this ticket includes"}
                         />
-                        <span className="ew-count">{String(t.desc || "").trim().length} / 200</span>
-                        {errors[`tkDesc_${idx}`] && <span className="ew-er">{errors[`tkDesc_${idx}`]}</span>}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                          {errors[`tkDesc_${idx}`] ? (
+                            <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>
+                              {errors[`tkDesc_${idx}`]}
+                            </span>
+                          ) : <span />}
+                          <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>
+                            {String(t.desc || "").trim().length} / 200
+                          </span>
+                        </div>
                       </label>
 
                       <div className="ew-2">
@@ -2388,8 +2408,16 @@ function EventEditorContent() {
                             aria-invalid={Boolean(errors[`tkPrice_${idx}`])}
                             placeholder="30000"
                           />
-                          <span className="ew-count">{digitsOf(t.price)?.replace(/^0$/, "").length || 0} / 10</span>
-                          {errors[`tkPrice_${idx}`] && <span className="ew-er">{errors[`tkPrice_${idx}`]}</span>}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                            {errors[`tkPrice_${idx}`] ? (
+                              <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>
+                                {errors[`tkPrice_${idx}`]}
+                              </span>
+                            ) : <span />}
+                            <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>
+                              {digitsOf(t.price)?.replace(/^0$/, "").length || 0} / 10
+                            </span>
+                          </div>
                         </label>
 
                         <label className="ew-f">
@@ -2412,8 +2440,16 @@ function EventEditorContent() {
                             aria-invalid={Boolean(errors[`tkCap_${idx}`])}
                             placeholder="100"
                           />
-                          <span className="ew-count">{digitsOf(t.cap)?.replace(/^0$/, "").length || 0} / 10</span>
-                          {errors[`tkCap_${idx}`] && <span className="ew-er">{errors[`tkCap_${idx}`]}</span>}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
+                            {errors[`tkCap_${idx}`] ? (
+                              <span className="ew-er" style={{ margin: 0, fontSize: "12px", lineHeight: 1.35 }}>
+                                {errors[`tkCap_${idx}`]}
+                              </span>
+                            ) : <span />}
+                            <span className="ew-count" style={{ margin: 0, marginLeft: "auto", fontSize: "11px", whiteSpace: "nowrap" }}>
+                              {digitsOf(t.cap)?.replace(/^0$/, "").length || 0} / 10
+                            </span>
+                          </div>
                         </label>
 
                         <label className="ew-f">
@@ -2474,7 +2510,7 @@ function EventEditorContent() {
                 <button
                   type="button"
                   className="ew-gh"
-                  style={{ alignSelf: "flex-start", marginTop: "4px" }}
+                  style={{ alignSelf: "flex-start", marginTop: "0px" }}
                   onClick={() => setTickets((prev) => [...prev, blankTicket()])}
                 >
                   {isMn ? "Өөр тасалбарын төрөл нэмэх" : "Add another ticket type"}
@@ -2749,218 +2785,218 @@ function EventEditorContent() {
                 : "After you submit, Bondy reviews the event and publishes it once it is approved."}
             </p>
             <div className="ew-r4">
-              <div className="ew-rcard">
-                <div className="ew-rcH">
-                  <b>{isMn ? "Үндсэн мэдээлэл" : "Basic info"}</b>
-                  <button type="button" className="ew-edit" onClick={() => handleGotoStep(1)}>
-                    {isMn ? "Засах" : "Edit"}
-                  </button>
-                </div>
+              {/* Column 1: Basic Info & Tickets */}
+              <div className="ew-rcol">
+                <div className="ew-rcard">
+                  <div className="ew-rcH">
+                    <b>{isMn ? "Үндсэн мэдээлэл" : "Basic info"}</b>
+                    <button type="button" className="ew-edit" onClick={() => handleGotoStep(1)}>
+                      {isMn ? "Засах" : "Edit"}
+                    </button>
+                  </div>
 
-                <div className="ew-topRow">
-                  {poster ? (
-                    <span
-                      className="ew-poster ew-posterR"
-                      style={{ backgroundImage: `url("${getFullImageUrl(poster)}")` }}
-                    />
-                  ) : (
-                    <span className="ew-poster ew-posterR" />
-                  )}
-                  <div style={{ flex: "1 1 230px", minWidth: 0 }}>
-                    <span className="ew-kv2">
-                      <span>{isMn ? "Эвентийн нэр" : "Event name"}</span>
-                      <span>{title.trim() ? titleCaseWords(title.trim()) : "—"}</span>
+                  <div className="ew-topRow">
+                    {poster ? (
+                      <span
+                        className="ew-poster ew-posterR"
+                        style={{ backgroundImage: `url("${getFullImageUrl(poster)}")` }}
+                      />
+                    ) : (
+                      <span className="ew-poster ew-posterR" />
+                    )}
+                    <div style={{ flex: "1 1 230px", minWidth: 0 }}>
+                      <span className="ew-kv2">
+                        <span>{isMn ? "Эвентийн нэр" : "Event name"}</span>
+                        <span>{title.trim() ? titleCaseWords(title.trim()) : "—"}</span>
+                      </span>
+                      <span className="ew-kv2">
+                        <span>{isMn ? "Ангилал" : "Category"}</span>
+                        <span>{categoryName || "—"}</span>
+                      </span>
+                      <span className="ew-kv2 ew-clamp">
+                        <span>{isMn ? "Товч танилцуулга" : "Overview"}</span>
+                        <span>{shortDesc.trim() ? sentenceCaseText(shortDesc.trim()) : "—"}</span>
+                      </span>
+                      <span className="ew-kv2 ew-clamp">
+                        <span>{isMn ? "Дэлгэрэнгүй тайлбар" : "Description"}</span>
+                        <span>{longDesc.trim() ? sentenceCaseText(longDesc.trim()) : "—"}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="ew-media">
+                    <b>{isMn ? "Медиа" : "Media"}</b>
+                    <span className="ew-mrow">
+                      <span>{isMn ? "Постер" : "Poster"}</span>
+                      <b>{poster ? (isMn ? "Оруулсан" : "Added") : "—"}</b>
                     </span>
-                    <span className="ew-kv2">
-                      <span>{isMn ? "Ангилал" : "Category"}</span>
-                      <span>{categoryName || "—"}</span>
+                    <span className="ew-mrow">
+                      <span>{isMn ? "Зургийн цомог" : "Photo gallery"}</span>
+                      <b>
+                        {gallery.length
+                          ? (isMn ? `${gallery.length} зураг` : (gallery.length === 1 ? "1 image" : `${gallery.length} images`))
+                          : "—"}
+                      </b>
                     </span>
-                    <span className="ew-kv2 ew-clamp">
-                      <span>{isMn ? "Товч танилцуулга" : "Overview"}</span>
-                      <span>{shortDesc.trim() ? sentenceCaseText(shortDesc.trim()) : "—"}</span>
+                    {gallery.length > 0 && (
+                      <div className="ew-gal ew-reviewGal">
+                        {gallery.map((imgUrl, idx) => (
+                          <span
+                            key={`${imgUrl}-${idx}`}
+                            className="ew-gi"
+                            role="img"
+                            aria-label={isMn ? `Зураг ${idx + 1}` : `Gallery image ${idx + 1}`}
+                            style={{ backgroundImage: `url("${getFullImageUrl(imgUrl)}")` }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    <span className="ew-mrow">
+                      <span>{isMn ? "Тизер видео" : "Teaser video"}</span>
+                      <b>{teaserVideo ? (teaserName || (isMn ? "Оруулсан" : "Added")) : "—"}</b>
                     </span>
-                    <span className="ew-kv2 ew-clamp">
-                      <span>{isMn ? "Дэлгэрэнгүй тайлбар" : "Description"}</span>
-                      <span>{longDesc.trim() ? sentenceCaseText(longDesc.trim()) : "—"}</span>
-                    </span>
+                    {teaserVideo && (
+                      <video
+                        className="ew-reviewVideo"
+                        controls
+                        playsInline
+                        preload="metadata"
+                        src={getFullImageUrl(teaserVideo)}
+                      />
+                    )}
                   </div>
                 </div>
 
-                <div className="ew-media">
-                  <b>{isMn ? "Медиа" : "Media"}</b>
-                  <span className="ew-mrow">
-                    <span>{isMn ? "Постер" : "Poster"}</span>
-                    <b>{poster ? (isMn ? "Оруулсан" : "Added") : "—"}</b>
-                  </span>
-                  {/* {poster && (
-                  <span
-                    className="ew-poster ew-posterR ew-reviewPoster"
-                    style={{ backgroundImage: `url("${getFullImageUrl(poster)}")` }}
-                  />
-                )} */}
-                  <span className="ew-mrow">
-                    <span>{isMn ? "Зургийн цомог" : "Photo gallery"}</span>
-                    <b>
-                      {gallery.length
-                        ? (isMn ? `${gallery.length} зураг` : (gallery.length === 1 ? "1 image" : `${gallery.length} images`))
-                        : "—"}
-                    </b>
-                  </span>
-                  {gallery.length > 0 && (
-                    <div className="ew-gal ew-reviewGal">
-                      {gallery.map((imgUrl, idx) => (
-                        <span
-                          key={`${imgUrl}-${idx}`}
-                          className="ew-gi"
-                          role="img"
-                          aria-label={isMn ? `Зураг ${idx + 1}` : `Gallery image ${idx + 1}`}
-                          style={{ backgroundImage: `url("${getFullImageUrl(imgUrl)}")` }}
-                        />
-                      ))}
+                {/* Tickets */}
+                <div className="ew-rcard">
+                  <div className="ew-rcH">
+                    <b>{isFree ? (isMn ? "Бүртгэл" : "Registrations") : (isMn ? "Тасалбарууд" : "Tickets")}</b>
+                    <button type="button" className="ew-edit" onClick={() => handleGotoStep(3)}>
+                      {isMn ? "Засах" : "Edit"}
+                    </button>
+                  </div>
+
+                  {isFree ? (
+                    <div className="ew-tkRow">
+                      <span className="ew-tkRowT">
+                        <b>{isMn ? "Бүртгэл" : "Registrations"}</b>
+                        <small>
+                          {`${freeCap || 0} ${isMn ? "орон" : "spots"} · ${freeSs
+                            ? formatReviewWhen(freeSs, isMn)
+                            : (isMn ? "Нийтлэгдсэн даруй" : "As soon as it is published")
+                            } – ${freeSe
+                              ? formatReviewWhen(freeSe, isMn)
+                              : (isMn ? "Эвент эхлэх хүртэл" : "Until the event starts")
+                            }`}
+                        </small>
+                      </span>
+                      <span className="ew-tkRowV">{isMn ? "Үнэгүй" : "Free"}</span>
                     </div>
+                  ) : (
+                    tickets.map((t, idx) => (
+                      <div key={idx} className="ew-tkRow">
+                        <span className="ew-tkRowT">
+                          <b>{t.name || (isMn ? "Нэргүй тасалбар" : "Untitled ticket")}</b>
+                          <small>
+                            {`${t.cap || 0} ${isMn ? "ширхэг" : "tickets"}${t.ss ? ` · ${formatReviewWhen(t.ss, isMn)} – ${t.se ? formatReviewWhen(t.se, isMn) : "—"}` : ""
+                              }`}
+                          </small>
+                        </span>
+                        <span className="ew-tkRowV">
+                          {Number(t.price) > 0
+                            ? `₮${Number(t.price).toLocaleString("en-US")}`
+                            : (isMn ? "Үнэгүй" : "Free")}
+                        </span>
+                      </div>
+                    ))
                   )}
-                  <span className="ew-mrow">
-                    <span>{isMn ? "Тизер видео" : "Teaser video"}</span>
-                    <b>{teaserVideo ? (teaserName || (isMn ? "Оруулсан" : "Added")) : "—"}</b>
-                  </span>
-                  {teaserVideo && (
-                    <video
-                      className="ew-reviewVideo"
-                      controls
-                      playsInline
-                      preload="metadata"
-                      src={getFullImageUrl(teaserVideo)}
-                    />
+
+                  {!isFree && (
+                    <span className="ew-kv2" style={{ borderTop: "1px solid var(--bd-border-soft)", marginTop: "6px" }}>
+                      <span>{isMn ? "Буцаан олголтын нөхцөл" : "Refund policy"}</span>
+                      <span>{dbPolicies.find((p) => p.value === policy)?.label || policy || "—"}</span>
+                    </span>
                   )}
                 </div>
               </div>
 
-              <div className="ew-rcard">
-                <div className="ew-rcH">
-                  <b>{isMn ? "Огноо ба байршил" : "Date and location"}</b>
-                  <button type="button" className="ew-edit" onClick={() => handleGotoStep(2)}>
-                    {isMn ? "Засах" : "Edit"}
-                  </button>
-                </div>
-                <div className="ew-topRow">
-                  {address ? (
-                    <span className="ew-mapS ew-mapP">
-                      <span className="ew-pin" style={{ left: pinAt.left, top: pinAt.top }}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              {/* Column 2: Date & Location & Settings */}
+              <div className="ew-rcol">
+                <div className="ew-rcard">
+                  <div className="ew-rcH">
+                    <b>{isMn ? "Огноо ба байршил" : "Date and location"}</b>
+                    <button type="button" className="ew-edit" onClick={() => handleGotoStep(2)}>
+                      {isMn ? "Засах" : "Edit"}
+                    </button>
+                  </div>
+                  <div className="ew-topRow">
+                    {address ? (
+                      <span className="ew-mapS ew-mapP">
+                        <span className="ew-pin" style={{ left: pinAt.left, top: pinAt.top }}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" stroke="currentColor" strokeWidth="1.6" />
+                            <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.6" />
+                          </svg>
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="ew-mapS">
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                           <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" stroke="currentColor" strokeWidth="1.6" />
                           <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.6" />
                         </svg>
                       </span>
-                    </span>
-                  ) : (
-                    <span className="ew-mapS">
-                      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" stroke="currentColor" strokeWidth="1.6" />
-                        <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.6" />
-                      </svg>
-                    </span>
-                  )}
-                  <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                    <span className="ew-kv2">
-                      <span>{isMn ? "Байршлын нэр" : "Venue name"}</span>
-                      <span>{venueName || "—"}</span>
-                    </span>
-                    <span className="ew-kv2">
-                      <span>{isMn ? "Хаяг" : "Address"}</span>
-                      <span>{address || "—"}</span>
-                    </span>
-                  </div>
-                </div>
-                <span className="ew-kv2">
-                  <span>{isMn ? "Эхлэх" : "Starts"}</span>
-                  <span>{startDate ? formatReviewWhen(startDate, isMn, startTime) : "—"}</span>
-                </span>
-                <span className="ew-kv2">
-                  <span>{isMn ? "Дуусах" : "Ends"}</span>
-                  <span>{endDate ? formatReviewWhen(endDate, isMn, endTime) : "—"}</span>
-                </span>
-              </div>
-
-              {/* Tickets */}
-              <div className="ew-rcard">
-                <div className="ew-rcH">
-                  <b>{isFree ? (isMn ? "Бүртгэл" : "Registrations") : (isMn ? "Тасалбарууд" : "Tickets")}</b>
-                  <button type="button" className="ew-edit" onClick={() => handleGotoStep(3)}>
-                    {isMn ? "Засах" : "Edit"}
-                  </button>
-                </div>
-
-                {isFree ? (
-                  <div className="ew-tkRow">
-                    <span className="ew-tkRowT">
-                      <b>{isMn ? "Бүртгэл" : "Registrations"}</b>
-                      <small>
-                        {`${freeCap || 0} ${isMn ? "орон" : "spots"} · ${freeSs
-                          ? formatReviewWhen(freeSs, isMn)
-                          : (isMn ? "Нийтлэгдсэн даруй" : "As soon as it is published")
-                          } – ${freeSe
-                            ? formatReviewWhen(freeSe, isMn)
-                            : (isMn ? "Эвент эхлэх хүртэл" : "Until the event starts")
-                          }`}
-                      </small>
-                    </span>
-                    <span className="ew-tkRowV">{isMn ? "Үнэгүй" : "Free"}</span>
-                  </div>
-                ) : (
-                  tickets.map((t, idx) => (
-                    <div key={idx} className="ew-tkRow">
-                      <span className="ew-tkRowT">
-                        <b>{t.name || (isMn ? "Нэргүй тасалбар" : "Untitled ticket")}</b>
-                        <small>
-                          {`${t.cap || 0} ${isMn ? "ширхэг" : "tickets"}${t.ss ? ` · ${formatReviewWhen(t.ss, isMn)} – ${t.se ? formatReviewWhen(t.se, isMn) : "—"}` : ""
-                            }`}
-                        </small>
+                    )}
+                    <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                      <span className="ew-kv2">
+                        <span>{isMn ? "Байршлын нэр" : "Venue name"}</span>
+                        <span>{venueName || "—"}</span>
                       </span>
-                      <span className="ew-tkRowV">
-                        {Number(t.price) > 0
-                          ? `₮${Number(t.price).toLocaleString("en-US")}`
-                          : (isMn ? "Үнэгүй" : "Free")}
+                      <span className="ew-kv2">
+                        <span>{isMn ? "Хаяг" : "Address"}</span>
+                        <span>{address || "—"}</span>
                       </span>
                     </div>
-                  ))
-                )}
-
-                {!isFree && (
-                  <span className="ew-kv2" style={{ borderTop: "1px solid var(--bd-border-soft)", marginTop: "6px" }}>
-                    <span>{isMn ? "Буцаан олголтын нөхцөл" : "Refund policy"}</span>
-                    <span>{dbPolicies.find((p) => p.value === policy)?.label || policy || "—"}</span>
+                  </div>
+                  <span className="ew-kv2">
+                    <span>{isMn ? "Эхлэх" : "Starts"}</span>
+                    <span>{startDate ? formatReviewWhen(startDate, isMn, startTime) : "—"}</span>
                   </span>
-                )}
-              </div>
-
-              {/* Card 3: Тохиргоо */}
-              <div className="ew-rcard">
-                <div className="ew-rcH">
-                  <b>{isMn ? "Тохиргоо" : "Settings"}</b>
-                  <button type="button" className="ew-edit" onClick={() => handleGotoStep(4)}>
-                    {isMn ? "Засах" : "Edit"}
-                  </button>
+                  <span className="ew-kv2">
+                    <span>{isMn ? "Дуусах" : "Ends"}</span>
+                    <span>{endDate ? formatReviewWhen(endDate, isMn, endTime) : "—"}</span>
+                  </span>
                 </div>
-                <span className="ew-kv2">
-                  <span>{isMn ? "Харагдах байдал" : "Visibility"}</span>
-                  <span>{visibility === "public" ? (isMn ? "Нийтийн" : "Public") : (isMn ? "Хувийн" : "Private")}</span>
-                </span>
-                <span className="ew-kv2">
-                  <span>{isMn ? "Насны хязгаарлалт" : "Age restriction"}</span>
-                  <span>{(ageRestriction === "all" || ageRestriction === "ALL") ? (isMn ? "Бүх насныханд" : "All ages") : (String(ageRestriction).endsWith("+") ? ageRestriction : `${ageRestriction}+`)}</span>
-                </span>
-                <span className="ew-kv2">
-                  <span>{isMn ? "Оролцогчдыг харуулах" : "Show attendees"}</span>
-                  <span>{showAttendees ? (isMn ? "Идэвхтэй" : "Active") : (isMn ? "Идэвхгүй" : "Inactive")}</span>
-                </span>
-                <span className="ew-kv2">
-                  <span>{isMn ? "Нэвтрэх тэмдэглэл" : "Entry notes"}</span>
-                  <span>{entryNotes || "—"}</span>
-                </span>
-                <span className="ew-kv2">
-                  <span>{isMn ? "Хувцаслалтын дүрэм" : "Dress code"}</span>
-                  <span>{dressCode || "—"}</span>
-                </span>
+
+                {/* Settings */}
+                <div className="ew-rcard">
+                  <div className="ew-rcH">
+                    <b>{isMn ? "Тохиргоо" : "Settings"}</b>
+                    <button type="button" className="ew-edit" onClick={() => handleGotoStep(4)}>
+                      {isMn ? "Засах" : "Edit"}
+                    </button>
+                  </div>
+                  <span className="ew-kv2">
+                    <span>{isMn ? "Харагдах байдал" : "Visibility"}</span>
+                    <span>{visibility === "public" ? (isMn ? "Нийтийн" : "Public") : (isMn ? "Хувийн" : "Private")}</span>
+                  </span>
+                  <span className="ew-kv2">
+                    <span>{isMn ? "Насны хязгаарлалт" : "Age restriction"}</span>
+                    <span>{(ageRestriction === "all" || ageRestriction === "ALL") ? (isMn ? "Бүх насныханд" : "All ages") : (String(ageRestriction).endsWith("+") ? ageRestriction : `${ageRestriction}+`)}</span>
+                  </span>
+                  <span className="ew-kv2">
+                    <span>{isMn ? "Оролцогчдыг харуулах" : "Show attendees"}</span>
+                    <span>{showAttendees ? (isMn ? "Идэвхтэй" : "Active") : (isMn ? "Идэвхгүй" : "Inactive")}</span>
+                  </span>
+                  <span className="ew-kv2">
+                    <span>{isMn ? "Нэвтрэх тэмдэглэл" : "Entry notes"}</span>
+                    <span>{entryNotes || "—"}</span>
+                  </span>
+                  <span className="ew-kv2">
+                    <span>{isMn ? "Хувцаслалтын дүрэм" : "Dress code"}</span>
+                    <span>{dressCode || "—"}</span>
+                  </span>
+                </div>
               </div>
             </div>
           </>
