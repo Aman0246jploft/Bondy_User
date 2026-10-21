@@ -1450,7 +1450,7 @@ function EventEditorContent() {
     if (blockedModal?.open) return;
     setDraftBusy(true);
     try {
-      const payload = buildPayload(true);
+      const payload = buildPayload(isDraftMode ? true : false);
       let res;
       let savedId = eventIdParam;
       if (eventIdParam) {
@@ -1463,19 +1463,17 @@ function EventEditorContent() {
       if (savedId) {
         setCreatedEventId(savedId);
       }
-      clearEventData();
-      flashToast(isMn ? "Ноорогт хадгаллаа" : "Draft saved");
 
       setDone({
         kind: "draft",
         tileBg: "rgba(35, 173, 164, 0.14)",
         tileColor: "var(--acc-bright)",
         icon: "check",
-        title: isMn ? "Ноорогт хадгалагдлаа" : "Saved to Drafts",
-        body: isMn ? "Дараа үргэлжлүүлэн засах боломжтой." : "You can continue editing at any time.",
+        title: isMn ? "Ноорогт хадгалагдлаа" : "Saved to drafts",
+        body: isMn ? "Дараа үргэлжлүүлэн засах боломжтой." : "You can keep editing later.",
         acts: [
-          { key: "continue", label: isMn ? "Үргэлжлүүлэн засах" : "Continue Editing", cls: "ew-go" },
-          { key: "events", label: isMn ? "Миний эвентүүд" : "My Events", cls: "ew-gh" },
+          { key: "continue", label: isMn ? "Үргэлжлүүлэн засах" : "Keep editing", cls: "ew-go" },
+          { key: "events", label: isMn ? "Миний эвентүүд" : "My events", cls: "ew-gh" },
         ],
       });
     } catch (err) {
@@ -1732,7 +1730,7 @@ function EventEditorContent() {
         <button
           type="button"
           className="ew-mobdraft"
-          onClick={promptSaveDraft}
+          onClick={executeSaveDraft}
           disabled={draftBusy}
         >
           {draftBusy ? <span className="ew-sp" /> : isMn ? "Ноорог" : "Draft"}
@@ -3066,7 +3064,7 @@ function EventEditorContent() {
             type="button"
             className="ew-gh"
             data-act="savedraft"
-            onClick={promptSaveDraft}
+            onClick={executeSaveDraft}
             disabled={draftBusy}
           >
             {draftBusy && <span className="ew-sp" />}

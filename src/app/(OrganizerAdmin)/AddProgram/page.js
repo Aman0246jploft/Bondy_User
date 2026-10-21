@@ -981,7 +981,7 @@ export default function LearningEditorPage() {
         price: Number(formData.price) || 0,
         refundPolicy: getCanonicalRefundPolicy(formData.refundPolicy) || null,
         enrollmentType: "fixedStart",
-        isDraft: true,
+        isDraft: mode === "published" ? false : true,
       };
 
       let res;
@@ -989,13 +989,15 @@ export default function LearningEditorPage() {
         res = await courseApi.updateCourse(courseId, payload);
       } else {
         res = await courseApi.createCourse(payload);
+        const createdId = res?.data?._id || res?.data?.course?._id || res?.data?.data?._id;
+        if (createdId) setCourseId(createdId);
       }
 
       setDirty(false);
       setDoneModal({
         type: "draft",
-        title: isMn ? "Ноорогт хадгалагдлаа" : "Draft Saved",
-        msg: isMn ? "Таны бөглөсөн мэдээлэл ноорог хэлбэрээр хадгалагдлаа." : "Your progress has been saved as a draft.",
+        title: isMn ? "Ноорогт хадгалагдлаа" : "Saved to drafts",
+        msg: isMn ? "Дараа үргэлжлүүлэн засах боломжтой." : "You can keep editing later.",
       });
     } catch (err) {
       console.error("Failed to save draft:", err);
@@ -2217,32 +2219,53 @@ export default function LearningEditorPage() {
             </p>
 
             <div style={{ display: "flex", alignItems: "center", gap: "9px", flexWrap: "wrap", justifyContent: "center", marginTop: "20px" }}>
-              <button
-                type="button"
-                className="lw-go"
-                onClick={() => {
-                  const id = doneModal.courseId || courseId;
-                  if (id) router.push(`/CourseDetailOrganiser?courseId=${id}`);
-                  else router.push("/CoursesManagement");
-                }}
-              >
-                {t("apViewCourse")}
-              </button>
-              <button
-                type="button"
-                className="lw-gh"
-                onClick={() => router.push("/CoursesManagement")}
-              >
-                {t("lmMyCourses")}
-              </button>
-              {doneModal.type === "published" && (
-                <button
-                  type="button"
-                  className="lw-gh"
-                  onClick={() => router.push("/Dashboard")}
-                >
-                  {t("dashboard")}
-                </button>
+              {doneModal.type === "draft" ? (
+                <>
+                  <button
+                    type="button"
+                    className="lw-go"
+                    onClick={() => setDoneModal(null)}
+                  >
+                    {isMn ? "Үргэлжлүүлэн засах" : "Keep editing"}
+                  </button>
+                  <button
+                    type="button"
+                    className="lw-gh"
+                    onClick={() => router.push("/CoursesManagement")}
+                  >
+                    {isMn ? "Миний сургалтууд" : "My courses"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="lw-go"
+                    onClick={() => {
+                      const id = doneModal.courseId || courseId;
+                      if (id) router.push(`/CourseDetailOrganiser?courseId=${id}`);
+                      else router.push("/CoursesManagement");
+                    }}
+                  >
+                    {t("apViewCourse")}
+                  </button>
+                  <button
+                    type="button"
+                    className="lw-gh"
+                    onClick={() => router.push("/CoursesManagement")}
+                  >
+                    {t("lmMyCourses")}
+                  </button>
+                  {doneModal.type === "published" && (
+                    <button
+                      type="button"
+                      className="lw-gh"
+                      onClick={() => router.push("/Dashboard")}
+                    >
+                      {t("dashboard")}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
