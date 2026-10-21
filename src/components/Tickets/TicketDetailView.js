@@ -7,6 +7,7 @@ import QRCode from "react-qr-code";
 import bookingApi from "@/api/bookingApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 import "./ticket-detail-view.css";
 
 function Icon({ name }) {
@@ -139,7 +140,7 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
   }, [id, data]);
 
   if (loading) {
-    return <div className="td-state-page"><b>{t("loading")}</b></div>;
+    return <GlobalLoader fullScreen={false} />;
   }
   if (failed || !ticket) {
     return <div className="td-state-page"><b>{t("tdNotFound")}</b></div>;
