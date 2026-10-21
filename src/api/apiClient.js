@@ -151,17 +151,23 @@ export function deepCapitalizeTitles(obj, seen = new WeakSet()) {
 
 apiClient.interceptors.response.use(
     (response) => {
-        if (response.data?.status === false && response.data?.message) {
-            if (
-                response.data.message === "Invalid or expired token" ||
-                response.data.message === "Your account has been disabled. Please contact support."
-            ) {
-                localStorage.removeItem("token");
-                localStorage.removeItem("userProfile");
-                localStorage.removeItem("registerEmail");
-                window.location.href = "/";
-                return;
-            }
+        const rawMsg = response.data?.message || "";
+        const isAccountDisabled =
+            response.data?.code === "ACCOUNT_DISABLED" ||
+            rawMsg === "Your account has been disabled. Please contact support." ||
+            rawMsg.includes("идэвхгүй болсон") ||
+            (response.data?.status === false && rawMsg.toLowerCase().includes("account has been disabled"));
+
+        const isInvalidToken =
+            rawMsg === "Invalid or expired token" ||
+            rawMsg.includes("Хүчингүй эсвэл хугацаа нь дууссан");
+
+        if (response.data?.status === false && (isAccountDisabled || isInvalidToken)) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("userProfile");
+            localStorage.removeItem("registerEmail");
+            window.location.href = "/";
+            return;
         }
 
         const skipToast = response.config?.skipToast;
@@ -182,11 +188,16 @@ apiClient.interceptors.response.use(
     (error) => {
         const skipToast = error.config?.skipToast;
         const message = error.response?.data?.message || "Something went wrong";
-        if (
+        const code = error.response?.data?.code;
+        const isForbiddenOrDisabled =
             error.response?.status === 401 ||
             error.response?.status === 403 ||
-            message === "Your account has been disabled. Please contact support."
-        ) {
+            code === "ACCOUNT_DISABLED" ||
+            message === "Your account has been disabled. Please contact support." ||
+            message.includes("идэвхгүй болсон") ||
+            message.toLowerCase().includes("account has been disabled");
+
+        if (isForbiddenOrDisabled) {
             localStorage.removeItem("token");
             localStorage.removeItem("userProfile");
             localStorage.removeItem("registerEmail");

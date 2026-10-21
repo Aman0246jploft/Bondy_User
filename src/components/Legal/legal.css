@@ -47,6 +47,10 @@
   border: 1px solid var(--bd-border, #303030);
   border-radius: 22px;
   background: var(--bd-ink-850, #161616);
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .lg-body {
@@ -54,6 +58,20 @@
   font-size: 14.5px;
   line-height: 1.7;
   color: var(--bd-gray-400, #a0a0a0);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.lg-body * {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.lg-body .lg-def-item {
+  margin: 0;
 }
 
 .lg-body > *:first-child {
@@ -90,21 +108,8 @@
 }
 
 .lg-body h2::before {
-  counter-increment: lgsec;
-  content: counter(lgsec);
-  display: block;
-  margin-bottom: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--bd-gray-500, #8a8a8a);
-}
-
-.lg-body h2:has(.lg-eyebrow)::before {
   content: none;
   display: none;
-  counter-increment: none;
 }
 
 .lg-body .lg-sec {

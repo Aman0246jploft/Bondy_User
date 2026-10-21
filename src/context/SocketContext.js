@@ -58,6 +58,14 @@ export const SocketProvider = ({ children }) => {
                 // toast.error("Socket connection failed");
             });
 
+            socketInstance.on("force_logout", (data) => {
+                toast.error(data?.message || "Your account has been disabled. Please contact support.");
+                localStorage.removeItem("token");
+                localStorage.removeItem("userProfile");
+                localStorage.removeItem("registerEmail");
+                window.location.href = "/";
+            });
+
             socketInstance.on("user_online", ({ userId }) => {
                 setOnlineUsers((prev) => new Set(prev).add(userId));
             });

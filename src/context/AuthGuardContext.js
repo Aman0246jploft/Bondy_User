@@ -113,9 +113,22 @@ export function AuthGuardProvider({ children }) {
               router.replace("/completeprofile");
             }
           }
+        } else if (response?.status === false && (response?.message === "Your account has been disabled. Please contact support." || response?.data?.user?.isDisable)) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("userProfile");
+          localStorage.removeItem("registerEmail");
+          setIsLoggedIn(false);
+          router.replace("/");
+          return;
         }
       } catch (err) {
-        // Handled by interceptor
+        if (err?.response?.status === 403 || err?.response?.data?.message?.includes("disabled")) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("userProfile");
+          localStorage.removeItem("registerEmail");
+          setIsLoggedIn(false);
+          router.replace("/");
+        }
       }
     };
 
