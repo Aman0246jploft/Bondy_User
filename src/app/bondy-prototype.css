@@ -2346,6 +2346,13 @@ footer.bd-footer .bd-footer-link {
   transition: border-color 200ms var(--bd-ease);
 }
 
+@media (min-width: 768px) {
+  .el-sform label,
+  main#top > form > label {
+    flex: 0 1 63.75% !important;
+  }
+}
+
 .el-sform label:hover,
 .el-sform label:focus-within {
   border-color: var(--bd-border-strong);
