@@ -140,10 +140,15 @@ export default function Page() {
           leaving = true;
           window.location.replace("/login?step=otp");
           return;
+        } else if (response?.message) {
+          toast.error(response.message);
         }
       }
     } catch (error) {
-      toast.error(error?.message || t("pleaseEnterFullOtp"));
+      const backendMsg = error?.response?.data?.message;
+      if (!backendMsg && error?.message && !error.message.includes("status code")) {
+        toast.error(error.message);
+      }
     } finally {
       if (!leaving) setLoading(false);
     }

@@ -166,8 +166,26 @@ apiClient.interceptors.response.use(
             localStorage.removeItem("token");
             localStorage.removeItem("userProfile");
             localStorage.removeItem("registerEmail");
-            window.location.href = "/";
-            return;
+
+            if (!skipToast) {
+                toast.error(localizeMessage(rawMsg || "Your account has been disabled. Please contact support."));
+            }
+
+            const isAuthPage = typeof window !== "undefined" && (
+                window.location.pathname.includes("/login") ||
+                window.location.pathname.includes("/register") ||
+                window.location.pathname.includes("/signup") ||
+                window.location.pathname.includes("/forgotpassword") ||
+                response.config?.url?.includes("/login") ||
+                response.config?.url?.includes("/signup")
+            );
+
+            if (!isAuthPage) {
+                setTimeout(() => {
+                    window.location.href = "/";
+                }, 1500);
+            }
+            return response.data;
         }
 
         const skipToast = response.config?.skipToast;
@@ -187,7 +205,7 @@ apiClient.interceptors.response.use(
     },
     (error) => {
         const skipToast = error.config?.skipToast;
-        const message = error.response?.data?.message || "Something went wrong";
+        const message = error.response?.data?.message || error.message || "Something went wrong";
         const code = error.response?.data?.code;
         const isForbiddenOrDisabled =
             error.response?.status === 401 ||
@@ -197,14 +215,29 @@ apiClient.interceptors.response.use(
             message.includes("идэвхгүй болсон") ||
             message.toLowerCase().includes("account has been disabled");
 
+        if (!skipToast) {
+            toast.error(localizeMessage(message));
+        }
+
         if (isForbiddenOrDisabled) {
             localStorage.removeItem("token");
             localStorage.removeItem("userProfile");
             localStorage.removeItem("registerEmail");
-            window.location.href = "/";
-        }
-        if (!skipToast) {
-            toast.error(localizeMessage(message));
+
+            const isAuthPage = typeof window !== "undefined" && (
+                window.location.pathname.includes("/login") ||
+                window.location.pathname.includes("/register") ||
+                window.location.pathname.includes("/signup") ||
+                window.location.pathname.includes("/forgotpassword") ||
+                error.config?.url?.includes("/login") ||
+                error.config?.url?.includes("/signup")
+            );
+
+            if (!isAuthPage) {
+                setTimeout(() => {
+                    window.location.href = "/";
+                }, 1500);
+            }
         }
         console.error("API Error:", message);
         return Promise.reject(error);
