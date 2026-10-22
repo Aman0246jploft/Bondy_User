@@ -86,6 +86,16 @@ function clientWhen(item, language) {
   return [day, item?.startTime].filter(Boolean).join(" · ");
 }
 
+function cleanTicketName(rawName) {
+  if (!rawName) return "";
+  const parts = String(rawName)
+    .split(",")
+    .map((s) => s.replace(/\s*\(x\d+\)/gi, "").trim())
+    .filter(Boolean);
+  const unique = [...new Set(parts)];
+  return unique.join(", ");
+}
+
 function payLabel(method, t) {
   if (method === "STRIPE") return t("tdPayStripe");
   if (method === "SOCIALPAY") return t("tdPaySocial");
@@ -154,21 +164,25 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
   const isCourse = ticket.bookingType === "COURSE";
   const item = isCourse ? ticket.courseId : ticket.eventId;
   const title = isCourse ? item?.courseTitle : item?.eventTitle;
-  const rawImage = Array.isArray(item?.posterImage) ? item.posterImage[0] : "";
-  const image = showCustomerNav && rawImage ? getFullImageUrl(rawImage) : rawImage;
+  const rawImage = Array.isArray(item?.posterImage) ? item.posterImage[0] : (item?.posterImage || "");
+  const image = !rawImage
+    ? ""
+    : rawImage.startsWith("http://") || rawImage.startsWith("https://")
+      ? rawImage
+      : getFullImageUrl(rawImage);
   const when = showCustomerNav
     ? clientWhen(item, language)
     : [dateText(item?.startDate, language), item?.startTime].filter(Boolean).join(" · ");
   const where = placeText(item);
   const buyerName = `${ticket.userId?.firstName || ""} ${ticket.userId?.lastName || ""}`.trim();
   const buyerEmail = ticket.userId?.email || ticket.email || "";
-  const option = ticket.ticketName || tickets[0]?.ticketName || "";
   const qty = ticket.qty || tickets.length || 1;
   const free = ticket.paymentMethod === "FREE" || !Number(ticket.totalAmount);
   const isItemCancelled = String(item?.status || "").toLowerCase() === "cancelled";
   const isCancelled = isItemCancelled || ticket.status === "CANCELLED" || ticket.status === "FAILED" || Boolean(ticket.cancelledAt) || (typeof ticket.refundReason === "string" && /cancel/i.test(ticket.refundReason));
   const dead = isCancelled || ["CANCELLED", "FAILED", "REFUND_INITIATED", "REFUNDED"].includes(ticket.status);
   const current = tickets[selected] || null;
+  const option = cleanTicketName(current?.ticketName || ticket.ticketName || tickets[0]?.ticketName) || (isCourse ? "Cohort" : "Ticket");
   const person = `${current?.firstName || ""} ${current?.lastName || ""}`.trim() || buyerName;
   const email = current?.email || current?.userId?.email || buyerEmail;
   const code = current?.ticketNumber || ticket.bookingId || "";
@@ -289,31 +303,32 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
             <span>{t("tdEachQr")}</span>
           </div>
         )}
-        <div className="td-split" data-pick={tickets.length > 1 ? "list" : "none"}>
+        <div className="td-split" data-pick={tickets.length > 1 ? "some" : "none"}>
           {tickets.length > 1 && (
             <div className="td-picker">
-              {tickets.map((row, index) => (
-                <button
-                  key={row._id || row.ticketNumber || index}
-                  type="button"
-                  className="td-tk"
-                  aria-selected={index === selected}
-                  onClick={() => setSelected(index)}
-                >
-                  <span className="td-tk-n">{index + 1}</span>
-                  <span className="td-tk-t">{row.ticketName || option}</span>
-                  <span className="td-tk-s">{`${row.firstName || ""} ${row.lastName || ""}`.trim() || buyerName}</span>
-                </button>
-              ))}
+              {tickets.map((row, index) => {
+                const rowName = cleanTicketName(row.ticketName) || option;
+                const rowPerson = `${row.firstName || ""} ${row.lastName || ""}`.trim() || buyerName;
+                return (
+                  <button
+                    key={row._id || row.ticketNumber || index}
+                    type="button"
+                    className="td-tk"
+                    aria-selected={index === selected}
+                    onClick={() => setSelected(index)}
+                  >
+                    <span className="td-tk-n">{index + 1}</span>
+                    <span className="td-tk-t">{rowName}</span>
+                    <span className="td-tk-s">{rowPerson}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
           <div className="td-panel">
             <div className="td-rows">
               {person && (
                 <span className="td-r"><Icon name="user" /><span className="td-k">{t("tdName")}</span><b className="td-v">{person}</b></span>
-              )}
-              {email && (
-                <span className="td-r"><Icon name="mail" /><span className="td-k">{t("tdEmail") || t("email") || "Email"}</span><b className="td-v">{email}</b></span>
               )}
               {isCourse && title && !showCustomerNav && (
                 <span className="td-r"><Icon name="list" /><span className="td-k">{t("obCourse")}</span><b className="td-v">{title}</b></span>
@@ -397,12 +412,10 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
         </button>
       )}
 
-      {(showCustomerNav || ordersHref) && (
-        <div className="td-cta">
-          <Link href={ordersHref || "/MyTickets"} className="td-cta-main">{t("bcOrders")}</Link>
-          {showCustomerNav && <Link href="/" className="td-cta-ghost">{t("bcHome")}</Link>}
-        </div>
-      )}
+      <div className="td-cta">
+        <Link href={ordersHref || "/MyTickets"} className="td-cta-main">{t("bcOrders")}</Link>
+        <Link href="/" className="td-cta-ghost">{t("bcHome")}</Link>
+      </div>
     </div>
   );
 }

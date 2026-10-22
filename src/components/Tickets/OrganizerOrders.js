@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import bookingApi from "@/api/bookingApi";
 import { useLanguage } from "@/context/LanguageContext";
+import { getFullImageUrl } from "@/utils/imageHelper";
 import "./organizer-orders.css";
 
 const PAGE_SIZE = 10;
@@ -19,6 +20,16 @@ function Icon({ name }) {
   return <svg {...common}><path d="m9 6 6 6-6 6" /></svg>;
 }
 
+function cleanTicketName(rawName) {
+  if (!rawName) return "";
+  const parts = String(rawName)
+    .split(",")
+    .map((s) => s.replace(/\s*\(x\d+\)/gi, "").trim())
+    .filter(Boolean);
+  const unique = [...new Set(parts)];
+  return unique.join(", ");
+}
+
 function ymd(value) {
   if (!value) return "";
   const date = new Date(value);
@@ -31,7 +42,12 @@ function describe(ticket, t) {
   const isCourse = ticket.bookingType === "COURSE";
   const item = (isCourse ? ticket.courseId : ticket.eventId) || {};
   const title = (isCourse ? item.courseTitle : item.eventTitle) || "";
-  const image = Array.isArray(item.posterImage) ? item.posterImage[0] : "";
+  const rawImage = Array.isArray(item.posterImage) ? item.posterImage[0] : (item.posterImage || "");
+  const image = !rawImage
+    ? ""
+    : rawImage.startsWith("http://") || rawImage.startsWith("https://")
+      ? rawImage
+      : getFullImageUrl(rawImage);
 
   let when = "";
   if (isCourse) {
@@ -40,6 +56,7 @@ function describe(ticket, t) {
     when = [ymd(item.startDate), item.startTime].filter(Boolean).join(", ");
   }
 
+  const venue = item.venueName || (typeof item.venueAddress === "object" ? item.venueAddress?.venueName : "") || "";
   const address = item.venueAddress && typeof item.venueAddress === "object"
     ? [item.venueAddress.address, item.venueAddress.city].filter(Boolean).join(", ")
     : (typeof item.venueAddress === "string" ? item.venueAddress : "");
@@ -53,10 +70,11 @@ function describe(ticket, t) {
     ].filter(Boolean).join(" · ");
   } else {
     const qty = ticket.qty || 1;
-    sub = ticket.ticketName ? `${ticket.ticketName} × ${qty}` : t("obTickets", { count: qty });
+    const cleanedName = cleanTicketName(ticket.ticketName);
+    sub = cleanedName ? `${cleanedName} × ${qty}` : t("obTickets", { count: qty });
   }
 
-  return { isCourse, title, image, when, venue: item.venueName || "", address, sub };
+  return { isCourse, title, image, when, venue, address, sub };
 }
 
 function statusTag(ticket, t) {
