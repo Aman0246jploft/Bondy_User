@@ -326,6 +326,7 @@ function SectionHeader({ mn, en, viewAllHref, language }) {
 
 function HeroCarousel({ slides, loading, language, t }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const currentIndexRef = useRef(0);
   const [isPaused, setIsPaused] = useState(false);
   const railRef = useRef(null);
   const slidesRef = useRef([]);
@@ -421,14 +422,15 @@ function HeroCarousel({ slides, loading, language, t }) {
   const go = useCallback((target) => {
     if (count <= 1 || animatingRef.current) return;
     const c = count;
+    const cur = currentIndexRef.current;
     const i = ((target % c) + c) % c;
-    if (i === currentIndex) return;
+    if (i === cur) return;
 
     const rail = railRef.current;
     if (rail) {
       if (settleTimeoutRef.current) clearTimeout(settleTimeoutRef.current);
-      const dir = ((i - currentIndex + c) % c) <= c / 2 ? 1 : -1;
-      const pos = ring(currentIndex, i, dir);
+      const dir = ((i - cur + c) % c) <= c / 2 ? 1 : -1;
+      const pos = ring(cur, i, dir);
       rail.style.transition = "none";
       rail.style.transform = `translate3d(${offset(pos)}px,0,0)`;
       void rail.offsetWidth;
@@ -444,18 +446,19 @@ function HeroCarousel({ slides, loading, language, t }) {
         focus(i);
       }, 600);
     }
+    currentIndexRef.current = i;
     setCurrentIndex(i);
-  }, [count, currentIndex, ring, offset, focus, settle]);
+  }, [count, ring, offset, focus, settle]);
 
-  // Initial settle & resize listener
+  // Initial settle on mount & window resize
   useEffect(() => {
     if (count <= 1) return;
-    settle(currentIndex);
-    focus(currentIndex);
+    settle(currentIndexRef.current);
+    focus(currentIndexRef.current);
 
     const onResize = () => {
       if (!animatingRef.current) {
-        settle(currentIndex);
+        settle(currentIndexRef.current);
       }
     };
     window.addEventListener("resize", onResize);
@@ -469,16 +472,16 @@ function HeroCarousel({ slides, loading, language, t }) {
       if (ro) ro.disconnect();
       if (settleTimeoutRef.current) clearTimeout(settleTimeoutRef.current);
     };
-  }, [count, settle, focus, currentIndex]);
+  }, [count, settle, focus]);
 
   // Auto-advance
   useEffect(() => {
     if (isPaused || count <= 1) return;
     autoPlayRef.current = setInterval(() => {
-      go(currentIndex + 1);
+      go(currentIndexRef.current + 1);
     }, 6000);
     return () => clearInterval(autoPlayRef.current);
-  }, [isPaused, count, currentIndex, go]);
+  }, [isPaused, count, go]);
 
   // Touch handlers
   const handleTouchStart = (e) => {
