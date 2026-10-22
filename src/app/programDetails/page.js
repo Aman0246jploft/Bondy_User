@@ -1720,7 +1720,7 @@ function ProgramDetailsContent() {
                     </span>
 
                     {sim.isFeatured && (
-                      <span className="bd-c-promo">{language === "en" ? "Featured" : "Онцлох"}</span>
+                      <span className="bd-c-promo">{language === "en" ? "Promoted" : "Онцлох"}</span>
                     )}
 
                     <span className="bd-c-b">

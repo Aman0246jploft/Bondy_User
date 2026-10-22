@@ -942,7 +942,7 @@ export default function HomePage() {
           </button>
         </SafeBg>
         {item.isFeatured && (
-          <span className="bd-c-promo">{language === "en" ? "Featured" : "Онцлох"}</span>
+          <span className="bd-c-promo">{language === "en" ? "Promoted" : "Онцлох"}</span>
         )}
         <span className="bd-c-b">
           <b className="bd-c-t">{title}</b>
@@ -1083,10 +1083,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════ SECTION 3: FEATURED COURSES ════════════════════════════════════ */}
-      <section id="courses" data-screen-label="Featured courses" style={{ padding: "clamp(16px,1.6vw,24px) 0 clamp(8px,1vw,14px)" }}>
+      {/* ════ SECTION 3: PROMOTED COURSES ════════════════════════════════════ */}
+      <section id="courses" data-screen-label="Promoted courses" style={{ padding: "clamp(16px,1.6vw,24px) 0 clamp(8px,1vw,14px)" }}>
         <div className="bd-container">
-          <SectionHeader mn="Онцлох сургалтууд" en="Featured courses" viewAllHref="/Programs-Listing?sort=recommended" language={language} />
+          <SectionHeader mn="Онцлох сургалтууд" en="Promoted courses" viewAllHref="/Programs-Listing?featured=1" language={language} />
           <RailCarousel
             items={featuredCourses}
             loading={sectionLoading}
@@ -1120,7 +1120,7 @@ export default function HomePage() {
                   return (
                     <Link key={row.id} href={row.href} className="hp-up-row">
                       <SafeBg src={row.image} className="hp-up-th">
-                        {row.isFeatured && <span className="hp-up-promo">{language === "en" ? "Featured" : "Онцлох"}</span>}
+                        {row.isFeatured && <span className="hp-up-promo">{language === "en" ? "Promoted" : "Онцлох"}</span>}
                       </SafeBg>
                       <b className="hp-up-t">{title}</b>
                       <span className="hp-up-v"><span className="hp-up-vt">{row.venue}</span></span>
@@ -1157,7 +1157,7 @@ export default function HomePage() {
 
       {/* ════ SECTION 5: PROMOTED ORGANIZERS ════════════════════════════════ */}
       {(sectionLoading || promotedOrganizers.length > 0) && (
-        <section id="organizers" data-screen-label="Featured organizers" style={{ padding: "clamp(20px,2vw,28px) 0 clamp(32px,3.2vw,48px)" }}>
+        <section id="organizers" data-screen-label="Promoted organizers" style={{ padding: "clamp(20px,2vw,28px) 0 clamp(32px,3.2vw,48px)" }}>
           <div className="bd-container">
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap", marginBottom: 20 }}>
               <h2 className="bd-h2" style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "var(--bd-white)" }}>

@@ -1844,6 +1844,7 @@ body {
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -2359,8 +2360,9 @@ footer.bd-footer .bd-footer-link {
 }
 
 @media (min-width: 768px) {
+
   .el-sform label,
-  main#top > form > label {
+  main#top>form>label {
     flex: 0 1 63.75% !important;
   }
 }

@@ -526,6 +526,17 @@ function ProgramsListingContent() {
   // Sort dropdown
   const [sortOption, setSortOption] = useState("recommended");
 
+  // Promoted / Featured only filter
+  const [featuredOnly, setFeaturedOnly] = useState(() => {
+    return (
+      searchParams.get("featured") === "1" ||
+      searchParams.get("featured") === "true" ||
+      searchParams.get("promoted") === "1" ||
+      searchParams.get("sort") === "featured" ||
+      searchParams.get("sort") === "promoted"
+    );
+  });
+
   // View mode
   const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'map'
 
@@ -591,6 +602,14 @@ function ProgramsListingContent() {
     if (sort && ["recommended", "date", "soonest", "price", "new"].includes(sort)) {
       setSortOption(sort === "soonest" ? "date" : sort);
     }
+
+    const isFeat =
+      searchParams.get("featured") === "1" ||
+      searchParams.get("featured") === "true" ||
+      searchParams.get("promoted") === "1" ||
+      searchParams.get("sort") === "featured" ||
+      searchParams.get("sort") === "promoted";
+    if (isFeat) setFeaturedOnly(true);
 
     const cat = searchParams.get("category") || searchParams.get("cat");
     if (cat) setSelectedCategoryKey(cat.toLowerCase());
@@ -743,6 +762,10 @@ function ProgramsListingContent() {
         params.radius = appliedFilters.dist;
       }
 
+      if (featuredOnly) {
+        params.isFeatured = true;
+      }
+
       return params;
     },
     [
@@ -753,6 +776,7 @@ function ProgramsListingContent() {
       customDateTo,
       appliedFilters.tod,
       appliedFilters.dist,
+      featuredOnly,
       userCoords,
     ]
   );
@@ -970,9 +994,15 @@ function ProgramsListingContent() {
         passesDistFilter(item)
     );
 
+    if (featuredOnly) {
+      result = result.filter((item) => item.promo);
+    }
+
     const activeSort = appliedFilters.sort || sortOption;
 
-    if (activeSort === "date" || activeSort === "soonest") {
+    if (activeSort === "recommended") {
+      result.sort((a, b) => (b.promo ? 1 : 0) - (a.promo ? 1 : 0));
+    } else if (activeSort === "date" || activeSort === "soonest") {
       result.sort((a, b) => {
         const da = a.date + (a.time || "00:00");
         const db = b.date + (b.time || "00:00");
@@ -996,6 +1026,7 @@ function ProgramsListingContent() {
     customDateTo,
     appliedFilters,
     sortOption,
+    featuredOnly,
   ]);
 
   // Visible courses in grid (all server-loaded courses)
@@ -1006,11 +1037,12 @@ function ProgramsListingContent() {
   // Calculate active filter count for badge
   const activeAdvCount = useMemo(() => {
     let count = 0;
+    if (featuredOnly) count++;
     if (appliedFilters.tod !== "any") count++;
     if (appliedFilters.dist !== "any") count++;
     if (appliedFilters.sort && appliedFilters.sort !== "recommended") count++;
     return count;
-  }, [appliedFilters]);
+  }, [appliedFilters, featuredOnly]);
 
   // Apply draft filters
   const handleApplyFilters = () => {
@@ -1036,6 +1068,7 @@ function ProgramsListingContent() {
       tod: "any",
       dist: "any",
     });
+    setFeaturedOnly(false);
     setDraftSort("recommended");
     setDraftTod("any");
     setDraftDist("any");
@@ -1052,6 +1085,7 @@ function ProgramsListingContent() {
     setCustomDateLabel("");
     setShowDatePickerModal(false);
     setSortOption("recommended");
+    setFeaturedOnly(false);
     handleClearAllFilters();
   };
 
@@ -1511,6 +1545,49 @@ function ProgramsListingContent() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", minHeight: "32px" }}>
+            {featuredOnly && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  height: "32px",
+                  padding: "0 6px 0 13px",
+                  borderRadius: "999px",
+                  background: "rgba(35,173,164,.14)",
+                  border: "1px solid var(--acc)",
+                  color: "var(--bd-white)",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {t("organizersFeaturedFirst") || (language === "en" ? "Promoted first" : "Онцлох нь эхэлж")}
+                <button
+                  type="button"
+                  onClick={() => setFeaturedOnly(false)}
+                  aria-label="Remove"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "20px",
+                    height: "20px",
+                    border: "none",
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,.1)",
+                    color: "var(--bd-white)",
+                    cursor: "pointer",
+                    padding: 0,
+                    fontSize: "13px",
+                    lineHeight: 1,
+                  }}
+                >
+                  ×
+                </button>
+              </span>
+            )}
+
             {appliedFilters.tod !== "any" && (
               <span
                 style={{
@@ -1689,7 +1766,11 @@ function ProgramsListingContent() {
                       <CourseCardImage src={crs.image} fallback={DEFAULT_FALLBACK_IMAGE} />
 
                       {/* Promo badge */}
-                      {crs.promo && <span className="el-c-promo">{t("featuredBadge")}</span>}
+                      {crs.promo && (
+                        <span className="el-c-promo">
+                          {language === "en" ? "Promoted" : t("featuredBadge")}
+                        </span>
+                      )}
 
                       {/* Favorite Button */}
                       <button
@@ -1852,7 +1933,7 @@ function ProgramsListingContent() {
                       <span>{item.venue}</span>
                       <span className="bd-mr-f">
                         <i>{item.priceText}</i>
-                        {item.promo && <em>{t("featuredBadge")}</em>}
+                        {item.promo && <em>{language === "en" ? "Promoted" : t("featuredBadge")}</em>}
                       </span>
                     </span>
                   </Link>

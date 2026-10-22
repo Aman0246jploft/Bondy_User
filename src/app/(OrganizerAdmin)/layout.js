@@ -213,7 +213,7 @@ export default function RootLayout({ children }) {
               justifyContent: "space-between",
               gap: "20px",
               flexWrap: "wrap",
-              padding: "15px clamp(18px, 2.4vw, 34px)",
+              padding: pathname.includes("/Notifications") || pathname.includes("/SupportTickets") ? "15px 10px" : "15px clamp(18px, 2.4vw, 34px)",
             }}
           >
             {/* Title & Subtitle */}
@@ -604,9 +604,12 @@ export default function RootLayout({ children }) {
         {/* Main Content Area */}
         <main
           data-screen-label={title}
+          className={pathname.includes("/Notifications") || pathname.includes("/SupportTickets") ? "og-main-notifs" : ""}
           style={{
             flex: 1,
-            padding: "clamp(20px, 2.4vw, 30px) clamp(18px, 2.4vw, 34px) clamp(48px, 4vw, 64px)",
+            padding: pathname.includes("/Notifications") || pathname.includes("/SupportTickets")
+              ? "clamp(16px, 2vw, 24px) 10px clamp(40px, 4vw, 56px)"
+              : "clamp(20px, 2.4vw, 30px) clamp(18px, 2.4vw, 34px) clamp(48px, 4vw, 64px)",
             background: "radial-gradient(900px 320px at 12% -6%, rgba(35, 173, 164, 0.06), transparent 68%)",
             minWidth: 0,
             width: "100%",

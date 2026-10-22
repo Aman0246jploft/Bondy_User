@@ -91,8 +91,8 @@ function destinationFor(notification) {
 
 export default function NotificationPage() {
   const { t, language } = useLanguage();
-  const router = useRouter();
-  const { fetchUnreadNotificationCount } = useSocket();
+  const socketCtx = useSocket();
+  const fetchUnreadNotificationCount = socketCtx?.fetchUnreadNotificationCount;
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -127,9 +127,9 @@ export default function NotificationPage() {
 
   useEffect(() => {
     fetchNotifications();
-    fetchUnreadNotificationCount();
+    fetchUnreadNotificationCount?.();
     document.title = `${t("notifications")} - Bondy`;
-  }, [fetchNotifications, retry, language]);
+  }, [fetchNotifications, retry, language, fetchUnreadNotificationCount]);
 
   const flash = (text) => {
     setToastText(text);
@@ -201,15 +201,14 @@ export default function NotificationPage() {
   return (
     <div className="on-page">
       <div className="on-head">
-        <p>
-          {loading
-            ? t("loading")
-            : failed
-              ? t("onLoadFailedSummary")
-              : totalUnread
-                ? t("onUnreadCount", { count: totalUnread })
-                : t("onAllRead")}
-        </p>
+        <div className="on-chips">
+          <button type="button" className="on-chip" aria-selected={activeTab === "all"} onClick={() => setTab("all")}>
+            {t("all")}
+          </button>
+          <button type="button" className="on-chip" aria-selected={activeTab === "unread"} onClick={() => setTab("unread")}>
+            {t("onUnread")}
+          </button>
+        </div>
         <button
           type="button"
           className="on-mark"
@@ -220,17 +219,18 @@ export default function NotificationPage() {
         </button>
       </div>
 
-      <div className="on-chips">
-        <button type="button" className="on-chip" aria-selected={activeTab === "all"} onClick={() => setTab("all")}>
-          {t("all")}
-        </button>
-        <button type="button" className="on-chip" aria-selected={activeTab === "unread"} onClick={() => setTab("unread")}>
-          {t("onUnread")}
-        </button>
-      </div>
-
       {loading ? (
-        <GlobalLoader fullScreen={false} message={t("loading")} />
+        <div className="on-list on-skeleton-list">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="on-row on-row-skeleton" style={{ pointerEvents: "none" }}>
+              <span className="on-rowI" style={{ background: "rgba(255, 255, 255, 0.06)", borderRadius: "12px", width: 40, height: 40, flexShrink: 0 }} />
+              <span className="on-copy" style={{ gap: 8, width: "100%" }}>
+                <span style={{ display: "block", height: 16, width: `${25 + (i * 12) % 35}%`, background: "rgba(255, 255, 255, 0.08)", borderRadius: 4 }} />
+                <span style={{ display: "block", height: 13, width: `${50 + (i * 17) % 40}%`, background: "rgba(255, 255, 255, 0.04)", borderRadius: 4 }} />
+              </span>
+            </div>
+          ))}
+        </div>
       ) : failed ? (
         <div className="on-state">
           <b>{t("failedToLoadNotifications")}</b>

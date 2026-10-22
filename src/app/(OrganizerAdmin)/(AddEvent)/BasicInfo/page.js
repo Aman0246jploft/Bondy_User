@@ -1586,10 +1586,10 @@ function EventEditorContent() {
     setPendingRemoveTicketIdx(idx);
     setAsk({
       kind: "rmtk",
-      title: isMn ? "Тасалбарын төрлийг хасах уу?" : "Remove ticket tier?",
+      title: isMn ? "Тасалбарын төрлийг хасах уу?" : "Remove this ticket type?",
       body: isMn
         ? "Хасвал энэ төрлийн үнэ, орон, борлуулалтын хугацаа устана."
-        : "Removing this tier will delete its price, capacity, and sale dates.",
+        : "Removing it clears its price, capacity and sales window.",
       acts: [
         { key: "rmyes", label: isMn ? "Хасах" : "Remove", cls: "ew-go" },
         { key: "cancel", label: isMn ? "Болих" : "Cancel", cls: "ew-gh" },

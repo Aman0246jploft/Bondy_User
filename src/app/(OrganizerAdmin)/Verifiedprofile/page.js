@@ -639,7 +639,28 @@ function VerificationPageContent() {
                             </div>
                 {upErr ? <div className="vf-alert">{upErr}</div> : null}
                 {sheetErr ? <div className="vf-alert">{sheetErr}</div> : null}
-                <p className="vf-note"><span>?</span><span>{t("vfIdSharp")}</span></p>
+                <p className="vf-note">
+                  <span
+                    className="vf-q"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "16px",
+                      height: "16px",
+                      borderRadius: "50%",
+                      border: "1.2px solid currentColor",
+                      fontSize: "10.5px",
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      flexShrink: 0,
+                      marginTop: "1px",
+                    }}
+                  >
+                    ?
+                  </span>
+                  <span>{t("vfIdSharp")}</span>
+                </p>
                 <button type="button" className="vf-go" disabled={busy || !front || !back} onClick={submitDoc}>{busy ? t("vfSending") : t("vfSend")}</button>
               </>
             )}
@@ -682,7 +703,7 @@ function VerificationPageContent() {
               </div>
                 <label className="vf-lb">{t("vfIban")} <i>*</i></label>
                 <input className="vf-in" value={bankIban} placeholder={t("vfIbanPh")} spellCheck={false} onChange={(e) => { setBankIban(formatIban(e.target.value)); setSheetErr(""); }} />
-                {ibanMsg ? <span className="vf-err">{ibanMsg}</span> : null}
+                {ibanMsg ? <span className="vf-err" style={{ textAlign: "left" }}>{ibanMsg}</span> : null}
                 <label className="vf-lb">{t("vfHolder")} <i>*</i></label>
                 <input className="vf-in" maxLength={80} value={bankHolder} placeholder={t("vfHolderPh")} onChange={(e) => { setBankHolder(e.target.value.slice(0, 80)); setSheetErr(""); }} />
                 <span className="vf-hint">{t("vfHolderHint")}</span>

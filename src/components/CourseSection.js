@@ -15,7 +15,7 @@ const CourseSection = ({
   extraParams = null,
   placement = "homePage",
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -99,7 +99,7 @@ const CourseSection = ({
                 <div className="event_main_cart">
                   <div className="recommended-card">
                     {item.isFeatured && (
-                      <span className="event-badge">Featured</span>
+                      <span className="event-badge">{t("featuredBadge") || (language === "en" ? "Promoted" : "Онцлох")}</span>
                     )}
                     <img
                       src={getFullImageUrl(item.posterImage?.[0]) || "/img/sidebar-logo.svg"}

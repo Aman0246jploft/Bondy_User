@@ -763,15 +763,24 @@ function RegisterForm() {
 
           {/* ── Social ── */}
           <div className="lg-or">
-            <span>{t("orSignInWith")}</span>
+            <span>{language === "mn" ? "эсвэл" : "or"}</span>
           </div>
           <div className="lg-social">
-            <button type="button" disabled className="lg-social-btn" title="Apple login coming soon">
+            {/* Apple */}
+            <button
+              type="button"
+              onClick={() => toast(language === "mn" ? "Тун удахгүй" : "Coming soon")}
+              className="lg-social-btn"
+              title="Apple login coming soon"
+            >
               <span className="lg-circle">
-                <img src="/img/app_icon.svg" alt="apple" />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+                  <path d="M17.05 12.72c.02 2.68 2.35 3.57 2.38 3.58-.02.06-.37 1.27-1.23 2.51-.74 1.07-1.51 2.14-2.72 2.16-1.19.02-1.57-.71-2.93-.71-1.36 0-1.78.69-2.9.73-1.17.04-2.06-1.15-2.81-2.22C5.28 16.5 4.1 12.5 5.68 9.8c.79-1.35 2.2-2.2 3.72-2.22 1.15-.02 2.23.77 2.93.77.7 0 2.02-.95 3.4-.81.58.02 2.2.21 3.24 1.6-.08.05-1.93 1.13-1.92 3.58ZM14.83 5.9c.62-.75 1.04-1.79.92-2.83-.89.04-1.97.6-2.61 1.34-.58.66-1.08 1.72-.94 2.74.99.08 1.99-.5 2.63-1.25Z" />
+                </svg>
               </span>
               <span>Apple</span>
             </button>
+            {/* Google */}
             <button
               type="button"
               onClick={() => googleLogin()}
@@ -780,9 +789,16 @@ function RegisterForm() {
               title="Sign up with Google"
             >
               <span className="lg-circle">
-                {googleLoading
-                  ? <span className="lg-spin" />
-                  : <img src="/img/google_icon.svg" alt="google" />}
+                {googleLoading ? (
+                  <span className="lg-spin" />
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 48 48" aria-hidden="true">
+                    <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.2-.4-4.7H24v8.9h11.8c-.5 2.7-2.1 5-4.4 6.5v5.4h7.1c4.2-3.8 6.6-9.5 6.6-16.1Z" />
+                    <path fill="#34A853" d="M24 46c6 0 11-2 14.5-5.4l-7.1-5.4c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.6-3.8-12.3-9.1H4.4v5.6C7.9 41 15.4 46 24 46Z" />
+                    <path fill="#FBBC05" d="M11.7 28.2c-.4-1.3-.7-2.7-.7-4.2s.3-2.9.7-4.2v-5.6H4.4C2.9 17.1 2 20.4 2 24s.9 6.9 2.4 9.8l7.3-5.6Z" />
+                    <path fill="#EA4335" d="M24 10.4c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 3.9 30 2 24 2 15.4 2 7.9 7 4.4 14.2l7.3 5.6C13.4 14.2 18.3 10.4 24 10.4Z" />
+                  </svg>
+                )}
               </span>
               <span>Google</span>
             </button>
