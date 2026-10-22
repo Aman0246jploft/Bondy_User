@@ -334,6 +334,12 @@ function EventEditorContent() {
 
   // Modals & Feedback
   const [toastMessage, setToastMessage] = useState("");
+  const flashToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage("");
+    }, 3200);
+  };
   const [ask, setAsk] = useState(null); // { kind, title, body, acts: [{ key, label, cls }] }
   const [done, setDone] = useState(null); // { kind, title, body, icon, tileBg, tileColor, acts: [{ key, label, cls }] }
   const [pendingRemoveTicketIdx, setPendingRemoveTicketIdx] = useState(null);
@@ -525,12 +531,6 @@ function EventEditorContent() {
 
     loadEvent();
   }, [eventIdParam, isMn]);
-
-  // Flash Toast
-  const flashToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(""), 2600);
-  };
 
   // Autocomplete filter for Address
   const filteredAddrs = useMemo(() => {
@@ -1073,9 +1073,29 @@ function EventEditorContent() {
   }, [pinMode, googleMapsLoaded, step]);
 
   // ─── File Uploads ─────────────────────────────────────────────────────────
-  const handlePosterUpload = async (e) => {
-    const file = e.target.files?.[0];
+  const processPosterFile = async (file) => {
     if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      const typeMsg = isMn
+        ? "Зөвхөн зураг оруулна уу (PNG, JPG, WEBP)."
+        : "Please upload a valid image file (PNG, JPG, WEBP).";
+      setErrors((prev) => ({ ...prev, poster: typeMsg }));
+      flashToast(typeMsg);
+      return;
+    }
+
+    // Validate file size: 5 MB limit
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_IMAGE_SIZE) {
+      const sizeMsg = isMn
+        ? "Файлын хэмжээ 5 МБ-аас ихгүй байх ёстой."
+        : "File size must not exceed 5 MB.";
+      setErrors((prev) => ({ ...prev, poster: sizeMsg }));
+      flashToast(sizeMsg);
+      return;
+    }
 
     setUploadingPoster(true);
     setUpPct(30);
@@ -1103,6 +1123,22 @@ function EventEditorContent() {
     }
   };
 
+  const handlePosterUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) {
+      await processPosterFile(file);
+    }
+  };
+
+  const handlePosterDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer?.files?.[0];
+    if (file) {
+      processPosterFile(file);
+    }
+  };
+
   const handleGalleryUpload = async (e) => {
     const picked = Array.from(e.target.files || []);
     e.target.value = "";
@@ -1110,20 +1146,32 @@ function EventEditorContent() {
 
     const room = 5 - gallery.length;
     if (room <= 0) {
-      flashToast(t("apGalleryTooMany"));
+      flashToast(t("apGalleryTooMany") || (isMn ? "Дээд тал нь 5 зураг оруулах боломжтой." : "You can upload a maximum of 5 images."));
       return;
     }
     const files = [];
     let tooBig = false;
+    let invalidType = false;
     picked.forEach((file) => {
+      if (!file.type.startsWith("image/")) {
+        invalidType = true;
+        return;
+      }
       if (file.size > 5 * 1024 * 1024) {
         tooBig = true;
         return;
       }
       if (files.length < room) files.push(file);
     });
-    if (tooBig) flashToast(t("apGalleryTooBig"));
-    if (picked.filter((file) => file.size <= 5 * 1024 * 1024).length > room) flashToast(t("apGalleryTooMany"));
+    if (invalidType) {
+      flashToast(isMn ? "Зөвхөн зураг оруулна уу (PNG, JPG, WEBP)." : "Please upload valid image files (PNG, JPG, WEBP).");
+    }
+    if (tooBig) {
+      flashToast(isMn ? "Файлын хэмжээ 5 МБ-аас ихгүй байх ёстой." : "File size must not exceed 5 MB.");
+    }
+    if (picked.filter((file) => file.type.startsWith("image/") && file.size <= 5 * 1024 * 1024).length > room) {
+      flashToast(t("apGalleryTooMany") || (isMn ? "Дээд тал нь 5 зураг оруулах боломжтой." : "You can upload a maximum of 5 images."));
+    }
     if (!files.length) return;
 
     setUploadingGallery(true);
@@ -1153,7 +1201,19 @@ function EventEditorContent() {
 
   const handleVideoUpload = async (e) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
+
+    if (!file.type.startsWith("video/")) {
+      flashToast(isMn ? "Зөвхөн видео файл оруулна уу (MP4, MOV)." : "Please upload a valid video file (MP4, MOV).");
+      return;
+    }
+
+    const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_VIDEO_SIZE) {
+      flashToast(isMn ? "Видео файлын хэмжээ 50 МБ-аас ихгүй байх ёстой." : "File size must not exceed 50 MB.");
+      return;
+    }
 
     setUploadingVideo(true);
     try {
@@ -1979,7 +2039,7 @@ function EventEditorContent() {
                     </label>
                   </div>
                 ) : (
-                  <div className="ew-drop">
+                  <div className="ew-drop" onDragOver={(e) => e.preventDefault()} onDrop={handlePosterDrop}>
                     <span className="ew-dropT">{isMn ? "Постер зураг оруулах" : "Upload Poster Image"}</span>
                     <span className="ew-dropS">PNG, JPG (Max 5MB)</span>
                     <label className="ew-gh ew-sm" style={{ position: "relative", overflow: "hidden" }}>

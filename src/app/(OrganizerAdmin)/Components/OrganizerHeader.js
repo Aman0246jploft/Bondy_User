@@ -79,9 +79,9 @@ function OrganizerHeader() {
         <div className="avatar">
           <Link href="/OrganizerPersonalInfo" title={t("personalInfo") || "Organizer Profile"}>
             <img 
-              src={profile?.profileImage ? getFullImageUrl(profile.profileImage) : "/img/default-user.png"} 
+              src={profile?.profileImage ? getFullImageUrl(profile.profileImage) : "/assets/logo/bondy-mark.svg"} 
               alt="Organizer" 
-              onError={(e) => { e.currentTarget.src = "/img/default-user.png"; }}
+              onError={(e) => { e.currentTarget.src = "/assets/logo/bondy-mark.svg"; }}
             />
           </Link>
         </div>

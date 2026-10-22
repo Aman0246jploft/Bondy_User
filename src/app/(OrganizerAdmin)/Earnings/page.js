@@ -468,9 +468,9 @@ function Page() {
 
       {loading ? (
         <div className="py-bal">
-          <div className="py-skel" style={{ height: 108 }} />
-          <div className="py-skel" style={{ height: 108 }} />
-          <div className="py-skel" style={{ height: 108 }} />
+          <div className="py-skel" style={{ height: 142 }} />
+          <div className="py-skel" style={{ height: 142 }} />
+          <div className="py-skel" style={{ height: 142 }} />
         </div>
       ) : (
         <div className="py-bal">

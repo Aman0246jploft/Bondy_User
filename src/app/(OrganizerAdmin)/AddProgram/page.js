@@ -170,6 +170,7 @@ export default function LearningEditorPage() {
   const [uploadingPoster, setUploadingPoster] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadingTeaser, setUploadingTeaser] = useState(false);
+  const [posterError, setPosterError] = useState("");
   const [toastMessage, setToastMessage] = useState("");
 
   // Modals & Overlays - NO prefilled cohort data
@@ -601,7 +602,9 @@ export default function LearningEditorPage() {
     if (!formData.courseCategory) {
       errs.courseCategory = isMn ? "Ангиллаа сонгоно уу." : "Please select a category.";
     }
-    if (!formData.posterImage || formData.posterImage.length === 0) {
+    if (posterError) {
+      errs.posterImage = posterError;
+    } else if (!formData.posterImage || formData.posterImage.length === 0) {
       errs.posterImage = isMn ? "Постер зураг оруулна уу." : "Poster image is required.";
     }
 
@@ -724,6 +727,27 @@ export default function LearningEditorPage() {
   // ─── Media Uploads (Poster, Gallery, Teaser) ──────────────────────────────
   const uploadPosterFile = async (file) => {
     if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      const typeMsg = isMn
+        ? "Зөвхөн зураг оруулна уу (PNG, JPG, WEBP)."
+        : "Please upload a valid image file (PNG, JPG, WEBP).";
+      setPosterError(typeMsg);
+      flashToast(typeMsg);
+      return;
+    }
+
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_IMAGE_SIZE) {
+      const sizeMsg = isMn
+        ? "Файлын хэмжээ 5 МБ-аас ихгүй байх ёстой."
+        : "File size must not exceed 5 MB.";
+      setPosterError(sizeMsg);
+      flashToast(sizeMsg);
+      return;
+    }
+
+    setPosterError("");
     setUploadingPoster(true);
     try {
       const uploadData = new FormData();
@@ -738,6 +762,7 @@ export default function LearningEditorPage() {
           posterImage: [uploadedPath],
         }));
         setDirty(true);
+        setPosterError("");
         flashToast(isMn ? "Постер зураг амжилттай байршлаа" : "Poster image uploaded successfully");
       } else {
         // Fallback for preview
@@ -747,6 +772,7 @@ export default function LearningEditorPage() {
           posterImage: [localPreview],
         }));
         setDirty(true);
+        setPosterError("");
         flashToast(isMn ? "Постер зураг сонгогдлоо" : "Poster image selected");
       }
     } catch (err) {
@@ -759,6 +785,7 @@ export default function LearningEditorPage() {
           posterImage: [localPreview],
         }));
         setDirty(true);
+        setPosterError("");
         flashToast(isMn ? "Постер зураг сонгогдлоо" : "Poster image selected");
       } catch (e) {
         flashToast(isMn ? "Зураг хуулахад алдаа гарлаа" : "Failed to upload poster image");
@@ -770,6 +797,7 @@ export default function LearningEditorPage() {
 
   const handlePosterUpload = (e) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (file) uploadPosterFile(file);
   };
 
@@ -785,20 +813,32 @@ export default function LearningEditorPage() {
     if (!picked.length) return;
     const room = 5 - (formData.mediaLinks?.length || 0);
     if (room <= 0) {
-      flashToast(t("apGalleryTooMany"));
+      flashToast(t("apGalleryTooMany") || (isMn ? "Дээд тал нь 5 зураг оруулах боломжтой." : "Maximum 5 gallery photos allowed."));
       return;
     }
     const files = [];
     let tooBig = false;
+    let invalidType = false;
     picked.forEach((file) => {
+      if (!file.type.startsWith("image/")) {
+        invalidType = true;
+        return;
+      }
       if (file.size > 5 * 1024 * 1024) {
         tooBig = true;
         return;
       }
       if (files.length < room) files.push(file);
     });
-    if (tooBig) flashToast(t("apGalleryTooBig"));
-    if (picked.filter((file) => file.size <= 5 * 1024 * 1024).length > room) flashToast(t("apGalleryTooMany"));
+    if (invalidType) {
+      flashToast(isMn ? "Зөвхөн зураг оруулна уу (PNG, JPG, WEBP)." : "Please upload valid image files (PNG, JPG, WEBP).");
+    }
+    if (tooBig) {
+      flashToast(isMn ? "Файлын хэмжээ 5 МБ-аас ихгүй байх ёстой." : "File size must not exceed 5 MB.");
+    }
+    if (picked.filter((file) => file.type.startsWith("image/") && file.size <= 5 * 1024 * 1024).length > room) {
+      flashToast(t("apGalleryTooMany") || (isMn ? "Дээд тал нь 5 зураг оруулах боломжтой." : "Maximum 5 gallery photos allowed."));
+    }
     if (!files.length) return;
     setUploadingGallery(true);
     try {
@@ -824,7 +864,20 @@ export default function LearningEditorPage() {
 
   const handleTeaserUpload = async (e) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
+
+    if (!file.type.startsWith("video/")) {
+      flashToast(isMn ? "Зөвхөн видео файл оруулна уу (MP4, MOV, WEBM)." : "Please upload a valid video file (MP4, MOV, WEBM).");
+      return;
+    }
+
+    const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_VIDEO_SIZE) {
+      flashToast(isMn ? "Файлын хэмжээ 50 МБ-аас ихгүй байх ёстой." : "File size must not exceed 50 MB.");
+      return;
+    }
+
     setUploadingTeaser(true);
     try {
       const uploadData = new FormData();
@@ -1361,7 +1414,9 @@ export default function LearningEditorPage() {
                     </label>
                   </div>
                 )}
-                {touched[1] && errors.posterImage && <span className="lw-er">{errors.posterImage}</span>}
+                {((touched[1] && errors.posterImage) || posterError) && (
+                  <span className="lw-er">{posterError || errors.posterImage}</span>
+                )}
               </div>
 
               {/* Gallery & Teaser Video optional uploads */}

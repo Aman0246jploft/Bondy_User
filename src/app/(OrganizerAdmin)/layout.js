@@ -168,14 +168,18 @@ export default function RootLayout({ children }) {
   };
 
   const title = getPageTitle();
-  const orgName =
-    profile?.businessName ||
+  const displayName =
     (profile?.firstName ? `${profile.firstName} ${profile.lastName || ""}`.trim() : "") ||
+    profile?.name ||
+    profile?.businessName ||
     profile?.email ||
     (isMn ? "Зохион байгуулагч" : "Organizer");
+  const orgName =
+    profile?.businessName ||
+    displayName;
   const avatarUrl = profile?.profileImage
     ? getFullImageUrl(profile.profileImage)
-    : "/img/default-user.png";
+    : "/assets/logo/bondy-mark.svg";
 
   if (!authorized) {
     return <GlobalLoader fullScreen />;
@@ -383,26 +387,31 @@ export default function RootLayout({ children }) {
                   }}
                   aria-haspopup="true"
                   aria-expanded={userMenuOpen}
-                  title={orgName}
+                  title={displayName}
                 >
                   <img
                     src={avatarUrl}
-                    alt={orgName}
+                    alt={displayName}
                     style={{
                       width: "32px",
                       height: "32px",
                       borderRadius: "999px",
-                      objectFit: "cover",
+                      objectFit: profile?.profileImage ? "cover" : "contain",
                       display: "block",
+                      background: "var(--bd-ink-800, #1b1b1b)",
+                      padding: profile?.profileImage ? "0" : "3px",
+                      boxSizing: "border-box",
                     }}
                     onError={(e) => {
                       e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/assets/img/b5e94e90c3d8df6c.jpg";
+                      e.currentTarget.src = "/assets/logo/bondy-mark.svg";
+                      e.currentTarget.style.objectFit = "contain";
+                      e.currentTarget.style.padding = "3px";
                     }}
                   />
                   <span className="og-org-txt" style={{ display: "flex", flexDirection: "column", gap: "1px", minWidth: 0 }}>
                     <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--bd-white)", whiteSpace: "nowrap" }}>
-                      {orgName}
+                      {displayName}
                     </span>
                     <span style={{ fontSize: "11px", color: "var(--acc-bright)" }}>
                       {profile?.organizerVerificationStatus === "APPROVED" || profile?.isVerified
