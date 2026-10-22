@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import bookingApi from "@/api/bookingApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 import "./booking-detail-view.css";
 
 function money(amount) {
@@ -73,7 +74,7 @@ export default function CustomerBookingDetail() {
     };
   }, [id]);
 
-  if (loading) return <div className="bk-page"><p className="bk-policy">{t("loading")}</p></div>;
+  if (loading) return <GlobalLoader fullScreen={false} />;
   if (failed || !data?.ticket) return <div className="bk-page"><p className="bk-policy">{t("tdNotFound")}</p></div>;
 
   const ticket = data.ticket;

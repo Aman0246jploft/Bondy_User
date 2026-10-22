@@ -7,6 +7,7 @@ import QRCode from "react-qr-code";
 import bookingApi from "@/api/bookingApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import GlobalLoader from "@/components/GlobalLoader";
 import "./ticket-detail-view.css";
 
 function Icon({ name }) {
@@ -24,6 +25,11 @@ function Icon({ name }) {
   if (name === "user") {
     return (
       <svg {...common}><circle cx="12" cy="8" r="3.2" /><path d="M5 19.2a7 7 0 0 1 14 0" /></svg>
+    );
+  }
+  if (name === "mail") {
+    return (
+      <svg {...common}><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
     );
   }
   if (name === "ticket") {
@@ -139,7 +145,7 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
   }, [id, data]);
 
   if (loading) {
-    return <div className="td-state-page"><b>{t("loading")}</b></div>;
+    return <GlobalLoader fullScreen={false} />;
   }
   if (failed || !ticket) {
     return <div className="td-state-page"><b>{t("tdNotFound")}</b></div>;
@@ -155,6 +161,7 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
     : [dateText(item?.startDate, language), item?.startTime].filter(Boolean).join(" · ");
   const where = placeText(item);
   const buyerName = `${ticket.userId?.firstName || ""} ${ticket.userId?.lastName || ""}`.trim();
+  const buyerEmail = ticket.userId?.email || ticket.email || "";
   const option = ticket.ticketName || tickets[0]?.ticketName || "";
   const qty = ticket.qty || tickets.length || 1;
   const free = ticket.paymentMethod === "FREE" || !Number(ticket.totalAmount);
@@ -163,7 +170,13 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
   const dead = isCancelled || ["CANCELLED", "FAILED", "REFUND_INITIATED", "REFUNDED"].includes(ticket.status);
   const current = tickets[selected] || null;
   const person = `${current?.firstName || ""} ${current?.lastName || ""}`.trim() || buyerName;
+  const email = current?.email || current?.userId?.email || buyerEmail;
   const code = current?.ticketNumber || ticket.bookingId || "";
+  const isTicketNumber = Boolean(
+    current?.ticketNumber ||
+    (code && typeof code === "string" && code.startsWith("TKT-")) ||
+    (code && code !== ticket.bookingId)
+  );
   const rawQr = current?.qrCodeData || (!tickets.length ? ticket.qrCodeData : "");
   // A real ticket code is a short token. Some records carry the payment invoice's
   // base64 image in this field, which is far too long to encode and is not a ticket code.
@@ -299,6 +312,9 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
               {person && (
                 <span className="td-r"><Icon name="user" /><span className="td-k">{t("tdName")}</span><b className="td-v">{person}</b></span>
               )}
+              {email && (
+                <span className="td-r"><Icon name="mail" /><span className="td-k">{t("tdEmail") || t("email") || "Email"}</span><b className="td-v">{email}</b></span>
+              )}
               {isCourse && title && !showCustomerNav && (
                 <span className="td-r"><Icon name="list" /><span className="td-k">{t("obCourse")}</span><b className="td-v">{title}</b></span>
               )}
@@ -320,8 +336,8 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
               )}
               {code && (
                 <span className="td-r">
-                  <Icon name="list" />
-                  <span className="td-k">{isCourse ? t("tdBookingNo") : t("tdTicketNo")}</span>
+                  <Icon name={isTicketNumber ? "ticket" : "list"} />
+                  <span className="td-k">{isTicketNumber ? t("tdTicketNo") : t("tdBookingNo")}</span>
                   <b className="td-v">{code}</b>
                 </span>
               )}

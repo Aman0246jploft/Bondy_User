@@ -488,7 +488,8 @@ export default function CoursesManagementPage() {
             <span>{isMn ? "Нэр" : "Course"}</span>
             <span>{dateColHeader}</span>
             <span>{isMn ? "Бүртгүүлсэн" : "Registered"}</span>
-            <span>{isMn ? "Төлөв" : "Status"}</span>
+            {/* Status column commented out for now */}
+            {/* <span>{isMn ? "Төлөв" : "Status"}</span> */}
             <span style={{ textAlign: "right", paddingRight: "8px" }}>{isMn ? "Үйлдэл" : "Action"}</span>
           </div>
 
@@ -569,8 +570,8 @@ export default function CoursesManagementPage() {
                     {enrolledText}
                   </span>
 
-                  {/* Column 4: Status Badge (Hidden for Past tab via CSS) */}
-                  <span>
+                  {/* Column 4: Status Badge (commented out for now) */}
+                  {/* <span>
                     {badge.hasStatus && (
                       <span
                         style={{
@@ -611,7 +612,7 @@ export default function CoursesManagementPage() {
                         {badge.status}
                       </span>
                     )}
-                  </span>
+                  </span> */}
 
                   {/* Column 5: Actions (Kebab Dots Menu) */}
                   <span className="lm-acts">
@@ -712,7 +713,7 @@ export default function CoursesManagementPage() {
                 className="lm-mi"
                 onClick={() => openPromoModal(activeMenu.course)}
               >
-                ⭐ {isMn ? "Сурталчилгаа" : "Promote"}
+                {isMn ? "Сурталчилгаа" : "Promote"}
               </button>
             )}
 

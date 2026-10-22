@@ -7,6 +7,7 @@ import bookingApi from "@/api/bookingApi";
 import { useLanguage } from "@/context/LanguageContext";
 import TicketDetailView from "@/components/Tickets/TicketDetailView";
 import BookingDetailView from "@/components/Tickets/BookingDetailView";
+import GlobalLoader from "@/components/GlobalLoader";
 
 const ORDERS = "/MyTicketsOrganiser";
 
@@ -43,7 +44,7 @@ function OrderDetail() {
   }, [id, retry]);
 
   if (state === "loading") {
-    return <div className="td-state-page"><b>{t("loading")}</b></div>;
+    return <GlobalLoader fullScreen={false} />;
   }
   if (state === "error" || !data) {
     return (
@@ -79,7 +80,7 @@ function OrderDetail() {
 export default function TicketDetailsOrganiserPage() {
   return (
     <ProtectedRoute>
-      <Suspense fallback={null}>
+      <Suspense fallback={<GlobalLoader fullScreen={false} />}>
         <OrderDetail />
       </Suspense>
     </ProtectedRoute>

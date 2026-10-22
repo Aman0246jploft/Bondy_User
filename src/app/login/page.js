@@ -44,7 +44,12 @@ export default function Page() {
   const codeRefs = useRef([]);
 
   useEffect(() => {
-    const step = new URLSearchParams(window.location.search).get("step");
+    const params = new URLSearchParams(window.location.search);
+    const roleParam = params.get("role") || params.get("tab") || params.get("type");
+    if (roleParam && roleParam.toLowerCase() === "staff") {
+      setActiveTab("Staff");
+    }
+    const step = params.get("step");
     const email = sessionStorage.getItem("bondyLoginEmail") || localStorage.getItem("loginEmail");
     if (step === "otp") {
       if (email) {
@@ -110,7 +115,11 @@ export default function Page() {
         if (response?.status) {
           writeLocal("token", response.data.token);
           writeLocal("userProfile", JSON.stringify(response.data.user));
-          toast.success("Logged in successfully as Staff");
+          toast.success(
+            t("staffLoginSuccess") && t("staffLoginSuccess") !== "staffLoginSuccess"
+              ? t("staffLoginSuccess")
+              : (response?.message || "Logged in successfully as Staff")
+          );
           leaving = true;
           router.push("/StaffHome");
         }
@@ -156,7 +165,7 @@ export default function Page() {
           try {
             returnTo = sessionStorage.getItem("bondy.returnTo") || "";
             sessionStorage.removeItem("bondy.returnTo");
-          } catch (e) {}
+          } catch (e) { }
 
           if (returnTo && returnTo.startsWith("/")) {
             go(returnTo);
@@ -428,160 +437,155 @@ export default function Page() {
               </button>
             </form>
           ) : (
-          <>
-          {/* ── Staff badge ── */}
-          {activeTab === "Staff" && (
-            <div className="lg-staff-badge">
-              🔒 {t("loginAsStaff")}
-            </div>
-          )}
+            <>
+              {/* ── Title ── */}
+              <h1 className="lg-h1">
+                {activeTab === "Staff"
+                  ? (t("loginAsStaff") || t("staffLogin") || "Login as Staff")
+                  : t("goodToSeeYouAgain")}
+              </h1>
+              <p className="lg-sub">
+                {activeTab === "Staff"
+                  ? (t("staffLoginDesc") !== "staffLoginDesc" ? t("staffLoginDesc") : "Enter your credentials to continue.")
+                  : t("smartTravelPlans")}
+              </p>
 
-          {/* ── Title ── */}
-          <h1 className="lg-h1">
-            {activeTab === "Staff" ? (t("staffLogin") || "Staff Sign In") : t("goodToSeeYouAgain")}
-          </h1>
-          <p className="lg-sub">
-            {activeTab === "Staff"
-              ? (t("staffLoginDesc") || "Enter your staff credentials to continue.")
-              : t("smartTravelPlans")}
-          </p>
-
-          {/* ── Customer / Organizer segment (hidden for Staff) ── */}
-          {activeTab !== "Staff" && (
-            <div className="lg-seg" role="tablist">
-              <button
-                type="button"
-                role="tab"
-                className="lg-seg-btn"
-                aria-selected={activeTab === "Customer" ? "true" : "false"}
-                onClick={() => switchTab("Customer")}
-              >
-                {t("user") || "User"}
-              </button>
-              <button
-                type="button"
-                role="tab"
-                className="lg-seg-btn"
-                aria-selected={activeTab === "Organizer" ? "true" : "false"}
-                onClick={() => switchTab("Organizer")}
-              >
-                {t("organizer")}
-              </button>
-            </div>
-          )}
-
-          {/* ── Form ── */}
-          <form className="login_field" noValidate onSubmit={handleLogin}>
-            <div className="lg-fields">
-              {/* Email */}
-              <label>
-                <input
-                  type="email"
-                  name="email"
-                  maxLength={50}
-                  placeholder={t("email")}
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="lg-in"
-                  aria-invalid={!!errors.email}
-                  aria-label={t("email")}
-                />
-                {errors.email && <span className="lg-err">{errors.email}</span>}
-              </label>
-
-              {/* Password */}
-              <label>
-                <div className="lg-pw">
-                  <input
-                    type={show ? "text" : "password"}
-                    name="password"
-                    maxLength={50}
-                    placeholder={t("enterPassword")}
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="lg-in"
-                    aria-invalid={!!errors.password}
-                    aria-label={t("enterPassword")}
-                  />
+              {/* ── Customer / Organizer segment (hidden for Staff) ── */}
+              {activeTab !== "Staff" && (
+                <div className="lg-seg" role="tablist">
                   <button
                     type="button"
-                    onClick={() => setShow(!show)}
-                    className="lg-eye-btn"
-                    aria-label="Toggle password"
+                    role="tab"
+                    className="lg-seg-btn"
+                    aria-selected={activeTab === "Customer" ? "true" : "false"}
+                    onClick={() => switchTab("Customer")}
                   >
-                    <img src={show ? "/img/lock.svg" : "/img/unlock.svg"} alt="toggle password" />
+                    {t("user") || "User"}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    className="lg-seg-btn"
+                    aria-selected={activeTab === "Organizer" ? "true" : "false"}
+                    onClick={() => switchTab("Organizer")}
+                  >
+                    {t("organizer")}
                   </button>
                 </div>
-                {errors.password && <span className="lg-err">{errors.password}</span>}
-              </label>
-            </div>
+              )}
 
-            {/* Forgot password */}
-            <Link
-              href={activeTab === "Staff" ? "/forgot-password?role=staff" : "/forgot-password"}
-              className="lg-forgot"
-            >
-              {t("forgotPasswordQuestion")}
-            </Link>
+              {/* ── Form ── */}
+              <form className="login_field" noValidate onSubmit={handleLogin}>
+                <div className="lg-fields">
+                  {/* Email */}
+                  <label>
+                    <input
+                      type="email"
+                      name="email"
+                      maxLength={50}
+                      placeholder={t("email")}
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="lg-in"
+                      aria-invalid={!!errors.email}
+                      aria-label={t("email")}
+                    />
+                    {errors.email && <span className="lg-err">{errors.email}</span>}
+                  </label>
 
-            {/* Submit */}
-            <button type="submit" disabled={loading} className="lg-submit">
-              {loading && <span className="lg-spin" />}
-              {loading ? t("signingIn") : t("signIn")}
-            </button>
-          </form>
+                  {/* Password */}
+                  <label>
+                    <div className="lg-pw">
+                      <input
+                        type={show ? "text" : "password"}
+                        name="password"
+                        maxLength={50}
+                        placeholder={t("enterPassword")}
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="lg-in"
+                        aria-invalid={!!errors.password}
+                        aria-label={t("enterPassword")}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShow(!show)}
+                        className="lg-eye-btn"
+                        aria-label="Toggle password"
+                      >
+                        <img src={show ? "/img/lock.svg" : "/img/unlock.svg"} alt="toggle password" />
+                      </button>
+                    </div>
+                    {errors.password && <span className="lg-err">{errors.password}</span>}
+                  </label>
+                </div>
 
-          {/* ── Social (Customer / Organizer only) ── */}
-          {activeTab !== "Staff" && (
-            <>
-              <div className="lg-or">
-                <span>{t("orSignUpWith")}</span>
-              </div>
-              <div className="lg-social">
-                {/* Apple — disabled */}
-                <button type="button" disabled className="lg-social-btn" title="Apple login coming soon">
-                  <span className="lg-circle">
-                    <img src="/img/app_icon.svg" alt="apple" />
-                  </span>
-                  <span>Apple</span>
-                </button>
-                {/* Google — active */}
-                <button
-                  type="button"
-                  onClick={() => googleLogin()}
-                  disabled={googleLoading}
-                  className="lg-social-btn"
-                  title="Sign in with Google"
+                {/* Forgot password */}
+                <Link
+                  href={activeTab === "Staff" ? "/forgot-password?role=staff" : "/forgot-password"}
+                  className="lg-forgot"
                 >
-                  <span className="lg-circle">
-                    {googleLoading
-                      ? <span className="lg-spin" />
-                      : <img src="/img/google_icon.svg" alt="google" />}
-                  </span>
-                  <span>Google</span>
-                </button>
-              </div>
-            </>
-          )}
+                  {t("forgotPasswordQuestion")}
+                </Link>
 
-          {/* ── Bottom links ── */}
-          {activeTab !== "Staff" ? (
-            <>
-              <div className="lg-switch">
-                <span>{t("dontHaveAccount")}</span>
-                <Link href="/register" className="lg-switch-link">{t("signUp")}</Link>
-              </div>
-              <Link href="/" className="lg-guest-link">{t("continueAsGuest")}</Link>
-              <button type="button" onClick={() => switchTab("Staff")} className="lg-staff-link">
-                {t("loginAsStaff")}
-              </button>
+                {/* Submit */}
+                <button type="submit" disabled={loading} className="lg-submit">
+                  {loading && <span className="lg-spin" />}
+                  {loading ? t("signingIn") : t("signIn")}
+                </button>
+              </form>
+
+              {/* ── Social (Customer / Organizer only) ── */}
+              {activeTab !== "Staff" && (
+                <>
+                  <div className="lg-or">
+                    <span>{t("orSignUpWith")}</span>
+                  </div>
+                  <div className="lg-social">
+                    {/* Apple — disabled */}
+                    <button type="button" disabled className="lg-social-btn" title="Apple login coming soon">
+                      <span className="lg-circle">
+                        <img src="/img/app_icon.svg" alt="apple" />
+                      </span>
+                      <span>Apple</span>
+                    </button>
+                    {/* Google — active */}
+                    <button
+                      type="button"
+                      onClick={() => googleLogin()}
+                      disabled={googleLoading}
+                      className="lg-social-btn"
+                      title="Sign in with Google"
+                    >
+                      <span className="lg-circle">
+                        {googleLoading
+                          ? <span className="lg-spin" />
+                          : <img src="/img/google_icon.svg" alt="google" />}
+                      </span>
+                      <span>Google</span>
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* ── Bottom links ── */}
+              {activeTab !== "Staff" ? (
+                <>
+                  <div className="lg-switch">
+                    <span>{t("dontHaveAccount")}</span>
+                    <Link href="/register" className="lg-switch-link">{t("signUp")}</Link>
+                  </div>
+                  <Link href="/" className="lg-guest-link">{t("continueAsGuest")}</Link>
+                  <button type="button" onClick={() => switchTab("Staff")} className="lg-staff-link">
+                    {t("loginAsStaff")}
+                  </button>
+                </>
+              ) : (
+                <button type="button" onClick={() => switchTab("Customer")} className="lg-staff-link">
+                  {t("backToUserLogin")}
+                </button>
+              )}
             </>
-          ) : (
-            <button type="button" onClick={() => switchTab("Customer")} className="lg-staff-link">
-              {t("backToUserLogin")}
-            </button>
-          )}
-          </>
           )}
         </section>
       </main>
