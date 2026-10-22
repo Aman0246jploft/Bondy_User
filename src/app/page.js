@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
@@ -322,6 +322,327 @@ function SectionHeader({ mn, en, viewAllHref, language }) {
   );
 }
 
+// ─── Hero Carousel Component (Peek & Ring loop like Bondy prototype) ─────────
+
+function HeroCarousel({ slides, loading, language, t }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const railRef = useRef(null);
+  const slidesRef = useRef([]);
+  const animatingRef = useRef(false);
+  const settleTimeoutRef = useRef(null);
+  const basePosRef = useRef(0);
+  const touchStartXRef = useRef(null);
+  const touchMoveXRef = useRef(null);
+  const autoPlayRef = useRef(null);
+
+  const originalCount = slides.length;
+  // If we have 2 slides, duplicate to 4 so peeks exist on both sides
+  const items = useMemo(() => {
+    if (slides.length === 2) {
+      return [...slides, ...slides];
+    }
+    return slides;
+  }, [slides]);
+
+  const count = items.length;
+
+  const getStep = useCallback(() => {
+    const rail = railRef.current;
+    if (!rail) return 0;
+    const w = rail.parentNode?.clientWidth || rail.clientWidth;
+    const panel = rail.firstElementChild;
+    const step = panel ? panel.getBoundingClientRect().width : (count === 1 ? w : 0.8 * w);
+    return step || 0.8 * w;
+  }, [count]);
+
+  const offset = useCallback((pos) => {
+    const rail = railRef.current;
+    if (!rail) return 0;
+    const w = rail.parentNode?.clientWidth || rail.clientWidth;
+    if (count <= 1) return 0;
+    const step = getStep();
+    if (!step) return 0;
+    return (w - step) / 2 - pos * step;
+  }, [count, getStep]);
+
+  const ring = useCallback((active, incoming, dir) => {
+    if (count <= 1) return 0;
+    const c = count;
+    const half = Math.floor(c / 2);
+    const rel = [];
+    for (let n = 0; n < c; n++) {
+      let d = (((n - active) % c) + c) % c;
+      rel[n] = d > half ? d - c : d;
+    }
+    if (incoming != null && rel[incoming] !== dir) {
+      const occupant = rel.indexOf(dir);
+      if (occupant !== -1) {
+        rel[occupant] = rel[incoming];
+        rel[incoming] = dir;
+      }
+    }
+    let min = 0;
+    for (let n = 0; n < c; n++) {
+      if (rel[n] < min) min = rel[n];
+    }
+    for (let n = 0; n < c; n++) {
+      const el = slidesRef.current[n];
+      if (el) {
+        el.style.order = String(rel[n] - min);
+      }
+    }
+    return -min;
+  }, [count]);
+
+  const focus = useCallback((i) => {
+    slidesRef.current.forEach((el, n) => {
+      if (!el) return;
+      const card = el.firstElementChild;
+      const veil = card && card.querySelector(".bd-hero-veil");
+      const on = n === i;
+      if (card) card.style.transform = on ? "scale(1)" : "scale(.94)";
+      el.style.opacity = on ? "1" : ".66";
+      if (veil) veil.style.opacity = on ? "0" : "1";
+      el.classList.toggle("active", on);
+    });
+  }, []);
+
+  const settle = useCallback((i) => {
+    const rail = railRef.current;
+    if (!rail || count <= 1) return;
+    const pos = ring(i, null, 0);
+    rail.style.transition = "none";
+    rail.style.transform = `translate3d(${offset(pos)}px,0,0)`;
+    void rail.offsetWidth;
+    basePosRef.current = pos;
+  }, [count, ring, offset]);
+
+  const go = useCallback((target) => {
+    if (count <= 1 || animatingRef.current) return;
+    const c = count;
+    const i = ((target % c) + c) % c;
+    if (i === currentIndex) return;
+
+    const rail = railRef.current;
+    if (rail) {
+      if (settleTimeoutRef.current) clearTimeout(settleTimeoutRef.current);
+      const dir = ((i - currentIndex + c) % c) <= c / 2 ? 1 : -1;
+      const pos = ring(currentIndex, i, dir);
+      rail.style.transition = "none";
+      rail.style.transform = `translate3d(${offset(pos)}px,0,0)`;
+      void rail.offsetWidth;
+
+      animatingRef.current = true;
+      rail.style.transition = "transform 580ms cubic-bezier(.2,.8,.2,1)";
+      rail.style.transform = `translate3d(${offset(pos + dir)}px,0,0)`;
+      focus(i);
+
+      settleTimeoutRef.current = setTimeout(() => {
+        animatingRef.current = false;
+        settle(i);
+        focus(i);
+      }, 600);
+    }
+    setCurrentIndex(i);
+  }, [count, currentIndex, ring, offset, focus, settle]);
+
+  // Initial settle & resize listener
+  useEffect(() => {
+    if (count <= 1) return;
+    settle(currentIndex);
+    focus(currentIndex);
+
+    const onResize = () => {
+      if (!animatingRef.current) {
+        settle(currentIndex);
+      }
+    };
+    window.addEventListener("resize", onResize);
+    let ro;
+    if (typeof ResizeObserver === "function" && railRef.current?.parentNode) {
+      ro = new ResizeObserver(onResize);
+      ro.observe(railRef.current.parentNode);
+    }
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (ro) ro.disconnect();
+      if (settleTimeoutRef.current) clearTimeout(settleTimeoutRef.current);
+    };
+  }, [count, settle, focus, currentIndex]);
+
+  // Auto-advance
+  useEffect(() => {
+    if (isPaused || count <= 1) return;
+    autoPlayRef.current = setInterval(() => {
+      go(currentIndex + 1);
+    }, 6000);
+    return () => clearInterval(autoPlayRef.current);
+  }, [isPaused, count, currentIndex, go]);
+
+  // Touch handlers
+  const handleTouchStart = (e) => {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchMoveXRef.current = e.touches[0].clientX;
+    setIsPaused(true);
+  };
+
+  const handleTouchMove = (e) => {
+    if (touchStartXRef.current == null || count <= 1 || animatingRef.current) return;
+    touchMoveXRef.current = e.touches[0].clientX;
+    const rail = railRef.current;
+    if (!rail) return;
+    const dx = e.touches[0].clientX - touchStartXRef.current;
+    rail.style.transition = "none";
+    rail.style.transform = `translate3d(${offset(basePosRef.current) + dx * 0.9}px,0,0)`;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartXRef.current == null) return;
+    const dx = (touchMoveXRef.current ?? touchStartXRef.current) - touchStartXRef.current;
+    touchStartXRef.current = null;
+    touchMoveXRef.current = null;
+    setIsPaused(false);
+    const rail = railRef.current;
+    if (Math.abs(dx) > 44) {
+      go(currentIndex + (dx < 0 ? 1 : -1));
+    } else if (rail) {
+      rail.style.transition = "transform 320ms cubic-bezier(.2,.8,.2,1)";
+      rail.style.transform = `translate3d(${offset(basePosRef.current)}px,0,0)`;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bd-hero">
+        <div className="bd-hero-slide active"><HeroSkeleton /></div>
+      </div>
+    );
+  }
+
+  if (slides.length === 0) {
+    return (
+      <div className="bd-hero is-single">
+        <div className="bd-hero-slide active">
+          <div className="bd-hero-card" style={{ background: "linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%)" }}>
+            <div className="bd-hero-pad">
+              <span className="bd-hero-kick" style={{ opacity: 0.7 }}>
+                {language === "en" ? "Discover events near you" : "Орчмынхоо эвентүүдийг нээгээрэй"}
+              </span>
+              <h2 className="bd-hero-title">
+                {language === "en" ? "Your next experience awaits" : "Дараагийн туршлагаа Bondy дээрээс ол"}
+              </h2>
+              <div className="bd-hero-cta">
+                <Link href="/Explore">{language === "en" ? "Browse Events" : "Эвентүүд харах"}</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`bd-hero ${count <= 1 ? "is-single" : ""}`}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className="bd-hero-rail" ref={railRef}>
+        {items.map((slide, idx) => {
+          const isActive = idx === currentIndex;
+          const title = language === "mn" ? (slide.titleMn || slide.title) : slide.title;
+          const date = language === "mn" ? (slide.dateMn || slide.date) : slide.date;
+          const rawPrice = language === "mn" ? slide.price : (slide.priceEn || slide.price);
+          const price = slide.priceNum > 0 ? t("priceFrom", { amount: rawPrice }) : rawPrice;
+          return (
+            <article
+              key={`${slide.id}-${idx}`}
+              ref={(el) => { slidesRef.current[idx] = el; }}
+              className={`bd-hero-slide ${isActive ? "active" : ""}`}
+            >
+              <div className="bd-hero-card">
+                <HeroSlideBg src={slide.image} />
+                <div className="bd-hero-grad-x" />
+                <div className="bd-hero-grad-y" />
+                <div className="bd-hero-pad">
+                  <span className="bd-hero-kick">{date}</span>
+                  <h2 className="bd-hero-title">{title}</h2>
+                  <span className="bd-hero-meta">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    {slide.venue}
+                  </span>
+                  <div className="bd-hero-cta">
+                    <Link href={slide.href || "/Explore"}>
+                      {language === "en" ? "Get Tickets" : "Тасалбар авах"}
+                    </Link>
+                    <span className="bd-hero-price">{price}</span>
+                  </div>
+                </div>
+                <div className="bd-hero-veil" />
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {count > 1 && (
+        <>
+          <button
+            type="button"
+            className="bd-hero-arw bd-hero-arw-prev"
+            onClick={() => go(currentIndex - 1)}
+            aria-label={language === "en" ? "Previous" : "Өмнөх"}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="bd-hero-arw bd-hero-arw-next"
+            onClick={() => go(currentIndex + 1)}
+            aria-label={language === "en" ? "Next" : "Дараах"}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </>
+      )}
+
+      {originalCount > 1 && (
+        <div className="bd-hero-bar">
+          <div style={{ padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="bd-hero-progs">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`bd-hero-prog ${i === (currentIndex % originalCount) ? "active" : ""}`}
+                  onClick={() => {
+                    const delta = i - (currentIndex % originalCount);
+                    go(currentIndex + delta);
+                  }}
+                  aria-label={`Слайд ${i + 1}`}
+                >
+                  <span className="bd-hero-track"><span className="bd-hero-fill" /></span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function HomePage() {
@@ -332,9 +653,6 @@ export default function HomePage() {
   // Hero
   const [heroSlides, setHeroSlides] = useState([]);
   const [heroLoading, setHeroLoading] = useState(true);
-  const [slideIndex, setSlideIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const touchStartX = useRef(null);
 
   // Section data
   const [recommendedEvents, setRecommendedEvents] = useState([]);
@@ -479,26 +797,6 @@ export default function HomePage() {
     load();
     return () => { cancelled = true; };
   }, []);
-
-  // ── Hero auto-advance ─────────────────────────────────────────────────────
-  useEffect(() => {
-    if (isPaused || heroSlides.length === 0) return;
-    const timer = setInterval(() => {
-      setSlideIndex((prev) => (prev + 1) % heroSlides.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, [isPaused, heroSlides.length]);
-
-  const handlePrevSlide = () => setSlideIndex((p) => (p - 1 + Math.max(heroSlides.length, 1)) % Math.max(heroSlides.length, 1));
-  const handleNextSlide = () => setSlideIndex((p) => (p + 1) % Math.max(heroSlides.length, 1));
-  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
-  const handleTouchEnd = (e) => {
-    if (!touchStartX.current) return;
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (diff > 50) handleNextSlide();
-    else if (diff < -50) handlePrevSlide();
-    touchStartX.current = null;
-  };
 
   // ── Search ────────────────────────────────────────────────────────────────
   const handleSearchSubmit = (e) => {
@@ -665,95 +963,12 @@ export default function HomePage() {
       {/* ════ HERO CAROUSEL — events marked "Add to Slider" by admin ════════ */}
       <section id="top" data-screen-label="Hero" style={{ padding: "clamp(16px,1.8vw,24px) 0 clamp(30px,3.2vw,42px)" }}>
         <div className="bd-hero-wrap">
-          <div
-            className="bd-hero"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            {heroLoading ? (
-              <div className="bd-hero-slide active"><HeroSkeleton /></div>
-            ) : heroSlides.length === 0 ? (
-              <div className="bd-hero-slide active">
-                <div className="bd-hero-card" style={{ background: "linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%)" }}>
-                  <div className="bd-hero-pad">
-                    <span className="bd-hero-kick" style={{ opacity: 0.7 }}>
-                      {language === "en" ? "Discover events near you" : "Орчмынхоо эвентүүдийг нээгээрэй"}
-                    </span>
-                    <h2 className="bd-hero-title">
-                      {language === "en" ? "Your next experience awaits" : "Дараагийн туршлагаа Bondy дээрээс ол"}
-                    </h2>
-                    <div className="bd-hero-cta">
-                      <Link href="/Explore">{language === "en" ? "Browse Events" : "Эвентүүд харах"}</Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="bd-hero-rail" style={{ transform: `translateX(-${slideIndex * 100}%)` }}>
-                  {heroSlides.map((slide, idx) => {
-                    const isActive = idx === slideIndex;
-                    const title = language === "mn" ? (slide.titleMn || slide.title) : slide.title;
-                    const date = language === "mn" ? (slide.dateMn || slide.date) : slide.date;
-                    const rawPrice = language === "mn" ? slide.price : (slide.priceEn || slide.price);
-                    const price = slide.priceNum > 0 ? t("priceFrom", { amount: rawPrice }) : rawPrice;
-                    return (
-                      <article key={slide.id} className={`bd-hero-slide ${isActive ? "active" : ""}`}>
-                        <div className="bd-hero-card">
-                          <HeroSlideBg src={slide.image} />
-                          <div className="bd-hero-grad-x" />
-                          <div className="bd-hero-grad-y" />
-                          <div className="bd-hero-pad">
-                            <span className="bd-hero-kick">{date}</span>
-                            <h2 className="bd-hero-title">{title}</h2>
-                            <span className="bd-hero-meta">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                                <circle cx="12" cy="10" r="3" />
-                              </svg>
-                              {slide.venue}
-                            </span>
-                            <div className="bd-hero-cta">
-                              <Link href={slide.href || "/Explore"}>
-                                {language === "en" ? "Get Tickets" : "Тасалбар авах"}
-                              </Link>
-                              <span className="bd-hero-price">{price}</span>
-                            </div>
-                          </div>
-                          <div className="bd-hero-veil" />
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-
-                {heroSlides.length > 1 && (
-                  <>
-                    <button type="button" className="bd-hero-arw bd-hero-arw-prev" onClick={handlePrevSlide} aria-label="Өмнөх">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
-                    </button>
-                    <button type="button" className="bd-hero-arw bd-hero-arw-next" onClick={handleNextSlide} aria-label="Дараах">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
-                    </button>
-                  </>
-                )}
-
-                <div className="bd-hero-bar">
-                  <div style={{ padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div className="bd-hero-progs">
-                      {heroSlides.map((_, i) => (
-                        <button key={i} type="button" className={`bd-hero-prog ${i === slideIndex ? "active" : ""}`} onClick={() => setSlideIndex(i)} aria-label={`Слайд ${i + 1}`}>
-                          <span className="bd-hero-track"><span className="bd-hero-fill" /></span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <HeroCarousel
+            slides={heroSlides}
+            loading={heroLoading}
+            language={language}
+            t={t}
+          />
         </div>
 
         {/* Floating Search */}

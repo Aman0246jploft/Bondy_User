@@ -502,12 +502,12 @@ body {
 
 .bd-hero-slide {
   position: relative;
-  flex: 0 0 100%;
-  width: 100%;
+  flex: 0 0 80%;
+  width: 80%;
   height: 100%;
-  padding: 0;
+  padding: 0 10px;
   box-sizing: border-box;
-  opacity: 1;
+  opacity: 0.66;
   transition: opacity 520ms cubic-bezier(.2, .8, .2, 1);
 }
 
@@ -523,11 +523,23 @@ body {
   border-radius: 26px;
   background: var(--bd-ink-800);
   box-shadow: 0 24px 56px rgba(0, 0, 0, 0.46), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-  transform: scale(1);
+  transform: scale(0.94);
   transition: transform 560ms cubic-bezier(.2, .8, .2, 1);
 }
 
 .bd-hero-slide.active .bd-hero-card {
+  transform: scale(1);
+}
+
+/* Fallback for single slide */
+.bd-hero.is-single .bd-hero-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  padding: 0;
+  opacity: 1;
+}
+
+.bd-hero.is-single .bd-hero-card {
   transform: scale(1);
 }
 
@@ -697,11 +709,11 @@ body {
 }
 
 .bd-hero-arw-prev {
-  left: clamp(16px, 2vw, 28px);
+  left: calc(10% + clamp(20px, 2vw, 34px));
 }
 
 .bd-hero-arw-next {
-  right: clamp(16px, 2vw, 28px);
+  right: calc(10% + clamp(20px, 2vw, 34px));
 }
 
 @media (max-width: 860px) {
