@@ -1,7 +1,7 @@
 .mo-wrap {
   width: 100%;
-  max-width: 731px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   min-width: 0;
   color: var(--bd-white, #fff);
   font-family: var(--bd-font-ui, Inter, sans-serif);

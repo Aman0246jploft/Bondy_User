@@ -41,6 +41,7 @@ export default function TermsConditions() {
 
   return (
     <LegalDocument
+      type="terms"
       title={t("termsConditions")}
       content={content}
       loading={loading}

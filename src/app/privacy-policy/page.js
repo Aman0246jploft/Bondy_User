@@ -41,6 +41,7 @@ export default function PrivacyPolicy() {
 
   return (
     <LegalDocument
+      type="privacy"
       title={t("privacyPolicy")}
       content={content}
       loading={loading}
