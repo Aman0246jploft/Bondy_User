@@ -867,15 +867,19 @@ function ProfileContent() {
   const orgCategory = userProfile.category || (userProfile.role === "ORGANIZER" ? (t("eventOrganizer") || "Зохион байгуулагч") : (t("userRole") || "Хэрэглэгч"));
   const orgIntro = userProfile.bio || (language === "mn" ? "Танилцуулга оруулаагүй байна." : "No introduction provided yet.");
 
-  const upcomingEvents = [
-    ...(userProfile?.events?.upcoming_events || []),
-    ...(userProfile?.courses?.upcoming_courses || []),
-  ];
+  const upcomingEvents = userProfile?.events?.upcoming_events || [];
+  const pastEvents = userProfile?.events?.previous_events || [];
+  const upcomingCourses = userProfile?.courses?.upcoming_courses || [];
+  const pastCourses = userProfile?.courses?.previous_courses || [];
 
-  const pastEvents = [
-    ...(userProfile?.events?.previous_events || []),
-    ...(userProfile?.courses?.previous_courses || []),
-  ];
+  const hasEvents = upcomingEvents.length > 0 || pastEvents.length > 0;
+  const hasCourses = upcomingCourses.length > 0 || pastCourses.length > 0;
+  const isCourseOrganizer = !hasEvents && (
+    hasCourses ||
+    String(userProfile?.businessType || "").toLowerCase().includes("course") ||
+    String(userProfile?.businessCategory || "").toLowerCase().includes("education") ||
+    Number(userProfile?.totalCoursesAdded || 0) > 0
+  );
 
   const isFollowing = Boolean(userProfile?.isFollowed);
   const isSelf = Boolean(userProfile?.isMyProfile);
@@ -1653,132 +1657,172 @@ function ProfileContent() {
           </div>
         </section>
 
-        {/* Upcoming Events Carousel Section ("Удахгүй болох") */}
-        <section style={{ marginTop: "clamp(40px, 4vw, 58px)" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 24,
-              flexWrap: "wrap",
-              marginBottom: 20,
-            }}
-          >
-            <h2
-              className="bd-h2"
-              style={{
-                margin: 0,
-                fontFamily: "var(--bd-font-ui)",
-                fontSize: 26,
-                fontWeight: 700,
-                lineHeight: 1.2,
-                letterSpacing: "-.016em",
-                color: "var(--bd-white, #FFFFFF)",
-              }}
-            >
-              {language === "mn" ? "Удахгүй болох" : "Upcoming"}
-            </h2>
-            <Link
-              href="/Explore"
-              className="bd-viewall"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                height: 38,
-                padding: "0 16px",
-                borderRadius: 999,
-                border: "1px solid var(--bd-border, rgba(255,255,255,.08))",
-                color: "var(--bd-gray-300, #D9D9D9)",
-                fontSize: 12,
-                fontWeight: 550,
-                whiteSpace: "nowrap",
-                textDecoration: "none",
-                transition: "border-color 200ms cubic-bezier(.2,.8,.2,1), color 200ms cubic-bezier(.2,.8,.2,1)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--acc, #23ADA4)";
-                e.currentTarget.style.color = "var(--bd-white, #FFFFFF)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--bd-border, rgba(255,255,255,.08))";
-                e.currentTarget.style.color = "var(--bd-gray-300, #D9D9D9)";
-              }}
-            >
-              {language === "mn" ? "Бүгдийг харах" : "View all"}
-            </Link>
-          </div>
+        {/* Differentiated Events / Courses Carousels */}
+        {(() => {
+          const renderSection = ({
+            title,
+            viewAllHref,
+            items,
+            isPast = false,
+            emptyText,
+          }) => (
+            <section style={{ marginTop: "clamp(40px, 4vw, 58px)" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 24,
+                  flexWrap: "wrap",
+                  marginBottom: 20,
+                }}
+              >
+                <h2
+                  className="bd-h2"
+                  style={{
+                    margin: 0,
+                    fontFamily: "var(--bd-font-ui)",
+                    fontSize: 26,
+                    fontWeight: 700,
+                    lineHeight: 1.2,
+                    letterSpacing: "-.016em",
+                    color: "var(--bd-white, #FFFFFF)",
+                  }}
+                >
+                  {title}
+                </h2>
+                {viewAllHref && (
+                  <Link
+                    href={viewAllHref}
+                    className="bd-viewall"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      height: 38,
+                      padding: "0 16px",
+                      borderRadius: 999,
+                      border: "1px solid var(--bd-border, rgba(255,255,255,.08))",
+                      color: "var(--bd-gray-300, #D9D9D9)",
+                      fontSize: 12,
+                      fontWeight: 550,
+                      whiteSpace: "nowrap",
+                      textDecoration: "none",
+                      transition: "border-color 200ms cubic-bezier(.2,.8,.2,1), color 200ms cubic-bezier(.2,.8,.2,1)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--acc, #23ADA4)";
+                      e.currentTarget.style.color = "var(--bd-white, #FFFFFF)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "var(--bd-border, rgba(255,255,255,.08))";
+                      e.currentTarget.style.color = "var(--bd-gray-300, #D9D9D9)";
+                    }}
+                  >
+                    {language === "mn" ? "Бүгдийг харах" : "View all"}
+                  </Link>
+                )}
+              </div>
 
-          {upcomingEvents.length > 0 ? (
-            <CarouselRail
-              items={upcomingEvents}
-              isPast={false}
-              language={language}
-              onFavToggle={handleFavoriteToggle}
-              favorites={favorites}
-            />
-          ) : (
-            <div
-              style={{
-                padding: "36px 20px",
-                borderRadius: 20,
-                background: "var(--bd-ink-850, #161616)",
-                border: "1px solid var(--bd-border, rgba(255,255,255,.08))",
-                textAlign: "center",
-                color: "var(--bd-gray-500)",
-                fontSize: 14.5,
-              }}
-            >
-              {language === "mn"
-                ? "Удахгүй болох эвент хараахан байхгүй байна."
-                : "No upcoming events scheduled at this moment."}
-            </div>
-          )}
-        </section>
+              {items && items.length > 0 ? (
+                <CarouselRail
+                  items={items}
+                  isPast={isPast}
+                  language={language}
+                  onFavToggle={!isPast ? handleFavoriteToggle : undefined}
+                  favorites={favorites}
+                />
+              ) : (
+                <div
+                  style={{
+                    padding: "36px 20px",
+                    borderRadius: 20,
+                    background: "var(--bd-ink-850, #161616)",
+                    border: "1px solid var(--bd-border, rgba(255,255,255,.08))",
+                    textAlign: "center",
+                    color: "var(--bd-gray-500)",
+                    fontSize: 14.5,
+                  }}
+                >
+                  {emptyText}
+                </div>
+              )}
+            </section>
+          );
 
-        {/* Past Events Carousel Section ("Өнгөрсөн") */}
-        <section style={{ marginTop: "clamp(40px, 4vw, 58px)" }}>
-          <h2
-            className="bd-h2"
-            style={{
-              margin: 0,
-              fontFamily: "var(--bd-font-ui)",
-              fontSize: 26,
-              fontWeight: 700,
-              lineHeight: 1.2,
-              letterSpacing: "-.016em",
-              color: "var(--bd-white, #FFFFFF)",
-              marginBottom: 20,
-            }}
-          >
-            {language === "mn" ? "Өнгөрсөн" : "Past"}
-          </h2>
+          if (hasEvents && hasCourses) {
+            return (
+              <>
+                {renderSection({
+                  title: t("upcomingEvents") || (language === "mn" ? "Удахгүй болох эвентүүд" : "Upcoming Events"),
+                  viewAllHref: "/Explore",
+                  items: upcomingEvents,
+                  isPast: false,
+                  emptyText: t("noUpcomingEventsScheduled") || (language === "mn" ? "Ойрын үед төлөвлөсөн эвент байхгүй байна." : "No upcoming events scheduled at this moment."),
+                })}
+                {renderSection({
+                  title: t("upcomingCourses") || (language === "mn" ? "Удахгүй болох сургалтууд" : "Upcoming Courses"),
+                  viewAllHref: "/Programs-Listing",
+                  items: upcomingCourses,
+                  isPast: false,
+                  emptyText: t("noUpcomingCoursesScheduled") || (language === "mn" ? "Ойрын үед төлөвлөсөн сургалт байхгүй байна." : "No upcoming courses scheduled at this moment."),
+                })}
+                {(pastEvents.length > 0 || pastCourses.length === 0) &&
+                  renderSection({
+                    title: t("pastEvents") || (language === "mn" ? "Өнгөрсөн эвентүүд" : "Past Events"),
+                    items: pastEvents,
+                    isPast: true,
+                    emptyText: t("noPastEventsRecorded") || (language === "mn" ? "Өнгөрсөн эвент бүртгэгдээгүй байна." : "No past events recorded yet."),
+                  })}
+                {pastCourses.length > 0 &&
+                  renderSection({
+                    title: t("pastCourses") || (language === "mn" ? "Өнгөрсөн сургалтууд" : "Past Courses"),
+                    items: pastCourses,
+                    isPast: true,
+                    emptyText: t("noPastCoursesRecorded") || (language === "mn" ? "Өнгөрсөн сургалт бүртгэгдээгүй байна." : "No past courses recorded yet."),
+                  })}
+              </>
+            );
+          }
 
-          {pastEvents.length > 0 ? (
-            <CarouselRail
-              items={pastEvents}
-              isPast={true}
-              language={language}
-            />
-          ) : (
-            <div
-              style={{
-                padding: "36px 20px",
-                borderRadius: 20,
-                background: "var(--bd-ink-850, #161616)",
-                border: "1px solid var(--bd-border, rgba(255,255,255,.08))",
-                textAlign: "center",
-                color: "var(--bd-gray-500)",
-                fontSize: 14.5,
-              }}
-            >
-              {language === "mn"
-                ? "Өнгөрсөн эвент бүртгэгдээгүй байна."
-                : "No past events recorded yet."}
-            </div>
-          )}
-        </section>
+          if (isCourseOrganizer) {
+            return (
+              <>
+                {renderSection({
+                  title: t("upcomingCourses") || (language === "mn" ? "Удахгүй болох сургалтууд" : "Upcoming Courses"),
+                  viewAllHref: "/Programs-Listing",
+                  items: upcomingCourses,
+                  isPast: false,
+                  emptyText: t("noUpcomingCoursesScheduled") || (language === "mn" ? "Ойрын үед төлөвлөсөн сургалт байхгүй байна." : "No upcoming courses scheduled at this moment."),
+                })}
+                {renderSection({
+                  title: t("pastCourses") || (language === "mn" ? "Өнгөрсөн сургалтууд" : "Past Courses"),
+                  items: pastCourses,
+                  isPast: true,
+                  emptyText: t("noPastCoursesRecorded") || (language === "mn" ? "Өнгөрсөн сургалт бүртгэгдээгүй байна." : "No past courses recorded yet."),
+                })}
+              </>
+            );
+          }
+
+          return (
+            <>
+              {renderSection({
+                title: t("upcomingEvents") || (language === "mn" ? "Удахгүй болох эвентүүд" : "Upcoming Events"),
+                viewAllHref: "/Explore",
+                items: upcomingEvents,
+                isPast: false,
+                emptyText: t("noUpcomingEventsScheduled") || (language === "mn" ? "Ойрын үед төлөвлөсөн эвент байхгүй байна." : "No upcoming events scheduled at this moment."),
+              })}
+              {renderSection({
+                title: t("pastEvents") || (language === "mn" ? "Өнгөрсөн эвентүүд" : "Past Events"),
+                items: pastEvents,
+                isPast: true,
+                emptyText: t("noPastEventsRecorded") || (language === "mn" ? "Өнгөрсөн эвент бүртгэгдээгүй байна." : "No past events recorded yet."),
+              })}
+            </>
+          );
+        })()}
       </main>
 
       {/* Confirmation Modal (Block / Unblock) */}
