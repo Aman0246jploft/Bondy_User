@@ -654,7 +654,14 @@ function CheckoutContent() {
       })
     : ((Number(bookingItem?.price) || Number(bookingItem?.courseFee) || 0) > 0);
 
-  const isFree = !hasSelectedPaidTicket && priceBreakdown.totalAmount === 0 && (isEvent ? Object.values(selectedTickets).some((q) => q > 0) : true);
+  const isItemFree = Boolean(
+    bookingItem?.isFreeEvent ||
+    bookingItem?.ticketPrice === 0 ||
+    (isEvent && bookingItem?.tickets && bookingItem.tickets.length > 0 && bookingItem.tickets.every((tk) => Number(tk.price || 0) === 0)) ||
+    (!isEvent && (Number(bookingItem?.price) || Number(bookingItem?.courseFee) || 0) === 0)
+  );
+
+  const isFree = isItemFree || (!hasSelectedPaidTicket && priceBreakdown.totalAmount === 0 && (isEvent ? Object.values(selectedTickets).some((q) => q > 0) : true));
   const totalQuantity = isEvent ? Object.values(selectedTickets).reduce((a, b) => a + b, 0) : qty;
   const canProceed = totalQuantity > 0;
 
@@ -1121,95 +1128,97 @@ function CheckoutContent() {
             </section>
             */}
 
-            {/* 3. Coupon Code Section */}
-            <section
-              style={{
-                padding: 20,
-                borderRadius: 20,
-                background: "var(--bd-ink-850, #161616)",
-                border: "1px solid var(--bd-border, rgba(255,255,255,.08))",
-              }}
-            >
-              <h2 style={{ margin: "0 0 14px", fontFamily: "var(--bd-font-ui)", fontSize: 20, fontWeight: 700, letterSpacing: "-.01em", color: "var(--bd-white, #FFFFFF)" }}>
-                {isEvent ? t("ckCoupon") : t("ckPromo")}
-              </h2>
+            {/* 3. Coupon Code Section (Hidden when event/item is free) */}
+            {!isFree && (
+              <section
+                style={{
+                  padding: 20,
+                  borderRadius: 20,
+                  background: "var(--bd-ink-850, #161616)",
+                  border: "1px solid var(--bd-border, rgba(255,255,255,.08))",
+                }}
+              >
+                <h2 style={{ margin: "0 0 14px", fontFamily: "var(--bd-font-ui)", fontSize: 20, fontWeight: 700, letterSpacing: "-.01em", color: "var(--bd-white, #FFFFFF)" }}>
+                  {isEvent ? t("ckCoupon") : t("ckPromo")}
+                </h2>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    flex: 1,
-                    minWidth: 200,
-                    height: 48,
-                    padding: "0 16px",
-                    borderRadius: 14,
-                    background: "var(--bd-ink-800, #1A1A1A)",
-                    border: "1px solid var(--bd-border, rgba(255,255,255,.08))",
-                    cursor: "text",
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--acc-bright)" }}>
-                    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
-                    <path d="M13 5v2" /><path d="M13 17v2" /><path d="M13 11v2" />
-                  </svg>
-                  <input
-                    type="text"
-                    value={promoCodeInput}
-                    onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                    placeholder="BONDY10"
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <label
                     style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
                       flex: 1,
-                      minWidth: 0,
-                      background: "none",
-                      border: "none",
-                      outline: "none",
+                      minWidth: 200,
+                      height: 48,
+                      padding: "0 16px",
+                      borderRadius: 14,
+                      background: "var(--bd-ink-800, #1A1A1A)",
+                      border: "1px solid var(--bd-border, rgba(255,255,255,.08))",
+                      cursor: "text",
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--acc-bright)" }}>
+                      <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+                      <path d="M13 5v2" /><path d="M13 17v2" /><path d="M13 11v2" />
+                    </svg>
+                    <input
+                      type="text"
+                      value={promoCodeInput}
+                      onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                      placeholder="BONDY10"
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        background: "none",
+                        border: "none",
+                        outline: "none",
+                        color: "var(--bd-white)",
+                        fontFamily: "var(--bd-font-ui)",
+                        fontSize: 15,
+                        textTransform: "uppercase",
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={handleApplyPromo}
+                    disabled={applyingPromo}
+                    style={{
+                      height: 48,
+                      padding: "0 22px",
+                      borderRadius: 999,
+                      border: "1px solid var(--bd-border-strong, #363636)",
+                      background: "transparent",
                       color: "var(--bd-white)",
                       fontFamily: "var(--bd-font-ui)",
                       fontSize: 15,
-                      textTransform: "uppercase",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "border-color 200ms ease",
                     }}
-                  />
-                </label>
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--acc)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--bd-border-strong)")}
+                  >
+                    {applyingPromo ? t("ckChecking") : t("ckApply")}
+                  </button>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={handleApplyPromo}
-                  disabled={applyingPromo}
-                  style={{
-                    height: 48,
-                    padding: "0 22px",
-                    borderRadius: 999,
-                    border: "1px solid var(--bd-border-strong, #363636)",
-                    background: "transparent",
-                    color: "var(--bd-white)",
-                    fontFamily: "var(--bd-font-ui)",
-                    fontSize: 15,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "border-color 200ms ease",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--acc)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--bd-border-strong)")}
-                >
-                  {applyingPromo ? t("ckChecking") : t("ckApply")}
-                </button>
-              </div>
-
-              {priceBreakdown.promoMessage && (
-                <p
-                  style={{
-                    margin: "10px 0 0",
-                    fontSize: 13,
-                    color: priceBreakdown.promoApplied ? "var(--acc-bright)" : "#FF5A5A",
-                    fontWeight: 600,
-                  }}
-                >
-                  {priceBreakdown.promoMessage}
-                </p>
-              )}
-            </section>
+                {priceBreakdown.promoMessage && (
+                  <p
+                    style={{
+                      margin: "10px 0 0",
+                      fontSize: 13,
+                      color: priceBreakdown.promoApplied ? "var(--acc-bright)" : "#FF5A5A",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {priceBreakdown.promoMessage}
+                  </p>
+                )}
+              </section>
+            )}
 
             {/* 4. Payment Method Section (Shown when price > 0) */}
             {!isFree && (
