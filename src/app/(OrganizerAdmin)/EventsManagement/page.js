@@ -218,37 +218,86 @@ export default function EventsManagementPage() {
     flashToast(isMn ? "Нийтийн хуудасны линк хуулагдлаа" : "Public link copied to clipboard");
   };
 
+  // Live Event Blocked Modal
+  const [liveBlockedModal, setLiveBlockedModal] = useState(null); // { open: boolean, event: object }
+  const [duplicatingId, setDuplicatingId] = useState(null);
+
+  const isEventLive = (ev) => {
+    if (!ev || ev.isDraft) return false;
+    const now = new Date();
+    return (
+      String(ev.status || "").toLowerCase() === "live" ||
+      Boolean(ev.isLive) ||
+      (ev.startDate && ev.endDate && new Date(ev.startDate) <= now && new Date(ev.endDate) >= now)
+    );
+  };
+
+  const handleEditEventAttempt = (event) => {
+    setActiveMenu(null);
+    if (isEventLive(event)) {
+      setLiveBlockedModal({
+        open: true,
+        event,
+        title: isMn ? "Арга хэмжээ шууд явагдаж байна" : "Event is Currently Live",
+        body: isMn
+          ? "Таны арга хэмжээ шууд явагдаж байгаа тул засах боломжгүй."
+          : "Your event is live, you cannot edit this.",
+      });
+      return;
+    }
+    router.push(`/BasicInfo?eventId=${event._id}`);
+  };
+
   // Duplicate / Copy Action
   const handleDuplicateEvent = async (event) => {
+    if (duplicatingId) return;
     setActiveMenu(null);
-    const baseTitle = (event.eventTitle || "").replace(/\s*\((?:хуулбар|copy)\)/gi, "").trim();
+    setDuplicatingId(event._id);
+
+    // Strip any previous (Copy), (copy), (хуулбар), (Copy 2) suffixes so it only adds one (Copy)
+    const rawTitle = (event.eventTitle || "").trim();
+    const baseTitle = rawTitle
+      .replace(/\s*\((?:хуулбар|copy)(?:\s*\d+)?\)\s*$/gi, "")
+      .replace(/\s*-\s*(?:хуулбар|copy)(?:\s*\d+)?\s*$/gi, "")
+      .trim();
     const fallbackTitle = isMn ? "Эвент" : "Event";
     const cloneTitle = isMn
       ? `${baseTitle || fallbackTitle} (хуулбар)`
       : `${baseTitle || fallbackTitle} (Copy)`;
+
     try {
+      const vAddr = event.venueAddress || {};
       const payload = {
         eventTitle: cloneTitle,
         shortdesc: event.shortdesc || event.description || "",
         longdesc: event.longdesc || event.description || "",
-        eventCategory: event.eventCategory?._id || event.eventCategory,
-        startDate: event.startDate,
-        startTime: event.startTime,
-        endDate: event.endDate,
-        endTime: event.endTime,
-        venueName: event.venueName,
-        address: event.address,
-        latitude: event.latitude,
-        longitude: event.longitude,
+        eventCategory: event.eventCategory?._id || event.eventCategory || undefined,
+        startDate: event.startDate || undefined,
+        startTime: event.startTime || undefined,
+        endDate: event.endDate || undefined,
+        endTime: event.endTime || undefined,
+        venueName: event.venueName || vAddr.venueName || undefined,
+        venueAddress: (vAddr.address || vAddr.city || (vAddr.latitude && vAddr.longitude))
+          ? {
+              address: vAddr.address || event.address || "",
+              city: vAddr.city || "",
+              state: vAddr.state || "",
+              country: vAddr.country || "",
+              zipcode: vAddr.zipcode || "",
+              latitude: Number(vAddr.latitude || event.latitude) || 0,
+              longitude: Number(vAddr.longitude || event.longitude) || 0,
+            }
+          : undefined,
         posterImage: event.posterImage || [],
+        mediaLinks: event.mediaLinks || [],
         tickets: event.tickets,
         isDraft: true,
       };
 
       const res = await eventApi.createEvent(payload);
-      if (res?.data?.data || res?.data?.event) {
-        const created = res.data.data || res.data.event;
-        setDraftEvents((prev) => [created, ...prev]);
+      const created = res?.data?.data || res?.data?.event;
+      if (created) {
+        setDraftEvents((prev) => [created, ...prev.filter((e) => e._id !== created._id)]);
       } else {
         setDraftEvents((prev) => [
           {
@@ -256,28 +305,34 @@ export default function EventsManagementPage() {
             _id: `copy-${Date.now()}`,
             eventTitle: cloneTitle,
             isDraft: true,
+            status: "DRAFT",
             totalBooked: 0,
             totalRevenue: 0,
           },
           ...prev,
         ]);
       }
+      setActiveTab("draft");
+      flashToast(isMn ? "Ноорог хуулбар үүслээ" : "Draft copy created");
     } catch (err) {
-      console.warn("Optimistic duplicate:", err);
+      console.warn("Duplicate event error, saving fallback draft:", err);
       setDraftEvents((prev) => [
         {
           ...event,
           _id: `copy-${Date.now()}`,
           eventTitle: cloneTitle,
           isDraft: true,
+          status: "DRAFT",
           totalBooked: 0,
           totalRevenue: 0,
         },
         ...prev,
       ]);
+      setActiveTab("draft");
+      flashToast(isMn ? "Ноорог хуулбар үүслээ" : "Draft copy created");
+    } finally {
+      setDuplicatingId(null);
     }
-    setActiveTab("draft");
-    flashToast(isMn ? "Ноорог хуулбар үүслээ" : "Draft copy created");
   };
 
   // Delete Draft Action
@@ -746,10 +801,7 @@ export default function EventsManagementPage() {
                 type="button"
                 className="oe-mi"
                 data-mi="edit"
-                onClick={() => {
-                  setActiveMenu(null);
-                  router.push(`/BasicInfo?eventId=${activeMenu.event._id}`);
-                }}
+                onClick={() => handleEditEventAttempt(activeMenu.event)}
               >
                 {isMn ? "Засах" : "Edit"}
               </button>
@@ -1018,6 +1070,127 @@ export default function EventsManagementPage() {
           }}
           onPurchased={fetchAllEvents}
         />
+      )}
+
+      {/* ─── Live Event Edit Blocked Modal ──────────────────────────────── */}
+      {liveBlockedModal?.open && (
+        <div
+          className="oe-scrim"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.72)",
+            backdropFilter: "blur(4px)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={() => setLiveBlockedModal(null)}
+        >
+          <div
+            className="oe-sheet"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "460px",
+              width: "100%",
+              background: "var(--bd-ink-900, #141414)",
+              border: "1px solid var(--bd-border-strong, #2f2f2f)",
+              borderRadius: "20px",
+              padding: "32px 28px",
+              textAlign: "center",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                background: "rgba(239, 68, 68, 0.15)",
+                color: "#ef4444",
+                marginBottom: "16px",
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+            </span>
+
+            <h3
+              style={{
+                margin: "0 0 10px",
+                fontFamily: "var(--bd-font-ui)",
+                fontSize: "20px",
+                fontWeight: 700,
+                color: "var(--bd-white, #fff)",
+              }}
+            >
+              {liveBlockedModal.title}
+            </h3>
+
+            <p
+              style={{
+                margin: "0 0 24px",
+                fontSize: "14.5px",
+                lineHeight: 1.55,
+                color: "var(--bd-gray-300, #ccc)",
+              }}
+            >
+              {liveBlockedModal.body}
+            </p>
+
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => setLiveBlockedModal(null)}
+                style={{
+                  height: "44px",
+                  padding: "0 24px",
+                  borderRadius: "999px",
+                  border: "1px solid var(--bd-border-strong, #333)",
+                  background: "transparent",
+                  color: "var(--bd-white, #fff)",
+                  fontFamily: "var(--bd-font-ui)",
+                  fontSize: "14.5px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {isMn ? "Хаах" : "Close"}
+              </button>
+              {liveBlockedModal.event?._id && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const id = liveBlockedModal.event._id;
+                    setLiveBlockedModal(null);
+                    router.push(`/EventDetailOrganiser?eventId=${id}`);
+                  }}
+                  style={{
+                    height: "44px",
+                    padding: "0 24px",
+                    borderRadius: "999px",
+                    border: "none",
+                    background: "var(--acc, #23ada4)",
+                    color: "var(--bd-white, #fff)",
+                    fontFamily: "var(--bd-font-ui)",
+                    fontSize: "14.5px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {isMn ? "Эвент харах" : "View Event"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );

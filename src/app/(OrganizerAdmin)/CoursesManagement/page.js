@@ -212,33 +212,88 @@ export default function CoursesManagementPage() {
     flashToast(isMn ? "Нийтийн хуудасны линк хуулагдлаа" : "Public link copied to clipboard");
   };
 
+  // Live Course Blocked Modal
+  const [liveBlockedModal, setLiveBlockedModal] = useState(null); // { open: boolean, course: object }
+  const [duplicatingId, setDuplicatingId] = useState(null);
+
+  const isCourseLive = (c) => {
+    if (!c || c.isDraft) return false;
+    const now = new Date();
+    return (
+      String(c.status || "").toLowerCase() === "live" ||
+      Boolean(c.isLive) ||
+      (c.startDate && new Date(c.startDate) <= now && (!c.endDate || new Date(c.endDate) >= now))
+    );
+  };
+
+  const handleEditCourseAttempt = (course) => {
+    setActiveMenu(null);
+    if (isCourseLive(course)) {
+      setLiveBlockedModal({
+        open: true,
+        course,
+        title: isMn ? "Сургалт явагдаж байна" : "Course is Currently Live",
+        body: isMn
+          ? "Таны сургалт шууд явагдаж байгаа тул засах боломжгүй."
+          : "Your course is live, you cannot edit this.",
+      });
+      return;
+    }
+    router.push(`/AddProgram?courseId=${course._id}`);
+  };
+
   // Duplicate / Copy Action
   const handleDuplicateCourse = async (course) => {
+    if (duplicatingId) return;
     setActiveMenu(null);
-    const baseTitle = (course.courseTitle || course.title || "").replace(/\s*\((?:хуулбар|copy)\)/gi, "").trim();
+    setDuplicatingId(course._id);
+
+    // Strip previous copy suffix so it doesn't chain (Copy) (Copy)
+    const rawTitle = (course.courseTitle || course.title || "").trim();
+    const baseTitle = rawTitle
+      .replace(/\s*\((?:хуулбар|copy)(?:\s*\d+)?\)\s*$/gi, "")
+      .replace(/\s*-\s*(?:хуулбар|copy)(?:\s*\d+)?\s*$/gi, "")
+      .trim();
     const fallbackTitle = isMn ? "Сургалт" : "Course";
     const cloneTitle = isMn
       ? `${baseTitle || fallbackTitle} (хуулбар)`
       : `${baseTitle || fallbackTitle} (Copy)`;
+
     try {
+      const vAddr = course.venueAddress || {};
       const payload = {
         courseTitle: cloneTitle,
-        description: course.description || "",
-        courseCategory: course.courseCategory?._id || course.courseCategory,
+        shortdesc: course.shortdesc || course.description || "",
+        longdesc: course.longdesc || course.description || "",
+        whatYouWillLearn: course.whatYouWillLearn || "",
+        courseCategory: course.courseCategory?._id || course.courseCategory || undefined,
         duration: course.duration,
         enrollmentType: course.enrollmentType || "fixedStart",
-        startDate: course.startDate,
-        endDate: course.endDate,
-        price: course.price,
+        startDate: course.startDate || undefined,
+        endDate: course.endDate || undefined,
+        price: course.price != null ? course.price : 0,
+        venueName: course.venueName || vAddr.venueName || undefined,
+        venueAddress: (vAddr.address || vAddr.city || (vAddr.latitude && vAddr.longitude))
+          ? {
+              address: vAddr.address || "",
+              city: vAddr.city || "",
+              state: vAddr.state || "",
+              country: vAddr.country || "",
+              zipcode: vAddr.zipcode || "",
+              latitude: Number(vAddr.latitude) || 0,
+              longitude: Number(vAddr.longitude) || 0,
+            }
+          : undefined,
         coverImage: course.coverImage,
         posterImage: course.posterImage || [],
+        mediaLinks: course.mediaLinks || [],
         isDraft: true,
       };
 
       const res = await courseApi.createCourse(payload);
-      if (res?.data?.data || res?.data?.course) {
-        const created = res.data.data || res.data.course;
-        setDraftCourses((prev) => [created, ...prev]);
+      const created = res?.data?.data || res?.data?.course;
+      if (created) {
+        setDraftCourses((prev) => [created, ...prev.filter((c) => c._id !== created._id)]);
       } else {
         setDraftCourses((prev) => [
           {
@@ -246,28 +301,34 @@ export default function CoursesManagementPage() {
             _id: `copy-${Date.now()}`,
             courseTitle: cloneTitle,
             isDraft: true,
+            status: "DRAFT",
             totalEnrollments: 0,
             totalRevenue: 0,
           },
           ...prev,
         ]);
       }
+      setActiveTab("draft");
+      flashToast(isMn ? "Ноорог хуулбар үүслээ" : "Draft copy created");
     } catch (err) {
-      console.warn("Optimistic duplicate:", err);
+      console.warn("Duplicate course error, saving fallback draft:", err);
       setDraftCourses((prev) => [
         {
           ...course,
           _id: `copy-${Date.now()}`,
           courseTitle: cloneTitle,
           isDraft: true,
+          status: "DRAFT",
           totalEnrollments: 0,
           totalRevenue: 0,
         },
         ...prev,
       ]);
+      setActiveTab("draft");
+      flashToast(isMn ? "Ноорог хуулбар үүслээ" : "Draft copy created");
+    } finally {
+      setDuplicatingId(null);
     }
-    setActiveTab("draft");
-    flashToast(isMn ? "Ноорог хуулбар үүслээ" : "Draft copy created");
   };
 
   // Delete Draft Action
@@ -659,11 +720,7 @@ export default function CoursesManagementPage() {
               <button
                 type="button"
                 className="lm-mi"
-                onClick={() => {
-                  const c = activeMenu.course;
-                  setActiveMenu(null);
-                  router.push(`/AddProgram?courseId=${c._id}`);
-                }}
+                onClick={() => handleEditCourseAttempt(activeMenu.course)}
               >
                 {isMn ? "Засах" : "Edit"}
               </button>
@@ -939,6 +996,127 @@ export default function CoursesManagementPage() {
           }}
           onPurchased={fetchAllCourses}
         />
+      )}
+
+      {/* ─── Live Course Edit Blocked Modal ──────────────────────────────── */}
+      {liveBlockedModal?.open && (
+        <div
+          className="lm-scrim"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.72)",
+            backdropFilter: "blur(4px)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={() => setLiveBlockedModal(null)}
+        >
+          <div
+            className="lm-sheet"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "460px",
+              width: "100%",
+              background: "var(--bd-ink-900, #141414)",
+              border: "1px solid var(--bd-border-strong, #2f2f2f)",
+              borderRadius: "20px",
+              padding: "32px 28px",
+              textAlign: "center",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                background: "rgba(239, 68, 68, 0.15)",
+                color: "#ef4444",
+                marginBottom: "16px",
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+            </span>
+
+            <h3
+              style={{
+                margin: "0 0 10px",
+                fontFamily: "var(--bd-font-ui)",
+                fontSize: "20px",
+                fontWeight: 700,
+                color: "var(--bd-white, #fff)",
+              }}
+            >
+              {liveBlockedModal.title}
+            </h3>
+
+            <p
+              style={{
+                margin: "0 0 24px",
+                fontSize: "14.5px",
+                lineHeight: 1.55,
+                color: "var(--bd-gray-300, #ccc)",
+              }}
+            >
+              {liveBlockedModal.body}
+            </p>
+
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => setLiveBlockedModal(null)}
+                style={{
+                  height: "44px",
+                  padding: "0 24px",
+                  borderRadius: "999px",
+                  border: "1px solid var(--bd-border-strong, #333)",
+                  background: "transparent",
+                  color: "var(--bd-white, #fff)",
+                  fontFamily: "var(--bd-font-ui)",
+                  fontSize: "14.5px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {isMn ? "Хаах" : "Close"}
+              </button>
+              {liveBlockedModal.course?._id && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const id = liveBlockedModal.course._id;
+                    setLiveBlockedModal(null);
+                    router.push(`/CourseDetailOrganiser?courseId=${id}`);
+                  }}
+                  style={{
+                    height: "44px",
+                    padding: "0 24px",
+                    borderRadius: "999px",
+                    border: "none",
+                    background: "var(--acc, #23ada4)",
+                    color: "var(--bd-white, #fff)",
+                    fontFamily: "var(--bd-font-ui)",
+                    fontSize: "14.5px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {isMn ? "Сургалт харах" : "View Course"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );

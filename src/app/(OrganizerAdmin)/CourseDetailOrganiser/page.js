@@ -2,7 +2,7 @@
 import Link from "next/link";
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import { Col, Row, Spinner } from "react-bootstrap";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import courseApi from "@/api/courseApi";
 import bookingApi from "@/api/bookingApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
@@ -60,10 +60,22 @@ function ExpandableText({ text, limit = 200, className = "" }) {
 }
 
 function CourseDetailsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const courseId = searchParams.get("courseId");
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liveBlockedModal, setLiveBlockedModal] = useState(null);
+
+  const isCourseLive = (c) => {
+    if (!c || c.isDraft) return false;
+    const now = new Date();
+    return (
+      String(c.status || "").toLowerCase() === "live" ||
+      Boolean(c.isLive) ||
+      (c.startDate && new Date(c.startDate) <= now && (!c.endDate || new Date(c.endDate) >= now))
+    );
+  };
   const [expandedDay, setExpandedDay] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -585,10 +597,26 @@ function CourseDetailsContent() {
                 {t("cdViewPublic")}
               </Link>
               {canEdit && (
-                <Link href={`/AddProgram?courseId=${course._id}`} className="cd-cta cd-cta-out">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isCourseLive(course)) {
+                      setLiveBlockedModal({
+                        open: true,
+                        title: isMn ? "Сургалт явагдаж байна" : "Course is Currently Live",
+                        body: isMn
+                          ? "Таны сургалт шууд явагдаж байгаа тул засах боломжгүй."
+                          : "Your course is live, you cannot edit this.",
+                      });
+                      return;
+                    }
+                    router.push(`/AddProgram?courseId=${course._id}`);
+                  }}
+                  className="cd-cta cd-cta-out"
+                >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z" /></svg>
                   {t("edit")}
-                </Link>
+                </button>
               )}
               <button type="button" className="cd-cta cd-cta-out" onClick={() => setPromoOpen(true)}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 10.4v3.2a1.6 1.6 0 0 0 1.6 1.6h1.7L14 19.4V4.6L7.3 8.8H5.6A1.6 1.6 0 0 0 4 10.4Z" /><path d="M17.2 8.6a4.6 4.6 0 0 1 0 6.8" /><path d="M7.6 15.4 8.9 20" /></svg>
@@ -1218,11 +1246,25 @@ function CourseDetailsContent() {
                 }}>
                 🚫 {t("cancelCourse") || "Cancel Course"}
               </button>
-              {(course.status?.toLowerCase() === "upcoming" || course.isDraft) && (
-                <Link
-                  href={`/AddProgram?courseId=${course._id}`}
+              {(course.status?.toLowerCase() === "upcoming" || course.isDraft || isCourseLive(course)) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isCourseLive(course)) {
+                      setLiveBlockedModal({
+                        open: true,
+                        title: isMn ? "Сургалт явагдаж байна" : "Course is Currently Live",
+                        body: isMn
+                          ? "Таны сургалт шууд явагдаж байгаа тул засах боломжгүй."
+                          : "Your course is live, you cannot edit this.",
+                      });
+                      return;
+                    }
+                    router.push(`/AddProgram?courseId=${course._id}`);
+                  }}
                   className="custom-btn"
-                  style={{ padding: "8px 20px", fontSize: "13px" }}>
+                  style={{ padding: "8px 20px", fontSize: "13px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="14"
@@ -1255,7 +1297,7 @@ function CourseDetailsContent() {
                     />
                   </svg>{" "}
                   {t("editCourse") || "Edit Course"}
-                </Link>
+                </button>
               )}
             </>
           )}
@@ -4104,6 +4146,102 @@ function CourseDetailsContent() {
                 }}
                 disabled={isSavingReservation}>
                 {isSavingReservation ? <Spinner size="sm" /> : t("saveChanges") || "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Live Course Blocked Modal ─── */}
+      {liveBlockedModal?.open && (
+        <div
+          className="ed-scrim"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.72)",
+            backdropFilter: "blur(4px)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={() => setLiveBlockedModal(null)}
+        >
+          <div
+            className="ed-sheet"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "460px",
+              width: "100%",
+              background: "var(--bd-ink-900, #141414)",
+              border: "1px solid var(--bd-border-strong, #2f2f2f)",
+              borderRadius: "20px",
+              padding: "32px 28px",
+              textAlign: "center",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                background: "rgba(239, 68, 68, 0.15)",
+                color: "#ef4444",
+                marginBottom: "16px",
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+            </span>
+
+            <h3
+              style={{
+                margin: "0 0 10px",
+                fontFamily: "var(--bd-font-ui)",
+                fontSize: "20px",
+                fontWeight: 700,
+                color: "var(--bd-white, #fff)",
+              }}
+            >
+              {liveBlockedModal.title}
+            </h3>
+
+            <p
+              style={{
+                margin: "0 0 24px",
+                fontSize: "14.5px",
+                lineHeight: 1.55,
+                color: "var(--bd-gray-300, #ccc)",
+              }}
+            >
+              {liveBlockedModal.body}
+            </p>
+
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+                type="button"
+                onClick={() => setLiveBlockedModal(null)}
+                style={{
+                  height: "44px",
+                  padding: "0 28px",
+                  borderRadius: "999px",
+                  border: "none",
+                  background: "var(--bd-primary, #23ada4)",
+                  color: "#fff",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
+                {isMn ? "Ойлголоо" : "Got it"}
               </button>
             </div>
           </div>

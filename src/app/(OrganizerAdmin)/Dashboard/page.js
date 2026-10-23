@@ -172,6 +172,27 @@ export default function OrganizerDashboardPage() {
   const [selectedPromoteItem, setSelectedPromoteItem] = useState(null);
   const [promoTarget, setPromoTarget] = useState(null);
   const [selectedBookingDetail, setSelectedBookingDetail] = useState(null);
+  const [liveBlockedModal, setLiveBlockedModal] = useState(null);
+
+  const isEventLive = (ev) => {
+    if (!ev || ev.isDraft) return false;
+    const now = new Date();
+    return (
+      String(ev.status || "").toLowerCase() === "live" ||
+      Boolean(ev.isLive) ||
+      (ev.startDate && ev.endDate && new Date(ev.startDate) <= now && new Date(ev.endDate) >= now)
+    );
+  };
+
+  const isCourseLive = (c) => {
+    if (!c || c.isDraft) return false;
+    const now = new Date();
+    return (
+      String(c.status || "").toLowerCase() === "live" ||
+      Boolean(c.isLive) ||
+      (c.startDate && new Date(c.startDate) <= now && (!c.endDate || new Date(c.endDate) >= now))
+    );
+  };
 
   // Chart hover interaction
   const [hoverIndex, setHoverIndex] = useState(null);
@@ -1246,6 +1267,17 @@ export default function OrganizerDashboardPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveKebab(null);
+                          if (isEventLive(ev)) {
+                            setLiveBlockedModal({
+                              open: true,
+                              title: isMn ? "Арга хэмжээ шууд явагдаж байна" : "Event is Currently Live",
+                              body: isMn
+                                ? "Таны арга хэмжээ шууд явагдаж байгаа тул засах боломжгүй."
+                                : "Your event is live, you cannot edit this.",
+                              viewHref: `/EventDetailOrganiser?eventId=${ev._id}`,
+                            });
+                            return;
+                          }
                           router.push(`/BasicInfo?eventId=${ev._id}`);
                         }}
                       >
@@ -1442,6 +1474,17 @@ export default function OrganizerDashboardPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveKebab(null);
+                          if (isCourseLive(cr)) {
+                            setLiveBlockedModal({
+                              open: true,
+                              title: isMn ? "Сургалт явагдаж байна" : "Course is Currently Live",
+                              body: isMn
+                                ? "Таны сургалт шууд явагдаж байгаа тул засах боломжгүй."
+                                : "Your course is live, you cannot edit this.",
+                              viewHref: `/CourseDetailOrganiser?courseId=${cr._id}`,
+                            });
+                            return;
+                          }
                           router.push(`/AddProgram?courseId=${cr._id}`);
                         }}
                       >
@@ -1910,6 +1953,125 @@ export default function OrganizerDashboardPage() {
           </div>
         </div>
       )}
+      {/* ─── Live Blocked Modal ─── */}
+      {liveBlockedModal?.open && (
+        <div
+          className="og-scrim"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.72)",
+            backdropFilter: "blur(4px)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={() => setLiveBlockedModal(null)}
+        >
+          <div
+            className="og-sheet"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "460px",
+              width: "100%",
+              background: "var(--bd-ink-900, #141414)",
+              border: "1px solid var(--bd-border-strong, #2f2f2f)",
+              borderRadius: "20px",
+              padding: "32px 28px",
+              textAlign: "center",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                background: "rgba(239, 68, 68, 0.15)",
+                color: "#ef4444",
+                marginBottom: "16px",
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+            </span>
+
+            <h3
+              style={{
+                margin: "0 0 10px",
+                fontFamily: "var(--bd-font-ui)",
+                fontSize: "20px",
+                fontWeight: 700,
+                color: "var(--bd-white, #fff)",
+              }}
+            >
+              {liveBlockedModal.title}
+            </h3>
+
+            <p
+              style={{
+                margin: "0 0 24px",
+                fontSize: "14.5px",
+                lineHeight: 1.55,
+                color: "var(--bd-gray-300, #ccc)",
+              }}
+            >
+              {liveBlockedModal.body}
+            </p>
+
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+                type="button"
+                onClick={() => setLiveBlockedModal(null)}
+                style={{
+                  height: "44px",
+                  padding: "0 24px",
+                  borderRadius: "999px",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  background: "transparent",
+                  color: "#fff",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
+                {isMn ? "Хаах" : "Close"}
+              </button>
+              {liveBlockedModal.viewHref && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const href = liveBlockedModal.viewHref;
+                    setLiveBlockedModal(null);
+                    router.push(href);
+                  }}
+                  style={{
+                    height: "44px",
+                    padding: "0 24px",
+                    borderRadius: "999px",
+                    border: "none",
+                    background: "var(--bd-primary, #23ada4)",
+                    color: "#fff",
+                    fontWeight: 600,
+                    fontSize: "14px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {isMn ? "Дэлгэрэнгүй харах" : "View Details"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {promoTarget && (
         <PromotionPlanModal
           open={Boolean(promoTarget)}

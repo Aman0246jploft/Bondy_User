@@ -160,6 +160,7 @@ function EventDetailsContent() {
   const [pickStart, setPickStart] = useState("");
   const [pickEnd, setPickEnd] = useState("");
   const [customLabel, setCustomLabel] = useState("");
+  const [liveBlockedModal, setLiveBlockedModal] = useState(null);
   const [hoverIndex, setHoverIndex] = useState(null);
 
   const copy = {
@@ -462,9 +463,33 @@ function EventDetailsContent() {
           <div className="ed-heroPair">
             <button type="button" className="ed-secondary ed-ctaWide" onClick={() => setPromoOpen(true)}><Icon name="promote" />{copy.promote}</button>
             {canEdit && (
-              <button type="button" className="ed-secondary ed-ctaWide" onClick={() => router.push(`/BasicInfo?eventId=${event._id}`)}><Icon name="edit" />{copy.edit}</button>
+              <button
+                type="button"
+                className="ed-secondary ed-ctaWide"
+                onClick={() => {
+                  const now = new Date();
+                  const isLive = !event.isDraft && (
+                    String(event.status || "").toLowerCase() === "live" ||
+                    Boolean(event.isLive) ||
+                    (event.startDate && event.endDate && new Date(event.startDate) <= now && new Date(event.endDate) >= now)
+                  );
+                  if (isLive) {
+                    setLiveBlockedModal({
+                      open: true,
+                      title: isMn ? "Арга хэмжээ шууд явагдаж байна" : "Event is Currently Live",
+                      body: isMn
+                        ? "Таны арга хэмжээ шууд явагдаж байгаа тул засах боломжгүй."
+                        : "Your event is live, you cannot edit this.",
+                    });
+                    return;
+                  }
+                  router.push(`/BasicInfo?eventId=${event._id}`);
+                }}
+              >
+                <Icon name="edit" />{copy.edit}
+              </button>
             )}
-              </div>
+          </div>
               </div>
       </section>
 
@@ -534,7 +559,31 @@ function EventDetailsContent() {
             <div className="ed-cardH">
               <h2>{copy.types}</h2>
               {canEdit && (
-                <button type="button" className="ed-mini" onClick={() => router.push(`/BasicInfo?eventId=${event._id}&step=3`)}>{copy.edit}</button>
+                <button
+                  type="button"
+                  className="ed-mini"
+                  onClick={() => {
+                    const now = new Date();
+                    const isLive = !event.isDraft && (
+                      String(event.status || "").toLowerCase() === "live" ||
+                      Boolean(event.isLive) ||
+                      (event.startDate && event.endDate && new Date(event.startDate) <= now && new Date(event.endDate) >= now)
+                    );
+                    if (isLive) {
+                      setLiveBlockedModal({
+                        open: true,
+                        title: isMn ? "Арга хэмжээ шууд явагдаж байна" : "Event is Currently Live",
+                        body: isMn
+                          ? "Таны арга хэмжээ шууд явагдаж байгаа тул засах боломжгүй."
+                          : "Your event is live, you cannot edit this.",
+                      });
+                      return;
+                    }
+                    router.push(`/BasicInfo?eventId=${event._id}&step=3`);
+                  }}
+                >
+                  {copy.edit}
+                </button>
               )}
             </div>
             <div className="og-table og-t1 ed-ttable">
@@ -854,6 +903,103 @@ function EventDetailsContent() {
             <div className="ed-sheetF">
               <button type="button" className="ghost" onClick={() => setShowExternal(false)}>{copy.dismiss}</button>
               <button type="button" className="ed-popGo" disabled={isSaving} onClick={saveExternal}>{copy.save}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Live Event Blocked Modal ─────────────────────────────────── */}
+      {liveBlockedModal?.open && (
+        <div
+          className="ed-scrim"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.72)",
+            backdropFilter: "blur(4px)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={() => setLiveBlockedModal(null)}
+        >
+          <div
+            className="ed-sheet"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "460px",
+              width: "100%",
+              background: "var(--bd-ink-900, #141414)",
+              border: "1px solid var(--bd-border-strong, #2f2f2f)",
+              borderRadius: "20px",
+              padding: "32px 28px",
+              textAlign: "center",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                background: "rgba(239, 68, 68, 0.15)",
+                color: "#ef4444",
+                marginBottom: "16px",
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+            </span>
+
+            <h3
+              style={{
+                margin: "0 0 10px",
+                fontFamily: "var(--bd-font-ui)",
+                fontSize: "20px",
+                fontWeight: 700,
+                color: "var(--bd-white, #fff)",
+              }}
+            >
+              {liveBlockedModal.title}
+            </h3>
+
+            <p
+              style={{
+                margin: "0 0 24px",
+                fontSize: "14.5px",
+                lineHeight: 1.55,
+                color: "var(--bd-gray-300, #ccc)",
+              }}
+            >
+              {liveBlockedModal.body}
+            </p>
+
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+                type="button"
+                onClick={() => setLiveBlockedModal(null)}
+                style={{
+                  height: "44px",
+                  padding: "0 28px",
+                  borderRadius: "999px",
+                  border: "none",
+                  background: "var(--acc, #23ada4)",
+                  color: "var(--bd-white, #fff)",
+                  fontFamily: "var(--bd-font-ui)",
+                  fontSize: "14.5px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                {isMn ? "Хаах" : "Close"}
+              </button>
             </div>
           </div>
         </div>
