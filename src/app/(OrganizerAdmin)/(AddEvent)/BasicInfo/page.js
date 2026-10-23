@@ -83,8 +83,12 @@ function nowStamp() {
 
 function toDateInput(value) {
   if (!value) return "";
+  const raw = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    return raw.slice(0, 10);
+  }
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value).slice(0, 10);
+  if (Number.isNaN(d.getTime())) return raw.slice(0, 10);
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
@@ -1434,7 +1438,7 @@ function EventEditorContent() {
           qty: Number(t.cap),
           isFreeTicket: false,
           ...(t.ss ? { salesStart: t.ss } : {}),
-          ...(t.se ? { salesEnd: t.se } : {}),
+          ...(t.se ? { salesEnd: /^\d{4}-\d{2}-\d{2}$/.test(String(t.se).trim()) ? `${String(t.se).trim()}T23:59:59.999` : t.se } : {}),
         }));
 
     const totalTicketsCount = formattedTickets.reduce((sum, t) => sum + (t.qty || 0), 0);
