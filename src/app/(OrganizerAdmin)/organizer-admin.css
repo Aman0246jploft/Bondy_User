@@ -3126,6 +3126,123 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border-color: #FF5A5A;
 }
 
+.pe-phone-input .pe-in.form-control {
+  width: 100%;
+  padding-left: 52px;
+}
+
+.pe-phone-input .pe-phone-country {
+  border: 0;
+  border-radius: 13px 0 0 13px;
+  background: transparent;
+}
+
+.pe-phone-input .flag-dropdown.open,
+.pe-phone-input .flag-dropdown.open .selected-flag,
+.pe-phone-input .selected-flag:hover,
+.pe-phone-input .selected-flag:focus {
+  background: var(--bd-ink-800) !important;
+}
+
+.pe-phone-dropdown.country-list {
+  margin-top: 8px;
+  border: 1px solid var(--bd-border-strong);
+  border-radius: 12px;
+  background: var(--bd-ink-800) !important;
+  color: var(--bd-gray-200);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.45);
+}
+
+.pe-phone-dropdown .search {
+  display: flex;
+  align-items: center;
+  padding: 9px;
+  background: var(--bd-ink-800) !important;
+}
+
+.pe-phone-dropdown .search-box {
+  width: 100%;
+  height: 34px;
+  margin-left: 0;
+  border: 1px solid var(--bd-border-strong);
+  border-radius: 8px;
+  background: var(--bd-ink-700) !important;
+  color: var(--bd-white);
+}
+
+.pe-phone-dropdown .country {
+  color: var(--bd-gray-200);
+}
+
+.pe-phone-dropdown .country:hover,
+.pe-phone-dropdown .country.highlight {
+  background: rgba(35, 173, 164, 0.18) !important;
+}
+
+.pe-phone-dropdown .dial-code {
+  color: var(--bd-gray-500);
+}
+
+.pe-phone-dropdown .divider {
+  border-bottom-color: var(--bd-border-strong) !important;
+}
+
+.pe-phone-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pe-phone-dropdown::-webkit-scrollbar-track {
+  background: var(--bd-ink-800);
+}
+
+.pe-phone-dropdown::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: var(--bd-gray-600);
+}
+
+.pe-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.pe-contact-row .pe-phone-input,
+.pe-contact-row .pe-in {
+  flex: 1;
+  min-width: 0;
+}
+
+.pe-verify,
+.pe-verified {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 13px;
+  border-radius: 13px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pe-verify {
+  border: 1px solid var(--acc);
+  background: rgba(35, 173, 164, 0.1);
+  color: var(--acc-bright);
+  cursor: pointer;
+}
+
+.pe-verify:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pe-verified {
+  border: 1px solid rgba(35, 173, 164, 0.45);
+  background: rgba(35, 173, 164, 0.1);
+  color: var(--acc-bright);
+}
+
 .pe-ta {
   box-sizing: border-box;
   width: 100%;

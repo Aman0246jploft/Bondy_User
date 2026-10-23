@@ -9,9 +9,103 @@ import jsQR from "jsqr";
 import { useLanguage } from "@/context/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 
+const isDuplicateScanResult = (ticketData, rawMsg = "") => {
+  if (ticketData) {
+    if (ticketData.isDuplicateScan) return true;
+    if (ticketData.validationStatus === "ALREADY_CHECKED_IN") return true;
+    if (ticketData.isValid === false && (ticketData.isAlreadyCheckedIn || ticketData.checkedInToday)) return true;
+    const msg = String(ticketData.message || "").toLowerCase();
+    if (
+      msg.includes("already checked") ||
+      msg.includes("already been scanned") ||
+      msg.includes("already been checked") ||
+      msg.includes("already scanned") ||
+      msg.includes("already used") ||
+      msg.includes("duplicate") ||
+      msg.includes("аль хэдийн бүртгэгдсэн") ||
+      msg.includes("аль хэдийн ашиглагдсан") ||
+      msg.includes("давхардсан")
+    ) {
+      return true;
+    }
+  }
+  if (rawMsg) {
+    const err = String(rawMsg).toLowerCase();
+    return (
+      err.includes("already checked") ||
+      err.includes("already been scanned") ||
+      err.includes("already been checked") ||
+      err.includes("already scanned") ||
+      err.includes("already_checked_in") ||
+      err.includes("already used") ||
+      err.includes("duplicate") ||
+      err.includes("all sessions checked in") ||
+      err.includes("already checked in today") ||
+      err.includes("аль хэдийн бүртгэгдсэн") ||
+      err.includes("аль хэдийн ашиглагдсан") ||
+      err.includes("давхардсан")
+    );
+  }
+  return false;
+};
+
+const formatScanTime = (dateVal, isMn) => {
+  if (!dateVal) return null;
+  try {
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleString(isMn ? "mn-MN" : "en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  } catch {
+    return null;
+  }
+};
+
+const playScanFeedback = (isDuplicate) => {
+  try {
+    if (typeof window === "undefined") return;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (isDuplicate) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(180, ctx.currentTime);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.35);
+    } else {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.25);
+    }
+  } catch {
+    // Non-fatal
+  }
+};
+
 function StaffHome() {
   const router = useRouter();
   const { t, language } = useLanguage();
+  const isMn = language === "mn";
 
   // Authentication check
   const [authorized, setAuthorized] = useState(false);
@@ -259,7 +353,7 @@ function StaffHome() {
 
   const handleVerifyCode = async (code) => {
     if (!code || !code.trim()) {
-      toast.error("Invalid ticket or QR code");
+      toast.error(isMn ? "Тасалбар эсвэл QR код буруу байна" : "Invalid ticket or QR code");
       return;
     }
     setOriginalCode(code);
@@ -269,22 +363,91 @@ function StaffHome() {
     setLoadingVerify(true);
     try {
       const payload = { qrCodeData: code.trim() };
-      // if (activeEntity) {
-      //   payload.entityId = activeEntity._id;
-      // }
       // Single-shot: verify + auto check-in via /booking/scan-qr
       const res = await staffApi.bookingScanQR(payload);
       if (res?.status) {
         setVerifiedTicket(res.data);
-        // Refresh lists in background after successful scan
+        const isDuplicate = isDuplicateScanResult(res.data);
+        if (isDuplicate) {
+          playScanFeedback(true);
+          if (typeof navigator !== "undefined" && navigator.vibrate) {
+            navigator.vibrate([200, 100, 200, 100, 400]);
+          }
+          toast.error(
+            isMn
+              ? "⚠️ Давхардсан уншилт! Энэ тасалбар аль хэдийн бүртгэгдсэн байна."
+              : "⚠️ Duplicate scan! This ticket has already been used.",
+            { id: "scan-toast", duration: 5000 }
+          );
+        } else if (res.data?.isValid) {
+          playScanFeedback(false);
+          if (typeof navigator !== "undefined" && navigator.vibrate) {
+            navigator.vibrate(100);
+          }
+          toast.success(
+            res.data.message || (isMn ? "Амжилттай бүртгэгдлээ" : "Checked In Successfully"),
+            { id: "scan-toast", duration: 3000 }
+          );
+        }
+        // Refresh lists in background after scan
         fetchAttendeesList();
         fetchScanHistory();
       } else {
-        setVerifyError(res?.message || "Failed to verify ticket");
+        const rawMsg = res?.message || "Failed to verify ticket";
+        if (isDuplicateScanResult(null, rawMsg)) {
+          playScanFeedback(true);
+          if (typeof navigator !== "undefined" && navigator.vibrate) {
+            navigator.vibrate([200, 100, 200, 100, 400]);
+          }
+          toast.error(
+            isMn
+              ? "⚠️ Давхардсан уншилт! Энэ тасалбар аль хэдийн бүртгэгдсэн байна."
+              : "⚠️ Duplicate scan! This ticket has already been used.",
+            { id: "scan-toast", duration: 5000 }
+          );
+          setVerifiedTicket({
+            isValid: false,
+            isAlreadyCheckedIn: true,
+            isDuplicateScan: true,
+            validationStatus: "ALREADY_CHECKED_IN",
+            message: rawMsg,
+            attendee: { ticketNumber: code },
+          });
+          setVerifyError(null);
+        } else {
+          setVerifyError(rawMsg);
+        }
       }
     } catch (err) {
       console.error("Scan failed", err);
-      setVerifyError(err?.response?.data?.message || "Scan failed");
+      const rawMsg = err?.response?.data?.message || err?.message || "Scan failed";
+      if (isDuplicateScanResult(null, rawMsg)) {
+        playScanFeedback(true);
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          navigator.vibrate([200, 100, 200, 100, 400]);
+        }
+        toast.error(
+          isMn
+            ? "⚠️ Давхардсан уншилт! Энэ тасалбар аль хэдийн бүртгэгдсэн байна."
+            : "⚠️ Duplicate scan! This ticket has already been used.",
+          { id: "scan-toast", duration: 5000 }
+        );
+        const errData = err?.response?.data?.data || {};
+        setVerifiedTicket({
+          isValid: false,
+          isAlreadyCheckedIn: true,
+          isDuplicateScan: true,
+          validationStatus: "ALREADY_CHECKED_IN",
+          message: rawMsg,
+          checkedInAt: errData.checkedInAt || null,
+          event: errData.event || (activeEntity ? { title: activeEntity.eventTitle || activeEntity.courseTitle } : null),
+          attendee: errData.attendee || { ticketNumber: code },
+          booking: errData.booking || null,
+        });
+        setVerifyError(null);
+      } else {
+        setVerifyError(rawMsg);
+      }
     } finally {
       setLoadingVerify(false);
     }
@@ -1037,6 +1200,59 @@ function StaffHome() {
         .badge-status.expired {
           background: rgba(255, 92, 92, 0.15);
           color: #ff5c5c;
+        }
+        .badge-status.duplicate {
+          background: rgba(220, 38, 38, 0.2);
+          color: #ef4444;
+          border: 1px solid rgba(239, 68, 68, 0.4);
+          animation: pulseWarning 1.5s infinite;
+        }
+        @keyframes pulseWarning {
+          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+          70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .duplicate-scan-card {
+          background: linear-gradient(135deg, rgba(220, 38, 38, 0.22) 0%, rgba(153, 27, 27, 0.15) 100%);
+          border: 1.5px solid rgba(239, 68, 68, 0.6);
+          border-radius: 14px;
+          padding: 16px;
+          margin-bottom: 16px;
+          text-align: center;
+          animation: pulseWarning 2s infinite ease-in-out;
+        }
+        .duplicate-scan-icon {
+          font-size: 38px;
+          line-height: 1;
+          margin-bottom: 8px;
+          display: inline-block;
+          filter: drop-shadow(0 2px 8px rgba(239, 68, 68, 0.5));
+        }
+        .duplicate-scan-title {
+          font-size: 16px;
+          font-weight: 800;
+          color: #ff6b6b;
+          margin-bottom: 6px;
+          letter-spacing: 0.3px;
+          text-transform: uppercase;
+        }
+        .duplicate-scan-desc {
+          font-size: 13px;
+          color: #fca5a5;
+          margin-bottom: 10px;
+          line-height: 1.45;
+        }
+        .duplicate-scan-time-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: rgba(0, 0, 0, 0.55);
+          border: 1px solid rgba(239, 68, 68, 0.4);
+          color: #fff;
+          font-size: 12px;
+          font-weight: 600;
+          padding: 6px 12px;
+          border-radius: 20px;
         }
       `}</style>
 
@@ -1862,7 +2078,11 @@ function StaffHome() {
       {/* --------------------------------------------------------------- */}
       <Modal show={showVerifyModal} onHide={closeVerifyModal} centered contentClassName="verify-modal-content">
         <Modal.Header closeButton closeVariant="white" className="border-0 pb-0">
-          <Modal.Title style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>{t("ticketVerification") || "Ticket Verification"}</Modal.Title>
+          <Modal.Title style={{ fontSize: "18px", fontWeight: "700", color: verifiedTicket && isDuplicateScanResult(verifiedTicket) ? "#ff6b6b" : "#fff" }}>
+            {verifiedTicket && isDuplicateScanResult(verifiedTicket)
+              ? (isMn ? "⚠️ Давхардсан уншилт" : "⚠️ Duplicate Scan")
+              : (t("ticketVerification") || "Ticket Verification")}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body className="pt-3 px-0">
           {loadingVerify ? (
@@ -1880,60 +2100,92 @@ function StaffHome() {
               </button>
             </div>
           ) : verifiedTicket ? (() => {
-            const isCheckedInToday = verifiedTicket.checkedInToday;
+            const isDuplicate = isDuplicateScanResult(verifiedTicket);
+            const isCheckedInToday = !isDuplicate && verifiedTicket.checkedInToday;
             // Determine the outcome status for display
-            const isSuccess = verifiedTicket.isValid;
-            const isAlreadyIn = verifiedTicket.isAlreadyCheckedIn;
+            const isSuccess = verifiedTicket.isValid && !isDuplicate;
+            const isAlreadyIn = (verifiedTicket.isAlreadyCheckedIn || isDuplicate) && !isSuccess;
             const isExpired = verifiedTicket.isExpired;
+            const checkedInTimestamp = formatScanTime(
+              verifiedTicket.checkedInAt || verifiedTicket.attendee?.checkedInAt || verifiedTicket.booking?.checkedInAt,
+              isMn
+            );
 
             return (
               <div className="verify-details-container">
                 {/* Event Info */}
                 <div className="verify-event-info mb-3">
                   <span className="verify-label">{t("eventOrCourse") || "Event / Course"}</span>
-                  <div className="verify-val" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>{verifiedTicket.event?.title || "Unknown"}</div>
+                  <div className="verify-val" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                    {verifiedTicket.event?.title || activeEntity?.eventTitle || activeEntity?.courseTitle || (isMn ? "Тодорхойгүй" : "Unknown")}
+                  </div>
                 </div>
 
-                {/* Status Badge — reflects auto check-in result */}
-                <div className="badge-wrapper mb-4">
-                  {isSuccess ? (
-                    <div className="badge-status valid" style={{ background: "rgba(35, 173, 164, 0.15)", color: "#23ada4" }}>
-                      &#10003; {verifiedTicket.message || t("checkedInSuccess") || "Checked In Successfully"}
+                {/* If Duplicate Scan, show high-visibility warning card */}
+                {isDuplicate ? (
+                  <div className="duplicate-scan-card">
+                    <div className="duplicate-scan-icon">⚠️</div>
+                    <div className="duplicate-scan-title">
+                      {t("duplicateScanBanner") || (isMn ? "Энэ тасалбар аль хэдийн ашиглагдсан байна!" : "This ticket has already been used / scanned!")}
                     </div>
-                  ) : isCheckedInToday ? (
-                    <div className="badge-status checked-in" style={{ background: "rgba(52, 199, 89, 0.15)", color: "#34c759" }}>
-                      {t("checkedInToday") || "Already Checked In Today"}
+                    <div className="duplicate-scan-desc">
+                      {t("duplicateScanDesc") || (isMn ? "Анхааруулга: Энэхүү тасалбарыг өмнө нь уншуулж бүртгэсэн байна. Дахин нэвтрүүлэх боломжгүй." : "Warning: This ticket was already scanned and checked in. Entry should be denied.")}
                     </div>
-                  ) : isAlreadyIn ? (
-                    <div className="badge-status checked-in">
-                      {t("alreadyCheckedIn") || "Already Checked In"}
-                    </div>
-                  ) : isExpired ? (
-                    <div className="badge-status expired">
-                      {t("expiredTicket") || "Expired Ticket"}
-                    </div>
-                  ) : (
-                    <div className="badge-status expired">
-                      {verifiedTicket.message || "Check-in not allowed"}
-                    </div>
-                  )}
-                </div>
+                    {checkedInTimestamp && (
+                      <div className="duplicate-scan-time-badge">
+                        <span>🕒</span>
+                        <span>{t("previouslyCheckedInAt") || (isMn ? "Өмнө нь бүртгэгдсэн:" : "Previously checked in at:")} {checkedInTimestamp}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Status Badge — reflects normal check-in result */
+                  <div className="badge-wrapper mb-4">
+                    {isSuccess ? (
+                      <div className="badge-status valid" style={{ background: "rgba(35, 173, 164, 0.15)", color: "#23ada4" }}>
+                        &#10003; {verifiedTicket.message || t("checkedInSuccess") || "Checked In Successfully"}
+                      </div>
+                    ) : isCheckedInToday ? (
+                      <div className="badge-status checked-in" style={{ background: "rgba(52, 199, 89, 0.15)", color: "#34c759" }}>
+                        {t("checkedInToday") || "Already Checked In Today"}
+                      </div>
+                    ) : isAlreadyIn ? (
+                      <div className="badge-status checked-in">
+                        {t("alreadyCheckedIn") || "Already Checked In"}
+                      </div>
+                    ) : isExpired ? (
+                      <div className="badge-status expired">
+                        {t("expiredTicket") || "Expired Ticket"}
+                      </div>
+                    ) : (
+                      <div className="badge-status expired">
+                        {verifiedTicket.message || "Check-in not allowed"}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Attendee Details */}
                 {verifiedTicket.attendee && (
                   <div className="verify-section mb-3">
-                    <div className="verify-row">
-                      <span className="verify-label">{t("attendeeName") || "Attendee Name"}</span>
-                      <span className="verify-val">{verifiedTicket.attendee.firstName} {verifiedTicket.attendee.lastName}</span>
-                    </div>
-                    <div className="verify-row">
-                      <span className="verify-label">{t("email") || "Email"}</span>
-                      <span className="verify-val" style={{ wordBreak: "break-all" }}>{verifiedTicket.attendee.email}</span>
-                    </div>
-                    <div className="verify-row">
-                      <span className="verify-label">{t("ticketNumber") || "Ticket Number"}</span>
-                      <span className="verify-val">{verifiedTicket.attendee.ticketNumber}</span>
-                    </div>
+                    {(verifiedTicket.attendee.firstName || verifiedTicket.attendee.lastName) && (
+                      <div className="verify-row">
+                        <span className="verify-label">{t("attendeeName") || "Attendee Name"}</span>
+                        <span className="verify-val">{verifiedTicket.attendee.firstName || ""} {verifiedTicket.attendee.lastName || ""}</span>
+                      </div>
+                    )}
+                    {verifiedTicket.attendee.email && (
+                      <div className="verify-row">
+                        <span className="verify-label">{t("email") || "Email"}</span>
+                        <span className="verify-val" style={{ wordBreak: "break-all" }}>{verifiedTicket.attendee.email}</span>
+                      </div>
+                    )}
+                    {verifiedTicket.attendee.ticketNumber && (
+                      <div className="verify-row">
+                        <span className="verify-label">{t("ticketNumber") || "Ticket Number"}</span>
+                        <span className="verify-val">{verifiedTicket.attendee.ticketNumber}</span>
+                      </div>
+                    )}
                     {verifiedTicket.attendee.ticketName && (
                       <div className="verify-row">
                         <span className="verify-label">{t("ticketType") || "Ticket Type"}</span>
@@ -1952,10 +2204,12 @@ function StaffHome() {
                 {/* Booking Details */}
                 {verifiedTicket.booking && (
                   <div className="verify-section mb-4">
-                    <div className="verify-row">
-                      <span className="verify-label">{t("bookingID") || "Booking ID"}</span>
-                      <span className="verify-val">{verifiedTicket.booking.bookingId}</span>
-                    </div>
+                    {verifiedTicket.booking.bookingId && (
+                      <div className="verify-row">
+                        <span className="verify-label">{t("bookingID") || "Booking ID"}</span>
+                        <span className="verify-val">{verifiedTicket.booking.bookingId}</span>
+                      </div>
+                    )}
                     {verifiedTicket.booking.passType && (
                       <div className="verify-row">
                         <span className="verify-label">{t("passType") || "Pass Type"}</span>
@@ -1968,14 +2222,16 @@ function StaffHome() {
                         <span className="verify-val">{new Date(verifiedTicket.booking.passExpiryDate).toLocaleDateString()}</span>
                       </div>
                     )}
-                    <div className="verify-row">
-                      <span className="verify-label">{t("checkedInQty") || "Checked In Qty"}</span>
-                      <span className="verify-val">{verifiedTicket.booking.checkedInQty || 0} / {verifiedTicket.booking.totalQty}</span>
-                    </div>
+                    {(verifiedTicket.booking.totalQty !== undefined) && (
+                      <div className="verify-row">
+                        <span className="verify-label">{t("checkedInQty") || "Checked In Qty"}</span>
+                        <span className="verify-val">{verifiedTicket.booking.checkedInQty || 0} / {verifiedTicket.booking.totalQty}</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Single close button — auto check-in is complete */}
+                {/* Single close button — styled prominently for duplicate scan / deny entry */}
                 <div className="verify-actions d-flex gap-2">
                   <button
                     className="common_btn w-100"
@@ -1983,9 +2239,21 @@ function StaffHome() {
                       closeVerifyModal();
                       setManualTicketNumber("");
                     }}
-                    style={{ background: "#333", color: "#fff", border: "none", borderRadius: "20px", height: "40px" }}
+                    style={{
+                      background: isDuplicate ? "#dc2626" : "#333",
+                      color: "#fff",
+                      border: isDuplicate ? "1px solid #ef4444" : "none",
+                      borderRadius: "20px",
+                      height: "42px",
+                      fontWeight: isDuplicate ? "700" : "500",
+                      fontSize: "14px",
+                      boxShadow: isDuplicate ? "0 4px 14px rgba(220, 38, 38, 0.4)" : "none",
+                      letterSpacing: isDuplicate ? "0.3px" : "normal",
+                    }}
                   >
-                    {t("close") || "Close"}
+                    {isDuplicate
+                      ? (t("closeDenyEntry") || (isMn ? "Хаах (Нэвтрүүлэхгүй)" : "Close (Deny Entry)"))
+                      : (t("close") || "Close")}
                   </button>
                 </div>
               </div>

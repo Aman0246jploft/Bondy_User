@@ -7,6 +7,9 @@ import toast from "react-hot-toast";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import OtpVerifyCard from "@/components/Otp/OtpVerifyCard";
+import SingleDateCalendarPopover from "@/components/SingleDateCalendarPopover";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 import "./profile-unified.css";
 
 const GENDER_OPTIONS = [
@@ -19,13 +22,23 @@ function isoToDisplay(iso) {
   if (!iso) return "";
   const [year, month, day] = String(iso).slice(0, 10).split("-");
   if (!year || !month || !day) return "";
-  return `${month}.${day}.${year}`;
+  return `${day}.${month}.${year}`;
 }
 
 function displayToIso(text) {
   const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(text || "").trim());
   if (!match) return "";
-  return `${match[3]}-${match[1]}-${match[2]}`;
+  const [, day, month, year] = match;
+  const date = new Date(`${year}-${month}-${day}T00:00:00`);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== Number(year) ||
+    date.getMonth() !== Number(month) - 1 ||
+    date.getDate() !== Number(day)
+  ) {
+    return "";
+  }
+  return `${year}-${month}-${day}`;
 }
 
 function ageFromIso(iso) {
@@ -38,17 +51,12 @@ function ageFromIso(iso) {
   return age;
 }
 
-function splitPhone(value, fallbackCode) {
-  const trimmed = String(value || "").trim();
-  const match = trimmed.match(/^(\+\d{1,4})\s*(.*)$/);
-  if (match) {
-    return { countryCode: match[1], contactNumber: match[2].replace(/\s+/g, "") };
-  }
-  return { countryCode: fallbackCode || "+976", contactNumber: trimmed.replace(/\s+/g, "") };
-}
+const phoneIdentity = ({ countryCode, contactNumber }) =>
+  `${String(countryCode || "").trim()}|${String(contactNumber || "").trim()}`;
 
 export default function UnifiedProfile({ forcedRole = null }) {
   const { t, language } = useLanguage();
+  const isMn = language === "mn";
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -57,6 +65,7 @@ export default function UnifiedProfile({ forcedRole = null }) {
   const [saveError, setSaveError] = useState("");
   const [otpTarget, setOtpTarget] = useState(null);
   const [otpBusy, setOtpBusy] = useState(false);
+  const [isDobPickerOpen, setIsDobPickerOpen] = useState(false);
   const [verifiedPhone, setVerifiedPhone] = useState("");
   const [verifiedEmail, setVerifiedEmail] = useState("");
 
@@ -68,7 +77,9 @@ export default function UnifiedProfile({ forcedRole = null }) {
     email: "",
     dob: "",
     contactNumber: "",
-    countryCode: "",
+    countryCode: "+976",
+    phoneVerified: false,
+    emailVerified: false,
     profileImage: "",
     backgroundImage: "",
     gender: "",
@@ -94,6 +105,7 @@ export default function UnifiedProfile({ forcedRole = null }) {
 
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
+  const dobInputRef = useRef(null);
 
   // Fetch initial profile & categories
   useEffect(() => {
@@ -118,12 +130,10 @@ export default function UnifiedProfile({ forcedRole = null }) {
             businessName: u.businessName || "",
             email: u.email || "",
             dob: isoToDisplay(u.dob),
-            contactNumber: u.contactNumber
-              ? u.countryCode
-                ? `${u.countryCode} ${u.contactNumber}`
-                : u.contactNumber
-              : "",
-            countryCode: u.countryCode || "",
+            contactNumber: u.contactNumber || "",
+            countryCode: u.countryCode || "+976",
+            phoneVerified: Boolean(u.verifications?.phone?.isVerified),
+            emailVerified: Boolean(u.verifications?.email?.isVerified),
             profileImage: u.profileImage || "",
             backgroundImage: u.backgroundImage || "",
             gender: u.gender || "",
@@ -212,10 +222,19 @@ export default function UnifiedProfile({ forcedRole = null }) {
         profileData.gender !== backupProfileData.gender ||
         profileData.bio !== backupProfileData.bio ||
         profileData.email !== backupProfileData.email ||
+        profileData.countryCode !== backupProfileData.countryCode ||
         profileData.contactNumber !== backupProfileData.contactNumber ||
         profileImageFile ||
         backgroundImageFile ||
         !sameIds(selectedCategoryIds, backupCategoryIds)),
+  );
+
+  const phoneChanged = Boolean(
+    backupProfileData && phoneIdentity(profileData) !== phoneIdentity(backupProfileData),
+  );
+  const emailChanged = Boolean(
+    backupProfileData &&
+      profileData.email.trim() !== String(backupProfileData.email || "").trim(),
   );
 
   const validateForm = () => {
@@ -236,17 +255,13 @@ export default function UnifiedProfile({ forcedRole = null }) {
     e?.preventDefault();
     if (!validateForm()) return;
     if (
-      backupProfileData &&
-      profileData.contactNumber !== backupProfileData.contactNumber &&
-      profileData.contactNumber !== verifiedPhone
+      phoneChanged && phoneIdentity(profileData) !== verifiedPhone
     ) {
       setSaveError(t("otpNeedPhone"));
       return;
     }
     if (
-      backupProfileData &&
-      profileData.email.trim() !== String(backupProfileData.email || "").trim() &&
-      profileData.email.trim() !== verifiedEmail
+      emailChanged && profileData.email.trim() !== verifiedEmail
     ) {
       setSaveError(t("otpNeedEmail"));
       return;
@@ -292,10 +307,9 @@ export default function UnifiedProfile({ forcedRole = null }) {
       if (backupProfileData && profileData.email !== backupProfileData.email) {
         updatePayload.email = profileData.email.trim();
       }
-      if (backupProfileData && profileData.contactNumber !== backupProfileData.contactNumber) {
-        const phone = splitPhone(profileData.contactNumber, profileData.countryCode);
-        updatePayload.countryCode = phone.countryCode;
-        updatePayload.contactNumber = phone.contactNumber;
+      if (backupProfileData && phoneIdentity(profileData) !== phoneIdentity(backupProfileData)) {
+        updatePayload.countryCode = profileData.countryCode;
+        updatePayload.contactNumber = profileData.contactNumber.trim();
       }
 
       const response = await authApi.updateProfile(updatePayload);
@@ -309,11 +323,9 @@ export default function UnifiedProfile({ forcedRole = null }) {
           lastName: updatedUser.lastName || profileData.lastName,
           email: updatedUser.email || profileData.email,
           countryCode: updatedUser.countryCode || profileData.countryCode,
-          contactNumber: updatedUser.contactNumber
-            ? updatedUser.countryCode
-              ? `${updatedUser.countryCode} ${updatedUser.contactNumber}`
-              : updatedUser.contactNumber
-            : profileData.contactNumber,
+          contactNumber: updatedUser.contactNumber || profileData.contactNumber,
+          phoneVerified: updatedUser.verifications?.phone?.isVerified ?? profileData.phoneVerified,
+          emailVerified: updatedUser.verifications?.email?.isVerified ?? profileData.emailVerified,
           dob: updatedUser.dob ? isoToDisplay(updatedUser.dob) : profileData.dob,
           profileImage: updatedUser.profileImage || uploadedProfileImage,
           backgroundImage: updatedUser.backgroundImage || uploadedBackgroundImage,
@@ -350,9 +362,9 @@ export default function UnifiedProfile({ forcedRole = null }) {
       ...prev,
       email: user.email || prev.email,
       countryCode: user.countryCode || prev.countryCode,
-      contactNumber: user.contactNumber
-        ? (user.countryCode ? `${user.countryCode} ${user.contactNumber}` : user.contactNumber)
-        : prev.contactNumber,
+      contactNumber: user.contactNumber || prev.contactNumber,
+      phoneVerified: user.verifications?.phone?.isVerified ?? prev.phoneVerified,
+      emailVerified: user.verifications?.email?.isVerified ?? prev.emailVerified,
     }));
   };
 
@@ -360,7 +372,10 @@ export default function UnifiedProfile({ forcedRole = null }) {
     try {
       setOtpBusy(true);
       const res = kind === "phone"
-        ? await apiClient.post("/verification/phone/send-otp", splitPhone(profileData.contactNumber, profileData.countryCode))
+        ? await apiClient.post("/verification/phone/send-otp", {
+            countryCode: profileData.countryCode,
+            contactNumber: profileData.contactNumber.trim(),
+          })
         : await apiClient.post("/verification/email/send-otp", { email: profileData.email });
       if (res?.status) {
         setOtpTarget(kind);
@@ -378,8 +393,14 @@ export default function UnifiedProfile({ forcedRole = null }) {
       const path = otpTarget === "phone" ? "/verification/phone/verify-otp" : "/verification/email/verify-otp";
       const res = await apiClient.post(path, { otp: code });
       if (res?.status) {
-        if (otpTarget === "phone") setVerifiedPhone(profileData.contactNumber);
-        if (otpTarget === "email") setVerifiedEmail(profileData.email.trim());
+        if (otpTarget === "phone") {
+          setVerifiedPhone(phoneIdentity(profileData));
+          setProfileData((current) => ({ ...current, phoneVerified: true }));
+        }
+        if (otpTarget === "email") {
+          setVerifiedEmail(profileData.email.trim());
+          setProfileData((current) => ({ ...current, emailVerified: true }));
+        }
         await refreshContact();
         setOtpTarget(null);
         return true;
@@ -396,7 +417,10 @@ export default function UnifiedProfile({ forcedRole = null }) {
     try {
       setOtpBusy(true);
       const res = otpTarget === "phone"
-        ? await apiClient.post("/verification/phone/resend-otp", splitPhone(profileData.contactNumber, profileData.countryCode))
+        ? await apiClient.post("/verification/phone/resend-otp", {
+            countryCode: profileData.countryCode,
+            contactNumber: profileData.contactNumber.trim(),
+          })
         : await apiClient.post("/verification/email/resend-otp", { email: profileData.email });
       return Boolean(res?.status);
     } catch {
@@ -534,7 +558,9 @@ export default function UnifiedProfile({ forcedRole = null }) {
             </div>
             <div className="ac-ro">
               <span className="ac-rok">{t("acPhoneLabel")}</span>
-              <span className="ac-rov">{profileData.contactNumber || "—"}</span>
+              <span className="ac-rov">
+                {[profileData.countryCode, profileData.contactNumber].filter(Boolean).join(" ") || "—"}
+              </span>
             </div>
             <div className="ac-ro">
               <span className="ac-rok">{t("acEmailLabel")}</span>
@@ -581,16 +607,36 @@ export default function UnifiedProfile({ forcedRole = null }) {
           <div>
             <span className="ac-lbl">{t("acPhoneLabel")} <span style={{ color: "#FF5A5A" }}>*</span></span>
             <div className="ac-field-row">
-              <input
-                type="tel"
-                className="ac-in"
-                value={profileData.contactNumber}
-                onChange={(e) => setProfileData({ ...profileData, contactNumber: e.target.value })}
-                placeholder="+976 9911 2233"
+              <PhoneInput
+                country="mn"
+                value={`${profileData.countryCode || ""}${profileData.contactNumber || ""}`.replace(/\D/g, "")}
+                onChange={(value, country) => {
+                  const dialCode = String(country?.dialCode || "");
+                  const countryCode = dialCode ? `+${dialCode}` : profileData.countryCode;
+                  const contactNumber = dialCode && String(value).startsWith(dialCode)
+                    ? String(value).slice(dialCode.length)
+                    : String(value || "");
+                  setProfileData((current) => ({ ...current, countryCode, contactNumber }));
+                }}
+                enableSearch
+                searchPlaceholder={isMn ? "Улс хайх" : "Search country"}
+                inputProps={{
+                  name: "phone",
+                  required: true,
+                  "aria-label": t("acPhoneLabel"),
+                }}
+                containerClass="ac-phone-input"
+                inputClass="ac-in"
+                buttonClass="ac-phone-country"
+                dropdownClass="ac-phone-dropdown"
               />
-              <button type="button" className="ac-change-btn" onClick={() => openContactOtp("phone")} disabled={otpBusy}>
-                {t("otpVerify")}
-              </button>
+              {phoneChanged ? (
+                <button type="button" className="ac-change-btn" onClick={() => openContactOtp("phone")} disabled={otpBusy}>
+                  {t("otpVerify")}
+                </button>
+              ) : profileData.phoneVerified ? (
+                <span className="ac-verified-status">✓ {isMn ? "Баталгаажсан" : "Verified"}</span>
+              ) : null}
             </div>
             <span className="ac-hint">{t("acPhoneHint")}</span>
           </div>
@@ -604,9 +650,13 @@ export default function UnifiedProfile({ forcedRole = null }) {
                 onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                 placeholder="имэйл@bondy.mn"
               />
-              <button type="button" className="ac-change-btn" onClick={() => openContactOtp("email")} disabled={otpBusy}>
-                {t("otpVerify")}
-              </button>
+              {emailChanged ? (
+                <button type="button" className="ac-change-btn" onClick={() => openContactOtp("email")} disabled={otpBusy}>
+                  {t("otpVerify")}
+                </button>
+              ) : profileData.emailVerified ? (
+                <span className="ac-verified-status">✓ {isMn ? "Баталгаажсан" : "Verified"}</span>
+              ) : null}
             </div>
             <span className="ac-hint">{t("acEmailHint")}</span>
           </div>
@@ -615,17 +665,49 @@ export default function UnifiedProfile({ forcedRole = null }) {
         <div className="ac-pair" style={{ marginTop: 14 }}>
           <label>
             <span className="ac-lbl">{t("acDobLabel")}</span>
-            <input
-              type="text"
-              className="ac-in"
-              value={profileData.dob}
-              onChange={(e) => setProfileData({ ...profileData, dob: e.target.value })}
-              aria-invalid={!!errors.dob}
-              inputMode="numeric"
-              maxLength={10}
-              placeholder="MM.DD.YYYY"
-            />
+            <div className="ac-date-picker">
+              <input
+                ref={dobInputRef}
+                type="text"
+                className="ac-in"
+                value={profileData.dob}
+                onClick={() => setIsDobPickerOpen(true)}
+                onFocus={() => setIsDobPickerOpen(true)}
+                aria-invalid={!!errors.dob}
+                aria-haspopup="dialog"
+                aria-expanded={isDobPickerOpen}
+                readOnly
+                placeholder="DD.MM.YYYY"
+              />
+              <button
+                type="button"
+                className="ac-date-picker-btn"
+                aria-label={t("acDobLabel")}
+                onClick={() => setIsDobPickerOpen(true)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7 2v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm3 8h2m4 0h2m-8 4h2m4 0h2" />
+                </svg>
+              </button>
+            </div>
             {errors.dob && <span className="ac-err">{errors.dob}</span>}
+            {isDobPickerOpen && (
+              <SingleDateCalendarPopover
+                anchorRef={dobInputRef}
+                value={profileData.dob}
+                language={language}
+                t={t}
+                title={t("acDobLabel")}
+                minDate={new Date(1900, 0, 1)}
+                maxDate={new Date()}
+                onApply={(formatted) => {
+                  setProfileData((current) => ({ ...current, dob: formatted }));
+                  setErrors((current) => ({ ...current, dob: undefined }));
+                  setIsDobPickerOpen(false);
+                }}
+                onCancel={() => setIsDobPickerOpen(false)}
+              />
+            )}
           </label>
           <div>
             <span className="ac-lbl">{t("acGender")}</span>

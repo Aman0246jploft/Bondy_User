@@ -4,17 +4,24 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import authApi from "@/api/authApi";
+import apiClient from "@/api/apiClient";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import GlobalLoader from "@/components/GlobalLoader";
+import OtpVerifyCard from "@/components/Otp/OtpVerifyCard";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 const EMPTY_FORM = {
   logo: "",
   cover: "",
   name: "",
   about: "",
+  countryCode: "+976",
   phone: "",
+  phoneVerified: false,
   email: "",
+  emailVerified: false,
   social: "",
 };
 
@@ -28,6 +35,10 @@ export default function OrganizerProfilePage() {
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saveErr, setSaveErr] = useState("");
+  const [otpTarget, setOtpTarget] = useState(null);
+  const [otpBusy, setOtpBusy] = useState(false);
+  const [verifiedPhone, setVerifiedPhone] = useState("");
+  const [verifiedEmail, setVerifiedEmail] = useState("");
   const [justSaved, setJustSaved] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(true);
@@ -84,8 +95,11 @@ export default function OrganizerProfilePage() {
             cover: u.backgroundImage ? getFullImageUrl(u.backgroundImage) : "",
             name: u.businessName || (u.firstName ? `${u.firstName} ${u.lastName || ""}`.trim() : "") || u.email || "",
             about: u.shortDesc || u.bio || "",
+            countryCode: u.countryCode || "+976",
             phone: u.contactNumber || "",
+            phoneVerified: Boolean(u.verifications?.phone?.isVerified),
             email: u.email || "",
+            emailVerified: Boolean(u.verifications?.email?.isVerified),
             social: u.socialMediaLink || "",
           };
           setIsVerified(Boolean(u.isVerified || u.isAllVerified || u.organizerVerificationStatus === "approved"));
@@ -103,8 +117,11 @@ export default function OrganizerProfilePage() {
               cover: u.backgroundImage ? getFullImageUrl(u.backgroundImage) : "",
               name: u.businessName || (u.firstName ? `${u.firstName} ${u.lastName || ""}`.trim() : "") || u.email || "",
               about: u.shortDesc || u.bio || "",
+              countryCode: u.countryCode || "+976",
               phone: u.contactNumber || "",
+              phoneVerified: Boolean(u.verifications?.phone?.isVerified),
               email: u.email || "",
+              emailVerified: Boolean(u.verifications?.email?.isVerified),
               social: u.socialMediaLink || "",
             };
             setIsVerified(Boolean(u.isVerified || u.isAllVerified || u.organizerVerificationStatus === "approved"));
@@ -125,8 +142,11 @@ export default function OrganizerProfilePage() {
               cover: u.backgroundImage ? getFullImageUrl(u.backgroundImage) : "",
               name: u.businessName || (u.firstName ? `${u.firstName} ${u.lastName || ""}`.trim() : "") || u.email || "",
               about: u.shortDesc || u.bio || "",
+              countryCode: u.countryCode || "+976",
               phone: u.contactNumber || "",
+              phoneVerified: Boolean(u.verifications?.phone?.isVerified),
               email: u.email || "",
+              emailVerified: Boolean(u.verifications?.email?.isVerified),
               social: u.socialMediaLink || "",
             };
             setSavedData(dynamicData);
@@ -158,7 +178,7 @@ export default function OrganizerProfilePage() {
 
     const phone = String(form.phone || "").trim();
     if (!phone) e.phone = isMn ? "Холбоо барих утсаа бичнэ үү." : "Contact phone is required.";
-    else if (!/^[+\d][\d\s-]{6,}$/.test(phone)) e.phone = isMn ? "Утасны дугаар буруу байна." : "Invalid phone number.";
+    else if (!/^\d{6,}$/.test(phone)) e.phone = isMn ? "Утасны дугаар буруу байна." : "Invalid phone number.";
 
     const email = String(form.email || "").trim();
     if (!email) e.email = isMn ? "Имэйл хаягаа бичнэ үү." : "Email is required.";
@@ -171,7 +191,11 @@ export default function OrganizerProfilePage() {
     return e;
   })();
 
-  const isDirty = ["logo", "cover", "name", "about", "phone", "email", "social"].some(
+  const phoneIdentity = (data) => `${String(data.countryCode || "").trim()}|${String(data.phone || "").trim()}`;
+  const phoneChanged = phoneIdentity(form) !== phoneIdentity(savedData);
+  const emailChanged = String(form.email || "").trim() !== String(savedData.email || "").trim();
+
+  const isDirty = ["logo", "cover", "name", "about", "countryCode", "phone", "email", "social"].some(
     (key) => String(form[key] || "") !== String(savedData[key] || "")
   );
   const isValid = Object.keys(errors).length === 0;
@@ -187,7 +211,65 @@ export default function OrganizerProfilePage() {
     setForm({ ...savedData });
     setTouched(false);
     setSaveErr("");
+    setVerifiedPhone("");
+    setVerifiedEmail("");
     toast(isMn ? "Өөрчлөлт цуцлагдлаа" : "Changes reverted");
+  };
+
+  const openContactOtp = async (kind) => {
+    try {
+      setOtpBusy(true);
+      const res = kind === "phone"
+        ? await apiClient.post("/verification/phone/send-otp", {
+            countryCode: form.countryCode,
+            contactNumber: form.phone.trim(),
+          })
+        : await apiClient.post("/verification/email/send-otp", { email: form.email.trim() });
+      if (res?.status) setOtpTarget(kind);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || (isMn ? "Код илгээж чадсангүй." : "Could not send verification code."));
+    } finally {
+      setOtpBusy(false);
+    }
+  };
+
+  const verifyContactOtp = async (otp) => {
+    try {
+      setOtpBusy(true);
+      const path = otpTarget === "phone" ? "/verification/phone/verify-otp" : "/verification/email/verify-otp";
+      const res = await apiClient.post(path, { otp });
+      if (!res?.status) return false;
+      if (otpTarget === "phone") {
+        setVerifiedPhone(phoneIdentity(form));
+        setForm((prev) => ({ ...prev, phoneVerified: true }));
+      } else {
+        setVerifiedEmail(form.email.trim());
+        setForm((prev) => ({ ...prev, emailVerified: true }));
+      }
+      setOtpTarget(null);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      setOtpBusy(false);
+    }
+  };
+
+  const resendContactOtp = async () => {
+    try {
+      setOtpBusy(true);
+      const res = otpTarget === "phone"
+        ? await apiClient.post("/verification/phone/resend-otp", {
+            countryCode: form.countryCode,
+            contactNumber: form.phone.trim(),
+          })
+        : await apiClient.post("/verification/email/resend-otp", { email: form.email.trim() });
+      return Boolean(res?.status);
+    } catch {
+      return false;
+    } finally {
+      setOtpBusy(false);
+    }
   };
 
   // Save changes to backend dynamically
@@ -195,6 +277,14 @@ export default function OrganizerProfilePage() {
     setTouched(true);
     if (!isValid) {
       setSaveErr(isMn ? "Талбаруудыг шалгана уу." : "Please correct the highlighted fields.");
+      return;
+    }
+    if (phoneChanged && phoneIdentity(form) !== verifiedPhone) {
+      setSaveErr(isMn ? "Шинэ утасны дугаараа баталгаажуулна уу." : "Please verify your new phone number.");
+      return;
+    }
+    if (emailChanged && String(form.email || "").trim() !== verifiedEmail) {
+      setSaveErr(isMn ? "Шинэ имэйл хаягаа баталгаажуулна уу." : "Please verify your new email address.");
       return;
     }
 
@@ -205,6 +295,7 @@ export default function OrganizerProfilePage() {
         businessName: form.name.trim(),
         shortDesc: form.about.trim(),
         bio: form.about.trim(),
+        countryCode: form.countryCode,
         contactNumber: form.phone.trim(),
         email: form.email.trim(),
         socialMediaLink: form.social.trim(),
@@ -217,8 +308,11 @@ export default function OrganizerProfilePage() {
           ...form,
           name: updatedUser.businessName || form.name,
           about: updatedUser.shortDesc || updatedUser.bio || form.about,
+          countryCode: updatedUser.countryCode || form.countryCode,
           phone: updatedUser.contactNumber || form.phone,
+          phoneVerified: updatedUser.verifications?.phone?.isVerified ?? form.phoneVerified,
           email: updatedUser.email || form.email,
+          emailVerified: updatedUser.verifications?.email?.isVerified ?? form.emailVerified,
           social: updatedUser.socialMediaLink || form.social,
         };
         setSavedData(freshData);
@@ -788,14 +882,37 @@ export default function OrganizerProfilePage() {
           <span className="pe-lb">
             {isMn ? "Холбоо барих утас" : "Contact phone"} <i>*</i>
           </span>
-          <input
-            type="tel"
-            className="pe-in"
-            value={form.phone}
-            onChange={(e) => handleFieldChange("phone", e.target.value)}
-            aria-invalid={touched && !!errors.phone}
-            placeholder="+976 9911 2233"
-          />
+          <div className="pe-contact-row">
+            <PhoneInput
+              country="mn"
+              value={`${form.countryCode || ""}${form.phone || ""}`.replace(/\D/g, "")}
+              onChange={(value, country) => {
+                const dialCode = String(country?.dialCode || "");
+                const countryCode = dialCode ? `+${dialCode}` : form.countryCode;
+                const phone = dialCode && String(value).startsWith(dialCode)
+                  ? String(value).slice(dialCode.length)
+                  : String(value || "");
+                setForm((prev) => ({ ...prev, countryCode, phone }));
+                setSaveErr("");
+              }}
+              enableSearch
+              searchPlaceholder={isMn ? "Улс хайх" : "Search country"}
+              inputProps={{
+                name: "phone",
+                required: true,
+                "aria-label": isMn ? "Холбоо барих утас" : "Contact phone",
+              }}
+              containerClass="pe-phone-input"
+              inputClass="pe-in"
+              buttonClass="pe-phone-country"
+              dropdownClass="pe-phone-dropdown"
+            />
+            {phoneChanged ? (
+              <button type="button" className="pe-verify" onClick={() => openContactOtp("phone")} disabled={otpBusy}>
+                {isMn ? "Баталгаажуулах" : "Verify"}
+              </button>
+            ) : form.phoneVerified ? <span className="pe-verified">✓ {isMn ? "Баталгаажсан" : "Verified"}</span> : null}
+          </div>
           {touched && errors.phone && <span className="pe-er">{errors.phone}</span>}
         </label>
 
@@ -804,14 +921,21 @@ export default function OrganizerProfilePage() {
           <span className="pe-lb">
             {isMn ? "Имэйл" : "Email"} <i>*</i>
           </span>
-          <input
-            type="email"
-            className="pe-in"
-            value={form.email}
-            onChange={(e) => handleFieldChange("email", e.target.value)}
-            aria-invalid={touched && !!errors.email}
-            placeholder="info@example.com"
-          />
+          <div className="pe-contact-row">
+            <input
+              type="email"
+              className="pe-in"
+              value={form.email}
+              onChange={(e) => handleFieldChange("email", e.target.value)}
+              aria-invalid={touched && !!errors.email}
+              placeholder="info@example.com"
+            />
+            {emailChanged ? (
+              <button type="button" className="pe-verify" onClick={() => openContactOtp("email")} disabled={otpBusy}>
+                {isMn ? "Баталгаажуулах" : "Verify"}
+              </button>
+            ) : form.emailVerified ? <span className="pe-verified">✓ {isMn ? "Баталгаажсан" : "Verified"}</span> : null}
+          </div>
           {touched && errors.email && <span className="pe-er">{errors.email}</span>}
         </label>
 
@@ -1164,6 +1288,14 @@ export default function OrganizerProfilePage() {
           </div>
         </div>
       )}
+      <OtpVerifyCard
+        open={Boolean(otpTarget)}
+        field={otpTarget === "email" ? "email" : "phone"}
+        busy={otpBusy}
+        onClose={() => setOtpTarget(null)}
+        onVerify={verifyContactOtp}
+        onResend={resendContactOtp}
+      />
     </div>
   );
 }

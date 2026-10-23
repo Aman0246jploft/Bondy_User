@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import io from "socket.io-client";
 import { toast } from "react-hot-toast";
+import { localizeMessage } from "@/api/apiClient";
 
 const SocketContext = createContext();
 
@@ -59,7 +60,8 @@ export const SocketProvider = ({ children }) => {
             });
 
             socketInstance.on("force_logout", (data) => {
-                toast.error(data?.message || "Your account has been disabled. Please contact support.");
+                const msg = data?.message || "This account has been deactivated.";
+                toast.error(localizeMessage(msg), { id: "force-logout-toast" });
                 localStorage.removeItem("token");
                 localStorage.removeItem("userProfile");
                 localStorage.removeItem("registerEmail");

@@ -491,7 +491,7 @@ function ProgramDetailsContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const { language, t } = useLanguage();
-  const { checkAuth } = useAuthGuard();
+  const { checkAuth, isLoggedIn } = useAuthGuard();
 
   const [courseDetails, setCourseDetails] = useState(null);
   const [loading, setLoading] = useState(true);

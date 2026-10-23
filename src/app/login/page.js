@@ -141,13 +141,13 @@ export default function Page() {
           window.location.replace("/login?step=otp");
           return;
         } else if (response?.message) {
-          toast.error(response.message);
+          toast.error(response.message, { id: "auth-status-toast" });
         }
       }
     } catch (error) {
       const backendMsg = error?.response?.data?.message;
       if (!backendMsg && error?.message && !error.message.includes("status code")) {
-        toast.error(error.message);
+        toast.error(error.message, { id: "auth-status-toast" });
       }
     } finally {
       if (!leaving) setLoading(false);

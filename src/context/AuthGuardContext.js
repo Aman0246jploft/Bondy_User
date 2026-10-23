@@ -113,7 +113,14 @@ export function AuthGuardProvider({ children }) {
               router.replace("/completeprofile");
             }
           }
-        } else if (response?.status === false && (response?.message === "Your account has been disabled. Please contact support." || response?.data?.user?.isDisable)) {
+        } else if (response?.status === false && (
+          response?.message === "This account has been deactivated." ||
+          response?.message === "Your account has been disabled. Please contact support." ||
+          response?.message?.includes("идэвхгүй болсон") ||
+          response?.message?.includes("deactivated") ||
+          response?.message?.includes("disabled") ||
+          response?.data?.user?.isDisable
+        )) {
           localStorage.removeItem("token");
           localStorage.removeItem("userProfile");
           localStorage.removeItem("registerEmail");
@@ -122,7 +129,14 @@ export function AuthGuardProvider({ children }) {
           return;
         }
       } catch (err) {
-        if (err?.response?.status === 403 || err?.response?.data?.message?.includes("disabled")) {
+        const errMsg = err?.response?.data?.message || err?.message || "";
+        if (
+          err?.response?.status === 403 ||
+          err?.response?.data?.code === "ACCOUNT_DISABLED" ||
+          errMsg.includes("deactivated") ||
+          errMsg.includes("disabled") ||
+          errMsg.includes("идэвхгүй болсон")
+        ) {
           localStorage.removeItem("token");
           localStorage.removeItem("userProfile");
           localStorage.removeItem("registerEmail");
