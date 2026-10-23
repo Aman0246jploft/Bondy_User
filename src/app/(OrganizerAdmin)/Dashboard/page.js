@@ -147,6 +147,7 @@ export default function OrganizerDashboardPage() {
   const [analytics, setAnalytics] = useState(null);
   const [earnings, setEarnings] = useState(null);
   const [events, setEvents] = useState([]);
+
   const [courses, setCourses] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
 
@@ -1262,32 +1263,32 @@ export default function OrganizerDashboardPage() {
                       String(ev.status || "").toLowerCase() !== "canceled" &&
                       (!ev.endDate || new Date(ev.endDate) >= new Date())
                     )) && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveKebab(null);
-                          if (isEventLive(ev)) {
-                            setLiveBlockedModal({
-                              open: true,
-                              title: isMn ? "Арга хэмжээ шууд явагдаж байна" : "Event is Currently Live",
-                              body: isMn
-                                ? "Таны арга хэмжээ шууд явагдаж байгаа тул засах боломжгүй."
-                                : "Your event is live, you cannot edit this.",
-                              viewHref: `/EventDetailOrganiser?eventId=${ev._id}`,
-                            });
-                            return;
-                          }
-                          router.push(`/BasicInfo?eventId=${ev._id}`);
-                        }}
-                      >
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M12 20h9" />
-                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                        </svg>
-                        <span>{isMn ? "Засах" : "Edit"}</span>
-                      </button>
-                    )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveKebab(null);
+                            if (isEventLive(ev)) {
+                              setLiveBlockedModal({
+                                open: true,
+                                title: isMn ? "Арга хэмжээ шууд явагдаж байна" : "Event is Currently Live",
+                                body: isMn
+                                  ? "Таны арга хэмжээ шууд явагдаж байгаа тул засах боломжгүй."
+                                  : "Your event is live, you cannot edit this.",
+                                viewHref: `/EventDetailOrganiser?eventId=${ev._id}`,
+                              });
+                              return;
+                            }
+                            router.push(`/BasicInfo?eventId=${ev._id}`);
+                          }}
+                        >
+                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                          </svg>
+                          <span>{isMn ? "Засах" : "Edit"}</span>
+                        </button>
+                      )}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -1469,32 +1470,32 @@ export default function OrganizerDashboardPage() {
                       String(cr.status || "").toLowerCase() !== "canceled" &&
                       (!cr.endDate || new Date(cr.endDate) >= new Date())
                     )) && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveKebab(null);
-                          if (isCourseLive(cr)) {
-                            setLiveBlockedModal({
-                              open: true,
-                              title: isMn ? "Сургалт явагдаж байна" : "Course is Currently Live",
-                              body: isMn
-                                ? "Таны сургалт шууд явагдаж байгаа тул засах боломжгүй."
-                                : "Your course is live, you cannot edit this.",
-                              viewHref: `/CourseDetailOrganiser?courseId=${cr._id}`,
-                            });
-                            return;
-                          }
-                          router.push(`/AddProgram?courseId=${cr._id}`);
-                        }}
-                      >
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M12 20h9" />
-                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                        </svg>
-                        <span>{isMn ? "Засах" : "Edit"}</span>
-                      </button>
-                    )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveKebab(null);
+                            if (isCourseLive(cr)) {
+                              setLiveBlockedModal({
+                                open: true,
+                                title: isMn ? "Сургалт явагдаж байна" : "Course is Currently Live",
+                                body: isMn
+                                  ? "Таны сургалт шууд явагдаж байгаа тул засах боломжгүй."
+                                  : "Your course is live, you cannot edit this.",
+                                viewHref: `/CourseDetailOrganiser?courseId=${cr._id}`,
+                              });
+                              return;
+                            }
+                            router.push(`/AddProgram?courseId=${cr._id}`);
+                          }}
+                        >
+                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                          </svg>
+                          <span>{isMn ? "Засах" : "Edit"}</span>
+                        </button>
+                      )}
                     <button
                       type="button"
                       onClick={(e) => {
