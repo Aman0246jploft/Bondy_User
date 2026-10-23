@@ -1435,7 +1435,9 @@ function EventEditorContent() {
           let ss = t.ss || undefined;
           let se = t.se || undefined;
           if (ss && se && String(ss).slice(0, 10) === String(se).slice(0, 10)) {
-            se = `${String(se).slice(0, 10)}T23:59:59`;
+            const datePart = String(se).slice(0, 10);
+            ss = `${datePart}T00:00:00.000Z`;
+            se = `${datePart}T23:59:59.999Z`;
           }
           return {
             ticketName: t.name.trim(),
