@@ -6,7 +6,6 @@ import PayNow from "./Modal/PayNow";
 import bookingApi from "@/api/bookingApi";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
-import { isTicketSalesStarted, isTicketSalesEnded } from "@/utils/dateFormater";
 
 
 export default function TicketBooking({ item, type, scheduleId }) {
@@ -948,8 +947,8 @@ export default function TicketBooking({ item, type, scheduleId }) {
                                     const ticketQty = selectedTickets[ticket._id] || 0;
                                     const availableQty = ticket.availableQty !== undefined ? ticket.availableQty : ticket.qty;
                                     const now = new Date();
-                                    const salesStarted = isTicketSalesStarted(ticket.salesStart, now);
-                                    const salesEnded = isTicketSalesEnded(ticket.salesEnd, now);
+                                    const salesStarted = ticket.salesStart ? now >= new Date(ticket.salesStart) : true;
+                                    const salesEnded = ticket.salesEnd ? now > new Date(ticket.salesEnd) : false;
                                     const isSalesActive = salesStarted && !salesEnded;
                                     return (
                                         <div

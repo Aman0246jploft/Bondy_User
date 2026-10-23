@@ -10,7 +10,6 @@ import { useAuthGuard } from "@/context/AuthGuardContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatTime } from "@/utils/timeHelper";
-import { isTicketSalesStarted, isTicketSalesEnded, getTicketSalesStartDate } from "@/utils/dateFormater";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ShareSheet from "@/components/ShareSheet";
@@ -801,8 +800,8 @@ function EventDetailsContent() {
       const avail = tk.availableQty !== undefined ? Number(tk.availableQty) : Number(tk.qty || 0);
       const isTierSold = avail <= 0;
       const now = new Date();
-      const salesStarted = isTicketSalesStarted(tk.salesStart, now);
-      const salesEnded = isTicketSalesEnded(tk.salesEnd, now);
+      const salesStarted = tk.salesStart ? now >= new Date(tk.salesStart) : true;
+      const salesEnded = tk.salesEnd ? now > new Date(tk.salesEnd) : false;
       const isSalesActive = salesStarted && !salesEnded;
       const q = (isTierSold || !isSalesActive) ? 0 : (ticketQtys[tk._id || idx] || 0);
       qty += q;
@@ -814,16 +813,15 @@ function EventDetailsContent() {
   const allSalesPending = useMemo(() => {
     if (!event?.tickets || event.tickets.length === 0) return false;
     const now = new Date();
-    return event.tickets.every((tk) => !isTicketSalesStarted(tk.salesStart, now));
+    return event.tickets.every((tk) => tk.salesStart && now < new Date(tk.salesStart));
   }, [event]);
 
   const earliestSalesStart = useMemo(() => {
     if (!event?.tickets || event.tickets.length === 0) return null;
     const now = new Date();
     const futureStarts = event.tickets
-      .filter((tk) => !isTicketSalesStarted(tk.salesStart, now))
-      .map((tk) => getTicketSalesStartDate(tk.salesStart))
-      .filter(Boolean);
+      .filter((tk) => tk.salesStart && now < new Date(tk.salesStart))
+      .map((tk) => new Date(tk.salesStart));
     if (futureStarts.length === 0) return null;
     return new Date(Math.min(...futureStarts));
   }, [event]);
@@ -835,9 +833,8 @@ function EventDetailsContent() {
 
     if (ticket && delta > 0) {
       const now = new Date();
-      if (!isTicketSalesStarted(ticket.salesStart, now)) {
-        const startD = getTicketSalesStartDate(ticket.salesStart);
-        const startStr = startD ? startD.toLocaleDateString() : "";
+      if (ticket.salesStart && now < new Date(ticket.salesStart)) {
+        const startStr = new Date(ticket.salesStart).toLocaleDateString();
         toast.error(
           language === "mn"
             ? `Тасалбарын борлуулалт ${startStr}-нд эхэлнэ: ${ticket.ticketName}`
@@ -845,7 +842,7 @@ function EventDetailsContent() {
         );
         return;
       }
-      if (isTicketSalesEnded(ticket.salesEnd, now)) {
+      if (ticket.salesEnd && now > new Date(ticket.salesEnd)) {
         toast.error(
           language === "mn"
             ? `Тасалбарын борлуулалт дууссан: ${ticket.ticketName}`
@@ -898,8 +895,8 @@ function EventDetailsContent() {
         if (num <= 0) return false;
         const tk = event?.tickets?.find((t, i) => (t._id || i) === id || String(t._id) === String(id));
         const avail = tk?.availableQty !== undefined ? Number(tk.availableQty) : Number(tk?.qty || 0);
-        const salesStarted = isTicketSalesStarted(tk?.salesStart, now);
-        const salesEnded = isTicketSalesEnded(tk?.salesEnd, now);
+        const salesStarted = tk?.salesStart ? now >= new Date(tk.salesStart) : true;
+        const salesEnded = tk?.salesEnd ? now > new Date(tk.salesEnd) : false;
         return avail > 0 && salesStarted && !salesEnded;
       })
       .map(([id, q]) => `${id}:${q}`)
@@ -1757,8 +1754,8 @@ function EventDetailsContent() {
                         const available = ticket.availableQty !== undefined ? ticket.availableQty : total;
                         const isTierSoldOut = available <= 0;
                         const now = new Date();
-                        const salesStarted = isTicketSalesStarted(ticket.salesStart, now);
-                        const salesEnded = isTicketSalesEnded(ticket.salesEnd, now);
+                        const salesStarted = ticket.salesStart ? now >= new Date(ticket.salesStart) : true;
+                        const salesEnded = ticket.salesEnd ? now > new Date(ticket.salesEnd) : false;
                         const isSalesActive = salesStarted && !salesEnded;
                         const rawQ = ticketQtys[tkId] || 0;
                         const q = (!isSalesActive || isTierSoldOut) ? 0 : rawQ;
@@ -1772,8 +1769,7 @@ function EventDetailsContent() {
                             className={`bs-tk${q > 0 ? " is-on" : ""}${isTierSoldOut || !isSalesActive ? " is-off" : ""}`}
                             onClick={() => {
                               if (!salesStarted && ticket.salesStart) {
-                                const startD = getTicketSalesStartDate(ticket.salesStart);
-                                const startStr = startD ? startD.toLocaleDateString() : "";
+                                const startStr = new Date(ticket.salesStart).toLocaleDateString();
                                 toast.error(
                                   language === "mn"
                                     ? `Тасалбарын борлуулалт ${startStr}-нд эхэлнэ: ${ticket.ticketName}`
@@ -1789,7 +1785,7 @@ function EventDetailsContent() {
                                 {isTierSoldOut
                                   ? t("soldOut")
                                   : !salesStarted
-                                    ? (language === "mn" ? `Борлуулалт: ${new Date(getTicketSalesStartDate(ticket.salesStart) || ticket.salesStart).toLocaleDateString()}` : `Sales start on ${new Date(getTicketSalesStartDate(ticket.salesStart) || ticket.salesStart).toLocaleDateString()}`)
+                                    ? (language === "mn" ? `Борлуулалт: ${new Date(ticket.salesStart).toLocaleDateString()}` : `Sales start on ${new Date(ticket.salesStart).toLocaleDateString()}`)
                                     : salesEnded
                                       ? (language === "mn" ? "Борлуулалт дууссан" : "Sales ended")
                                       : `${Number(available).toLocaleString()} ${t("left")}`}
