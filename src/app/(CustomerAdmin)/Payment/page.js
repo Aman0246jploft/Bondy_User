@@ -10,7 +10,7 @@ function page() {
   const { t } = useLanguage();
 
    useEffect(() => {
-    document.title = "Customer Admin - Bondy";
+    document.title = "User Admin - Bondy";
   }, []);
   
   return (

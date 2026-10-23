@@ -20,7 +20,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
       try {
         const u = localStorage.getItem("userProfile");
         if (u) return JSON.parse(u);
-      } catch (e) {}
+      } catch (e) { }
     }
     return null;
   });
@@ -33,7 +33,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
           setProfile(res.data.user);
           localStorage.setItem("userProfile", JSON.stringify(res.data.user));
         }
-      } catch (err) {}
+      } catch (err) { }
     };
     fetchUser();
   }, [pathname]);
@@ -60,8 +60,8 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
   };
 
   const displayName = profile
-    ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || profile.email || "Customer"
-    : "Customer";
+    ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || profile.email || (t("user") || "User")
+    : (t("user") || "User");
 
   const handleLinkClick = () => {
     if (onCloseMobile) onCloseMobile();
@@ -83,7 +83,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
           <b className="bd-side-name" title={displayName}>
             {displayName}
           </b>
-          <span className="bd-side-role-badge">CUSTOMER</span>
+          <span className="bd-side-role-badge">{t("user") || "USER"}</span>
         </div>
       </div>
 
