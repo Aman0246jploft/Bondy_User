@@ -340,6 +340,49 @@
   border-color: #ff5a5a;
 }
 
+.ac-date-picker {
+  position: relative;
+}
+
+.ac-date-picker .ac-in {
+  padding-right: 52px;
+  cursor: pointer;
+}
+
+.ac-date-picker-btn {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--acc, #23ada4);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.ac-date-picker-btn:hover,
+.ac-date-picker-btn:focus-visible {
+  background: rgba(35, 173, 164, 0.14);
+  outline: none;
+}
+
+.ac-date-picker-btn svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .ac-ta {
   box-sizing: border-box;
   width: 100%;
