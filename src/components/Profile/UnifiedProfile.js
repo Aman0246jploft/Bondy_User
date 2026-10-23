@@ -8,6 +8,8 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import OtpVerifyCard from "@/components/Otp/OtpVerifyCard";
 import SingleDateCalendarPopover from "@/components/SingleDateCalendarPopover";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 import "./profile-unified.css";
 
 const GENDER_OPTIONS = [
@@ -49,17 +51,12 @@ function ageFromIso(iso) {
   return age;
 }
 
-function splitPhone(value, fallbackCode) {
-  const trimmed = String(value || "").trim();
-  const match = trimmed.match(/^(\+\d{1,4})\s*(.*)$/);
-  if (match) {
-    return { countryCode: match[1], contactNumber: match[2].replace(/\s+/g, "") };
-  }
-  return { countryCode: fallbackCode || "+976", contactNumber: trimmed.replace(/\s+/g, "") };
-}
+const phoneIdentity = ({ countryCode, contactNumber }) =>
+  `${String(countryCode || "").trim()}|${String(contactNumber || "").trim()}`;
 
 export default function UnifiedProfile({ forcedRole = null }) {
   const { t, language } = useLanguage();
+  const isMn = language === "mn";
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -80,7 +77,9 @@ export default function UnifiedProfile({ forcedRole = null }) {
     email: "",
     dob: "",
     contactNumber: "",
-    countryCode: "",
+    countryCode: "+976",
+    phoneVerified: false,
+    emailVerified: false,
     profileImage: "",
     backgroundImage: "",
     gender: "",
@@ -131,12 +130,10 @@ export default function UnifiedProfile({ forcedRole = null }) {
             businessName: u.businessName || "",
             email: u.email || "",
             dob: isoToDisplay(u.dob),
-            contactNumber: u.contactNumber
-              ? u.countryCode
-                ? `${u.countryCode} ${u.contactNumber}`
-                : u.contactNumber
-              : "",
-            countryCode: u.countryCode || "",
+            contactNumber: u.contactNumber || "",
+            countryCode: u.countryCode || "+976",
+            phoneVerified: Boolean(u.verifications?.phone?.isVerified),
+            emailVerified: Boolean(u.verifications?.email?.isVerified),
             profileImage: u.profileImage || "",
             backgroundImage: u.backgroundImage || "",
             gender: u.gender || "",
@@ -225,10 +222,19 @@ export default function UnifiedProfile({ forcedRole = null }) {
         profileData.gender !== backupProfileData.gender ||
         profileData.bio !== backupProfileData.bio ||
         profileData.email !== backupProfileData.email ||
+        profileData.countryCode !== backupProfileData.countryCode ||
         profileData.contactNumber !== backupProfileData.contactNumber ||
         profileImageFile ||
         backgroundImageFile ||
         !sameIds(selectedCategoryIds, backupCategoryIds)),
+  );
+
+  const phoneChanged = Boolean(
+    backupProfileData && phoneIdentity(profileData) !== phoneIdentity(backupProfileData),
+  );
+  const emailChanged = Boolean(
+    backupProfileData &&
+      profileData.email.trim() !== String(backupProfileData.email || "").trim(),
   );
 
   const validateForm = () => {
@@ -249,17 +255,13 @@ export default function UnifiedProfile({ forcedRole = null }) {
     e?.preventDefault();
     if (!validateForm()) return;
     if (
-      backupProfileData &&
-      profileData.contactNumber !== backupProfileData.contactNumber &&
-      profileData.contactNumber !== verifiedPhone
+      phoneChanged && phoneIdentity(profileData) !== verifiedPhone
     ) {
       setSaveError(t("otpNeedPhone"));
       return;
     }
     if (
-      backupProfileData &&
-      profileData.email.trim() !== String(backupProfileData.email || "").trim() &&
-      profileData.email.trim() !== verifiedEmail
+      emailChanged && profileData.email.trim() !== verifiedEmail
     ) {
       setSaveError(t("otpNeedEmail"));
       return;
@@ -305,10 +307,9 @@ export default function UnifiedProfile({ forcedRole = null }) {
       if (backupProfileData && profileData.email !== backupProfileData.email) {
         updatePayload.email = profileData.email.trim();
       }
-      if (backupProfileData && profileData.contactNumber !== backupProfileData.contactNumber) {
-        const phone = splitPhone(profileData.contactNumber, profileData.countryCode);
-        updatePayload.countryCode = phone.countryCode;
-        updatePayload.contactNumber = phone.contactNumber;
+      if (backupProfileData && phoneIdentity(profileData) !== phoneIdentity(backupProfileData)) {
+        updatePayload.countryCode = profileData.countryCode;
+        updatePayload.contactNumber = profileData.contactNumber.trim();
       }
 
       const response = await authApi.updateProfile(updatePayload);
@@ -322,11 +323,9 @@ export default function UnifiedProfile({ forcedRole = null }) {
           lastName: updatedUser.lastName || profileData.lastName,
           email: updatedUser.email || profileData.email,
           countryCode: updatedUser.countryCode || profileData.countryCode,
-          contactNumber: updatedUser.contactNumber
-            ? updatedUser.countryCode
-              ? `${updatedUser.countryCode} ${updatedUser.contactNumber}`
-              : updatedUser.contactNumber
-            : profileData.contactNumber,
+          contactNumber: updatedUser.contactNumber || profileData.contactNumber,
+          phoneVerified: updatedUser.verifications?.phone?.isVerified ?? profileData.phoneVerified,
+          emailVerified: updatedUser.verifications?.email?.isVerified ?? profileData.emailVerified,
           dob: updatedUser.dob ? isoToDisplay(updatedUser.dob) : profileData.dob,
           profileImage: updatedUser.profileImage || uploadedProfileImage,
           backgroundImage: updatedUser.backgroundImage || uploadedBackgroundImage,
@@ -363,9 +362,9 @@ export default function UnifiedProfile({ forcedRole = null }) {
       ...prev,
       email: user.email || prev.email,
       countryCode: user.countryCode || prev.countryCode,
-      contactNumber: user.contactNumber
-        ? (user.countryCode ? `${user.countryCode} ${user.contactNumber}` : user.contactNumber)
-        : prev.contactNumber,
+      contactNumber: user.contactNumber || prev.contactNumber,
+      phoneVerified: user.verifications?.phone?.isVerified ?? prev.phoneVerified,
+      emailVerified: user.verifications?.email?.isVerified ?? prev.emailVerified,
     }));
   };
 
@@ -373,7 +372,10 @@ export default function UnifiedProfile({ forcedRole = null }) {
     try {
       setOtpBusy(true);
       const res = kind === "phone"
-        ? await apiClient.post("/verification/phone/send-otp", splitPhone(profileData.contactNumber, profileData.countryCode))
+        ? await apiClient.post("/verification/phone/send-otp", {
+            countryCode: profileData.countryCode,
+            contactNumber: profileData.contactNumber.trim(),
+          })
         : await apiClient.post("/verification/email/send-otp", { email: profileData.email });
       if (res?.status) {
         setOtpTarget(kind);
@@ -391,8 +393,14 @@ export default function UnifiedProfile({ forcedRole = null }) {
       const path = otpTarget === "phone" ? "/verification/phone/verify-otp" : "/verification/email/verify-otp";
       const res = await apiClient.post(path, { otp: code });
       if (res?.status) {
-        if (otpTarget === "phone") setVerifiedPhone(profileData.contactNumber);
-        if (otpTarget === "email") setVerifiedEmail(profileData.email.trim());
+        if (otpTarget === "phone") {
+          setVerifiedPhone(phoneIdentity(profileData));
+          setProfileData((current) => ({ ...current, phoneVerified: true }));
+        }
+        if (otpTarget === "email") {
+          setVerifiedEmail(profileData.email.trim());
+          setProfileData((current) => ({ ...current, emailVerified: true }));
+        }
         await refreshContact();
         setOtpTarget(null);
         return true;
@@ -409,7 +417,10 @@ export default function UnifiedProfile({ forcedRole = null }) {
     try {
       setOtpBusy(true);
       const res = otpTarget === "phone"
-        ? await apiClient.post("/verification/phone/resend-otp", splitPhone(profileData.contactNumber, profileData.countryCode))
+        ? await apiClient.post("/verification/phone/resend-otp", {
+            countryCode: profileData.countryCode,
+            contactNumber: profileData.contactNumber.trim(),
+          })
         : await apiClient.post("/verification/email/resend-otp", { email: profileData.email });
       return Boolean(res?.status);
     } catch {
@@ -547,7 +558,9 @@ export default function UnifiedProfile({ forcedRole = null }) {
             </div>
             <div className="ac-ro">
               <span className="ac-rok">{t("acPhoneLabel")}</span>
-              <span className="ac-rov">{profileData.contactNumber || "—"}</span>
+              <span className="ac-rov">
+                {[profileData.countryCode, profileData.contactNumber].filter(Boolean).join(" ") || "—"}
+              </span>
             </div>
             <div className="ac-ro">
               <span className="ac-rok">{t("acEmailLabel")}</span>
@@ -594,16 +607,36 @@ export default function UnifiedProfile({ forcedRole = null }) {
           <div>
             <span className="ac-lbl">{t("acPhoneLabel")} <span style={{ color: "#FF5A5A" }}>*</span></span>
             <div className="ac-field-row">
-              <input
-                type="tel"
-                className="ac-in"
-                value={profileData.contactNumber}
-                onChange={(e) => setProfileData({ ...profileData, contactNumber: e.target.value })}
-                placeholder="+976 9911 2233"
+              <PhoneInput
+                country="mn"
+                value={`${profileData.countryCode || ""}${profileData.contactNumber || ""}`.replace(/\D/g, "")}
+                onChange={(value, country) => {
+                  const dialCode = String(country?.dialCode || "");
+                  const countryCode = dialCode ? `+${dialCode}` : profileData.countryCode;
+                  const contactNumber = dialCode && String(value).startsWith(dialCode)
+                    ? String(value).slice(dialCode.length)
+                    : String(value || "");
+                  setProfileData((current) => ({ ...current, countryCode, contactNumber }));
+                }}
+                enableSearch
+                searchPlaceholder={isMn ? "Улс хайх" : "Search country"}
+                inputProps={{
+                  name: "phone",
+                  required: true,
+                  "aria-label": t("acPhoneLabel"),
+                }}
+                containerClass="ac-phone-input"
+                inputClass="ac-in"
+                buttonClass="ac-phone-country"
+                dropdownClass="ac-phone-dropdown"
               />
-              <button type="button" className="ac-change-btn" onClick={() => openContactOtp("phone")} disabled={otpBusy}>
-                {t("otpVerify")}
-              </button>
+              {phoneChanged ? (
+                <button type="button" className="ac-change-btn" onClick={() => openContactOtp("phone")} disabled={otpBusy}>
+                  {t("otpVerify")}
+                </button>
+              ) : profileData.phoneVerified ? (
+                <span className="ac-verified-status">✓ {isMn ? "Баталгаажсан" : "Verified"}</span>
+              ) : null}
             </div>
             <span className="ac-hint">{t("acPhoneHint")}</span>
           </div>
@@ -617,9 +650,13 @@ export default function UnifiedProfile({ forcedRole = null }) {
                 onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                 placeholder="имэйл@bondy.mn"
               />
-              <button type="button" className="ac-change-btn" onClick={() => openContactOtp("email")} disabled={otpBusy}>
-                {t("otpVerify")}
-              </button>
+              {emailChanged ? (
+                <button type="button" className="ac-change-btn" onClick={() => openContactOtp("email")} disabled={otpBusy}>
+                  {t("otpVerify")}
+                </button>
+              ) : profileData.emailVerified ? (
+                <span className="ac-verified-status">✓ {isMn ? "Баталгаажсан" : "Verified"}</span>
+              ) : null}
             </div>
             <span className="ac-hint">{t("acEmailHint")}</span>
           </div>

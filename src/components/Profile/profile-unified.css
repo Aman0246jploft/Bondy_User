@@ -522,6 +522,99 @@
   min-width: 0;
 }
 
+.ac-field-row .ac-phone-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.ac-phone-input .ac-in.form-control {
+  width: 100%;
+  padding-left: 52px;
+}
+
+.ac-phone-input .ac-phone-country {
+  border: 0;
+  border-radius: 14px 0 0 14px;
+  background: transparent;
+}
+
+.ac-phone-input .flag-dropdown.open,
+.ac-phone-input .flag-dropdown.open .selected-flag,
+.ac-phone-input .selected-flag:hover,
+.ac-phone-input .selected-flag:focus {
+  background: var(--bd-ink-800, #1a243b) !important;
+}
+
+.ac-phone-dropdown.country-list {
+  margin-top: 8px;
+  border: 1px solid var(--bd-border-strong, rgba(255, 255, 255, 0.16));
+  border-radius: 12px;
+  background: var(--bd-ink-800, #1a243b) !important;
+  color: var(--bd-gray-200, #e5e7eb);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.45);
+}
+
+.ac-phone-dropdown .search {
+  display: flex;
+  align-items: center;
+  padding: 9px;
+  background: var(--bd-ink-800, #1a243b) !important;
+}
+
+.ac-phone-dropdown .search-box {
+  width: 100%;
+  height: 34px;
+  margin-left: 0;
+  border: 1px solid var(--bd-border-strong, rgba(255, 255, 255, 0.16));
+  border-radius: 8px;
+  background: var(--bd-ink-700, #222d47) !important;
+  color: var(--bd-white, #fff);
+}
+
+.ac-phone-dropdown .country {
+  color: var(--bd-gray-200, #e5e7eb);
+}
+
+.ac-phone-dropdown .country:hover,
+.ac-phone-dropdown .country.highlight {
+  background: rgba(35, 173, 164, 0.18) !important;
+}
+
+.ac-phone-dropdown .dial-code {
+  color: var(--bd-gray-500, #9ca3af);
+}
+
+.ac-phone-dropdown .divider {
+  border-bottom-color: var(--bd-border-strong, rgba(255, 255, 255, 0.16)) !important;
+}
+
+.ac-phone-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ac-phone-dropdown::-webkit-scrollbar-track {
+  background: var(--bd-ink-800, #1a243b);
+}
+
+.ac-phone-dropdown::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: var(--bd-gray-600, #4b5563);
+}
+
+.ac-verified-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  height: 48px;
+  padding: 0 13px;
+  border: 1px solid rgba(35, 173, 164, 0.45);
+  border-radius: 14px;
+  background: rgba(35, 173, 164, 0.1);
+  color: var(--acc-bright, #42d6cc);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .ac-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
