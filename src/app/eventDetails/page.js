@@ -21,7 +21,7 @@ const FALLBACK_IMG = "/img/sidebar-logo.svg";
 const MONTH_KEYS = ["monthJan", "monthFeb", "monthMar", "monthApr", "monthMay", "monthJun", "monthJul", "monthAug", "monthSep", "monthOct", "monthNov", "monthDec"];
 const WEEKDAY_KEYS = ["weekdaySun", "weekdayMon", "weekdayTue", "weekdayWed", "weekdayThu", "weekdayFri", "weekdaySat"];
 
-function formatDateBilingual(dateStr, startTime, endTime, lang, t) {
+function formatDateBilingual(dateStr, startTime, endTime, lang, t, endDateStr) {
   if (!dateStr) return t("comingSoon");
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return t("comingSoon");
@@ -35,6 +35,22 @@ function formatDateBilingual(dateStr, startTime, endTime, lang, t) {
     const s = formatTime(startTime, true, lang);
     const e = endTime ? formatTime(endTime, true, lang) : "";
     timePart = e ? ` · ${s} – ${e}` : ` · ${s}`;
+  }
+
+  if (endDateStr) {
+    const endD = new Date(endDateStr);
+    if (!isNaN(endD.getTime())) {
+      const isSameDay =
+        d.getFullYear() === endD.getFullYear() &&
+        d.getMonth() === endD.getMonth() &&
+        d.getDate() === endD.getDate();
+      if (!isSameDay) {
+        const endDayNum = endD.getDate();
+        const endDayName = t(WEEKDAY_KEYS[endD.getDay()]);
+        const endMonthName = `${t(MONTH_KEYS[endD.getMonth()])} ${endDayNum}`;
+        return `${monthName}, ${dayName} – ${endMonthName}, ${endDayName}${timePart}`;
+      }
+    }
   }
 
   return `${monthName}, ${dayName}${timePart}`;
@@ -669,7 +685,7 @@ function EventDetailsContent() {
   }, [minPrice, event, language]);
 
   const formattedDateTime = useMemo(() => {
-    return formatDateBilingual(event?.startDate, event?.startTime, event?.endTime, language, t);
+    return formatDateBilingual(event?.startDate, event?.startTime, event?.endTime, language, t, event?.endDate);
   }, [event, language, t]);
 
   const fullVenue = useMemo(() => {
@@ -693,7 +709,7 @@ function EventDetailsContent() {
     if (!event) return false;
 
     // Status flag check
-    if (event.status && ["completed", "expired", "cancelled", "ended"].includes(event.status.toLowerCase())) {
+    if (event.status && ["past", "completed", "expired", "cancelled", "ended"].includes(event.status.toLowerCase())) {
       return true;
     }
 
