@@ -13,7 +13,6 @@ import bookingApi from "@/api/bookingApi";
 import toast from "react-hot-toast";
 import { useAuthGuard } from "@/context/AuthGuardContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
-import { isTicketSalesStarted, isTicketSalesEnded, getTicketSalesStartDate } from "@/utils/dateFormater";
 import GlobalLoader from "@/components/GlobalLoader";
 
 function formatDateBilingual(dateStr, startTime, endTime, lang) {
@@ -169,8 +168,8 @@ function CheckoutContent() {
                   const tk = evt.tickets?.find((t, i) => (t._id || i) === id || String(t._id) === String(id));
                   const avail = tk?.availableQty !== undefined ? Number(tk.availableQty) : Number(tk?.qty || 0);
                   const now = new Date();
-                  const salesStarted = isTicketSalesStarted(tk?.salesStart, now);
-                  const salesEnded = isTicketSalesEnded(tk?.salesEnd, now);
+                  const salesStarted = tk?.salesStart ? now >= new Date(tk.salesStart) : true;
+                  const salesEnded = tk?.salesEnd ? now > new Date(tk.salesEnd) : false;
                   if (avail > 0 && salesStarted && !salesEnded) {
                     initial[id] = Math.min(n, avail);
                   } else {
@@ -411,9 +410,8 @@ function CheckoutContent() {
     const ticket = bookingItem?.tickets?.find((t) => (t._id || t.id) === ticketId || String(t._id || t.id) === String(ticketId));
     if (ticket && delta > 0) {
       const now = new Date();
-      if (!isTicketSalesStarted(ticket.salesStart, now)) {
-        const startD = getTicketSalesStartDate(ticket.salesStart);
-        const startStr = startD ? startD.toLocaleDateString() : "";
+      if (ticket.salesStart && now < new Date(ticket.salesStart)) {
+        const startStr = new Date(ticket.salesStart).toLocaleDateString();
         toast.error(
           language === "mn"
             ? `Тасалбарын борлуулалт ${startStr}-нд эхэлнэ: ${ticket.ticketName}`
@@ -421,7 +419,7 @@ function CheckoutContent() {
         );
         return;
       }
-      if (isTicketSalesEnded(ticket.salesEnd, now)) {
+      if (ticket.salesEnd && now > new Date(ticket.salesEnd)) {
         toast.error(
           language === "mn"
             ? `Тасалбарын борлуулалт дууссан: ${ticket.ticketName}`
@@ -983,8 +981,8 @@ function CheckoutContent() {
                       const available = ticket.availableQty !== undefined ? ticket.availableQty : totalSeats;
                       const isSoldOut = available <= 0;
                       const now = new Date();
-                      const salesStarted = isTicketSalesStarted(ticket.salesStart, now);
-                      const salesEnded = isTicketSalesEnded(ticket.salesEnd, now);
+                      const salesStarted = ticket.salesStart ? now >= new Date(ticket.salesStart) : true;
+                      const salesEnded = ticket.salesEnd ? now > new Date(ticket.salesEnd) : false;
                       const isSalesActive = salesStarted && !salesEnded;
                       const priceNum = Number(ticket.price) || 0;
                       const priceLabel = priceNum === 0 ? (language === "mn" ? "Үнэгүй" : "Free") : `₮${priceNum.toLocaleString()}`;
@@ -1015,7 +1013,7 @@ function CheckoutContent() {
                             </span>
                             {!salesStarted ? (
                               <span style={{ fontSize: 12.5, color: "#23ada4", fontWeight: 600 }}>
-                                {language === "mn" ? `Борлуулалт: ${new Date(getTicketSalesStartDate(ticket.salesStart) || ticket.salesStart).toLocaleDateString()}` : `Sales start on ${new Date(getTicketSalesStartDate(ticket.salesStart) || ticket.salesStart).toLocaleDateString()}`}
+                                {language === "mn" ? `Борлуулалт: ${new Date(ticket.salesStart).toLocaleDateString()}` : `Sales start on ${new Date(ticket.salesStart).toLocaleDateString()}`}
                               </span>
                             ) : salesEnded ? (
                               <span style={{ fontSize: 12.5, color: "#FFA143", fontWeight: 600 }}>

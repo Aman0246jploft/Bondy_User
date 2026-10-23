@@ -180,8 +180,8 @@ export default function CustomerBookingDetail() {
             <b style={{ display: "block", fontSize: "15px" }}>
               {isItemCancelled
                 ? (isEvent
-                  ? (language === "mn" ? "Энэ эвент цуцлагдсан байна" : "This event has been cancelled")
-                  : (language === "mn" ? "Энэ курс цуцлагдсан байна" : "This course has been cancelled"))
+                    ? (language === "mn" ? "Энэ эвент цуцлагдсан байна" : "This event has been cancelled")
+                    : (language === "mn" ? "Энэ курс цуцлагдсан байна" : "This course has been cancelled"))
                 : (language === "mn" ? "Энэ захиалга цуцлагдсан байна" : "This booking has been cancelled")}
             </b>
             {ticket.refundReason && (
@@ -194,11 +194,11 @@ export default function CustomerBookingDetail() {
               <p style={{ margin: "4px 0 0", opacity: 0.9, fontSize: "12.5px" }}>
                 {language === "mn"
                   ? (ticket.refundedAt
-                    ? `Төлбөр ${shortDate(ticket.refundedAt, language)}-нд буцаагдсан.`
-                    : "Тасалбарын төлбөр буцаагдсан.")
+                      ? `Төлбөр ${shortDate(ticket.refundedAt, language)}-нд буцаагдсан.`
+                      : "Тасалбарын төлбөр буцаагдсан.")
                   : (ticket.refundedAt
-                    ? `Payment was refunded on ${shortDate(ticket.refundedAt, language)}.`
-                    : "Ticket payment has been refunded.")}
+                      ? `Payment was refunded on ${shortDate(ticket.refundedAt, language)}.`
+                      : "Ticket payment has been refunded.")}
               </p>
             )}
           </div>
