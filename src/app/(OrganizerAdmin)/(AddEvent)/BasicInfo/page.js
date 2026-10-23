@@ -67,6 +67,15 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
+function formatImageSize(bytes) {
+  const size = Number(bytes);
+  if (!Number.isFinite(size) || size < 0) return "";
+  if (size >= 1024 * 1024) {
+    return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(size / 1024 / 1024)} MB`;
+  }
+  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(size / 1024)} KB`;
+}
+
 function nowStamp() {
   const d = new Date();
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
@@ -1110,7 +1119,7 @@ function EventEditorContent() {
         const uploadedPath = res.data.files[0];
         setPoster(uploadedPath);
         setPosterName(file.name);
-        setPosterSize(`${(file.size / 1024 / 1024).toFixed(1)} MB`);
+        setPosterSize(formatImageSize(file.size));
         setErrors((prev) => ({ ...prev, poster: "" }));
         flashToast(isMn ? "Постер амжилттай хуулагдлаа" : "Poster uploaded successfully");
       }

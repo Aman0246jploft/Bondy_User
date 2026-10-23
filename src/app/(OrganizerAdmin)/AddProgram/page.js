@@ -64,6 +64,15 @@ const BONDY_DARK_MAP_STYLE = [
 
 const STEP_KEYS = ["apBasic", "apLocation", "apPrice", "apReview"];
 
+function formatImageSize(bytes) {
+  const size = Number(bytes);
+  if (!Number.isFinite(size) || size < 0) return "";
+  if (size >= 1024 * 1024) {
+    return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(size / 1024 / 1024)} MB`;
+  }
+  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(size / 1024)} KB`;
+}
+
 function clipDigits(value, maxDigits) {
   return String(value ?? "").replace(/\D/g, "").slice(0, maxDigits);
 }
@@ -171,6 +180,7 @@ export default function LearningEditorPage() {
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadingTeaser, setUploadingTeaser] = useState(false);
   const [posterError, setPosterError] = useState("");
+  const [posterSize, setPosterSize] = useState("");
   const [toastMessage, setToastMessage] = useState("");
 
   // Modals & Overlays - NO prefilled cohort data
@@ -761,6 +771,7 @@ export default function LearningEditorPage() {
           ...prev,
           posterImage: [uploadedPath],
         }));
+        setPosterSize(formatImageSize(file.size));
         setDirty(true);
         setPosterError("");
         flashToast(isMn ? "Постер зураг амжилттай байршлаа" : "Poster image uploaded successfully");
@@ -771,6 +782,7 @@ export default function LearningEditorPage() {
           ...prev,
           posterImage: [localPreview],
         }));
+        setPosterSize(formatImageSize(file.size));
         setDirty(true);
         setPosterError("");
         flashToast(isMn ? "Постер зураг сонгогдлоо" : "Poster image selected");
@@ -784,6 +796,7 @@ export default function LearningEditorPage() {
           ...prev,
           posterImage: [localPreview],
         }));
+        setPosterSize(formatImageSize(file.size));
         setDirty(true);
         setPosterError("");
         flashToast(isMn ? "Постер зураг сонгогдлоо" : "Poster image selected");
@@ -1378,7 +1391,7 @@ export default function LearningEditorPage() {
                     />
                     <span className="lw-upT">
                       <b>{t("apPosterAttached")}</b>
-                      <span>{t("apPosterHint")}</span>
+                      <span>{posterSize || t("apPosterHint")}</span>
                       {uploadingPoster && (
                         <span className="lw-pbar">
                           <span style={{ width: "80%" }} />

@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import OtpVerifyCard from "@/components/Otp/OtpVerifyCard";
+import SingleDateCalendarPopover from "@/components/SingleDateCalendarPopover";
 import "./profile-unified.css";
 
 const GENDER_OPTIONS = [
@@ -19,13 +20,23 @@ function isoToDisplay(iso) {
   if (!iso) return "";
   const [year, month, day] = String(iso).slice(0, 10).split("-");
   if (!year || !month || !day) return "";
-  return `${month}.${day}.${year}`;
+  return `${day}.${month}.${year}`;
 }
 
 function displayToIso(text) {
   const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(text || "").trim());
   if (!match) return "";
-  return `${match[3]}-${match[1]}-${match[2]}`;
+  const [, day, month, year] = match;
+  const date = new Date(`${year}-${month}-${day}T00:00:00`);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== Number(year) ||
+    date.getMonth() !== Number(month) - 1 ||
+    date.getDate() !== Number(day)
+  ) {
+    return "";
+  }
+  return `${year}-${month}-${day}`;
 }
 
 function ageFromIso(iso) {
@@ -57,6 +68,7 @@ export default function UnifiedProfile({ forcedRole = null }) {
   const [saveError, setSaveError] = useState("");
   const [otpTarget, setOtpTarget] = useState(null);
   const [otpBusy, setOtpBusy] = useState(false);
+  const [isDobPickerOpen, setIsDobPickerOpen] = useState(false);
   const [verifiedPhone, setVerifiedPhone] = useState("");
   const [verifiedEmail, setVerifiedEmail] = useState("");
 
@@ -94,6 +106,7 @@ export default function UnifiedProfile({ forcedRole = null }) {
 
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
+  const dobInputRef = useRef(null);
 
   // Fetch initial profile & categories
   useEffect(() => {
@@ -615,17 +628,49 @@ export default function UnifiedProfile({ forcedRole = null }) {
         <div className="ac-pair" style={{ marginTop: 14 }}>
           <label>
             <span className="ac-lbl">{t("acDobLabel")}</span>
-            <input
-              type="text"
-              className="ac-in"
-              value={profileData.dob}
-              onChange={(e) => setProfileData({ ...profileData, dob: e.target.value })}
-              aria-invalid={!!errors.dob}
-              inputMode="numeric"
-              maxLength={10}
-              placeholder="MM.DD.YYYY"
-            />
+            <div className="ac-date-picker">
+              <input
+                ref={dobInputRef}
+                type="text"
+                className="ac-in"
+                value={profileData.dob}
+                onClick={() => setIsDobPickerOpen(true)}
+                onFocus={() => setIsDobPickerOpen(true)}
+                aria-invalid={!!errors.dob}
+                aria-haspopup="dialog"
+                aria-expanded={isDobPickerOpen}
+                readOnly
+                placeholder="DD.MM.YYYY"
+              />
+              <button
+                type="button"
+                className="ac-date-picker-btn"
+                aria-label={t("acDobLabel")}
+                onClick={() => setIsDobPickerOpen(true)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7 2v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm3 8h2m4 0h2m-8 4h2m4 0h2" />
+                </svg>
+              </button>
+            </div>
             {errors.dob && <span className="ac-err">{errors.dob}</span>}
+            {isDobPickerOpen && (
+              <SingleDateCalendarPopover
+                anchorRef={dobInputRef}
+                value={profileData.dob}
+                language={language}
+                t={t}
+                title={t("acDobLabel")}
+                minDate={new Date(1900, 0, 1)}
+                maxDate={new Date()}
+                onApply={(formatted) => {
+                  setProfileData((current) => ({ ...current, dob: formatted }));
+                  setErrors((current) => ({ ...current, dob: undefined }));
+                  setIsDobPickerOpen(false);
+                }}
+                onCancel={() => setIsDobPickerOpen(false)}
+              />
+            )}
           </label>
           <div>
             <span className="ac-lbl">{t("acGender")}</span>
