@@ -2086,7 +2086,7 @@ export const translations = {
     pdMaps: "Open in Google Maps",
     pdPolicy: "Course policy",
     pdPolicyFallback: "Full refund if you cancel at least 14 days before the course starts. No refund after it starts.",
-    pdEnroll: "Sign up",
+    pdEnroll: "Enroll Now",
     pdSimilar: "Similar courses",
     pdReadMore: "Read more",
     pdShowLess: "Show less",
