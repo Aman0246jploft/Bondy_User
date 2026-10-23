@@ -244,7 +244,7 @@ export default function UnifiedSecurity({ role = "customer", defaultOpenPassword
       return;
     }
     if (oldPassword === newPassword) {
-      toast.error(language === "mn" ? "Шинэ нууц үг хуучнаас өөр байх ёстой" : "New password must be different from old password");
+      toast.error(language === "mn" ? "Шинэ нууц үг одоогийнхоос өөр байх ёстой" : "New password must be different from current password");
       return;
     }
 

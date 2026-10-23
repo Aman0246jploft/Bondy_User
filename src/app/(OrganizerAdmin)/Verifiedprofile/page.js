@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { parsePhoneNumber } from "react-phone-number-input";
 import apiClient from "@/api/apiClient";
 import authApi from "@/api/authApi";
 import { useLanguage } from "@/context/LanguageContext";
@@ -166,13 +169,19 @@ function VerificationPageContent() {
   const idDocs = [];
   const nat = u.verifications?.idVerification?.nationalId;
   const lic = u.verifications?.idVerification?.drivingLicence;
-  if (nat?.frontImage) idDocs.push({ type: "id", front: nat.frontImage, back: nat.backImage, status: mapStatus(nat.status), reason: nat.rejectionReason, at: nat.verifiedAt });
-  if (lic?.frontImage) idDocs.push({ type: "license", front: lic.frontImage, back: lic.backImage, status: mapStatus(lic.status), reason: lic.rejectionReason, at: lic.verifiedAt });
+  if (nat?.frontImage) idDocs.push({ type: "id", front: nat.frontImage, back: nat.backImage, status: mapStatus(nat.status), reason: nat.rejectionReason, at: nat.verifiedAt || nat.updatedAt || nat.createdAt });
+  if (lic?.frontImage) idDocs.push({ type: "license", front: lic.frontImage, back: lic.backImage, status: mapStatus(lic.status), reason: lic.rejectionReason, at: lic.verifiedAt || lic.updatedAt || lic.createdAt });
+
   let idStatus = "none";
-  if (idDocs.some((d) => d.status === "rejected")) idStatus = "rejected";
-  else if (idDocs.some((d) => d.status === "review")) idStatus = "review";
-  else if (idDocs.length && idDocs.every((d) => d.status === "verified")) idStatus = "verified";
-  const idDoc = idDocs[idDocs.length - 1] || null;
+  if (idDocs.some((d) => d.status === "verified")) {
+    idStatus = "verified";
+  } else if (idDocs.some((d) => d.status === "review")) {
+    idStatus = "review";
+  } else if (idDocs.some((d) => d.status === "rejected")) {
+    idStatus = "rejected";
+  }
+
+  const idDoc = idDocs.find((d) => d.status === idStatus) || idDocs[0] || null;
 
   const accountList = Array.isArray(u.bankAccounts) ? u.bankAccounts : [];
   const bankRec = [...accountList].reverse().find((b) => b.status === "pending")
@@ -219,11 +228,20 @@ function VerificationPageContent() {
   const rowDetail = (key) => {
     const item = items[key];
     if (key === "identity") {
-      if (!idDoc) return t("vfDocsTodo");
-      const name = docLabel(idDoc.type);
-      if (item.status === "review") return `${name} · ${t("vfSentStamp", { when: stamp(idDoc.at) || t("vfSentShort") })}`;
-      if (item.status === "rejected") return `${name} · ${t("vfResubmit")}`;
-      return name;
+      if (!idDocs.length) return t("vfDocsTodo");
+      if (item.status === "verified") {
+        const vDoc = idDocs.find((d) => d.status === "verified") || idDocs[0];
+        return `${docLabel(vDoc.type)} · ${t("vfVerified")}`;
+      }
+      if (item.status === "review") {
+        const rDoc = idDocs.find((d) => d.status === "review") || idDocs[0];
+        return `${docLabel(rDoc.type)} · ${t("vfSentStamp", { when: stamp(rDoc.at) || t("vfSentShort") })}`;
+      }
+      if (item.status === "rejected") {
+        const rejDoc = idDocs.find((d) => d.status === "rejected") || idDocs[0];
+        return `${docLabel(rejDoc.type)} · ${t("vfResubmit")}`;
+      }
+      return docLabel(idDocs[0].type);
     }
     if (item.status === "verified") {
       if (key === "phone" || key === "email") return item.value || t("vfVerified");
@@ -242,7 +260,10 @@ function VerificationPageContent() {
   };
   const rowReason = (key) => {
     if (items[key].status !== "rejected") return "";
-    if (key === "identity") return idDoc?.reason || "";
+    if (key === "identity") {
+      const rejDoc = idDocs.find((d) => d.status === "rejected");
+      return rejDoc?.reason || "";
+    }
     if (key === "bank") return bankRec?.rejectionReason || "";
     if (key === "profile") return u.businessRejectionReason || "";
     return "";
@@ -260,7 +281,13 @@ function VerificationPageContent() {
     setSheet(key);
     setAsk(null);
     setStep("value");
-    setNewVal("");
+    if (key === "phone") {
+      setNewVal(!phoneVerified && phoneValue ? phoneValue : "");
+    } else if (key === "email") {
+      setNewVal(!emailVerified && emailValue ? emailValue : "");
+    } else {
+      setNewVal("");
+    }
     setOtp("");
     setOtpMsg("");
     setSheetErr("");
@@ -294,23 +321,38 @@ function VerificationPageContent() {
 
   const sendCode = async () => {
     const raw = String(newVal || "").trim();
+    let finalCountryCode = "+976";
+    let finalContactNumber = raw;
     if (sheet === "email") {
       if (!raw || raw.length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(raw)) { setSheetErr(t("stEmailLen")); return; }
     } else {
       const digits = raw.replace(/\D/g, "");
       if (!digits) { setSheetErr(t("vfPhoneNeed")); return; }
-      if (digits.length !== 8) { setSheetErr(t("vfPhoneBad")); return; }
+      try {
+        const parsed = parsePhoneNumber(raw.startsWith("+") ? raw : `+${raw}`);
+        if (parsed) {
+          finalCountryCode = `+${parsed.countryCallingCode}`;
+          finalContactNumber = parsed.nationalNumber;
+        } else {
+          finalContactNumber = digits;
+        }
+      } catch (phoneErr) {
+        finalContactNumber = digits;
+      }
+      if (!finalContactNumber || finalContactNumber.length < 4) {
+        setSheetErr(t("vfPhoneBad"));
+        return;
+      }
     }
     try {
       setBusy(true);
       setSheetErr("");
       const res = sheet === "email"
         ? await apiClient.post("/verification/email/send-otp", { email: raw })
-        : await apiClient.post("/verification/phone/send-otp", { countryCode: "+976", contactNumber: raw.replace(/\D/g, "") });
+        : await apiClient.post("/verification/phone/send-otp", { countryCode: finalCountryCode, contactNumber: finalContactNumber });
       if (!res?.status) { setSheetErr(res?.message || t("vfUploadFail")); return; }
       if (sheet === "phone") {
-        const digits = raw.replace(/\D/g, "");
-        setNewVal(`+976 ${digits.slice(0, 4)} ${digits.slice(4)}`);
+        setNewVal(`${finalCountryCode} ${finalContactNumber}`);
       }
       setStep("otp");
       setOtp("");
@@ -449,10 +491,10 @@ function VerificationPageContent() {
   const contactEdit = contactEditable && !contactVerified && step !== "otp";
   const isOtp = contactEditable && step === "otp";
   const digits = String(newVal || "").replace(/\D/g, "");
-  const currentDigits = String(phoneValue || "").replace(/\D/g, "").replace(/^976/, "");
+  const currentPhoneDigits = String(phoneValue || "").replace(/\D/g, "");
   const sendOff = sheet === "email"
-    ? String(newVal).trim().length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(String(newVal).trim()) || String(newVal).trim().toLowerCase() === emailValue.toLowerCase()
-    : digits.length !== 8 || digits === currentDigits;
+    ? String(newVal).trim().length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(String(newVal).trim()) || (emailVerified && String(newVal).trim().toLowerCase() === emailValue.toLowerCase())
+    : digits.length < 7 || (phoneVerified && digits === currentPhoneDigits);
   const bankForm = sheet === "bank" && (bankStatus === "none" || bankStatus === "rejected" || bankEditing);
   const bankRead = sheet === "bank" && !bankForm && bankRec?.bankName;
   const ibanMsg = sheet === "bank" ? (() => {
@@ -492,7 +534,7 @@ function VerificationPageContent() {
       <div className="vf-prog">
         <span className="vf-progBar"><span style={{ width: `${Math.round((done / 5) * 100)}%` }} /></span>
         <span className="vf-progT">{t("vfProg", { done, total: 5 })}</span>
-            </div>
+      </div>
 
       <section className="vf-list">
         {rows.map((row) => {
@@ -506,7 +548,7 @@ function VerificationPageContent() {
                 <b>{row.title}</b>
                 <i>{rowDetail(row.key)}</i>
                 {reason ? <em>{reason}</em> : null}
-            </span>
+              </span>
               <span className="vf-rowEnd">
                 <span className="vf-pill" style={TONE[tone]}>{st}</span>
                 <Icon name="arrow" size={17} />
@@ -542,7 +584,7 @@ function VerificationPageContent() {
                   {sheet === "profile" && items.profile.status === "review" ? t("vfProfileReview") : meta.label}
                 </b>
                 <p>{statusNote()}</p>
-                    </div>
+              </div>
             )}
 
             {contactVerified && (
@@ -557,7 +599,23 @@ function VerificationPageContent() {
                 <div className="vf-kv"><span>{sheet === "email" ? t("vfCurrentEmail") : t("vfCurrentPhone")}</span><span>{items[sheet].value || t("vfDash")}</span></div>
                 <label className="vf-lb">{sheet === "email" ? t("vfNewEmail") : t("vfNewPhone")} <i>*</i></label>
                 {sheet === "phone" ? (
-                  <span className="vf-inWrap"><span className="vf-inPre">+976</span><input inputMode="numeric" maxLength={9} value={newVal} placeholder="9911 2233" onChange={(e) => { setNewVal(e.target.value.replace(/[^\d\s]/g, "").slice(0, 9)); setSheetErr(""); }} /></span>
+                  <div className="vf-phone-wrap">
+                    <PhoneInput
+                      country={"mn"}
+                      value={newVal}
+                      onChange={(phone) => {
+                        setNewVal(phone ? "+" + phone : "");
+                        setSheetErr("");
+                      }}
+                      specialLabel=""
+                      inputClass="vf-phone-in"
+                      buttonClass="vf-phone-btn"
+                      dropdownClass="vf-phone-dropdown"
+                      searchClass="vf-phone-search"
+                      enableSearch={true}
+                      searchPlaceholder={t("search") || "Search country..."}
+                    />
+                  </div>
                 ) : (
                   <input className="vf-in" maxLength={120} value={newVal} placeholder="name@example.com" onChange={(e) => { setNewVal(e.target.value.slice(0, 120)); setSheetErr(""); }} />
                 )}
@@ -576,40 +634,124 @@ function VerificationPageContent() {
                     {Array.from({ length: OTP_LEN }).map((_, i) => (
                       <span key={i} className="vf-otpB" data-on={otp.length === i ? "1" : "0"} data-bad={otpMsg ? "1" : "0"}>{otp[i] || ""}</span>
                     ))}
-                        </div>
+                  </div>
                   {otpMsg ? <span className="vf-err">{otpMsg}</span> : null}
                   <span className="vf-hint">{left > 0 ? t("vfResendWait", { sec: left }) : t("vfResendReady")}</span>
-                  </div>
+                </div>
                 <div className="vf-acts">
                   <button type="button" className="vf-go" disabled={busy} onClick={verifyOtp}>{busy ? t("vfChecking") : t("vfVerify")}</button>
                   <button type="button" className="vf-gh" disabled={left > 0 || busy} onClick={resend}>{t("vfResend")}</button>
-              </div>
+                </div>
               </>
             )}
 
             {sheet === "identity" && idStep === "list" && (
               <>
                 <div className="vf-hero">
-                  <span className="vf-heroI"><Icon name="shield" size={32} />{idStatus !== "verified" ? <em>!</em> : null}</span>
-                  <h3>{idStatus === "review" ? t("vfIdReviewTitle") : idStatus === "verified" ? t("vfIdOkTitle") : idStatus === "rejected" ? t("vfNeedsFix") : t("vfIdEmptyTitle")}</h3>
-                  <p>{idStatus === "review" ? t("vfIdReviewNote") : idStatus === "verified" ? t("vfIdOkNote") : idStatus === "rejected" ? (idDoc?.reason || t("vfNeedsFixNote")) : t("vfIdEmptyNote")}</p>
+                  <span className="vf-heroI" style={idStatus === "verified" ? TONE.ok : undefined}>
+                    <Icon name={idStatus === "verified" ? "check" : "shield"} size={32} />
+                    {idStatus === "rejected" ? <em>!</em> : null}
+                  </span>
+                  <h3>
+                    {idStatus === "review"
+                      ? t("vfIdReviewTitle")
+                      : idStatus === "verified"
+                      ? t("vfIdOkTitle")
+                      : idStatus === "rejected"
+                      ? t("vfNeedsFix")
+                      : t("vfIdEmptyTitle")}
+                  </h3>
+                  <p>
+                    {idStatus === "review"
+                      ? t("vfIdReviewNote")
+                      : idStatus === "verified"
+                      ? t("vfIdOkNote")
+                      : idStatus === "rejected"
+                      ? (idDocs.find((d) => d.status === "rejected")?.reason || t("vfNeedsFixNote"))
+                      : t("vfIdEmptyNote")}
+                  </p>
                 </div>
-                {idDoc && (
-                  <div className="vf-docCard">
+
+                {/* Show ALL uploaded documents */}
+                {idDocs.map((doc) => (
+                  <div className="vf-docCard" key={doc.type} style={{ marginBottom: "14px" }}>
                     <div className="vf-docHead">
-                      <span><b>{docLabel(idDoc.type)}</b><i>{idDoc.status === "verified" ? t("vfOkStamp", { when: stamp(idDoc.at) }) : t("vfSentStamp", { when: stamp(idDoc.at) })}</i></span>
-                      <span className="vf-pill" style={TONE[statusTone(idDoc.status)]}>{statusMetaLabel(idDoc.status, t)}</span>
-                </div>
+                      <span>
+                        <b>{docLabel(doc.type)}</b>
+                        <i>{doc.status === "verified" ? t("vfOkStamp", { when: stamp(doc.at) }) : t("vfSentStamp", { when: stamp(doc.at) })}</i>
+                      </span>
+                      <span className="vf-pill" style={TONE[statusTone(doc.status)]}>
+                        {statusMetaLabel(doc.status, t)}
+                      </span>
+                    </div>
+
                     <div className="vf-thumbs">
-                      <div><span className="vf-shot" style={idDoc.front ? { backgroundImage: `url(${media(idDoc.front)})` } : undefined} /><span className="vf-thumbL">{t("vfFront")}</span></div>
-                      <div><span className="vf-shot" style={idDoc.back ? { backgroundImage: `url(${media(idDoc.back)})` } : undefined} /><span className="vf-thumbL">{t("vfBack")}</span></div>
-              </div>
-                    {idDoc.status === "rejected" ? <p className="vf-note"><Icon name="clock" size={15} /><span>{t("vfIdRejectFoot")}</span></p> : null}
+                      <div>
+                        <span className="vf-shot" style={doc.front ? { backgroundImage: `url(${media(doc.front)})` } : undefined} />
+                        <span className="vf-thumbL">{t("vfFront")}</span>
+                      </div>
+                      <div>
+                        <span className="vf-shot" style={doc.back ? { backgroundImage: `url(${media(doc.back)})` } : undefined} />
+                        <span className="vf-thumbL">{t("vfBack")}</span>
+                      </div>
+                    </div>
+
+                    {doc.status === "rejected" && (
+                      <div style={{ marginTop: "10px", padding: "10px 12px", borderRadius: "10px", background: "rgba(255,90,90,.08)", border: "1px solid rgba(255,90,90,.2)" }}>
+                        <p style={{ margin: 0, fontSize: "12px", color: "#FF8A8A", fontWeight: 600 }}>
+                          {doc.reason ? `Reason: ${doc.reason}` : t("vfNeedsFixNote")}
+                        </p>
+                        <button
+                          type="button"
+                          className="vf-go"
+                          style={{ marginTop: "8px", height: "36px", fontSize: "12px" }}
+                          onClick={() => {
+                            setDocType(doc.type);
+                            setIdStep("upload");
+                            setFront("");
+                            setBack("");
+                            setSheetErr("");
+                          }}
+                        >
+                          {`Re-upload ${docLabel(doc.type)}`}
+                        </button>
                       </div>
                     )}
-                {(idStatus === "none" || idStatus === "rejected") && (
-                  <button type="button" className="vf-go" onClick={() => { setIdStep("type"); setDocType(""); setFront(""); setBack(""); }}>{idStatus === "rejected" ? t("vfIdReplace") : t("vfIdAdd")}</button>
+                  </div>
+                ))}
+
+                {/* If no documents uploaded yet */}
+                {idDocs.length === 0 && (
+                  <button
+                    type="button"
+                    className="vf-go"
+                    onClick={() => {
+                      setIdStep("type");
+                      setDocType("");
+                      setFront("");
+                      setBack("");
+                    }}
+                  >
+                    {t("vfIdAdd")}
+                  </button>
                 )}
+
+                {/* If user uploaded only 1 document and wants to add another (and not yet verified) */}
+                {idDocs.length > 0 && idDocs.length < 2 && idStatus !== "verified" && !idDocs.some((d) => d.status === "rejected") && (
+                  <button
+                    type="button"
+                    className="vf-gh"
+                    onClick={() => {
+                      setIdStep("type");
+                      setDocType("");
+                      setFront("");
+                      setBack("");
+                    }}
+                  >
+                    {t("vfIdAdd")}
+                  </button>
+                )}
+
                 <p className="vf-note vf-center"><Icon name="shield" size={15} /><span>{t("vfIdPrivacy")}</span></p>
               </>
             )}
@@ -618,14 +760,42 @@ function VerificationPageContent() {
               <>
                 <h3 className="vf-stepT">{t("vfChooseType")}</h3>
                 <div className="vf-list">
-                  {[{ id: "id", label: t("vfIdCard"), sub: t("vfIdCardSub") }, { id: "license", label: t("vfLicence"), sub: t("vfLicenceSub") }].map((doc) => (
-                    <button type="button" className="vf-row" key={doc.id} onClick={() => { setDocType(doc.id); setIdStep("upload"); setFront(""); setBack(""); setSheetErr(""); }}>
-                      <span className="vf-rowI" style={TONE.brand}><Icon name={doc.id === "id" ? "user" : "shield"} /></span>
-                      <span style={{ flex: 1, minWidth: 0 }}><b>{doc.label}</b><i>{doc.sub}</i></span>
-                      <Icon name="arrow" size={17} />
+                  {[
+                    { id: "id", label: t("vfIdCard"), sub: t("vfIdCardSub") },
+                    { id: "license", label: t("vfLicence"), sub: t("vfLicenceSub") }
+                  ].map((doc) => {
+                    const existing = idDocs.find((d) => d.type === doc.id);
+                    const isVerified = existing?.status === "verified";
+                    return (
+                      <button
+                        type="button"
+                        className="vf-row"
+                        key={doc.id}
+                        disabled={isVerified}
+                        style={isVerified ? { opacity: 0.5, cursor: "not-allowed" } : undefined}
+                        onClick={() => {
+                          if (isVerified) return;
+                          setDocType(doc.id);
+                          setIdStep("upload");
+                          setFront("");
+                          setBack("");
+                          setSheetErr("");
+                        }}
+                      >
+                        <span className="vf-rowI" style={isVerified ? TONE.ok : TONE.brand}>
+                          <Icon name={doc.id === "id" ? "user" : "shield"} />
+                        </span>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <b>
+                            {doc.label} {isVerified ? <span className="vf-pill" style={TONE.ok}>✓ {t("vfVerified")}</span> : null}
+                          </b>
+                          <i>{isVerified ? t("vfVerified") : doc.sub}</i>
+                        </span>
+                        {!isVerified && <Icon name="arrow" size={17} />}
                       </button>
-                  ))}
-                    </div>
+                    );
+                  })}
+                </div>
               </>
             )}
 
@@ -636,7 +806,7 @@ function VerificationPageContent() {
                 <div className="vf-dropGrid">
                   <Drop side="front" label={t("vfFront")} file={front} busy={frontBusy} onPick={pickFile} t={t} />
                   <Drop side="back" label={t("vfBack")} file={back} busy={backBusy} onPick={pickFile} t={t} />
-                            </div>
+                </div>
                 {upErr ? <div className="vf-alert">{upErr}</div> : null}
                 {sheetErr ? <div className="vf-alert">{sheetErr}</div> : null}
                 <p className="vf-note">
@@ -685,7 +855,7 @@ function VerificationPageContent() {
                   <button type="button" className="vf-selBtn" data-empty={bankName ? "0" : "1"} aria-expanded={bankOpen} onClick={() => setBankOpen((v) => !v)}>
                     <span>{bankName || t("vfPickBank")}</span>
                     <Icon name="down" size={16} />
-                        </button>
+                  </button>
                   {bankOpen && (
                     <div className="vf-selPanel">
                       <input className="vf-in" value={bankQuery} placeholder={t("vfSearchBank")} onChange={(e) => setBankQuery(e.target.value)} />
@@ -694,13 +864,13 @@ function VerificationPageContent() {
                           <button type="button" className="vf-selOpt" key={b._id || b.bankName} aria-selected={bankName === b.bankName} onClick={() => { setBankName(b.bankName); setBankOpen(false); setBankQuery(""); setSheetErr(""); }}>
                             <span>{b.bankName}</span>
                             {bankName === b.bankName ? <Icon name="check" size={15} /> : null}
-                      </button>
+                          </button>
                         ))}
                         {bankHits.length === 0 ? <span className="vf-selNone">{t("vfNoBank")}</span> : null}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
                 <label className="vf-lb">{t("vfIban")} <i>*</i></label>
                 <input className="vf-in" value={bankIban} placeholder={t("vfIbanPh")} spellCheck={false} onChange={(e) => { setBankIban(formatIban(e.target.value)); setSheetErr(""); }} />
                 {ibanMsg ? <span className="vf-err" style={{ textAlign: "left" }}>{ibanMsg}</span> : null}
@@ -722,10 +892,10 @@ function VerificationPageContent() {
                       <b className="vf-pvName">{u.businessName || t("vfDash")}</b>
                       {categoryName ? <span className="vf-pvCat">{categoryName}</span> : null}
                       <span className="vf-pvBio">{u.shortDesc || u.bio || ""}</span>
-                        </span>
-                      </div>
+                    </span>
+                  </div>
                   {city ? <span className="vf-pvLoc"><Icon name="pin" size={15} /><span>{city}</span></span> : null}
-                      </div>
+                </div>
                 {(profileStatus === "none" || profileStatus === "rejected") && (
                   <>
                     <div className="vf-checks">
@@ -747,11 +917,11 @@ function VerificationPageContent() {
                     router.push("/OrganizerProfile");
                   }}>{t("vfEditProfile")}</button>
                   <Link className="vf-go" href={userId ? `/profile?id=${userId}` : "/profile"}>{t("vfPreview")}</Link>
-              </div>
+                </div>
               </>
             )}
           </div>
-                </div>
+        </div>
       )}
 
       {ask && (
@@ -781,13 +951,13 @@ function VerificationPageContent() {
                   <button type="button" className="vf-go" onClick={() => setAsk(null)}>{t("vfContinue")}</button>
                 </>
               )}
-                    </div>
-                  </div>
-              </div>
-            )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast ? <div className="vf-toast" role="status">{toast}</div> : null}
-        </div>
+    </div>
   );
 
   function sheetTitle() {

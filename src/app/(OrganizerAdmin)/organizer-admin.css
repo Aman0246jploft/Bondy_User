@@ -8166,6 +8166,168 @@ button.cd-pkg { width: 100%; border-radius: 16px; padding: 16px; cursor: pointer
 .vf-inWrap { display: flex; align-items: center; height: 48px; border-radius: 14px; border: 1px solid rgba(255,255,255,.16); background: #111; overflow: hidden; }
 .vf-inPre { padding: 0 12px; color: #9a9a9a; font-weight: 700; border-right: 1px solid rgba(255,255,255,.12); }
 .vf-inWrap input { border: none; background: transparent; height: 100%; }
+/* Dedicated PhoneInput styling for Verifiedprofile sheet */
+.vf-phone-wrap {
+  width: 100%;
+  position: relative;
+}
+.vf-phone-wrap .react-tel-input {
+  width: 100% !important;
+  font-family: inherit !important;
+}
+.vf-phone-wrap .react-tel-input .special-label {
+  display: none !important;
+}
+.vf-phone-wrap .react-tel-input input.form-control,
+.vf-phone-wrap .react-tel-input .vf-phone-in {
+  width: 100% !important;
+  height: 48px !important;
+  box-sizing: border-box !important;
+  padding: 0 14px 0 54px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background: #111 !important;
+  color: #fff !important;
+  font-size: 15px !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s ease !important;
+}
+.vf-phone-wrap .react-tel-input input.form-control:focus,
+.vf-phone-wrap .react-tel-input .vf-phone-in:focus {
+  border-color: #23ada4 !important;
+}
+.vf-phone-wrap .react-tel-input .flag-dropdown,
+.vf-phone-wrap .react-tel-input .vf-phone-btn {
+  position: absolute !important;
+  top: 1px !important;
+  bottom: 1px !important;
+  left: 1px !important;
+  width: 48px !important;
+  height: 46px !important;
+  background: #111 !important;
+  border: none !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 13px 0 0 13px !important;
+  padding: 0 !important;
+}
+.vf-phone-wrap .react-tel-input .flag-dropdown.open,
+.vf-phone-wrap .react-tel-input .flag-dropdown:hover,
+.vf-phone-wrap .react-tel-input .selected-flag:hover {
+  background: #1a1a1a !important;
+}
+.vf-phone-wrap .react-tel-input .selected-flag {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 0 0 10px !important;
+  background: transparent !important;
+  border-radius: 13px 0 0 13px !important;
+  display: flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+}
+.vf-phone-wrap .react-tel-input .selected-flag .flag {
+  position: static !important;
+  margin: 0 !important;
+  display: inline-block !important;
+}
+.vf-phone-wrap .react-tel-input .selected-flag .arrow {
+  position: static !important;
+  margin: 0 0 0 6px !important;
+  border-top-color: #9a9a9a !important;
+}
+.vf-phone-wrap .react-tel-input .selected-flag .arrow.up {
+  border-top-color: transparent !important;
+  border-bottom-color: #36cec2 !important;
+}
+.vf-phone-wrap .react-tel-input .country-list,
+.vf-phone-wrap .react-tel-input .vf-phone-dropdown {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  left: -1px !important;
+  width: 340px !important;
+  max-width: calc(100vw - 64px) !important;
+  max-height: 230px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #1c1c1c !important;
+  background-color: #1c1c1c !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.85) !important;
+  color: #fff !important;
+  overflow-y: auto !important;
+  z-index: 99999 !important;
+  list-style: none !important;
+}
+.vf-phone-wrap .react-tel-input .country-list::-webkit-scrollbar {
+  width: 6px;
+}
+.vf-phone-wrap .react-tel-input .country-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+.vf-phone-wrap .react-tel-input .country-list .search {
+  position: sticky !important;
+  top: 0 !important;
+  background: #1c1c1c !important;
+  background-color: #1c1c1c !important;
+  padding: 8px !important;
+  margin: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  z-index: 2 !important;
+  display: flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+.vf-phone-wrap .react-tel-input .country-list .search-box,
+.vf-phone-wrap .react-tel-input .country-list .vf-phone-search {
+  width: 100% !important;
+  height: 36px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 12px 0 32px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background: #111 !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  outline: none !important;
+}
+.vf-phone-wrap .react-tel-input .country-list .search-emoji {
+  position: absolute !important;
+  left: 18px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  font-size: 13px !important;
+  pointer-events: none !important;
+}
+.vf-phone-wrap .react-tel-input .country-list .country {
+  padding: 9px 12px !important;
+  font-size: 13px !important;
+  color: #ddd !important;
+  background: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
+}
+.vf-phone-wrap .react-tel-input .country-list .country:hover,
+.vf-phone-wrap .react-tel-input .country-list .country.highlight {
+  background: rgba(35, 173, 164, 0.2) !important;
+  color: #36cec2 !important;
+}
+.vf-phone-wrap .react-tel-input .country-list .country .country-name {
+  margin-right: 6px !important;
+  color: inherit !important;
+}
+.vf-phone-wrap .react-tel-input .country-list .country .dial-code {
+  color: #888 !important;
+  margin-left: auto !important;
+  font-size: 12.5px !important;
+}
 .vf-hint { display: block; margin-top: 8px; font-size: 12.5px; color: #8a8a8a; }
 .vf-err { display: block; margin-top: 6px; font-size: 12.5px; color: #ff8a8a; text-align: left; }
 .vf-otpWrap .vf-err { text-align: center; }
