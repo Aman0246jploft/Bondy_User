@@ -917,7 +917,7 @@ function EventDetailsContent() {
       })
       .map(([id, q]) => `${id}:${q}`)
       .join(",");
-      
+
     checkAuth(() => {
       router.push(`/eventbooking?eventId=${eventId}${picked ? `&tickets=${encodeURIComponent(picked)}` : ""}`);
     });
