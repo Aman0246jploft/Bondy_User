@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import QRCode from "react-qr-code";
+import toast from "react-hot-toast";
 import bookingApi from "@/api/bookingApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
@@ -114,6 +115,8 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState(0);
+  const [savingQr, setSavingQr] = useState(false);
+  const cardRef = useRef(null);
 
   useEffect(() => {
     // The parent page may already hold the booking; render it without a second request.
@@ -396,20 +399,226 @@ export default function TicketDetailView({ showCustomerNav = false, data = null,
         <button
           type="button"
           className="td-save"
-          onClick={() => {
-            const svg = document.querySelector(".td-qr-box svg");
-            if (!svg) return;
-            const blob = new Blob([svg.outerHTML], { type: "image/svg+xml" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `${ticket.bookingId || "ticket"}.svg`;
-            link.click();
-            URL.revokeObjectURL(url);
+          disabled={savingQr}
+          onClick={async () => {
+            if (savingQr) return;
+            try {
+              setSavingQr(true);
+              if (!cardRef.current) return;
+              const html2canvas = (await import("html2canvas")).default;
+              const canvas = await html2canvas(cardRef.current, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                logging: false,
+              });
+              const image = canvas.toDataURL("image/png");
+              const link = document.createElement("a");
+              link.href = image;
+              link.download = `checkin-${code || ticket.bookingId || "ticket"}.png`;
+              link.click();
+            } catch (err) {
+              console.error("Failed to generate check-in card:", err);
+              toast.error(language === "mn" ? "Зураг татахад алдаа гарлаа" : "Failed to download check-in card");
+            } finally {
+              setSavingQr(false);
+            }
           }}
         >
-          {t("tdSaveQr")}
+          {savingQr ? (language === "mn" ? "Бэлтгэж байна..." : "Saving...") : t("tdSaveQr")}
         </button>
+      )}
+
+      {/* Offscreen high-res check-in card for image export */}
+      {qr && !dead && (
+        <div className="td-export-stage" aria-hidden="true">
+          <div ref={cardRef} className="td-checkin-card">
+            {/* Top wave styling */}
+            <svg
+              className="td-card-waves"
+              viewBox="0 0 440 640"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              preserveAspectRatio="none"
+            >
+              {/* Top-left decorative teal wave */}
+              <path
+                d="M-40 -40 L160 -40 C140 25 80 75 -40 85 Z"
+                fill="#169b8f"
+                opacity="0.95"
+              />
+              <path
+                d="M-30 -30 L110 -30 C100 20 60 55 -30 65 Z"
+                fill="#27c5b6"
+                opacity="0.65"
+              />
+              {/* Top-right decorative teal wave */}
+              <path
+                d="M360 -40 L480 -40 L480 85 C420 70 380 20 360 -40 Z"
+                fill="#169b8f"
+                opacity="0.95"
+              />
+              {/* Bottom decorative wave layers */}
+              <path
+                d="M-40 610 C90 570 210 635 340 595 C390 580 440 585 480 595 L480 680 L-40 680 Z"
+                fill="#23ada4"
+                opacity="0.9"
+              />
+              <path
+                d="M-40 630 C120 600 260 650 480 610 L480 680 L-40 680 Z"
+                fill="#0e7a71"
+                opacity="0.85"
+              />
+            </svg>
+
+            <div className="td-card-content">
+              {/* Brand Logo Header */}
+              <div className="td-card-brand">
+                <img
+                  src="/assets/logo/bondy-logo.svg"
+                  alt="Bondy"
+                  style={{ height: 38, width: "auto" }}
+                />
+              </div>
+
+              {/* Title & Prompt */}
+              <div className="td-card-heading">
+                <div className="td-card-title-row">
+                  {/* Left decorative sparkle rays */}
+                  <span className="td-card-sparkle">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2.8" strokeLinecap="round">
+                      <line x1="12" y1="4" x2="12" y2="8" />
+                      <line x1="5" y1="12" x2="9" y2="12" />
+                      <line x1="7" y1="7" x2="10" y2="10" />
+                    </svg>
+                  </span>
+
+                  <h2 className="td-card-h">{t("qrScanCheckIn")}</h2>
+
+                  {/* Right decorative sparkle rays */}
+                  <span className="td-card-sparkle td-card-sparkle-flip">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2.8" strokeLinecap="round">
+                      <line x1="12" y1="4" x2="12" y2="8" />
+                      <line x1="5" y1="12" x2="9" y2="12" />
+                      <line x1="7" y1="7" x2="10" y2="10" />
+                    </svg>
+                  </span>
+                </div>
+                <p className="td-card-desc">
+                  {isCourse ? t("qrScanCourseDesc") : t("qrScanDesc")}
+                </p>
+              </div>
+
+              {/* QR Code with Teal Rounded Frame */}
+              <div className="td-card-qr-frame">
+                <QRCode
+                  value={qr}
+                  size={200}
+                  level="M"
+                  style={{ display: "block", borderRadius: 14 }}
+                />
+              </div>
+
+              {/* Event / Course Info Box */}
+              <div className="td-card-info-box">
+                <div className="td-card-info-grid">
+                  {/* Date Column */}
+                  <div className="td-card-info-item">
+                    <span className="td-card-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </span>
+                    <div className="td-card-text">
+                      <span className="td-card-lbl">{t("date") || "Date"}</span>
+                      <b className="td-card-val">
+                        {isCourse && period
+                          ? period
+                          : (item?.startDate
+                              ? new Date(item.startDate).toLocaleDateString(language === "mn" ? "mn-MN" : "en-US", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })
+                              : "—")}
+                      </b>
+                      {item?.startDate && !isCourse && (
+                        <span className="td-card-sub">
+                          ({new Date(item.startDate).toLocaleDateString(language === "mn" ? "mn-MN" : "en-US", { weekday: "long" })})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Time Column */}
+                  <div className="td-card-info-item">
+                    <span className="td-card-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                    </span>
+                    <div className="td-card-text">
+                      <span className="td-card-lbl">{language === "mn" ? "Цаг" : "Time"}</span>
+                      <b className="td-card-val">
+                        {isCourse
+                          ? (batch?.startTime && batch?.endTime
+                              ? `${batch.startTime} – ${batch.endTime}`
+                              : (weekly || item?.startTime || "—"))
+                          : ([item?.startTime, item?.endTime].filter(Boolean).join(" – ") || item?.startTime || "—")}
+                      </b>
+                      {isCourse && dayText && (
+                        <span className="td-card-sub">{dayText}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Location (Full Row) */}
+                  <div className="td-card-info-item full-width">
+                    <span className="td-card-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    </span>
+                    <div className="td-card-text">
+                      <span className="td-card-lbl">{t("location") || "Location"}</span>
+                      <b className="td-card-val">
+                        {item?.venueAddress?.venueName || item?.venue?.venueName || title || "Bondy"}
+                      </b>
+                      {(item?.venueAddress?.address || item?.venueAddress?.city || where) && (
+                        <span className="td-card-sub">
+                          {[item?.venueAddress?.address, item?.venueAddress?.city].filter(Boolean).join(", ") || where}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Thank you note */}
+              <div className="td-card-footer">
+                <div className="td-card-thank-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2.8" strokeLinecap="round">
+                    <line x1="5" y1="12" x2="9" y2="12" />
+                    <line x1="7" y1="7" x2="10" y2="10" />
+                  </svg>
+                  <span>{t("qrThankYou")}</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#23ada4" strokeWidth="2.8" strokeLinecap="round" style={{ transform: "scaleX(-1)" }}>
+                    <line x1="5" y1="12" x2="9" y2="12" />
+                    <line x1="7" y1="7" x2="10" y2="10" />
+                  </svg>
+                </div>
+                <p className="td-card-thank-sub">
+                  {isCourse ? t("qrThankYouCourseDesc") : t("qrThankYouDesc")}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="td-cta">

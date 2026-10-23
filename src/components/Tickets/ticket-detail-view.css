@@ -472,3 +472,201 @@
     order: -1;
   }
 }
+
+/* Offscreen container for high-fidelity export */
+.td-export-stage {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 480px;
+  z-index: -9999;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.td-checkin-card {
+  position: relative;
+  width: 440px;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 28px;
+  overflow: hidden;
+  padding: 34px 28px 30px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+  font-family: var(--bd-font-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+.td-card-waves {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.td-card-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.td-card-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+
+.td-card-heading {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.td-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.td-card-sparkle {
+  color: #1ea89c;
+  display: flex;
+  align-items: center;
+}
+
+.td-card-sparkle-flip {
+  transform: scaleX(-1);
+}
+
+.td-card-h {
+  margin: 0;
+  font-size: 27px;
+  font-weight: 800;
+  color: #0b4f49;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.td-card-desc {
+  margin: 7px 0 0;
+  font-size: 13.5px;
+  color: #4b6664;
+  font-weight: 500;
+  line-height: 1.4;
+  max-width: 320px;
+}
+
+.td-card-qr-frame {
+  padding: 18px;
+  background: #ffffff;
+  border: 4.5px solid #1ba89b;
+  border-radius: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(27, 168, 155, 0.12);
+  margin-bottom: 24px;
+}
+
+.td-card-info-box {
+  width: 100%;
+  background: #eef8f6;
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.td-card-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.td-card-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.td-card-info-item.full-width {
+  grid-column: 1 / -1;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(27, 168, 155, 0.22);
+}
+
+.td-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(27, 168, 155, 0.12);
+  color: #148f83;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.td-card-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.td-card-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5c7b77;
+  text-transform: capitalize;
+  line-height: 1.2;
+}
+
+.td-card-val {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0d4640;
+  line-height: 1.35;
+  margin-top: 2px;
+  word-break: break-word;
+}
+
+.td-card-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: #638682;
+  margin-top: 1px;
+}
+
+.td-card-footer {
+  text-align: center;
+  padding-top: 2px;
+}
+
+.td-card-thank-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-style: italic;
+  font-weight: 800;
+  font-size: 23px;
+  color: #179e91;
+  letter-spacing: -0.01em;
+}
+
+.td-card-thank-sub {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: #4b6664;
+  font-weight: 500;
+}
+
