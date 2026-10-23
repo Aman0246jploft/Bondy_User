@@ -83,8 +83,12 @@ function nowStamp() {
 
 function toDateInput(value) {
   if (!value) return "";
+  const raw = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    return raw.slice(0, 10);
+  }
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value).slice(0, 10);
+  if (Number.isNaN(d.getTime())) return raw.slice(0, 10);
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
@@ -1427,15 +1431,22 @@ function EventEditorContent() {
         : [])
       : tickets
         .filter((t) => String(t.name || "").trim() && Number(t.cap) > 0)
-        .map((t) => ({
-          ticketName: t.name.trim(),
-          ticketShortDesc: t.desc || "",
-          price: Number(t.price) || 0,
-          qty: Number(t.cap),
-          isFreeTicket: false,
-          ...(t.ss ? { salesStart: t.ss } : {}),
-          ...(t.se ? { salesEnd: t.se } : {}),
-        }));
+        .map((t) => {
+          let ss = t.ss || undefined;
+          let se = t.se || undefined;
+          if (ss && se && String(ss).slice(0, 10) === String(se).slice(0, 10)) {
+            se = `${String(se).slice(0, 10)}T23:59:59`;
+          }
+          return {
+            ticketName: t.name.trim(),
+            ticketShortDesc: t.desc || "",
+            price: Number(t.price) || 0,
+            qty: Number(t.cap),
+            isFreeTicket: false,
+            ...(ss ? { salesStart: ss } : {}),
+            ...(se ? { salesEnd: se } : {}),
+          };
+        });
 
     const totalTicketsCount = formattedTickets.reduce((sum, t) => sum + (t.qty || 0), 0);
 
