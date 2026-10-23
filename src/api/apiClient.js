@@ -151,12 +151,20 @@ export function deepCapitalizeTitles(obj, seen = new WeakSet()) {
 
 apiClient.interceptors.response.use(
     (response) => {
+        const skipToast = response.config?.skipToast;
         const rawMsg = response.data?.message || "";
         const isAccountDisabled =
             response.data?.code === "ACCOUNT_DISABLED" ||
+            rawMsg === "This account has been deactivated." ||
+            rawMsg === "This account has been deactivated" ||
             rawMsg === "Your account has been disabled. Please contact support." ||
             rawMsg.includes("идэвхгүй болсон") ||
-            (response.data?.status === false && rawMsg.toLowerCase().includes("account has been disabled"));
+            (response.data?.status === false && (
+                rawMsg.toLowerCase().includes("account has been disabled") ||
+                rawMsg.toLowerCase().includes("account has been deactivated") ||
+                rawMsg.toLowerCase().includes("account is disabled") ||
+                rawMsg.toLowerCase().includes("account is deactivated")
+            ));
 
         const isInvalidToken =
             rawMsg === "Invalid or expired token" ||
@@ -168,7 +176,10 @@ apiClient.interceptors.response.use(
             localStorage.removeItem("registerEmail");
 
             if (!skipToast) {
-                toast.error(localizeMessage(rawMsg || "Your account has been disabled. Please contact support."));
+                const displayMsg = isAccountDisabled
+                    ? localizeMessage("This account has been deactivated.")
+                    : localizeMessage(rawMsg || "Invalid or expired token");
+                toast.error(displayMsg, { id: "auth-status-toast" });
             }
 
             const isAuthPage = typeof window !== "undefined" && (
@@ -188,14 +199,16 @@ apiClient.interceptors.response.use(
             return response.data;
         }
 
-        const skipToast = response.config?.skipToast;
         if (!skipToast) {
             if (response.data?.status && response.data?.message) {
                 if (typeof response.data.message === "string") {
                     // toast.success(response.data.message);
                 }
             } else if (response.data?.status === false && response.data?.message) {
-                toast.error(localizeMessage(response.data.message));
+                const displayMsg = isAccountDisabled
+                    ? localizeMessage("This account has been deactivated.")
+                    : localizeMessage(response.data.message);
+                toast.error(displayMsg, { id: "auth-status-toast" });
             }
         }
         if (response.data) {
@@ -207,16 +220,27 @@ apiClient.interceptors.response.use(
         const skipToast = error.config?.skipToast;
         const message = error.response?.data?.message || error.message || "Something went wrong";
         const code = error.response?.data?.code;
+        const isAccountDisabled =
+            code === "ACCOUNT_DISABLED" ||
+            message === "This account has been deactivated." ||
+            message === "This account has been deactivated" ||
+            message === "Your account has been disabled. Please contact support." ||
+            message.includes("идэвхгүй болсон") ||
+            message.toLowerCase().includes("account has been disabled") ||
+            message.toLowerCase().includes("account has been deactivated") ||
+            message.toLowerCase().includes("account is disabled") ||
+            message.toLowerCase().includes("account is deactivated");
+
         const isForbiddenOrDisabled =
             error.response?.status === 401 ||
             error.response?.status === 403 ||
-            code === "ACCOUNT_DISABLED" ||
-            message === "Your account has been disabled. Please contact support." ||
-            message.includes("идэвхгүй болсон") ||
-            message.toLowerCase().includes("account has been disabled");
+            isAccountDisabled;
 
         if (!skipToast) {
-            toast.error(localizeMessage(message));
+            const displayMsg = isAccountDisabled
+                ? localizeMessage("This account has been deactivated.")
+                : localizeMessage(message);
+            toast.error(displayMsg, { id: "auth-status-toast" });
         }
 
         if (isForbiddenOrDisabled) {
