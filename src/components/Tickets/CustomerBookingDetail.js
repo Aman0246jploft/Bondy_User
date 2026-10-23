@@ -145,7 +145,7 @@ export default function CustomerBookingDetail() {
   if (!isEvent && period) rows.push({ k: t("bdCourseDates"), v: period });
   if (!isEvent && weekly) rows.push({ k: t("tdWeekly"), v: weekly });
   if (venue || address) rows.push({ k: t("tdLocation"), v: venue || address, sub: venue && address && address !== venue ? address : "" });
-  if (!isEvent) rows.push({ k: t("bdTeacher"), v: "—", plain: true });
+  // if (!isEvent) rows.push({ k: t("bdTeacher"), v: "—", plain: true });
   if (ordered) rows.push({ k: t("bdOrdered"), v: ordered });
 
   return (

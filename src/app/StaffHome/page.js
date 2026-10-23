@@ -11,6 +11,8 @@ import LanguageSelector from "@/components/LanguageSelector";
 
 const isDuplicateScanResult = (ticketData, rawMsg = "") => {
   if (ticketData) {
+    if (ticketData.justCheckedIn) return false;
+    if (ticketData.isValid === true) return false;
     if (ticketData.isDuplicateScan) return true;
     if (ticketData.validationStatus === "ALREADY_CHECKED_IN") return true;
     if (ticketData.isValid === false && (ticketData.isAlreadyCheckedIn || ticketData.checkedInToday)) return true;
