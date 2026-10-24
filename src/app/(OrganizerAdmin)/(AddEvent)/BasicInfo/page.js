@@ -1470,6 +1470,7 @@ function EventEditorContent() {
       startTime: startTime || "",
       endDate: endDate || startDate || "",
       endTime: endTime || "",
+      timeZone: typeof window !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Asia/Ulaanbaatar",
       venueName: venueName || "",
       venueAddress: {
         address: address || "",

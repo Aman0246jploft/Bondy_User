@@ -287,6 +287,7 @@ export default function CoursesManagementPage() {
         coverImage: course.coverImage,
         posterImage: course.posterImage || [],
         mediaLinks: course.mediaLinks || [],
+        timeZone: course.timeZone || (typeof window !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Asia/Ulaanbaatar"),
         isDraft: true,
       };
 

@@ -1070,6 +1070,7 @@ export default function LearningEditorPage() {
         price: Number(formData.price) || 0,
         refundPolicy: getCanonicalRefundPolicy(formData.refundPolicy) || null,
         enrollmentType: "fixedStart",
+        timeZone: typeof window !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Asia/Ulaanbaatar",
         isDraft: mode === "published" ? false : true,
       };
 
@@ -1141,6 +1142,7 @@ export default function LearningEditorPage() {
         price: Number(formData.price),
         refundPolicy: getCanonicalRefundPolicy(formData.refundPolicy) || null,
         enrollmentType: "fixedStart",
+        timeZone: typeof window !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Asia/Ulaanbaatar",
         isDraft: false,
       };
 
