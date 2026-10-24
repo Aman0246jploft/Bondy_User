@@ -1075,12 +1075,28 @@ export default function LearningEditorPage() {
       };
 
       let res;
-      if (courseId) {
-        res = await courseApi.updateCourse(courseId, payload);
+      let targetCourseId = courseId;
+      if (targetCourseId) {
+        res = await courseApi.updateCourse(targetCourseId, payload);
       } else {
         res = await courseApi.createCourse(payload);
-        const createdId = res?.data?._id || res?.data?.course?._id || res?.data?.data?._id;
-        if (createdId) setCourseId(createdId);
+        const createdId =
+          res?.data?.course?._id ||
+          res?.data?.data?.course?._id ||
+          res?.data?._id ||
+          res?.data?.data?._id ||
+          res?.course?._id;
+        if (createdId) {
+          targetCourseId = createdId;
+          setCourseId(createdId);
+          setMode("draft");
+          if (typeof window !== "undefined") {
+            const url = new URL(window.location.href);
+            url.searchParams.set("courseId", createdId);
+            url.searchParams.set("mode", "draft");
+            window.history.replaceState(null, "", url.toString());
+          }
+        }
       }
 
       if (!res || res.status === false) {
@@ -1155,8 +1171,22 @@ export default function LearningEditorPage() {
 
       setDirty(false);
       const publishedId =
-        res?.data?._id || res?.data?.course?._id || res?.data?.data?._id || courseId;
-      if (publishedId) setCourseId(publishedId);
+        res?.data?.course?._id ||
+        res?.data?.data?.course?._id ||
+        res?.data?._id ||
+        res?.data?.data?._id ||
+        res?.course?._id ||
+        courseId;
+      if (publishedId) {
+        setCourseId(publishedId);
+        setMode("published");
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.searchParams.set("courseId", publishedId);
+          url.searchParams.delete("mode");
+          window.history.replaceState(null, "", url.toString());
+        }
+      }
       const updated = mode === "published";
       setDoneModal({
         type: updated ? "updated" : "published",
