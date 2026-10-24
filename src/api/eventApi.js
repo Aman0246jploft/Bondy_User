@@ -17,7 +17,10 @@ const eventApi = {
     },
     createEvent: (data) => apiClient.post("/event/create", data),
     getEventDetails: (eventId) => apiClient.get(`/event/details/${eventId}`, { skipToast: true }),
-    getAllAttendees: (eventId, params) => apiClient.get(`/event/attendees/${eventId}`, { params, skipToast: true }),
+    getAllAttendees: (eventId, params) => {
+        const queryParams = typeof params === "string" ? (params ? { search: params } : {}) : (params || {});
+        return apiClient.get(`/event/attendees/${eventId}`, { params: queryParams, skipToast: true });
+    },
     getOrganizerStats: () => apiClient.get("/event/organizer/stats", { skipToast: true }),
     updateEvent: (eventId, data) => apiClient.post(`/event/edit/${eventId}`, data),
     getRefundPolicies: (lang) => {
