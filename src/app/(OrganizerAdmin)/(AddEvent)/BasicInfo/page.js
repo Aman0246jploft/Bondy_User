@@ -1532,14 +1532,17 @@ function EventEditorContent() {
     if (blockedModal?.open) return;
     setDraftBusy(true);
     try {
-      const payload = buildPayload(isDraftMode ? true : false);
+      const targetId = createdEventId || eventIdParam;
+      // If editing an existing published event, keep as published, otherwise always save as draft (isDraft: true)
+      const saveAsDraft = !(eventIdParam && !isDraftMode);
+      const payload = buildPayload(saveAsDraft);
       let res;
-      let savedId = eventIdParam;
-      if (eventIdParam) {
-        res = await eventApi.updateEvent(eventIdParam, payload);
+      let savedId = targetId;
+      if (targetId) {
+        res = await eventApi.updateEvent(targetId, payload);
       } else {
         res = await eventApi.createEvent(payload);
-        savedId = res?.data?.data?._id || res?.data?.event?._id || res?.data?._id;
+        savedId = res?.data?.event?._id || res?.data?.data?.event?._id || res?.data?.data?._id || res?.data?._id || res?.event?._id;
       }
 
       if (!res || res.status === false) {
@@ -1549,6 +1552,16 @@ function EventEditorContent() {
 
       if (savedId) {
         setCreatedEventId(savedId);
+        setIsDraftMode(saveAsDraft);
+        setIsEditMode(true);
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.searchParams.set("eventId", savedId);
+          if (saveAsDraft) {
+            url.searchParams.set("mode", "draft");
+          }
+          window.history.replaceState(null, "", url.toString());
+        }
       }
 
       setDone({
@@ -1708,13 +1721,13 @@ function EventEditorContent() {
     try {
       const payload = buildPayload(false);
       let res;
-      let targetId = eventIdParam;
+      let targetId = createdEventId || eventIdParam;
 
-      if (eventIdParam) {
-        res = await eventApi.updateEvent(eventIdParam, payload);
+      if (targetId) {
+        res = await eventApi.updateEvent(targetId, payload);
       } else {
         res = await eventApi.createEvent(payload);
-        targetId = res?.data?.data?._id || res?.data?.event?._id || res?.data?._id;
+        targetId = res?.data?.event?._id || res?.data?.data?.event?._id || res?.data?.data?._id || res?.data?._id || res?.event?._id;
       }
 
       if (!res || res.status === false) {
@@ -1724,6 +1737,14 @@ function EventEditorContent() {
 
       if (targetId) {
         setCreatedEventId(targetId);
+        setIsDraftMode(false);
+        setIsEditMode(true);
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.searchParams.set("eventId", targetId);
+          url.searchParams.delete("mode");
+          window.history.replaceState(null, "", url.toString());
+        }
       }
       clearEventData();
       setDone({
