@@ -715,6 +715,8 @@ function ProgramsListingContent() {
         date: dateStr,
         lat: lat || 47.9186,
         lng: lng || 106.9176,
+        status: crs.status,
+        isFeatured: Boolean(crs.isFeatured),
         promo: Boolean(crs.isFeatured),
         href: `/programDetails?id=${crs._id}`,
         raw: crs,
@@ -1765,12 +1767,16 @@ function ProgramsListingContent() {
                       {/* Image cover with dark gradient */}
                       <CourseCardImage src={crs.image} fallback={DEFAULT_FALLBACK_IMAGE} />
 
-                      {/* Promo badge */}
-                      {crs.promo && (
+                      {/* Live / Promo badge */}
+                      {(crs.status === "Live" || String(crs.status).toLowerCase() === "live" || crs.raw?.status === "Live") ? (
+                        <span className="el-c-promo" style={{ background: "#098D8A" }}>
+                          {language === "en" ? "LIVE" : "ШУУД"}
+                        </span>
+                      ) : crs.promo ? (
                         <span className="el-c-promo">
                           {language === "en" ? "Promoted" : t("featuredBadge")}
                         </span>
-                      )}
+                      ) : null}
 
                       {/* Favorite Button */}
                       <button
@@ -1933,7 +1939,11 @@ function ProgramsListingContent() {
                       <span>{item.venue}</span>
                       <span className="bd-mr-f">
                         <i>{item.priceText}</i>
-                        {item.promo && <em>{language === "en" ? "Promoted" : t("featuredBadge")}</em>}
+                        {(item.status === "Live" || String(item.status).toLowerCase() === "live" || item.raw?.status === "Live") ? (
+                          <em style={{ background: "#098D8A", color: "#fff" }}>{language === "en" ? "LIVE" : "ШУУД"}</em>
+                        ) : item.promo ? (
+                          <em>{language === "en" ? "Promoted" : t("featuredBadge")}</em>
+                        ) : null}
                       </span>
                     </span>
                   </Link>

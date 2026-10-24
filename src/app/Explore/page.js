@@ -742,6 +742,8 @@ function ExploreContent() {
         date: dateStr,
         lat: lat || 47.9186,
         lng: lng || 106.9176,
+        status: evt.status,
+        isFeatured: Boolean(evt.isFeatured || evt.fetcherEvent),
         promo: Boolean(evt.isFeatured || evt.fetcherEvent),
         href: `/eventDetails?id=${evt._id}`,
         raw: evt,
@@ -1725,8 +1727,14 @@ function ExploreContent() {
                       {/* Image cover with dark gradient */}
                       <EventCardImage src={evt.image} fallback={DEFAULT_FALLBACK_IMAGE} />
 
-                      {/* Promo badge */}
-                      {evt.promo && <span className="el-c-promo">{t("featuredBadge")}</span>}
+                      {/* Live / Promo badge */}
+                      {(evt.status === "Live" || String(evt.status).toLowerCase() === "live" || evt.raw?.status === "Live") ? (
+                        <span className="el-c-promo" style={{ background: "#098D8A" }}>
+                          {language === "en" ? "LIVE" : "ШУУД"}
+                        </span>
+                      ) : evt.promo ? (
+                        <span className="el-c-promo">{t("featuredBadge")}</span>
+                      ) : null}
 
                       {/* Favorite Button */}
                       <button
@@ -1889,7 +1897,11 @@ function ExploreContent() {
                       <span>{item.venue}</span>
                       <span className="bd-mr-f">
                         <i>{item.priceText}</i>
-                        {item.promo && <em>{t("featuredBadge")}</em>}
+                        {(item.status === "Live" || String(item.status).toLowerCase() === "live" || item.raw?.status === "Live") ? (
+                          <em style={{ background: "#098D8A", color: "#fff" }}>{language === "en" ? "LIVE" : "ШУУД"}</em>
+                        ) : item.promo ? (
+                          <em>{t("featuredBadge")}</em>
+                        ) : null}
                       </span>
                     </span>
                   </Link>
