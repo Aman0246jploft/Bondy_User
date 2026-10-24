@@ -10,6 +10,7 @@ import eventApi from "@/api/eventApi";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatCategoryName, capitalizeWords } from "@/utils/formatHelper";
 import GlobalLoader from "@/components/GlobalLoader";
+import LocationPreviewMap from "@/components/LocationPreviewMap";
 
 // ─── Audited Constants from Prototype ─────────────────────────────────────────
 const FALLBACK_CATS = [
@@ -2491,22 +2492,49 @@ function EventEditorContent() {
 
               <label className="ew-f" style={{ position: "relative" }}>
                 <span className="ew-lb">{isMn ? "Хаяг" : "Address"} <i>*</i></span>
-                <input
-                  ref={addressInputRef}
-                  type="text"
-                  className="ew-in"
-                  value={address}
-                  maxLength={180}
-                  onChange={(e) => {
-                    const next = e.target.value.slice(0, 180);
-                    setAddress(next);
-                    setAddrQuery(next);
-                    if (errors.address) setErrors((prev) => ({ ...prev, address: "" }));
-                  }}
-                  aria-invalid={Boolean(errors.address)}
-                  autoComplete="off"
-                  placeholder={isMn ? "Дүүрэг, хороо, барилга" : "District, khoroo, building"}
-                />
+                <div className="ew-dt">
+                  <input
+                    ref={addressInputRef}
+                    type="text"
+                    className="ew-in"
+                    value={address}
+                    maxLength={180}
+                    onChange={(e) => {
+                      const next = e.target.value.slice(0, 180);
+                      setAddress(next);
+                      setAddrQuery(next);
+                      if (errors.address) setErrors((prev) => ({ ...prev, address: "" }));
+                    }}
+                    aria-invalid={Boolean(errors.address)}
+                    autoComplete="off"
+                    placeholder={isMn ? "Дүүрэг, хороо, барилга" : "District, khoroo, building"}
+                  />
+                  <span
+                    className="ew-dtBtn"
+                    style={{
+                      pointerEvents: "none",
+                      color: "var(--acc, #23ada4)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    aria-hidden="true"
+                  >
+                    <svg
+                      width="19"
+                      height="19"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                  </span>
+                </div>
                 {errors.address && <span className="ew-er">{errors.address}</span>}
               </label>
 
@@ -3231,23 +3259,15 @@ function EventEditorContent() {
                     </button>
                   </div>
                   <div className="ew-topRow">
-                    {address ? (
-                      <span className="ew-mapS ew-mapP">
-                        <span className="ew-pin" style={{ left: pinAt.left, top: pinAt.top }}>
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" stroke="currentColor" strokeWidth="1.6" />
-                            <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.6" />
-                          </svg>
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="ew-mapS">
-                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                          <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" stroke="currentColor" strokeWidth="1.6" />
-                          <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.6" />
-                        </svg>
-                      </span>
-                    )}
+                    <LocationPreviewMap
+                      latitude={lat}
+                      longitude={lng}
+                      address={address}
+                      venueName={venueName}
+                      width={148}
+                      height={148}
+                      borderRadius={14}
+                    />
                     <div style={{ flex: "1 1 200px", minWidth: 0 }}>
                       <span className="ew-kv2">
                         <span>{isMn ? "Байршлын нэр" : "Venue name"}</span>
