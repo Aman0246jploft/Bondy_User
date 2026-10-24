@@ -207,7 +207,7 @@ export default function CoursesManagementPage() {
     setActiveMenu(null);
     const url = `${window.location.origin}/programDetails?id=${course._id}`;
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(url).catch(() => {});
+      navigator.clipboard.writeText(url).catch(() => { });
     }
     flashToast(isMn ? "Нийтийн хуудасны линк хуулагдлаа" : "Public link copied to clipboard");
   };
@@ -275,14 +275,14 @@ export default function CoursesManagementPage() {
         venueName: course.venueName || vAddr.venueName || undefined,
         venueAddress: (vAddr.address || vAddr.city || (vAddr.latitude && vAddr.longitude))
           ? {
-              address: vAddr.address || "",
-              city: vAddr.city || "",
-              state: vAddr.state || "",
-              country: vAddr.country || "",
-              zipcode: vAddr.zipcode || "",
-              latitude: Number(vAddr.latitude) || 0,
-              longitude: Number(vAddr.longitude) || 0,
-            }
+            address: vAddr.address || "",
+            city: vAddr.city || "",
+            state: vAddr.state || "",
+            country: vAddr.country || "",
+            zipcode: vAddr.zipcode || "",
+            latitude: Number(vAddr.latitude) || 0,
+            longitude: Number(vAddr.longitude) || 0,
+          }
           : undefined,
         coverImage: course.coverImage,
         posterImage: course.posterImage || [],
@@ -718,14 +718,14 @@ export default function CoursesManagementPage() {
               String(activeMenu.course.status || "").toLowerCase() !== "canceled" &&
               (!activeMenu.course.endDate || new Date(activeMenu.course.endDate) >= new Date())
             )) && (
-              <button
-                type="button"
-                className="lm-mi"
-                onClick={() => handleEditCourseAttempt(activeMenu.course)}
-              >
-                {isMn ? "Засах" : "Edit"}
-              </button>
-            )}
+                <button
+                  type="button"
+                  className="lm-mi"
+                  onClick={() => handleEditCourseAttempt(activeMenu.course)}
+                >
+                  {isMn ? "Засах" : "Edit"}
+                </button>
+              )}
 
             {/* View */}
             <button
