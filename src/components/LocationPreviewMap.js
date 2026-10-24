@@ -63,14 +63,13 @@ export default function LocationPreviewMap({
         )}`);
 
   const bbox = hasCoords
-    ? `${(lng - 0.007).toFixed(6)}%2C${(lat - 0.0045).toFixed(6)}%2C${(
-        lng + 0.007
-      ).toFixed(6)}%2C${(lat + 0.0045).toFixed(6)}`
+    ? `${(lng - 0.006).toFixed(6)}%2C${(lat - 0.004).toFixed(6)}%2C${(
+        lng + 0.006
+      ).toFixed(6)}%2C${(lat + 0.004).toFixed(6)}`
     : "";
+  // Note: do not append &marker= so OSM does not render its own green pin/popup
   const embedSrc = hasCoords
-    ? `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat.toFixed(
-        6
-      )}%2C${lng.toFixed(6)}`
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`
     : "";
 
   return (
@@ -105,14 +104,26 @@ export default function LocationPreviewMap({
       }}
     >
       {hasCoords && !iframeError ? (
-        <>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            overflow: "hidden",
+            pointerEvents: "none",
+          }}
+        >
+          {/* Sized 340x340 and centered to clip out all OSM attribution, zoom buttons, and donation text */}
           <iframe
             title="Location Map"
             src={embedSrc}
             onError={() => setIframeError(true)}
             style={{
-              width: "100%",
-              height: "100%",
+              position: "absolute",
+              width: "340px",
+              height: "340px",
+              left: "50%",
+              top: "50%",
+              transform: "translate(-50%, -50%)",
               border: 0,
               pointerEvents: "none",
               display: "block",
@@ -127,10 +138,10 @@ export default function LocationPreviewMap({
               inset: 0,
               pointerEvents: "none",
               background:
-                "radial-gradient(circle at center, rgba(35, 173, 164, 0.08) 0%, rgba(13, 18, 23, 0.42) 100%)",
+                "radial-gradient(circle at center, rgba(35, 173, 164, 0.05) 0%, rgba(13, 18, 23, 0.38) 100%)",
             }}
           />
-        </>
+        </div>
       ) : (
         /* Stylized high-contrast map graphic fallback */
         <div
@@ -232,49 +243,6 @@ export default function LocationPreviewMap({
         >
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
         </svg>
-      </span>
-
-      {/* Bottom Open/Google Map Pill Badge */}
-      <span
-        style={{
-          position: "absolute",
-          bottom: 7,
-          left: "50%",
-          transform: "translateX(-50%)",
-          fontSize: 9.5,
-          fontWeight: 700,
-          letterSpacing: "0.5px",
-          textTransform: "uppercase",
-          color: "#ffffff",
-          background: "rgba(10, 14, 20, 0.82)",
-          backdropFilter: "blur(6px)",
-          padding: "2.5px 8px",
-          borderRadius: 999,
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
-          pointerEvents: "none",
-          zIndex: 3,
-          whiteSpace: "nowrap",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 4,
-        }}
-      >
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="var(--acc-bright, #36cec2)"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-          <polyline points="15 3 21 3 21 9" />
-          <line x1="10" y1="14" x2="21" y2="3" />
-        </svg>
-        Map
       </span>
     </a>
   );
