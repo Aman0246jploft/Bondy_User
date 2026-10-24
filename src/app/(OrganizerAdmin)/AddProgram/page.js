@@ -310,14 +310,15 @@ export default function LearningEditorPage() {
             address: loc.address || prev.venueAddress.address,
             district: loc.district || prev.venueAddress.district,
             city: loc.city || prev.venueAddress.city,
-            state: loc.district || prev.venueAddress.state,
+            state: loc.state || loc.district || prev.venueAddress.state,
+            country: loc.country || prev.venueAddress.country,
           },
         }));
         setDirty(true);
         flashToast(
           isMn
-            ? `Байршил шинэчлэгдлээ (${loc.district || ""})`
-            : `Location & district updated from map`
+            ? `Байршил шинэчлэгдлээ (${loc.district || loc.city || ""})`
+            : `Location updated from map`
         );
       };
 
@@ -328,19 +329,33 @@ export default function LearningEditorPage() {
             const r = results[0];
             const comp = r.address_components || [];
             let district = "";
+            let city = "";
+            let state = "";
+            let country = "";
             for (const c of comp) {
+              const types = c.types || [];
+              if (types.includes("locality") || types.includes("postal_town")) {
+                city = c.long_name;
+              } else if (types.includes("administrative_area_level_1")) {
+                state = c.long_name;
+              } else if (types.includes("country")) {
+                country = c.long_name;
+              } else if (types.includes("sublocality") || types.includes("administrative_area_level_2")) {
+                if (!district) district = c.long_name;
+              }
               for (const m of DISTRICT_MATCHERS) {
                 if (m.keys.some((k) => c.long_name.toLowerCase().includes(k))) {
                   district = m.mn;
                   break;
                 }
               }
-              if (district) break;
             }
             applyLocation({
               address: r.formatted_address || `${roundedLat}, ${roundedLng}`,
-              district: district || detectDistrictFromCoords(roundedLat, roundedLng),
-              city: "Улаанбаатар",
+              district: district || detectDistrictFromCoords(roundedLat, roundedLng) || state || "",
+              city: city || (country === "Mongolia" || country === "Монгол Улс" ? "Улаанбаатар" : ""),
+              state: state || district || "",
+              country: country || "",
             });
           } else {
             const fallback = await reverseGeocodeFallback(roundedLat, roundedLng);
@@ -1639,8 +1654,10 @@ export default function LearningEditorPage() {
                           address: String(venueData?.address || "").slice(0, 180),
                           latitude: lat,
                           longitude: lng,
-                          district: matchedDistrict || prev.venueAddress.district || "",
-                          state: matchedDistrict || prev.venueAddress.state || "",
+                          city: venueData?.city || prev.venueAddress.city || "",
+                          country: venueData?.country || prev.venueAddress.country || "",
+                          district: matchedDistrict || venueData?.sublocality || venueData?.city || prev.venueAddress.district || "",
+                          state: matchedDistrict || venueData?.state || prev.venueAddress.state || "",
                         },
                       }));
                       setDirty(true);
