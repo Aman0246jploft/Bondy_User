@@ -16,6 +16,7 @@ import FAQ from "@/components/FAQ";
 import ShareSheet from "@/components/ShareSheet";
 import { useUserLocation, extractCoordinates, calcDistanceKm, formatDistance } from "@/utils/locationHelper";
 import GlobalLoader from "@/components/GlobalLoader";
+import LocationPreviewMap from "@/components/LocationPreviewMap";
 
 const FALLBACK_IMG = "/img/sidebar-logo.svg";
 
@@ -1342,17 +1343,17 @@ function ProgramDetailsContent() {
                   </a>
                 </div>
 
-                {/* 132x132 Radar Preview Card */}
-                <div style={{ position: "relative", width: 132, height: 132, flexShrink: 0, borderRadius: 18, overflow: "hidden", border: "1px solid var(--bd-border)", background: "var(--bd-ink-850)" }}>
-                  <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px)", backgroundSize: "26px 26px" }} />
-                  <div style={{ position: "absolute", inset: 0, background: "radial-gradient(180px 140px at 50% 50%, rgba(35,173,164,.18), transparent 72%)" }} />
-                  <span style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 999, background: "var(--acc)", boxShadow: "0 0 16px rgba(35, 173, 164, 0.6)", color: "var(--bd-white)" }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </span>
-                </div>
+                <LocationPreviewMap
+                  latitude={venueAddress?.latitude}
+                  longitude={venueAddress?.longitude}
+                  venueAddress={venueAddress}
+                  address={venueAddress?.address}
+                  venueName={venueName}
+                  googleMapsUrl={googleMapsUrl}
+                  width={132}
+                  height={132}
+                  borderRadius={18}
+                />
               </div>
             </section>
 

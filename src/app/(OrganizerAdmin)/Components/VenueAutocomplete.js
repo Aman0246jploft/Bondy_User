@@ -18,6 +18,7 @@ const VenueAutocomplete = ({
   minLength = 3,
   apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
   hideClearButton = false,
+  country = null,
 }) => {
   const inputRef = useRef(null);
   const autocompleteRef = useRef(null);
@@ -126,31 +127,37 @@ const VenueAutocomplete = ({
     if (autocompleteRef.current) return;
 
     try {
-      // Create autocomplete instance with better configuration
+      const autocompleteOptions = {
+        types: ["establishment", "geocode"],
+        fields: [
+          "formatted_address",
+          "name",
+          "geometry.location",
+          "address_components",
+          "place_id",
+        ],
+        strictBounds: false,
+      };
+
+      if (country) {
+        autocompleteOptions.componentRestrictions = { country };
+      }
+
+      // Create autocomplete instance with worldwide or custom country search
       const autocomplete = new window.google.maps.places.Autocomplete(
         inputRef.current,
-        {
-          types: ["establishment", "geocode"], // Include both places and addresses
-          fields: [
-            "formatted_address",
-            "name",
-            "geometry.location",
-            "address_components",
-          ],
-          // Configure autocomplete behavior
-          componentRestrictions: { country: "mn" },
-          strictBounds: false, // Don't restrict to viewport
-        }
+        autocompleteOptions
       );
 
       // Store reference
       autocompleteRef.current = autocomplete;
 
-      // Configure autocomplete options for better search
+      // Configure autocomplete options for worldwide search
       autocomplete.setOptions({
         types: ["establishment", "geocode"],
         strictBounds: false,
-        bounds: null, // Remove any bounds restrictions
+        bounds: null, // Worldwide: no bounding box restriction
+        ...(country ? { componentRestrictions: { country } } : {}),
       });
 
       // Add place selection listener
@@ -251,8 +258,42 @@ const VenueAutocomplete = ({
 
     const place = autocompleteRef.current.getPlace();
 
-    if (!place.geometry || !place.geometry.location) {
-      console.warn("No geometry data available for selected place");
+    if (!place || !place.geometry || !place.geometry.location) {
+      if (place?.place_id && window.google?.maps?.places?.PlacesService) {
+        try {
+          const dummyDiv = document.createElement("div");
+          const service = new window.google.maps.places.PlacesService(dummyDiv);
+          service.getDetails(
+            {
+              placeId: place.place_id,
+              fields: [
+                "formatted_address",
+                "name",
+                "geometry.location",
+                "address_components",
+              ],
+            },
+            (detail, status) => {
+              if (status === "OK" && detail?.geometry?.location) {
+                const locData = extractLocationData(detail);
+                const venueAddress = {
+                  latitude: locData.latitude,
+                  longitude: locData.longitude,
+                  city: locData.city,
+                  country: locData.country,
+                  state: locData.state,
+                  zipcode: locData.zipcode,
+                  address: locData.address || detail.name || inputValue,
+                };
+                setInputValue(locData.address || detail.name || inputValue);
+                if (onPlaceSelected) onPlaceSelected(venueAddress);
+              }
+            }
+          );
+        } catch (e) {
+          console.warn("Error fetching place details:", e);
+        }
+      }
       return;
     }
 
@@ -320,8 +361,36 @@ const VenueAutocomplete = ({
         className={className}
         maxLength={maxLength}
         disabled={disabled || !isLoaded}
-        style={{ paddingRight: (inputValue && !hideClearButton) ? "40px" : "12px" }}
+        style={{ paddingRight: inputValue && !hideClearButton ? "64px" : "38px" }}
       />
+      <span
+        style={{
+          position: "absolute",
+          right: inputValue && !hideClearButton ? "36px" : "12px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          color: "var(--acc, #23ada4)",
+          pointerEvents: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        aria-hidden="true"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+      </span>
       {inputValue && !hideClearButton && (
         <button
           type="button"
