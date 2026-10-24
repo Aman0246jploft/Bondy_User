@@ -29,11 +29,11 @@ function EventAttendeesContent() {
     const fetchAttendees = async () => {
       try {
         setLoading(true);
-        const response = await eventApi.getAllAttendees(eventId, search);
+        const response = await eventApi.getAllAttendees(eventId, { search: search.trim() || undefined });
         if (response?.status) {
           setAttendees(response?.data?.attendees || []);
           setHost(response?.data?.host);
-          setEventTitle(response?.data?.eventTitle);
+          setEventTitle(response?.data?.event?.eventTitle || response?.data?.eventTitle || "");
         }
       } catch (error) {
         console.error("Error fetching attendees:", error);
