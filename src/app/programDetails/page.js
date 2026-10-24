@@ -1720,9 +1720,11 @@ function ProgramDetailsContent() {
                       </button>
                     </span>
 
-                    {sim.isFeatured && (
+                    {(sim.status === "Live" || String(sim.status).toLowerCase() === "live") ? (
+                      <span className="bd-c-promo" style={{ background: "#098D8A" }}>{language === "en" ? "LIVE" : "ШУУД"}</span>
+                    ) : sim.isFeatured ? (
                       <span className="bd-c-promo">{language === "en" ? "Promoted" : "Онцлох"}</span>
-                    )}
+                    ) : null}
 
                     <span className="bd-c-b">
                       <b className="bd-c-t">{sim.courseTitle}</b>

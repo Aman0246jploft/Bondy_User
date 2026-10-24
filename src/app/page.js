@@ -102,6 +102,7 @@ function mapCourse(crs) {
     dateMn: sd && !isNaN(sd) ? `${sd.getMonth() + 1}-р сарын ${sd.getDate()}-нд` : "Тун удахгүй",
     price: priceNum > 0 ? `₮${priceNum.toLocaleString()}` : "Үнэгүй",
     priceEn: priceNum > 0 ? `₮${priceNum.toLocaleString()}` : "Free",
+    status: crs.status,
     isFeatured: Boolean(crs.isFeatured),
     href: `/programDetails?id=${crs._id}`,
   };
@@ -942,8 +943,8 @@ export default function HomePage() {
             </svg>
           </button>
         </SafeBg>
-        {item.status === "Live" ? (
-          <span className="bd-c-promo" style={{ background: "#ef4444" }}>{language === "en" ? "LIVE" : "ШУУД"}</span>
+        {(item.status === "Live" || String(item.status).toLowerCase() === "live") ? (
+          <span className="bd-c-promo" style={{ background: "#098D8A" }}>{language === "en" ? "LIVE" : "ШУУД"}</span>
         ) : item.isFeatured ? (
           <span className="bd-c-promo">{language === "en" ? "Promoted" : "Онцлох"}</span>
         ) : null}
@@ -1123,8 +1124,8 @@ export default function HomePage() {
                   return (
                     <Link key={row.id} href={row.href} className="hp-up-row">
                       <SafeBg src={row.image} className="hp-up-th">
-                        {row.status === "Live" ? (
-                          <span className="hp-up-promo" style={{ background: "#ef4444" }}>{language === "en" ? "LIVE" : "ШУУД"}</span>
+                        {(row.status === "Live" || String(row.status).toLowerCase() === "live") ? (
+                          <span className="hp-up-promo" style={{ background: "#098D8A" }}>{language === "en" ? "LIVE" : "ШУУД"}</span>
                         ) : row.isFeatured ? (
                           <span className="hp-up-promo">{language === "en" ? "Promoted" : "Онцлох"}</span>
                         ) : null}
