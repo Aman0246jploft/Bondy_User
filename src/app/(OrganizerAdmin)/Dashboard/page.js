@@ -1982,6 +1982,9 @@ export default function OrganizerDashboardPage() {
               borderRadius: "20px",
               padding: "32px 28px",
               textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
               boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
             }}
           >
@@ -1995,7 +1998,8 @@ export default function OrganizerDashboardPage() {
                 borderRadius: "50%",
                 background: "rgba(239, 68, 68, 0.15)",
                 color: "#ef4444",
-                marginBottom: "16px",
+                margin: "0 auto 16px",
+                alignSelf: "center",
               }}
             >
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">

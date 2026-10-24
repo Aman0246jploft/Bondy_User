@@ -81,6 +81,7 @@ function mapEvent(evt) {
     price: price.text,
     priceEn: price.textEn,
     priceNum: price.num,
+    status: evt.status,
     isFeatured: Boolean(evt.isFeatured),
     addToSlider: Boolean(evt.addToSlider),
     href: `/eventDetails?id=${evt._id}`,
@@ -725,7 +726,7 @@ export default function HomePage() {
           eventApi.getEvents({ isFeatured: true, status: "Live,Upcoming", limit: 10 }),
           eventApi.getEvents({ filter: "thisweekend", status: "Live,Upcoming", limit: 8 }),
           courseApi.getCourses({ isFeatured: true, limit: 10 }),
-          eventApi.getEvents({ filter: "today", status: "Live,Upcoming", limit: 8 }),
+          eventApi.getEvents({ status: "Live,Upcoming", limit: 8 }),
           organizerApi.getPublicOrganizers({ featured: 1 }),
         ]);
 
@@ -941,9 +942,11 @@ export default function HomePage() {
             </svg>
           </button>
         </SafeBg>
-        {item.isFeatured && (
+        {item.status === "Live" ? (
+          <span className="bd-c-promo" style={{ background: "#ef4444" }}>{language === "en" ? "LIVE" : "ШУУД"}</span>
+        ) : item.isFeatured ? (
           <span className="bd-c-promo">{language === "en" ? "Promoted" : "Онцлох"}</span>
-        )}
+        ) : null}
         <span className="bd-c-b">
           <b className="bd-c-t">{title}</b>
           <span className="bd-c-m" data-sched-line>{date}</span>
@@ -1097,10 +1100,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════ SECTION 4: UPCOMING — compact row list ═════════════════════════ */}
-      <section id="weekend" data-screen-label="Upcoming" style={{ padding: "clamp(8px,1vw,14px) 0 clamp(20px,2vw,28px)" }}>
+      {/* ════ SECTION 4: UPCOMING / LIVE — compact row list ═════════════════ */}
+      <section id="weekend" data-screen-label="Upcoming / Live" style={{ padding: "clamp(8px,1vw,14px) 0 clamp(20px,2vw,28px)" }}>
         <div className="bd-container">
-          <SectionHeader mn="Удахгүй болох" en="Upcoming" viewAllHref="/Explore?sort=soonest" language={language} />
+          <SectionHeader mn="Удахгүй болох / Шууд" en="Upcoming / Live" viewAllHref="/Explore?sort=soonest" language={language} />
           <div className="hp-up">
             {sectionLoading
               ? Array.from({ length: 5 }).map((_, i) => (
@@ -1120,7 +1123,11 @@ export default function HomePage() {
                   return (
                     <Link key={row.id} href={row.href} className="hp-up-row">
                       <SafeBg src={row.image} className="hp-up-th">
-                        {row.isFeatured && <span className="hp-up-promo">{language === "en" ? "Promoted" : "Онцлох"}</span>}
+                        {row.status === "Live" ? (
+                          <span className="hp-up-promo" style={{ background: "#ef4444" }}>{language === "en" ? "LIVE" : "ШУУД"}</span>
+                        ) : row.isFeatured ? (
+                          <span className="hp-up-promo">{language === "en" ? "Promoted" : "Онцлох"}</span>
+                        ) : null}
                       </SafeBg>
                       <b className="hp-up-t">{title}</b>
                       <span className="hp-up-v"><span className="hp-up-vt">{row.venue}</span></span>
@@ -1148,7 +1155,7 @@ export default function HomePage() {
                       fontWeight: 500,
                     }}
                   >
-                    {language === "en" ? "No upcoming events found." : "Удахгүй болох эвент олдсонгүй."}
+                    {language === "en" ? "No upcoming or live events found." : "Удахгүй болох болон шууд эвент олдсонгүй."}
                   </div>
                 )}
           </div>
