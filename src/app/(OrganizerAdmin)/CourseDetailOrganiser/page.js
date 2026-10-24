@@ -631,7 +631,6 @@ function CourseDetailsContent() {
               <span className="cd-metaCopy">
                 <span className="cd-lab">{t("cdTiming")}</span>
                 <b>{startD ? `${formatDay(course.startDate)}${!isOngoing && endD ? ` – ${formatDay(course.endDate)}` : ""}` : "—"}</b>
-                {!isOngoing && weekCount > 0 ? <span className="cd-sub">{t("cdWeeks", { count: weekCount })}</span> : null}
               </span>
             </div>
             <div className="cd-metaItem">
@@ -779,7 +778,7 @@ function CourseDetailsContent() {
                       <span className="cd-fico">{svg(<><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M8 3v4M16 3v4M3 10h18" /></>)}</span>
                       <span>
                         <span className="cd-lab">{t("tdCoursePeriod")}</span>
-                        <b>{period ? `${period}${weeks ? ` (${t("cdWeeksN", { count: weeks })})` : ""}` : "—"}</b>
+                        <b>{period || "—"}</b>
                       </span>
                     </div>
                     <div className="cd-fact">
