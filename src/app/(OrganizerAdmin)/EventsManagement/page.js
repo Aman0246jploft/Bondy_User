@@ -291,6 +291,7 @@ export default function EventsManagementPage() {
         posterImage: event.posterImage || [],
         mediaLinks: event.mediaLinks || [],
         tickets: event.tickets,
+        timeZone: event.timeZone || (typeof window !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Asia/Ulaanbaatar"),
         isDraft: true,
       };
 
