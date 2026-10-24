@@ -12,6 +12,7 @@ import VenueAutocomplete from "../Components/VenueAutocomplete";
 import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatCategoryName } from "@/utils/formatHelper";
 import GlobalLoader from "@/components/GlobalLoader";
+import LocationPreviewMap from "@/components/LocationPreviewMap";
 
 // ─── Constants & Fallback Data ────────────────────────────────────────────────
 const DAYS = [
@@ -2122,12 +2123,16 @@ export default function LearningEditorPage() {
                     </button>
                   </div>
                   <div className="lw-topRow">
-                    <span className="lw-mapS">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                    </span>
+                    <LocationPreviewMap
+                      latitude={formData.venueAddress?.latitude}
+                      longitude={formData.venueAddress?.longitude}
+                      venueAddress={formData.venueAddress}
+                      address={formData.venueAddress?.address}
+                      venueName={formData.venueName}
+                      width={148}
+                      height={148}
+                      borderRadius={14}
+                    />
                     <div style={{ flex: "1 1 220px", minWidth: 0 }}>
                       <span className="lw-kv2">
                         <span>{t("apVenueName")}</span>

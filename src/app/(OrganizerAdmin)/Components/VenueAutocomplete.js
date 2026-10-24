@@ -320,8 +320,36 @@ const VenueAutocomplete = ({
         className={className}
         maxLength={maxLength}
         disabled={disabled || !isLoaded}
-        style={{ paddingRight: (inputValue && !hideClearButton) ? "40px" : "12px" }}
+        style={{ paddingRight: inputValue && !hideClearButton ? "64px" : "38px" }}
       />
+      <span
+        style={{
+          position: "absolute",
+          right: inputValue && !hideClearButton ? "36px" : "12px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          color: "var(--acc, #23ada4)",
+          pointerEvents: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        aria-hidden="true"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+      </span>
       {inputValue && !hideClearButton && (
         <button
           type="button"
