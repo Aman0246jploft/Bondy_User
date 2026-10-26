@@ -91,6 +91,7 @@ function destinationFor(notification) {
 
 export default function NotificationPage() {
   const { t, language } = useLanguage();
+  const router = useRouter();
   const socketCtx = useSocket();
   const fetchUnreadNotificationCount = socketCtx?.fetchUnreadNotificationCount;
   const [notifications, setNotifications] = useState([]);
