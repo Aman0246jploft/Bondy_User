@@ -1,8 +1,8 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import io from "socket.io-client";
 import { toast } from "react-hot-toast";
-import { localizeMessage } from "@/api/apiClient";
+import apiClient, { localizeMessage } from "@/api/apiClient";
 
 const SocketContext = createContext();
 
@@ -22,6 +22,16 @@ export const SocketProvider = ({ children }) => {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
         if (token) {
+            // Initial fetch of unread message count via HTTP
+            apiClient.get("/chat/unread-count")
+                .then((res) => {
+                    const c = res.data?.data?.count;
+                    if (c !== undefined) {
+                        setUnreadMessageCount(Number(c) || 0);
+                    }
+                })
+                .catch(() => {});
+
             // Decode token to get userId if needed, or rely on socket auth middleware if present
             // For now, passing token in auth payload
             socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL, {
@@ -34,14 +44,37 @@ export const SocketProvider = ({ children }) => {
             socketInstance.on("connect", () => {
                 console.log("Socket connected:", socketInstance.id);
                 setIsSocketConnected(true);
+
+                // Fetch latest unread counts upon connection
+                socketInstance.emit("get_unread_notification_count", {}, (res) => {
+                    if (res?.count !== undefined) setUnreadNotificationCount(Number(res.count) || 0);
+                });
+                socketInstance.emit("get_unread_message_count", {}, (res) => {
+                    if (res?.count !== undefined) setUnreadMessageCount(Number(res.count) || 0);
+                });
             });
 
-            socketInstance.on("unread_notification_count", ({ count }) => {
-                setUnreadNotificationCount(count ?? 0);
+            socketInstance.on("unread_notification_count", (data) => {
+                const count = typeof data === "number" ? data : (data?.count ?? 0);
+                setUnreadNotificationCount(Number(count) || 0);
             });
 
-            socketInstance.on("unread_message_count", ({ count }) => {
-                setUnreadMessageCount(count ?? 0);
+            socketInstance.on("unread_message_count", (data) => {
+                const count = typeof data === "number" ? data : (data?.count ?? 0);
+                setUnreadMessageCount(Number(count) || 0);
+            });
+
+            // Re-fetch or update when a chat message or update arrives
+            socketInstance.on("update_chat_list", () => {
+                socketInstance.emit("get_unread_message_count", {}, (res) => {
+                    if (res?.count !== undefined) setUnreadMessageCount(Number(res.count) || 0);
+                });
+            });
+
+            socketInstance.on("receive_message", () => {
+                socketInstance.emit("get_unread_message_count", {}, (res) => {
+                    if (res?.count !== undefined) setUnreadMessageCount(Number(res.count) || 0);
+                });
             });
 
             socketInstance.on("online_users_list", ({ userIds }) => {
@@ -99,10 +132,19 @@ export const SocketProvider = ({ children }) => {
     };
 
     const fetchUnreadMessageCount = () => {
-        if (socket) {
+        if (socket && isSocketConnected) {
             socket.emit("get_unread_message_count", {}, (res) => {
-                if (res?.count !== undefined) setUnreadMessageCount(res.count);
+                if (res?.count !== undefined) setUnreadMessageCount(Number(res.count) || 0);
             });
+        } else {
+            apiClient.get("/chat/unread-count")
+                .then((res) => {
+                    const c = res.data?.data?.count;
+                    if (c !== undefined) {
+                        setUnreadMessageCount(Number(c) || 0);
+                    }
+                })
+                .catch(() => {});
         }
     };
 

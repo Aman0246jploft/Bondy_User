@@ -2944,6 +2944,39 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: currentColor;
 }
 
+.og-badge-count {
+  margin-left: auto;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bd-teal-500, #23ada4);
+  color: #ffffff;
+  font-family: var(--bd-font-ui, Inter, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(35, 173, 164, 0.4);
+  letter-spacing: -0.2px;
+  overflow: visible !important;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.og-nav-item:hover .og-badge-count {
+  background: #1ea299;
+  transform: scale(1.05);
+}
+
+.og-nav-item.active .og-badge-count {
+  background: #23ada4;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(35, 173, 164, 0.5);
+}
+
 .og-burger {
   display: none;
   align-items: center;

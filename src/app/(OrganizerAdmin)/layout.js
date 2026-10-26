@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
   const pathname = usePathname();
   const [editorQuery, setEditorQuery] = useState("");
   const { language, changeLanguage, t } = useLanguage();
-  const { unreadNotificationCount } = useSocket();
+  const { unreadNotificationCount, unreadMessageCount } = useSocket() || {};
   const isMn = language === "mn";
 
   const [authorized, setAuthorized] = useState(false);
@@ -561,13 +561,13 @@ export default function RootLayout({ children }) {
               { id: "learning", label: isMn ? "Сургалт" : "Course", href: "/CoursesManagement" },
               { id: "bookings", label: t("obNav"), href: "/OrganizerCustomerBookings" },
               { id: "staff", label: isMn ? "Ажилтнууд" : "Staff", href: "/Staff" },
-              { id: "messages", label: isMn ? "Зурвас" : "Messages", href: "/Message" },
+              { id: "messages", label: isMn ? "Зурвас" : "Messages", href: "/Message", badge: unreadMessageCount },
               { id: "payouts", label: isMn ? "Орлого ба татан авалт" : "Earnings & payouts", href: "/Earnings" },
               { id: "analytics", label: isMn ? "Аналитик" : "Analytics", href: "/Analytics" },
               { id: "verify", label: isMn ? "Баталгаажуулалт" : "Verification", href: "/Verifiedprofile" },
               { id: "myorders", label: isMn ? "Миний захиалга" : "My bookings", href: "/MyTicketsOrganiser" },
               { id: "profile", label: isMn ? "Профайл" : "Profile", href: "/OrganizerProfile" },
-              { id: "notifications", label: isMn ? "Мэдэгдэл" : "Notifications", href: "/Notifications" },
+              { id: "notifications", label: isMn ? "Мэдэгдэл" : "Notifications", href: "/Notifications", badge: unreadNotificationCount },
             ].map((tab) => {
               const active = tab.id === "bookings"
                 ? pathname.startsWith("/OrganizerCustomerBookings") || pathname.startsWith("/OrganizerBookingDetail")
@@ -595,6 +595,27 @@ export default function RootLayout({ children }) {
                   }}
                 >
                   {tab.label}
+                  {Boolean(tab.badge && tab.badge > 0) && (
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minWidth: "18px",
+                        height: "18px",
+                        padding: "0 5px",
+                        borderRadius: "999px",
+                        background: "var(--acc, #23ada4)",
+                        color: "#fff",
+                        fontSize: "10.5px",
+                        fontWeight: 700,
+                        lineHeight: 1,
+                        marginLeft: "2px",
+                      }}
+                    >
+                      {tab.badge > 99 ? "99+" : tab.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

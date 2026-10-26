@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
+import { useSocket } from "@/context/SocketContext";
 
 // Clean design system glyphs matching Bondy prototype
 function NavIcon({ glyph, size = 22 }) {
@@ -134,6 +135,7 @@ export default function OrganizerSidebar({ mobileOpen = false, onCloseMobile }) 
   const pathname = usePathname();
   const { t, language } = useLanguage();
   const isMn = language === "mn";
+  const { unreadMessageCount = 0, unreadNotificationCount = 0 } = useSocket() || {};
 
   const navItems = [
     {
@@ -190,6 +192,7 @@ export default function OrganizerSidebar({ mobileOpen = false, onCloseMobile }) 
       glyph: "mail",
       href: "/Message",
       active: pathname.startsWith("/Message"),
+      badge: unreadMessageCount,
     },
     {
       id: "payouts",
@@ -238,6 +241,7 @@ export default function OrganizerSidebar({ mobileOpen = false, onCloseMobile }) 
       glyph: "bell",
       href: "/Notifications",
       active: pathname.startsWith("/Notifications"),
+      badge: unreadNotificationCount,
     },
   ];
 
@@ -324,7 +328,14 @@ export default function OrganizerSidebar({ mobileOpen = false, onCloseMobile }) 
             <span className="og-nav-icon">
               <NavIcon glyph={item.glyph} />
             </span>
-            <span>{item.label}</span>
+            <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {item.label}
+            </span>
+            {Boolean(item.badge && item.badge > 0) && (
+              <span className="og-badge-count">
+                {item.badge > 99 ? "99+" : item.badge}
+              </span>
+            )}
           </Link>
         ))}
       </nav>
