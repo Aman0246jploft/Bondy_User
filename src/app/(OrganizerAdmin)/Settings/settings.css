@@ -436,6 +436,37 @@
   background-position: center;
 }
 
+.os-unblock {
+  flex-shrink: 0;
+  height: 34px;
+  padding: 0 16px;
+  border: 1px solid var(--bd-teal-500, #23ada4);
+  border-radius: 999px;
+  background: rgba(35, 173, 164, 0.14);
+  color: #36cec2;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 180ms ease;
+}
+
+.os-unblock:hover:not(:disabled) {
+  background: var(--bd-teal-500, #23ada4);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(35, 173, 164, 0.4);
+}
+
+.os-unblock:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--bd-gray-500, #8a8a8a);
+  background: transparent;
+}
+
 .os-empty {
   margin: 8px 0;
   font-size: 14px;

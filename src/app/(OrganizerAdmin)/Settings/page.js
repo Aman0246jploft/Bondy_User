@@ -528,22 +528,22 @@ export default function SettingsPage() {
           <div className="os-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
             <div className="os-head">
               <div>
-                <b>{t("osBlockedTitle")}</b>
-                <span>{t("osBlockedSub")}</span>
+                <b>{t("osBlockedTitle") || t("osBlocked") || "Blocked list"}</b>
+                <span>{t("osBlockedSub") || "Users you have blocked cannot message or interact with you."}</span>
               </div>
-              <button type="button" className="os-x" onClick={closeSheet} aria-label={t("osClose")}>×</button>
+              <button type="button" className="os-x" onClick={closeSheet} aria-label={t("osClose") || "Close"}>×</button>
             </div>
-            {blockedLoading && <span className="os-hint"><span className="os-sp" /> {t("osLoading")}</span>}
+            {blockedLoading && <span className="os-hint"><span className="os-sp" /> {t("osLoading") || "Loading…"}</span>}
             {blockedErr && (
               <div className="os-empty">
-                <b>{t("osBlockedFailed")}</b>
-                <button type="button" className="os-gh" onClick={loadBlocked}>{t("osRetry")}</button>
+                <b>{t("osBlockedFailed") || "Could not load the blocked list."}</b>
+                <button type="button" className="os-gh" onClick={loadBlocked}>{t("osRetry") || "Try again"}</button>
               </div>
             )}
             {!blockedLoading && !blockedErr && blocked.length === 0 && (
               <div className="os-empty">
-                <b>{t("osBlockedEmpty")}</b>
-                <p>{t("osBlockedEmptyNote")}</p>
+                <b>{t("osBlockedEmpty") || "No blocked users"}</b>
+                <p>{t("osBlockedEmptyNote") || "When you block someone, they will appear here."}</p>
               </div>
             )}
             {!blockedLoading && !blockedErr && blocked.length > 0 && (
@@ -565,7 +565,7 @@ export default function SettingsPage() {
                         disabled={unblocking === id}
                         onClick={() => unblock(id)}
                       >
-                        {unblocking === id ? t("osSaving") : t("osUnblock")}
+                        {unblocking === id ? (t("osSaving") || "Saving…") : (t("unblock") || t("osUnblock") || "Unblock")}
                       </button>
                     </div>
                   );

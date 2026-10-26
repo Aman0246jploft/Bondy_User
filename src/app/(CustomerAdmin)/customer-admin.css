@@ -3046,19 +3046,32 @@ a.st-row:hover {
 .st-unblock {
   flex-shrink: 0;
   height: 34px;
-  padding: 0 14px;
-  border: 1px solid var(--bd-border-strong, rgba(255, 255, 255, 0.16));
+  padding: 0 16px;
+  border: 1px solid var(--bd-teal-500, #23ada4);
   border-radius: 999px;
-  background: transparent;
-  color: #fff;
+  background: rgba(35, 173, 164, 0.14);
+  color: #36cec2;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 180ms ease;
+}
+
+.st-unblock:hover:not(:disabled) {
+  background: var(--bd-teal-500, #23ada4);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(35, 173, 164, 0.4);
 }
 
 .st-unblock:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--bd-gray-500, #8a8a8a);
+  background: transparent;
 }
 
 @media (max-width: 640px) {
