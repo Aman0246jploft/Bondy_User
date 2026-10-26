@@ -9,8 +9,32 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import { useLanguage } from "@/context/LanguageContext";
 import GlobalLoader from "@/components/GlobalLoader";
 import OtpVerifyCard from "@/components/Otp/OtpVerifyCard";
+import SingleDateCalendarPopover from "@/components/SingleDateCalendarPopover";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+
+function isoToDisplay(iso) {
+  if (!iso) return "";
+  const [year, month, day] = String(iso).slice(0, 10).split("-");
+  if (!year || !month || !day) return "";
+  return `${day}.${month}.${year}`;
+}
+
+function displayToIso(text) {
+  const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(text || "").trim());
+  if (!match) return "";
+  const [, day, month, year] = match;
+  const date = new Date(`${year}-${month}-${day}T00:00:00`);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== Number(year) ||
+    date.getMonth() !== Number(month) - 1 ||
+    date.getDate() !== Number(day)
+  ) {
+    return "";
+  }
+  return `${year}-${month}-${day}`;
+}
 
 const EMPTY_FORM = {
   logo: "",
@@ -23,10 +47,11 @@ const EMPTY_FORM = {
   email: "",
   emailVerified: false,
   social: "",
+  dob: "",
 };
 
 export default function OrganizerProfilePage() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isMn = language === "mn";
 
   // Form and persistence states
@@ -35,6 +60,8 @@ export default function OrganizerProfilePage() {
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saveErr, setSaveErr] = useState("");
+  const [isDobPickerOpen, setIsDobPickerOpen] = useState(false);
+  const dobInputRef = useRef(null);
   const [otpTarget, setOtpTarget] = useState(null);
   const [otpBusy, setOtpBusy] = useState(false);
   const [verifiedPhone, setVerifiedPhone] = useState("");
@@ -101,6 +128,7 @@ export default function OrganizerProfilePage() {
             email: u.email || "",
             emailVerified: Boolean(u.verifications?.email?.isVerified),
             social: u.socialMediaLink || "",
+            dob: isoToDisplay(u.dob),
           };
           setIsVerified(Boolean(u.isVerified || u.isAllVerified || u.organizerVerificationStatus === "approved"));
           setSavedData(dynamicData);
@@ -123,6 +151,7 @@ export default function OrganizerProfilePage() {
               email: u.email || "",
               emailVerified: Boolean(u.verifications?.email?.isVerified),
               social: u.socialMediaLink || "",
+              dob: isoToDisplay(u.dob),
             };
             setIsVerified(Boolean(u.isVerified || u.isAllVerified || u.organizerVerificationStatus === "approved"));
             setSavedData(dynamicData);
@@ -148,6 +177,7 @@ export default function OrganizerProfilePage() {
               email: u.email || "",
               emailVerified: Boolean(u.verifications?.email?.isVerified),
               social: u.socialMediaLink || "",
+              dob: isoToDisplay(u.dob),
             };
             setSavedData(dynamicData);
             setForm(dynamicData);
@@ -195,7 +225,7 @@ export default function OrganizerProfilePage() {
   const phoneChanged = phoneIdentity(form) !== phoneIdentity(savedData);
   const emailChanged = String(form.email || "").trim() !== String(savedData.email || "").trim();
 
-  const isDirty = ["logo", "cover", "name", "about", "countryCode", "phone", "email", "social"].some(
+  const isDirty = ["logo", "cover", "name", "about", "countryCode", "phone", "email", "social", "dob"].some(
     (key) => String(form[key] || "") !== String(savedData[key] || "")
   );
   const isValid = Object.keys(errors).length === 0;
@@ -299,6 +329,7 @@ export default function OrganizerProfilePage() {
         contactNumber: form.phone.trim(),
         email: form.email.trim(),
         socialMediaLink: form.social.trim(),
+        dob: form.dob?.trim() ? displayToIso(form.dob) : null,
       };
 
       const res = await authApi.updateProfile(payload);
@@ -314,6 +345,7 @@ export default function OrganizerProfilePage() {
           email: updatedUser.email || form.email,
           emailVerified: updatedUser.verifications?.email?.isVerified ?? form.emailVerified,
           social: updatedUser.socialMediaLink || form.social,
+          dob: updatedUser.dob ? isoToDisplay(updatedUser.dob) : form.dob,
         };
         setSavedData(freshData);
         setForm(freshData);
@@ -951,6 +983,52 @@ export default function OrganizerProfilePage() {
             placeholder="https://facebook.com/..."
           />
           {touched && errors.social && <span className="pe-er">{errors.social}</span>}
+        </label>
+
+        {/* 6. Date of Birth (Full Width) */}
+        <label className="pe-f" style={{ marginBottom: "18px" }}>
+          <span className="pe-lb">{t("acDobLabel") || (isMn ? "Төрсөн огноо" : "Date of birth")}</span>
+          <div className="ac-date-picker">
+            <input
+              ref={dobInputRef}
+              type="text"
+              className="pe-in ac-in"
+              value={form.dob || ""}
+              onClick={() => setIsDobPickerOpen(true)}
+              onFocus={() => setIsDobPickerOpen(true)}
+              readOnly
+              placeholder="DD.MM.YYYY"
+              style={{ cursor: "pointer" }}
+            />
+            <button
+              type="button"
+              className="ac-date-picker-btn"
+              aria-label={t("acDobLabel") || (isMn ? "Төрсөн огноо" : "Date of birth")}
+              aria-haspopup="dialog"
+              aria-expanded={isDobPickerOpen}
+              onClick={() => setIsDobPickerOpen(true)}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 2v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm3 8h2m4 0h2m-8 4h2m4 0h2" />
+              </svg>
+            </button>
+          </div>
+          {isDobPickerOpen && (
+            <SingleDateCalendarPopover
+              anchorRef={dobInputRef}
+              value={form.dob}
+              language={language}
+              t={t}
+              title={t("acDobLabel") || (isMn ? "Төрсөн огноо" : "Date of birth")}
+              minDate={new Date(1900, 0, 1)}
+              maxDate={new Date()}
+              onApply={(formatted) => {
+                handleFieldChange("dob", formatted);
+                setIsDobPickerOpen(false);
+              }}
+              onCancel={() => setIsDobPickerOpen(false)}
+            />
+          )}
         </label>
 
         {/* Error Alert */}
