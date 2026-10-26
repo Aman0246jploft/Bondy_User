@@ -26,6 +26,8 @@ function Page() {
     ADJUSTMENT: t("adjustment"),
     REFERRAL: t("referralReward"),
     PURCHASE: t("purchase"),
+    PROMOTION: t("pyPromo") || "Promotion",
+    "Promotion": t("pyPromo") || "Promotion",
     "Ticket Sale": t("ticketSale"),
     "Course Sale": t("courseSale") || "Course Sale",
     "Purchase": t("purchase"),
@@ -201,20 +203,27 @@ function Page() {
     try {
       setLoading(true);
       const res = await organizerApi.getEarnings();
-      if (res?.status) {
+      if (res?.status && res.data) {
         setEarnings({
           totalEarnings: res.data.totalEarnings || 0,
           payoutBalance: res.data.payoutBalance || 0,
-          walletHistory: res.data.walletHistory || [],
-          payoutHistory: res.data.payoutHistory || [],
+          walletHistory: Array.isArray(res.data.walletHistory) ? res.data.walletHistory : [],
+          payoutHistory: Array.isArray(res.data.payoutHistory) ? res.data.payoutHistory : [],
         });
         setSummary({
           available: Number(res.data.availableBalance ?? res.data.payoutBalance ?? 0),
           pending: Number(res.data.pending || 0),
           total: Number(res.data.totalBalance ?? res.data.payoutBalance ?? 0),
         });
-        setBankAccounts(res.data.bankAccounts || []);
+        setBankAccounts(Array.isArray(res.data.bankAccounts) ? res.data.bankAccounts : []);
         if (res.data.minPayout) setMinPayout(Number(res.data.minPayout));
+        if (res.data.analytics) {
+          setAnalytics({
+            earnings: Number(res.data.analytics.earnings || 0),
+            deductions: Number(res.data.analytics.deductions || 0),
+            netEarnings: Number(res.data.analytics.netEarnings || 0),
+          });
+        }
       }
     } catch (err) {
       toast.error(t("failedToLoadEarnings") || "Failed to load earnings");
@@ -336,18 +345,143 @@ function Page() {
   const canWithdraw = Boolean(bank) && available >= minPayout;
   const minText = money(minPayout);
 
-  const SALE = ["TICKET_SALE", "COURSE_SALE", "Ticket Sale", "Course Sale", "Тасалбар борлуулалт", "Сургалт борлуулалт"];
-  const PAYOUT = ["PAYOUT_REQUEST", "PAYOUT_REJECTED", "Payout Request", "Payout Refunded", "Payout Rejected", "Төлбөрийн хүсэлт", "Төлбөр буцаагдсан"];
-  const REFUND = ["REFUND", "Refund", "Буцаан олголт"];
-  const FEE = ["CANCELLATION_DEDUCTION", "ADJUSTMENT", "Cancellation Deduction", "Adjustment", "Цуцлалтын суутгал", "Зохицуулалт"];
+  const matchesKind = (item, kind) => {
+    if (!item) return false;
+    if (kind === "all") return true;
+
+    const rawType = String(item.type || "").trim();
+    const typeUpper = rawType.toUpperCase();
+    const desc = String(item.description || "").toLowerCase();
+
+    if (kind === "sale") {
+      return (
+        typeUpper.includes("SALE") ||
+        typeUpper.includes("PURCHASE") ||
+        rawType.includes("борлуулалт") ||
+        rawType.includes("Худалдан авалт") ||
+        desc.startsWith("ticket sale") ||
+        desc.startsWith("course sale") ||
+        desc.startsWith("тасалбар борлуулалт") ||
+        desc.startsWith("сургалт борлуулалт")
+      );
+    }
+
+    if (kind === "payout") {
+      return (
+        typeUpper.includes("PAYOUT") ||
+        rawType.includes("Төлбөрийн хүсэлт") ||
+        rawType.includes("Төлбөр буцаагдсан") ||
+        Boolean(item.payoutId) ||
+        desc.includes("payout") ||
+        desc.includes("төлбөрийн хүсэлт")
+      );
+    }
+
+    if (kind === "fee") {
+      return (
+        typeUpper.includes("DEDUCTION") ||
+        typeUpper.includes("ADJUSTMENT") ||
+        typeUpper.includes("FEE") ||
+        rawType.includes("суутгал") ||
+        rawType.includes("Зохицуулалт") ||
+        rawType.includes("шимтгэл") ||
+        desc.includes("deduction") ||
+        desc.includes("adjustment") ||
+        desc.includes("суутгал") ||
+        desc.includes("зохицуулалт")
+      );
+    }
+
+    if (kind === "refund") {
+      return (
+        typeUpper.includes("REFUND") ||
+        typeUpper.includes("REJECT") ||
+        rawType.includes("Буцаан олголт") ||
+        rawType.includes("буцаагдсан") ||
+        desc.includes("refund") ||
+        desc.includes("rejected") ||
+        desc.includes("буцаан") ||
+        desc.includes("буцаагдсан") ||
+        desc.includes("татгалз")
+      );
+    }
+
+    if (kind === "promo") {
+      return (
+        typeUpper.includes("PROMO") ||
+        typeUpper.includes("REFERRAL") ||
+        typeUpper.includes("COMMISSION") ||
+        rawType.includes("Урилгын шагнал") ||
+        rawType.includes("Сурталчилгаа") ||
+        rawType.includes("урилга") ||
+        desc.includes("promo") ||
+        desc.includes("promotion") ||
+        desc.includes("referral") ||
+        desc.includes("commission") ||
+        desc.includes("урилга") ||
+        desc.includes("сурталчил")
+      );
+    }
+
+    return false;
+  };
+
   const kindOf = (item) => {
-    const type = item.type || "";
-    const desc = `${item.description || ""}`.toLowerCase();
-    if (desc.includes("promo") || desc.includes("promotion") || desc.includes("сурталчил")) return "promo";
-    if (SALE.includes(type)) return "sale";
-    if (PAYOUT.includes(type)) return "payout";
-    if (REFUND.includes(type)) return "refund";
-    if (FEE.includes(type)) return "fee";
+    if (!item) return "other";
+    const rawType = String(item.type || "").trim();
+    const typeUpper = rawType.toUpperCase();
+    const desc = String(item.description || "").toLowerCase();
+
+    if (
+      typeUpper.includes("PROMO") ||
+      typeUpper.includes("REFERRAL") ||
+      rawType.includes("Урилгын шагнал") ||
+      rawType.includes("Сурталчилгаа") ||
+      desc.includes("referral") ||
+      (desc.includes("promo") && !desc.startsWith("ticket sale") && !desc.startsWith("course sale"))
+    ) {
+      return "promo";
+    }
+
+    if (
+      typeUpper.includes("REFUND") ||
+      rawType.includes("Буцаан олголт") ||
+      typeUpper.includes("PAYOUT_REJECTED") ||
+      rawType.includes("Payout Refunded") ||
+      rawType.includes("Төлбөр буцаагдсан")
+    ) {
+      return "refund";
+    }
+
+    if (
+      typeUpper.includes("PAYOUT") ||
+      rawType.includes("Төлбөрийн хүсэлт") ||
+      Boolean(item.payoutId)
+    ) {
+      return "payout";
+    }
+
+    if (
+      typeUpper.includes("DEDUCTION") ||
+      typeUpper.includes("ADJUSTMENT") ||
+      typeUpper.includes("FEE") ||
+      rawType.includes("суутгал") ||
+      rawType.includes("Зохицуулалт")
+    ) {
+      return "fee";
+    }
+
+    if (
+      typeUpper.includes("SALE") ||
+      typeUpper.includes("PURCHASE") ||
+      rawType.includes("борлуулалт") ||
+      rawType.includes("Худалдан авалт") ||
+      desc.startsWith("ticket sale") ||
+      desc.startsWith("course sale")
+    ) {
+      return "sale";
+    }
+
     return "other";
   };
   const getPayoutInfo = (item) => {
@@ -399,7 +533,7 @@ function Page() {
     { value: "all", label: t("pyAllTime") },
     { value: "custom", label: t("pyChooseDate") },
   ];
-  const txs = earnings.walletHistory.filter((item) => txKind === "all" || kindOf(item) === txKind);
+  const txs = (earnings.walletHistory || []).filter((item) => matchesKind(item, txKind));
   const perfZero = !perfLoading && !perfError && analytics.earnings === 0 && analytics.deductions === 0 && analytics.netEarnings === 0;
 
   const amountError = (raw) => {
