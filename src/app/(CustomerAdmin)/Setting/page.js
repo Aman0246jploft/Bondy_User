@@ -88,7 +88,15 @@ function page() {
       setLoading(true);
       const res = await userSettingApi.getUserSetting();
       if (res?.status && res?.data) {
-        setSettings(res.data);
+        setSettings((prev) => ({
+          ...prev,
+          ...res.data,
+          pushNotification: res.data.pushNotification !== false,
+          bookingNotification: res.data.bookingNotification !== false,
+          reminderNotification: res.data.reminderNotification !== false,
+          organizerUpdateNotification: res.data.organizerUpdateNotification !== false,
+          messageNotification: res.data.messageNotification !== false,
+        }));
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -112,9 +120,10 @@ function page() {
   };
 
   const handleToggle = async (field) => {
-    const newValue = !settings[field];
+    const currentValue = settings[field] !== false;
+    const newValue = !currentValue;
 
-    setSettings(prev => {
+    setSettings((prev) => {
       const updated = { ...prev, [field]: newValue };
 
       if (field === "pushNotification") {
@@ -123,13 +132,14 @@ function page() {
         updated.organizerUpdateNotification = newValue;
         updated.messageNotification = newValue;
       } else {
-        const anyActiveSub = updated.bookingNotification ||
-          updated.reminderNotification ||
-          updated.organizerUpdateNotification ||
-          updated.messageNotification;
-        if (anyActiveSub && !prev.pushNotification) {
+        const anyActiveSub =
+          updated.bookingNotification !== false ||
+          updated.reminderNotification !== false ||
+          updated.organizerUpdateNotification !== false ||
+          updated.messageNotification !== false;
+        if (anyActiveSub && prev.pushNotification === false) {
           updated.pushNotification = true;
-        } else if (!anyActiveSub && prev.pushNotification) {
+        } else if (!anyActiveSub && prev.pushNotification !== false) {
           updated.pushNotification = false;
         }
       }
@@ -137,7 +147,18 @@ function page() {
     });
 
     try {
-      await userSettingApi.updateUserSetting({ [field]: newValue });
+      const res = await userSettingApi.updateUserSetting({ [field]: newValue });
+      if (res?.status && res?.data) {
+        setSettings((prev) => ({
+          ...prev,
+          ...res.data,
+          pushNotification: res.data.pushNotification !== false,
+          bookingNotification: res.data.bookingNotification !== false,
+          reminderNotification: res.data.reminderNotification !== false,
+          organizerUpdateNotification: res.data.organizerUpdateNotification !== false,
+          messageNotification: res.data.messageNotification !== false,
+        }));
+      }
       toast.success(t("settingsUpdated") || "Settings updated");
     } catch (error) {
       console.error("Failed to update setting:", error);
@@ -224,7 +245,7 @@ function page() {
               <b>{t("pushNotifications")}</b>
               <span>{t("pushNotificationsDesc")}</span>
             </span>
-            <Switch id="pushNotification" checked={!!settings.pushNotification} onChange={() => handleToggle("pushNotification")} />
+            <Switch id="pushNotification" checked={settings.pushNotification !== false} onChange={() => handleToggle("pushNotification")} />
           </div>
         </div>
       </section>
@@ -238,7 +259,7 @@ function page() {
               <b>{t("bookings")}</b>
               <span>{t("bookingsDesc")}</span>
             </span>
-            <Switch id="bookingNotification" checked={!!settings.bookingNotification} onChange={() => handleToggle("bookingNotification")} />
+            <Switch id="bookingNotification" checked={settings.bookingNotification !== false} onChange={() => handleToggle("bookingNotification")} />
           </div>
           <div className="st-row">
             <span className="st-ico"><Glyph name="bell" /></span>
@@ -246,7 +267,7 @@ function page() {
               <b>{t("reminders")}</b>
               <span>{t("remindersDesc")}</span>
             </span>
-            <Switch id="reminderNotification" checked={!!settings.reminderNotification} onChange={() => handleToggle("reminderNotification")} />
+            <Switch id="reminderNotification" checked={settings.reminderNotification !== false} onChange={() => handleToggle("reminderNotification")} />
           </div>
           <div className="st-row">
             <span className="st-ico"><Glyph name="user" /></span>
@@ -254,7 +275,7 @@ function page() {
               <b>{t("organizerUpdates")}</b>
               <span>{t("organizerUpdatesDesc")}</span>
             </span>
-            <Switch id="organizerUpdateNotification" checked={!!settings.organizerUpdateNotification} onChange={() => handleToggle("organizerUpdateNotification")} />
+            <Switch id="organizerUpdateNotification" checked={settings.organizerUpdateNotification !== false} onChange={() => handleToggle("organizerUpdateNotification")} />
           </div>
           <div className="st-row">
             <span className="st-ico"><Glyph name="letter" /></span>
@@ -262,7 +283,7 @@ function page() {
               <b>{t("messages")}</b>
               <span>{t("messagesDesc")}</span>
             </span>
-            <Switch id="messageNotification" checked={!!settings.messageNotification} onChange={() => handleToggle("messageNotification")} />
+            <Switch id="messageNotification" checked={settings.messageNotification !== false} onChange={() => handleToggle("messageNotification")} />
           </div>
         </div>
       </section>
