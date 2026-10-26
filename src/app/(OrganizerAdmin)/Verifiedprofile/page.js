@@ -8,8 +8,10 @@ import "react-phone-input-2/lib/style.css";
 import { parsePhoneNumber } from "react-phone-number-input";
 import apiClient from "@/api/apiClient";
 import authApi from "@/api/authApi";
+import categoryApi from "@/api/categoryApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { getFullImageUrl } from "@/utils/imageHelper";
+import { formatCategoryName, isMongoId } from "@/utils/formatHelper";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import GlobalLoader from "@/components/GlobalLoader";
 
@@ -92,6 +94,7 @@ function VerificationPageContent() {
   const [failed, setFailed] = useState(false);
   const [profile, setProfile] = useState(null);
   const [banks, setBanks] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [sheet, setSheet] = useState(null);
   const [ask, setAsk] = useState(null);
   const [step, setStep] = useState("value");
@@ -127,9 +130,10 @@ function VerificationPageContent() {
     try {
       setLoading(true);
       setFailed(false);
-      const [profileRes, bankRes] = await Promise.all([
+      const [profileRes, bankRes, catRes] = await Promise.all([
         apiClient.get("/user/selfProfile"),
         apiClient.get("/verification/banks"),
+        categoryApi.getCategories({ limit: 100 }),
       ]);
       if (!profileRes?.status || !profileRes.data?.user) {
         setFailed(true);
@@ -137,6 +141,11 @@ function VerificationPageContent() {
       }
       setProfile(profileRes.data.user);
       setBanks(bankRes?.status && Array.isArray(bankRes.data?.banks) ? bankRes.data.banks : []);
+      const fetchedCats =
+        (catRes?.status && catRes?.data?.categories) ||
+        (Array.isArray(catRes?.data) ? catRes.data : []) ||
+        (Array.isArray(catRes?.data?.data) ? catRes.data.data : []);
+      if (Array.isArray(fetchedCats)) setCategories(fetchedCats);
     } catch (err) {
       setFailed(true);
     } finally {
@@ -479,8 +488,18 @@ function VerificationPageContent() {
   const categoryName = (() => {
     const c = u.businessCategory;
     if (!c) return "";
-    if (typeof c === "string") return c;
-    return language === "mn" ? (c.nameMn || c.name || "") : (c.name || c.nameMn || "");
+    let catObj = typeof c === "object" ? c : null;
+    if (!catObj && typeof c === "string") {
+      catObj = categories.find((cat) => String(cat._id) === c || String(cat.id) === c);
+    }
+    if (catObj) {
+      return formatCategoryName(catObj, language);
+    }
+    if (typeof c === "string") {
+      if (isMongoId(c)) return "";
+      return formatCategoryName(c, language);
+    }
+    return "";
   })();
   const city = u.address || u.city || "";
   const logo = media(u.profileImage);

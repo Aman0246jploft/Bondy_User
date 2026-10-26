@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import DateRangeCalendarPopover from "@/components/DateRangeCalendarPopover";
 import GlobalLoader from "@/components/GlobalLoader";
+import { formatDisplayId } from "@/utils/formatHelper";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -880,7 +881,7 @@ function Page() {
                 </div>
                 <div className="py-kv"><span>{t("pyAmountWord")}</span><span>{money(payoutAmount)}</span></div>
                 <div className="py-kv"><span>{t("pyMethodWord")}</span><span>{bankDetail}</span></div>
-                <div className="py-kv"><span>{t("pyRequestNo")}</span><span>{payoutResult?._id || "—"}</span></div>
+                <div className="py-kv"><span>{t("pyRequestNo")}</span><span>{payoutResult?.paymentReference || formatDisplayId(payoutResult?._id, "REQ")}</span></div>
                 <button type="button" className="py-go" onClick={() => setShowPayoutModal(false)}>{t("pyDone")}</button>
               </>
             )}

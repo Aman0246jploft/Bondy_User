@@ -33,14 +33,40 @@ export function capitalizeWords(str) {
 }
 
 /**
+ * Checks if a string looks like a raw MongoDB ObjectId (24 hex characters).
+ */
+export function isMongoId(val) {
+  if (!val || typeof val !== "string") return false;
+  return /^[0-9a-fA-F]{24}$/.test(val.trim());
+}
+
+/**
  * Returns formatted localized category name with Title Case.
+ * Guaranteed never to return a raw MongoDB ObjectId.
  */
 export function formatCategoryName(category, lang = "en") {
   if (!category) return "";
-  if (typeof category === "string") return capitalizeWords(category);
+  if (typeof category === "string") {
+    if (isMongoId(category)) return "";
+    return capitalizeWords(category);
+  }
   const localized =
-    lang === "mn" && (category.name_thi || category.categoryName_mn)
-      ? category.name_thi || category.categoryName_mn
-      : category.name || category.categoryName || "";
+    lang === "mn" && (category.name_thi || category.categoryName_mn || category.nameMn)
+      ? category.name_thi || category.categoryName_mn || category.nameMn
+      : category.name || category.categoryName || category.name_thi || "";
+  if (isMongoId(localized)) return "";
   return capitalizeWords(localized);
+}
+
+/**
+ * Ensures any identifier shown to the user is safe and not a raw Mongo ID.
+ * If given a Mongo ID, formats it as a short human-readable reference, e.g. REQ-XXXXXX.
+ */
+export function formatDisplayId(id, prefix = "ID") {
+  if (!id) return "—";
+  const str = String(id).trim();
+  if (isMongoId(str)) {
+    return `${prefix}-${str.slice(-6).toUpperCase()}`;
+  }
+  return str;
 }
