@@ -5995,6 +5995,60 @@ a.view-map {
   color: var(--bd-gray-600) !important;
 }
 
+.common_field .phone_input {
+  width: 100% !important;
+  position: relative !important;
+}
+
+.common_field .phone_input .form-control,
+.common_field .phone_input input.form-control {
+  height: 56px !important;
+  border-radius: 999px !important;
+  background-color: transparent !important;
+  border: 1px solid var(--bd-border-strong) !important;
+  color: var(--white) !important;
+  padding-left: 65px !important;
+  padding-right: 20px !important;
+  font-size: 15px !important;
+  transition: border-color 200ms var(--bd-ease) !important;
+}
+
+.common_field .phone_input .form-control:focus,
+.common_field .phone_input input.form-control:focus,
+.common_field .phone_input:focus-within .form-control {
+  border-color: var(--primary-teal, #23ada4) !important;
+  box-shadow: none !important;
+}
+
+.common_field .phone_input .flag-dropdown {
+  position: absolute !important;
+  top: 1px !important;
+  bottom: 1px !important;
+  left: 1px !important;
+  width: 56px !important;
+  height: 54px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 999px 0 0 999px !important;
+  padding: 0 !important;
+}
+
+.common_field .phone_input .selected-flag {
+  width: 56px !important;
+  height: 100% !important;
+  background: transparent !important;
+  border-radius: 999px 0 0 999px !important;
+  padding: 0 0 0 20px !important;
+  cursor: pointer !important;
+}
+
+.common_field .phone_input .selected-flag:hover,
+.common_field .phone_input .selected-flag:focus,
+.common_field .phone_input .flag-dropdown.open .selected-flag {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-radius: 999px 0 0 999px !important;
+}
+
 /* form field css end */
 
 /* otp css start */

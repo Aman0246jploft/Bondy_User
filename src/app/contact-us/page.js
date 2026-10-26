@@ -9,6 +9,8 @@ import contactApi from "@/api/contactApi";
 import categoryApi from "@/api/categoryApi";
 import { toast } from "react-hot-toast";
 import CharCounter from "@/components/CharCounter";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 export default function Page() {
   const { t, language } = useLanguage();
@@ -71,9 +73,15 @@ export default function Page() {
 
     setLoading(true);
     try {
+      const formattedPhone = formData.phone && formData.phone.trim()
+        ? (formData.phone.startsWith("+") ? formData.phone.trim() : `+${formData.phone.trim()}`)
+        : undefined;
+
       const response = await contactApi.createContact({
         ...formData,
         fullName: nameVal,
+        phone: formattedPhone,
+        topic: formData.topic || undefined,
         message: msgVal,
       });
       if (response && response.status !== false) {
@@ -146,31 +154,88 @@ export default function Page() {
                   <Col lg={6}>
                     <Form.Group controlId="phone">
                       <Form.Label>{t("phone")}</Form.Label>
-                      <Form.Control
-                        type="text"
-                        placeholder={t("phonePlaceholder")}
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                      />
+                      <div className="phone_input w-100">
+                        <PhoneInput
+                          country={"mn"}
+                          enableSearch
+                          value={formData.phone}
+                          onChange={(phone) => {
+                            const formatted = phone ? (phone.startsWith("+") ? phone : `+${phone}`) : "";
+                            setFormData((prev) => ({ ...prev, phone: formatted }));
+                          }}
+                          inputClass="form-control w-100"
+                          containerClass="phone_input w-100"
+                          dropdownClass="phone_input_dropdown"
+                          buttonClass="phone_input_button"
+                          placeholder={t("phonePlaceholder") || (language === "en" ? "Enter phone number" : "Утасны дугаараа оруулна уу")}
+                          searchPlaceholder={language === "mn" ? "Улс хайх" : "Search country"}
+                          inputProps={{
+                            name: "phone",
+                            id: "phone",
+                            placeholder: t("phonePlaceholder") || (language === "en" ? "Enter phone number" : "Утасны дугаараа оруулна уу"),
+                          }}
+                        />
+                      </div>
                     </Form.Group>
                   </Col>
                   <Col lg={6}>
                     <Form.Group controlId="topic">
                       <Form.Label>{t("selectTopic")}</Form.Label>
-                      <Form.Control
-                        as="select"
-                        name="topic"
-                        value={formData.topic}
-                        onChange={handleChange}
-                      >
-                        <option value="">{t("selectTopicPlaceholder")}</option>
-                        {topics.map((topic) => (
-                          <option key={topic._id} value={topic.name}>
-                            {topic.name}
+                      <div style={{ position: "relative" }}>
+                        <Form.Control
+                          as="select"
+                          name="topic"
+                          value={formData.topic}
+                          onChange={handleChange}
+                          style={{
+                            cursor: "pointer",
+                            appearance: "none",
+                            WebkitAppearance: "none",
+                            MozAppearance: "none",
+                            paddingRight: "48px",
+                            color: formData.topic ? "var(--white)" : "var(--bd-gray-600, #888)",
+                          }}
+                        >
+                          <option value="" style={{ background: "#181a1f", color: "#888" }}>
+                            {t("selectTopicPlaceholder")}
                           </option>
-                        ))}
-                      </Form.Control>
+                          {topics.map((topic) => (
+                            <option
+                              key={topic._id}
+                              value={topic.name}
+                              style={{ background: "#181a1f", color: "#fff" }}
+                            >
+                              {language === "mn" && topic.name_mn ? topic.name_mn : topic.name}
+                            </option>
+                          ))}
+                        </Form.Control>
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "22px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            pointerEvents: "none",
+                            color: "var(--primary-teal, #23ada4)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </span>
+                      </div>
                     </Form.Group>
                   </Col>
                   <Col lg={12}>
