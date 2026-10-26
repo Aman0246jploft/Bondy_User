@@ -350,10 +350,43 @@ function Page() {
     if (FEE.includes(type)) return "fee";
     return "other";
   };
+  const getPayoutInfo = (item) => {
+    if (!item) return null;
+    const rawId = item.payoutId?._id || item.payoutId;
+    const pId = rawId ? String(rawId) : null;
+    let payout = null;
+    if (pId && Array.isArray(earnings.payoutHistory)) {
+      payout = earnings.payoutHistory.find((p) => String(p._id) === pId);
+    }
+    if (!payout && item.payoutId && typeof item.payoutId === "object") {
+      payout = item.payoutId;
+    }
+    return payout;
+  };
+
   const statusOf = (item) => {
-    const type = item.type || "";
-    if (["PAYOUT_REQUEST", "Payout Request", "Төлбөрийн хүсэлт"].includes(type)) return "pending";
-    if (["PAYOUT_REJECTED", "Payout Refunded", "Payout Rejected", "Төлбөр буцаагдсан"].includes(type)) return "failed";
+    const type = String(item?.type || "").toLowerCase();
+    const isPayoutRequest = type.includes("payout request") || type.includes("төлбөрийн хүсэлт");
+    const isPayoutRefund =
+      type.includes("payout refund") ||
+      type.includes("payout reject") ||
+      type.includes("буцаагдсан");
+
+    if (isPayoutRefund) {
+      return "refunded";
+    }
+
+    if (isPayoutRequest) {
+      const payout = getPayoutInfo(item);
+      const rawStatus = String(payout?.status || item?.payoutStatus || item?.status || "").toUpperCase();
+      if (rawStatus === "PAID") return "paid";
+      if (rawStatus === "CANCELLED" || rawStatus === "REJECTED") return "cancelled";
+      return "pending";
+    }
+
+    const rawStatus = String(item?.status || "").toUpperCase();
+    if (rawStatus === "CANCELLED" || rawStatus === "FAILED") return "cancelled";
+    if (rawStatus === "PENDING") return "pending";
     return "paid";
   };
 
@@ -626,9 +659,27 @@ function Page() {
                   </span>
                   <span className="py-txAmt">
                     <b style={{ color }}>{money(item.amount)}</b>
-                    {(status === "pending" || status === "failed") && (
-                      <span className={`py-pill ${status === "failed" ? "is-bad" : "is-wait"}`}>
-                        {status === "failed" ? t("pyFailed") : t("pyWaiting")}
+                    {kind === "payout" ? (
+                      <span
+                        className={`py-pill ${
+                          status === "paid" || status === "refunded"
+                            ? "is-ok"
+                            : status === "cancelled"
+                            ? "is-bad"
+                            : "is-wait"
+                        }`}
+                      >
+                        {status === "paid"
+                          ? t("pyPaid")
+                          : status === "cancelled"
+                          ? t("pyCancelled") || t("cancelled")
+                          : status === "refunded"
+                          ? t("pyRefunded") || t("refunded")
+                          : t("pyWaiting")}
+                      </span>
+                    ) : (status === "pending" || status === "failed" || status === "cancelled") && (
+                      <span className={`py-pill ${status === "pending" ? "is-wait" : "is-bad"}`}>
+                        {status === "pending" ? t("pyWaiting") : t("pyCancelled") || t("pyFailed")}
                       </span>
                     )}
                     <i>{formatDate(item.createdAt)}</i>
@@ -717,25 +768,62 @@ function Page() {
         </div>
       )}
 
-      {txOpen && (
-        <div className="py-scrim" onClick={(e) => { if (e.target === e.currentTarget) setTxOpen(null); }}>
-          <div className="py-sheet py-sheet-sm">
-            <div className="py-sheetHead">
-              <div>
-                <b>{TYPE_LABEL[txOpen.type] || txOpen.type}</b>
-                <span>{formatDescription(txOpen.description)}</span>
+      {txOpen && (() => {
+        const pInfo = getPayoutInfo(txOpen);
+        const st = statusOf(txOpen);
+        const stLabel =
+          st === "pending"
+            ? t("pyWaiting")
+            : st === "cancelled"
+            ? t("pyCancelled") || t("cancelled")
+            : st === "refunded"
+            ? t("pyRefunded") || t("refunded")
+            : st === "failed"
+            ? t("pyFailed")
+            : t("pyPaid");
+        return (
+          <div className="py-scrim" onClick={(e) => { if (e.target === e.currentTarget) setTxOpen(null); }}>
+            <div className="py-sheet py-sheet-sm">
+              <div className="py-sheetHead">
+                <div>
+                  <b>{TYPE_LABEL[txOpen.type] || txOpen.type}</b>
+                  <span>{formatDescription(txOpen.description)}</span>
+                </div>
+                <button type="button" className="py-x" aria-label={t("close")} onClick={() => setTxOpen(null)}>×</button>
               </div>
-              <button type="button" className="py-x" aria-label={t("close")} onClick={() => setTxOpen(null)}>×</button>
+              <div className="py-kv"><span>{t("pyAmountWord")}</span><span>{money(txOpen.amount)}</span></div>
+              <div className="py-kv"><span>{t("pyKind")}</span><span>{t(chips.find(([id]) => id === kindOf(txOpen))?.[1] || "pySale")}</span></div>
+              <div className="py-kv">
+                <span>{t("pyStatus")}</span>
+                <span
+                  className={`py-pill ${
+                    st === "paid" || st === "refunded"
+                      ? "is-ok"
+                      : st === "cancelled" || st === "failed"
+                      ? "is-bad"
+                      : "is-wait"
+                  }`}
+                  style={{ marginTop: 0 }}
+                >
+                  {stLabel}
+                </span>
+              </div>
+              {pInfo?.paymentReference ? (
+                <div className="py-kv"><span>{t("payoutRefLabel")}</span><span>{pInfo.paymentReference}</span></div>
+              ) : null}
+              {pInfo?.adminNote ? (
+                <div className="py-kv"><span>{t("reason") || "Note"}</span><span>{pInfo.adminNote}</span></div>
+              ) : null}
+              {pInfo?.paidAt ? (
+                <div className="py-kv"><span>{t("pyPaid")}</span><span>{formatDate(pInfo.paidAt)}</span></div>
+              ) : null}
+              <div className="py-kv"><span>{t("pyDate")}</span><span>{formatDate(txOpen.createdAt)}</span></div>
+              <p className="py-hint">{t("pyViewOnly")}</p>
+              <button type="button" className="py-gh" onClick={() => setTxOpen(null)}>{t("close")}</button>
             </div>
-            <div className="py-kv"><span>{t("pyAmountWord")}</span><span>{money(txOpen.amount)}</span></div>
-            <div className="py-kv"><span>{t("pyKind")}</span><span>{t(chips.find(([id]) => id === kindOf(txOpen))?.[1] || "pySale")}</span></div>
-            <div className="py-kv"><span>{t("pyStatus")}</span><span>{statusOf(txOpen) === "pending" ? t("pyWaiting") : statusOf(txOpen) === "failed" ? t("pyFailed") : t("pyPaid")}</span></div>
-            <div className="py-kv"><span>{t("pyDate")}</span><span>{formatDate(txOpen.createdAt)}</span></div>
-            <p className="py-hint">{t("pyViewOnly")}</p>
-            <button type="button" className="py-gh" onClick={() => setTxOpen(null)}>{t("close")}</button>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
