@@ -13,6 +13,7 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import { formatCategoryName } from "@/utils/formatHelper";
 import GlobalLoader from "@/components/GlobalLoader";
 import LocationPreviewMap from "@/components/LocationPreviewMap";
+import { BONDY_MAP_STYLE } from "@/utils/bondyMapStyle";
 
 // ─── Constants & Fallback Data ────────────────────────────────────────────────
 const DAYS = [
@@ -44,23 +45,6 @@ const DISTRICT_MATCHERS = [
   { keys: ["налайх", "nalaikh", "nld", "нд"], mn: "Налайх дүүрэг", en: "Nalaikh District" },
   { keys: ["багануур", "baganuur", "bnd", "бнд"], mn: "Багануур дүүрэг", en: "Baganuur District" },
   { keys: ["багахангай", "bagakhangai", "bkhd", "бхд"], mn: "Багахангай дүүрэг", en: "Bagakhangai District" },
-];
-
-const BONDY_DARK_MAP_STYLE = [
-  { elementType: "geometry", stylers: [{ color: "#141414" }] },
-  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#858585" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#141414" }] },
-  { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#666666" }] },
-  { featureType: "administrative.country", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
-  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#bdbdbd" }] },
-  { featureType: "poi", stylers: [{ visibility: "off" }] },
-  { featureType: "road", elementType: "geometry.fill", stylers: [{ color: "#222222" }] },
-  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#8a8a8a" }] },
-  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#2c2c2c" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#363636" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0d1b22" }] },
-  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#2b4c59" }] },
 ];
 
 const STEP_KEYS = ["apBasic", "apLocation", "apPrice", "apReview"];
@@ -382,11 +366,11 @@ export default function LearningEditorPage() {
       const map = new window.google.maps.Map(mapContainerRef.current, {
         center: initialPos,
         zoom: 15,
-        styles: BONDY_DARK_MAP_STYLE,
+        styles: BONDY_MAP_STYLE,
         disableDefaultUI: true,
         zoomControl: true,
         gestureHandling: "greedy",
-        backgroundColor: "#141414",
+        backgroundColor: "#202a3a",
       });
 
       const marker = new window.google.maps.Marker({
