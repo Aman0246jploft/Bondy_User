@@ -380,7 +380,7 @@ export default function OrganizerSidebar({ mobileOpen = false, onCloseMobile }) 
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="og-drawer-scrim" onClick={onCloseMobile}>
+        <div id="og-mobile-navigation" className="og-drawer-scrim" onClick={onCloseMobile}>
           <div className="og-drawer-pane" onClick={(e) => e.stopPropagation()}>
             {renderAsideContent()}
           </div>

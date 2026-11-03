@@ -3,86 +3,106 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 
-// Bondy bespoke dark map theme — obsidian base, slate roads, midnight blue water, muted typography
-const BONDY_DARK_MAP_STYLE = [
-  { elementType: "geometry", stylers: [{ color: "#16171a" }] },
-  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#8a919e" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#16171a" }, { weight: 3 }] },
+// Dark slate map with warm main roads and blue waterways to match the mobile map reference.
+const BONDY_MAP_STYLE = [
+  { elementType: "geometry", stylers: [{ color: "#202a3a" }] },
+  { elementType: "labels.icon", stylers: [{ visibility: "on" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#d1d6df" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#202a3a" }, { weight: 3 }] },
   {
     featureType: "administrative",
     elementType: "geometry",
-    stylers: [{ color: "#2d323b" }],
+    stylers: [{ color: "#465367" }],
   },
   {
     featureType: "administrative.locality",
     elementType: "labels.text.fill",
-    stylers: [{ color: "#c8ced9" }, { weight: 0.5 }],
+    stylers: [{ color: "#e1e4eb" }],
   },
   {
     featureType: "administrative.neighborhood",
     elementType: "labels.text.fill",
-    stylers: [{ color: "#8b94a5" }],
+    stylers: [{ color: "#b2bac8" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "geometry",
+    stylers: [{ color: "#293848" }],
   },
   {
     featureType: "poi",
     elementType: "labels.text.fill",
-    stylers: [{ color: "#616875" }],
+    stylers: [{ color: "#c4ccd5" }],
   },
   {
     featureType: "poi.park",
     elementType: "geometry",
-    stylers: [{ color: "#122019" }],
+    stylers: [{ color: "#243b3a" }],
   },
   {
     featureType: "poi.park",
     elementType: "labels.text.fill",
-    stylers: [{ color: "#4f7567" }],
+    stylers: [{ color: "#a9c5b5" }],
   },
   {
     featureType: "road",
     elementType: "geometry.fill",
-    stylers: [{ color: "#22252c" }],
+    stylers: [{ color: "#344153" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#202a3a" }],
   },
   {
     featureType: "road",
     elementType: "labels.text.fill",
-    stylers: [{ color: "#6e7786" }],
+    stylers: [{ color: "#c7cdd7" }],
+  },
+  {
+    featureType: "road.local",
+    elementType: "geometry.fill",
+    stylers: [{ color: "#2c394b" }],
   },
   {
     featureType: "road.arterial",
     elementType: "geometry.fill",
-    stylers: [{ color: "#282d36" }],
+    stylers: [{ color: "#b9985d" }],
   },
   {
     featureType: "road.highway",
     elementType: "geometry.fill",
-    stylers: [{ color: "#313845" }],
+    stylers: [{ color: "#e7b75f" }],
   },
   {
     featureType: "road.highway",
     elementType: "geometry.stroke",
-    stylers: [{ color: "#1a1e26" }],
+    stylers: [{ color: "#9b7840" }],
   },
   {
     featureType: "road.highway",
     elementType: "labels.text.fill",
-    stylers: [{ color: "#9ca5b4" }],
+    stylers: [{ color: "#f0d7a4" }],
   },
   {
     featureType: "transit",
     elementType: "geometry",
-    stylers: [{ color: "#1c2027" }],
+    stylers: [{ color: "#3b4a5e" }],
   },
   {
     featureType: "water",
     elementType: "geometry",
-    stylers: [{ color: "#0c1722" }],
+    stylers: [{ color: "#172d43" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry.fill",
+    stylers: [{ color: "#172d43" }],
   },
   {
     featureType: "water",
     elementType: "labels.text.fill",
-    stylers: [{ color: "#394d61" }],
+    stylers: [{ color: "#91b5d2" }],
   },
 ];
 
@@ -300,12 +320,12 @@ export default function InteractiveMapStage({
         zoom: 13,
         minZoom: 5,
         maxZoom: 19,
-        styles: BONDY_DARK_MAP_STYLE,
+        styles: BONDY_MAP_STYLE,
         disableDefaultUI: true,
         keyboardShortcuts: false,
         gestureHandling: "greedy",
         clickableIcons: false,
-        backgroundColor: "#16171a",
+        backgroundColor: "#202a3a",
       });
 
       // Clicking empty area on map closes the preview card
@@ -504,7 +524,7 @@ export default function InteractiveMapStage({
     }
   }, [engine, isReady, dispersedItems.length]);
 
-  // 6. Fallback: Leaflet with CartoDB Dark Matter tiles (if Google key fails or offline)
+  // 6. Fallback: Leaflet with Carto Dark Matter tiles (if Google Maps is unavailable)
   useEffect(() => {
     if (engine !== "leaflet" || !mapContainerRef.current) return;
 
@@ -533,12 +553,15 @@ export default function InteractiveMapStage({
             attributionControl: false,
           });
 
-          // Ultra-crisp CartoDB Dark Matter tiles
+          L.control.attribution({ position: "topright", prefix: false }).addTo(lmap);
+
           L.tileLayer(
             "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
             {
               subdomains: "abcd",
-              maxZoom: 19,
+              maxZoom: 20,
+              attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             }
           ).addTo(lmap);
 
@@ -633,7 +656,7 @@ export default function InteractiveMapStage({
             inset: 0,
             width: "100%",
             height: "100%",
-            backgroundColor: "#16171a",
+            backgroundColor: "#202a3a",
           }}
         />
 
@@ -648,9 +671,9 @@ export default function InteractiveMapStage({
               alignItems: "center",
               justifyContent: "center",
               gap: "12px",
-              background: "#141518",
+              background: "#202a3a",
               zIndex: 10,
-              color: "var(--bd-gray-400)",
+              color: "#c7cdd7",
               fontSize: "13px",
             }}
           >
@@ -658,7 +681,7 @@ export default function InteractiveMapStage({
               style={{
                 width: "32px",
                 height: "32px",
-                border: "3px solid rgba(255,255,255,0.1)",
+                border: "3px solid rgba(255,255,255,0.12)",
                 borderTopColor: "var(--acc, #23ada4)",
                 borderRadius: "50%",
                 animation: "spin 0.8s linear infinite",
@@ -684,9 +707,11 @@ export default function InteractiveMapStage({
           style={{
             cursor: "pointer",
             border: "1px solid var(--bd-border)",
-            background: "rgba(16, 17, 20, 0.9)",
+            background: "rgba(255, 255, 255, 0.94)",
             backdropFilter: "blur(12px)",
+            color: "#26364a",
             zIndex: 220,
+            boxShadow: "0 4px 14px rgba(35, 54, 74, 0.16)",
           }}
         >
           <svg
@@ -725,15 +750,15 @@ export default function InteractiveMapStage({
               height: "32px",
               padding: "0 14px",
               borderRadius: "999px",
-              border: "1px solid var(--bd-border-strong)",
-              background: "rgba(18, 19, 23, 0.92)",
+              border: "1px solid #d5dee6",
+              background: "rgba(255, 255, 255, 0.96)",
               backdropFilter: "blur(12px)",
-              color: "var(--bd-white)",
+              color: "#26364a",
               fontFamily: "var(--bd-font-ui)",
               fontSize: "12.5px",
               fontWeight: 600,
               cursor: isLoadingMore ? "not-allowed" : "pointer",
-              boxShadow: "0 6px 18px rgba(0,0,0,0.45)",
+              boxShadow: "0 6px 18px rgba(35, 54, 74, 0.18)",
               transition: "all 160ms var(--bd-ease)",
             }}
           >

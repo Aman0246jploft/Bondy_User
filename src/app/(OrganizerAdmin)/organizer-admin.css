@@ -4438,6 +4438,47 @@ section > .og-row:first-child {
 .dh-mobbar {
   display: none;
 }
+.dh-mobmenu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--bd-border, #303030);
+  border-radius: 999px;
+  background: var(--bd-ink-850, #161616);
+  color: var(--bd-white, #fff);
+  cursor: pointer;
+}
+.dh-mobprofile {
+  position: relative;
+  flex-shrink: 0;
+}
+.dh-mobprofile-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 2px;
+  border: 1px solid var(--bd-border, #303030);
+  border-radius: 999px;
+  background: var(--bd-ink-850, #161616);
+  cursor: pointer;
+}
+.dh-mobprofile-button img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  background: var(--bd-ink-800, #1b1b1b);
+}
+.dh-mobprofile .ogn-menu {
+  top: calc(100% + 8px);
+  right: 0;
+}
 @media (max-width: 767px) {
   .og-shell > div > header {
     display: none !important;

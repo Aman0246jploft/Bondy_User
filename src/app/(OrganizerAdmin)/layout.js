@@ -650,7 +650,59 @@ export default function RootLayout({ children }) {
               </svg>
             </button>
             <span className="dh-mobbarT">{title}</span>
-            <span className="dh-mobbar-sp" />
+            <div className="dh-mobprofile" data-profile-menuwrap>
+              <button
+                type="button"
+                className="dh-mobprofile-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMobileMenuOpen(false);
+                  setUserMenuOpen((open) => !open);
+                }}
+                aria-label={isMn ? "Профайл нээх" : "Open profile menu"}
+                aria-expanded={userMenuOpen}
+                aria-haspopup="menu"
+                aria-controls="og-mobile-profile-menu"
+                title={displayName}
+              >
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/assets/logo/bondy-mark.svg";
+                  }}
+                />
+              </button>
+              {userMenuOpen && (
+                <div id="og-mobile-profile-menu" className="ogn-menu" role="menu" onClick={(e) => e.stopPropagation()}>
+                  <Link href="/OrganizerProfile" className="ogn-mi" role="menuitem" onClick={() => setUserMenuOpen(false)}>
+                    {isMn ? "Профайл" : "Profile"}
+                  </Link>
+                  <Link href="/Settings" className="ogn-mi" role="menuitem" onClick={() => setUserMenuOpen(false)}>
+                    {isMn ? "Тохиргоо" : "Settings"}
+                  </Link>
+                  <button type="button" className="ogn-mi ogn-mi-danger" role="menuitem" onClick={handleLogout}>
+                    {isMn ? "Гарах" : "Log out"}
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              className="dh-mobmenu"
+              onClick={() => {
+                setUserMenuOpen(false);
+                setMobileMenuOpen((open) => !open);
+              }}
+              aria-label={isMn ? "Цэс нээх" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="og-mobile-navigation"
+            >
+              <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+                <path d="M1 1h16M1 7h16M1 13h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </button>
           </div>
 
           <EventProvider>{children}</EventProvider>

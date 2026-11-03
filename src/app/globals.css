@@ -1049,6 +1049,9 @@ select:-webkit-autofill {
   gap: 3px;
   z-index: 1050;
   backdrop-filter: blur(20px);
+  max-height: calc(100dvh - 88px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .bd-profile-dropdown-header {
@@ -1211,6 +1214,9 @@ select:-webkit-autofill {
   flex-direction: column;
   gap: 14px;
   padding: 16px clamp(20px, 4vw, 32px) 20px;
+  max-height: calc(100dvh - 72px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   z-index: 999;
 }
 

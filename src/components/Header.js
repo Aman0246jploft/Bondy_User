@@ -232,8 +232,14 @@ export default function BondyHeader() {
               <button
                 type="button"
                 className="bd-profile-trigger"
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                aria-label="User Profile"
+                onClick={() => {
+                  setIsProfileOpen((open) => !open);
+                  setIsMenuOpen(false);
+                }}
+                aria-label={t("profile") || "Profile"}
+                aria-expanded={isProfileOpen}
+                aria-haspopup="menu"
+                aria-controls="bd-profile-dropdown"
               >
                 <img
                   src={getFullImageUrl(userProfile.profileImage) || "/img/default-user.png"}
@@ -246,7 +252,7 @@ export default function BondyHeader() {
               </button>
 
               {isProfileOpen && (
-                <div className={`bd-profile-dropdown${isOrganizer ? " is-org" : " is-user"}`}>
+                <div id="bd-profile-dropdown" className={`bd-profile-dropdown${isOrganizer ? " is-org" : " is-user"}`} role="menu">
                   {isOrganizer ? (
                     <>
                       <Link href="/Dashboard" className="bd-menu-org" onClick={() => setIsProfileOpen(false)}>
@@ -262,18 +268,18 @@ export default function BondyHeader() {
                     </>
                   ) : (
                     <>
-                      <Link href="/Personalinfo" onClick={() => setIsProfileOpen(false)}>
-                        {t("profile")}
+                      <Link href="/Personalinfo" role="menuitem" onClick={() => setIsProfileOpen(false)}>
+                        {t("profile") || "Profile"}
                       </Link>
-                      <Link href="/MyTickets" onClick={() => setIsProfileOpen(false)}>
-                        {t("bcOrders")}
+                      <Link href="/MyTickets" role="menuitem" onClick={() => setIsProfileOpen(false)}>
+                        {t("bcOrders") || "My bookings"}
                       </Link>
-                      <Link href="/Setting" onClick={() => setIsProfileOpen(false)}>
-                        {t("settings")}
+                      <Link href="/Setting" role="menuitem" onClick={() => setIsProfileOpen(false)}>
+                        {t("settings") || "Settings"}
                       </Link>
                       <span className="bd-menu-rule" />
                       <button type="button" className="logout-btn" onClick={handleLogout}>
-                        {t("logout")}
+                        {t("logout") || "Log out"}
                       </button>
                     </>
                   )}
@@ -295,8 +301,14 @@ export default function BondyHeader() {
           <button
             type="button"
             className="bd-mob-btn"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={() => {
+              setIsMenuOpen((open) => !open);
+              setIsProfileOpen(false);
+            }}
             aria-label={t("menu") || "Menu"}
+            aria-expanded={isMenuOpen}
+            aria-controls="bd-mobile-navigation"
+            aria-haspopup="true"
           >
             <span style={{ display: "flex", flexDirection: "column", gap: "4px", pointerEvents: "none" }}>
               <span style={{ width: "16px", height: "2px", borderRadius: "2px", background: "currentColor" }}></span>
@@ -307,7 +319,12 @@ export default function BondyHeader() {
         </div>
 
         {/* MOBILE SLIDE-DOWN PANEL */}
-        <div className={`bd-mob-panel ${isMenuOpen ? "open" : ""}`} data-mob-panel>
+        <nav
+          id="bd-mobile-navigation"
+          className={`bd-mob-panel ${isMenuOpen ? "open" : ""}`}
+          data-mob-panel
+          aria-label={t("menu") || "Menu"}
+        >
           <Link
             href="/Explore"
             className={`bd-mob-link ${isEventsActive ? "active highlight" : ""}`}
@@ -340,30 +357,14 @@ export default function BondyHeader() {
             </Link>
           )}
 
-          {userProfile ? (
+          {userProfile && isOrganizer && (
             <>
-              {isOrganizer ? (
-                <>
-                  <Link href="/Dashboard" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
-                    {t("organizerSection")}
-                  </Link>
-                  <Link href="/Settings" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
-                    {t("settings")}
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link href="/Personalinfo" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
-                    {t("profile")}
-                  </Link>
-                  <Link href="/MyTickets" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
-                    {t("bcOrders")}
-                  </Link>
-                  <Link href="/Setting" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
-                    {t("settings")}
-                  </Link>
-                </>
-              )}
+              <Link href="/Dashboard" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
+                {t("organizerSection")}
+              </Link>
+              <Link href="/Settings" className="bd-mob-link" onClick={() => setIsMenuOpen(false)}>
+                {t("settings")}
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}
@@ -382,7 +383,8 @@ export default function BondyHeader() {
                 {t("logout") || "Log out"}
               </button>
             </>
-          ) : (
+          )}
+          {!userProfile && (
             <>
               <Link
                 href="/login"
@@ -404,7 +406,7 @@ export default function BondyHeader() {
           <div style={{ marginTop: "6px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
             <LanguageSelector />
           </div>
-        </div>
+        </nav>
       </div>
     </header>
   );
