@@ -1,5 +1,7 @@
 import apiClient from "./apiClient";
 
+let selfProfileRequest = null;
+
 const authApi = {
     customerSignup: (data) => apiClient.post("/user/customer/signup", data),
     organizerSignup: (data) => apiClient.post("/user/organizer/signup", data),
@@ -9,7 +11,21 @@ const authApi = {
                 "Content-Type": "multipart/form-data",
             },
         }),
-    getSelfProfile: (config = {}) => apiClient.get("/user/selfProfile", { skipToast: true, ...config }),
+    getSelfProfile: (config = {}) => {
+        if (config && Object.keys(config).length > 0) {
+            return apiClient.get("/user/selfProfile", { skipToast: true, ...config });
+        }
+
+        if (!selfProfileRequest) {
+            selfProfileRequest = apiClient
+                .get("/user/selfProfile", { skipToast: true })
+                .finally(() => {
+                    selfProfileRequest = null;
+                });
+        }
+
+        return selfProfileRequest;
+    },
     updateProfile: (data) => apiClient.post("/user/update-profile", data, { skipToast: true }),
     getCategoryList: (params) => apiClient.get("/category/list", {
         params: {
