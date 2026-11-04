@@ -12,7 +12,7 @@ export default function GlobalLoader({ fullScreen = true, message = "" }) {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--bd-ink-900, #0c0c0e)",
+        background: "rgba(13, 18, 18, 0.22)",
         color: "#ffffff",
       }
     : {
