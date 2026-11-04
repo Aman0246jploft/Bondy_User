@@ -419,7 +419,7 @@ function AnalyticPage() {
                       <th>{t("views") || "Views"}</th>
                       <th>{t("bookingsTab") || "Bookings"}</th>
                       <th>{t("revenue") || "Revenue"}</th>
-                      
+
                     </tr>
                   </thead>
                   <tbody>

@@ -796,21 +796,20 @@ function Page() {
                     <b style={{ color }}>{money(item.amount)}</b>
                     {kind === "payout" ? (
                       <span
-                        className={`py-pill ${
-                          status === "paid" || status === "refunded"
-                            ? "is-ok"
-                            : status === "cancelled"
+                        className={`py-pill ${status === "paid" || status === "refunded"
+                          ? "is-ok"
+                          : status === "cancelled"
                             ? "is-bad"
                             : "is-wait"
-                        }`}
+                          }`}
                       >
                         {status === "paid"
                           ? t("pyPaid")
                           : status === "cancelled"
-                          ? t("pyCancelled") || t("cancelled")
-                          : status === "refunded"
-                          ? t("pyRefunded") || t("refunded")
-                          : t("pyWaiting")}
+                            ? t("pyCancelled") || t("cancelled")
+                            : status === "refunded"
+                              ? t("pyRefunded") || t("refunded")
+                              : t("pyWaiting")}
                       </span>
                     ) : (status === "pending" || status === "failed" || status === "cancelled") && (
                       <span className={`py-pill ${status === "pending" ? "is-wait" : "is-bad"}`}>
@@ -910,12 +909,12 @@ function Page() {
           st === "pending"
             ? t("pyWaiting")
             : st === "cancelled"
-            ? t("pyCancelled") || t("cancelled")
-            : st === "refunded"
-            ? t("pyRefunded") || t("refunded")
-            : st === "failed"
-            ? t("pyFailed")
-            : t("pyPaid");
+              ? t("pyCancelled") || t("cancelled")
+              : st === "refunded"
+                ? t("pyRefunded") || t("refunded")
+                : st === "failed"
+                  ? t("pyFailed")
+                  : t("pyPaid");
         return (
           <div className="py-scrim" onClick={(e) => { if (e.target === e.currentTarget) setTxOpen(null); }}>
             <div className="py-sheet py-sheet-sm">
@@ -931,13 +930,12 @@ function Page() {
               <div className="py-kv">
                 <span>{t("pyStatus")}</span>
                 <span
-                  className={`py-pill ${
-                    st === "paid" || st === "refunded"
-                      ? "is-ok"
-                      : st === "cancelled" || st === "failed"
+                  className={`py-pill ${st === "paid" || st === "refunded"
+                    ? "is-ok"
+                    : st === "cancelled" || st === "failed"
                       ? "is-bad"
                       : "is-wait"
-                  }`}
+                    }`}
                   style={{ marginTop: 0 }}
                 >
                   {stLabel}

@@ -12,6 +12,23 @@ import { getFullImageUrl } from "@/utils/imageHelper";
 import GlobalLoader from "@/components/GlobalLoader";
 import "./organizer-admin.css";
 
+const isOrganizer = (user) =>
+  user?.role === "ORGANIZER" ||
+  user?.roleId === 2 ||
+  !!user?.organizerVerificationStatus;
+
+function getCachedOrganizerProfile() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const cached = localStorage.getItem("userProfile");
+    const user = cached ? JSON.parse(cached) : null;
+    return isOrganizer(user) ? user : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function RootLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -23,15 +40,7 @@ export default function RootLayout({ children }) {
   const [authorized, setAuthorized] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [profile, setProfile] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const u = localStorage.getItem("userProfile");
-        if (u) return JSON.parse(u);
-      } catch (e) { }
-    }
-    return null;
-  });
+  const [profile, setProfile] = useState(getCachedOrganizerProfile);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -61,16 +70,19 @@ export default function RootLayout({ children }) {
         router.push("/login");
         return;
       }
+
+      const cachedProfile = getCachedOrganizerProfile();
+      if (cachedProfile) {
+        setProfile(cachedProfile);
+        setAuthorized(true);
+      }
+
       try {
         const response = await authApi.getSelfProfile();
         if (response?.status && response?.data?.user) {
           const user = response.data.user;
-          const isOrg =
-            user.role === "ORGANIZER" ||
-            user.roleId === 2 ||
-            !!user.organizerVerificationStatus;
-
-          if (!isOrg) {
+          if (!isOrganizer(user)) {
+            setAuthorized(false);
             router.push("/");
           } else {
             setProfile(user);
@@ -80,20 +92,15 @@ export default function RootLayout({ children }) {
             setAuthorized(true);
           }
         } else {
+          setAuthorized(false);
           router.push("/login");
         }
       } catch (error) {
         // If already cached in localStorage with organizer role, allow smooth view
-        const cached = typeof window !== "undefined" ? localStorage.getItem("userProfile") : null;
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            if (parsed.role === "ORGANIZER" || parsed.roleId === 2 || parsed.organizerVerificationStatus) {
-              setProfile(parsed);
-              setAuthorized(true);
-              return;
-            }
-          } catch (e) { }
+        if (cachedProfile) {
+          setProfile(cachedProfile);
+          setAuthorized(true);
+          return;
         }
         router.push("/login");
       }
