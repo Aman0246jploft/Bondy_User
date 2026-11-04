@@ -675,19 +675,19 @@ function VerificationPageContent() {
                     {idStatus === "review"
                       ? t("vfIdReviewTitle")
                       : idStatus === "verified"
-                      ? t("vfIdOkTitle")
-                      : idStatus === "rejected"
-                      ? t("vfNeedsFix")
-                      : t("vfIdEmptyTitle")}
+                        ? t("vfIdOkTitle")
+                        : idStatus === "rejected"
+                          ? t("vfNeedsFix")
+                          : t("vfIdEmptyTitle")}
                   </h3>
                   <p>
                     {idStatus === "review"
                       ? t("vfIdReviewNote")
                       : idStatus === "verified"
-                      ? t("vfIdOkNote")
-                      : idStatus === "rejected"
-                      ? (idDocs.find((d) => d.status === "rejected")?.reason || t("vfNeedsFixNote"))
-                      : t("vfIdEmptyNote")}
+                        ? t("vfIdOkNote")
+                        : idStatus === "rejected"
+                          ? (idDocs.find((d) => d.status === "rejected")?.reason || t("vfNeedsFixNote"))
+                          : t("vfIdEmptyNote")}
                   </p>
                 </div>
 

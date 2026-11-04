@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import React, { Suspense, useEffect, useMemo, useState } from "react";
-import { Spinner } from "react-bootstrap";
 import { useRouter, useSearchParams } from "next/navigation";
 import eventApi from "@/api/eventApi";
 import bookingApi from "@/api/bookingApi";
@@ -680,7 +679,7 @@ function EventDetailsContent() {
             </label>
           </div>
           {bookingsLoading ? (
-            <div className="d-flex justify-content-center py-4"><Spinner animation="border" style={{ color: "#23ada4" }} /></div>
+            <GlobalLoader fullScreen={false} />
           ) : bookingsList.length === 0 ? (
             <p className="ed-empty">{copy.none}</p>
           ) : (
@@ -793,7 +792,7 @@ function EventDetailsContent() {
         </div>
 
           {analyticsLoading ? (
-            <div className="d-flex justify-content-center py-4"><Spinner animation="border" style={{ color: "#23ada4" }} /></div>
+            <GlobalLoader fullScreen={false} />
           ) : (
             <>
               <div className="ed-anMain">
@@ -1014,7 +1013,7 @@ function EventDetailsContent() {
 
 export default function Page() {
   return (
-    <Suspense fallback={<div className="text-center py-5"><Spinner animation="border" style={{ color: "#23ada4" }} /></div>}>
+    <Suspense fallback={<GlobalLoader fullScreen={false} />}>
       <EventDetailsContent />
     </Suspense>
   );
