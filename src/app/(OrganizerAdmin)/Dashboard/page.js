@@ -7,7 +7,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import organizerApi from "../../../api/organizerApi";
 import eventApi from "../../../api/eventApi";
 import courseApi from "../../../api/courseApi";
-import authApi from "../../../api/authApi";
 import DateRangeCalendarPopover from "@/components/DateRangeCalendarPopover";
 import { getFullImageUrl } from "../../../utils/imageHelper";
 import GlobalLoader from "@/components/GlobalLoader";
@@ -132,7 +131,6 @@ export default function OrganizerDashboardPage() {
 
   // ─── State ─────────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState(null);
   const [dashStats, setDashStats] = useState({
     totalDraftEvents: 0,
     totalPendingEvents: 0,
@@ -230,44 +228,60 @@ export default function OrganizerDashboardPage() {
   // ─── Fetch All Dashboard Data ──────────────────────────────────────────────
   const fetchAllData = useCallback(async () => {
     try {
-      setLoading(true);
+      const requests = [
+        organizerApi.getDashboardData().then((res) => {
+          if (res?.status && res?.data) setDashStats(res.data);
+          return res;
+        }),
+        organizerApi.getAnalyticsStats().then((res) => {
+          if (res?.status && res?.data) setAnalytics(res.data);
+          return res;
+        }),
+        organizerApi.getEarnings().then((res) => {
+          if (res?.status && res?.data) setEarnings(res.data);
+          return res;
+        }),
+        eventApi.getOrganizerEvents({ limit: 6 }).then((res) => {
+          if (res?.status && res?.data) {
+            const list = res.data.events || res.data || [];
+            setEvents(Array.isArray(list) ? list : []);
+          }
+          return res;
+        }),
+        courseApi.getOrganizerCourses({ limit: 6 }).then((res) => {
+          if (res?.status && res?.data) {
+            const list = res.data.courses || res.data || [];
+            setCourses(Array.isArray(list) ? list : []);
+          }
+          return res;
+        }),
+      ];
 
-      const [profRes, dashRes, analRes, earnRes, evRes, crRes] = await Promise.allSettled([
-        authApi.getSelfProfile(),
-        organizerApi.getDashboardData(),
-        organizerApi.getAnalyticsStats(),
-        organizerApi.getEarnings(),
-        eventApi.getOrganizerEvents({ limit: 6 }),
-        courseApi.getOrganizerCourses({ limit: 6 }),
-      ]);
-
-      // Profile
-      if (profRes.status === "fulfilled" && profRes.value?.status && profRes.value?.data?.user) {
-        setProfile(profRes.value.data.user);
-      } else {
-        try {
-          const cached = localStorage.getItem("userProfile");
-          if (cached) setProfile(JSON.parse(cached));
-        } catch (e) { }
-      }
+      const observedRequests = requests.map((request) =>
+        request.then(
+          (result) => {
+            setLoading(false);
+            return result;
+          },
+          (error) => {
+            setLoading(false);
+            throw error;
+          }
+        )
+      );
+      const [dashRes, , earnRes] =
+        await Promise.allSettled(observedRequests);
 
       // Dashboard stats
       let freshDashData = null;
       if (dashRes.status === "fulfilled" && dashRes.value?.status && dashRes.value?.data) {
         freshDashData = dashRes.value.data;
-        setDashStats(freshDashData);
-      }
-
-      // Analytics stats
-      if (analRes.status === "fulfilled" && analRes.value?.status && analRes.value?.data) {
-        setAnalytics(analRes.value.data);
       }
 
       // Earnings data
       let freshEarnData = null;
       if (earnRes.status === "fulfilled" && earnRes.value?.status && earnRes.value?.data) {
         freshEarnData = earnRes.value.data;
-        setEarnings(freshEarnData);
       }
 
       // ─── Map Recent Bookings (Prioritize Real Transactions, Exclude Payouts) ─
@@ -339,30 +353,23 @@ export default function OrganizerDashboardPage() {
       }
 
       setRecentOrders(orders.slice(0, 5));
-
-      // Events
-      if (evRes.status === "fulfilled" && evRes.value?.status && evRes.value?.data) {
-        const evList = evRes.value.data.events || evRes.value.data || [];
-        setEvents(Array.isArray(evList) ? evList : []);
-      }
-
-      // Courses
-      if (crRes.status === "fulfilled" && crRes.value?.status && crRes.value?.data) {
-        const crList = crRes.value.data.courses || crRes.value.data || [];
-        setCourses(Array.isArray(crList) ? crList : []);
-      }
     } catch (err) {
       console.error("Failed to load organizer dashboard:", err);
-    } finally {
       setLoading(false);
     }
   }, [isMn]);
 
   useEffect(() => {
     fetchAllData();
+  }, [fetchAllData]);
+
+  useEffect(() => {
     fetchRevenueAnalytics(range);
+  }, [fetchRevenueAnalytics, range]);
+
+  useEffect(() => {
     document.title = isMn ? "Хянах самбар - Bondy Organizer" : "Dashboard - Bondy Organizer";
-  }, [fetchAllData, fetchRevenueAnalytics, range, isMn]);
+  }, [isMn]);
 
   // Close floating menus when clicking outside
   useEffect(() => {
@@ -613,7 +620,11 @@ export default function OrganizerDashboardPage() {
   };
 
   if (loading) {
-    return <GlobalLoader fullScreen={false} />;
+    return (
+      <div style={{ minHeight: "42vh", display: "grid", placeItems: "center" }}>
+        <GlobalLoader fullScreen={false} />
+      </div>
+    );
   }
 
   return (

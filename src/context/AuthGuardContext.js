@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import authApi from "@/api/authApi";
 
@@ -11,6 +11,7 @@ export function AuthGuardProvider({ children }) {
   const [pendingAction, setPendingAction] = useState(null);
   const pathname = usePathname();
   const router = useRouter();
+  const lastTimezoneUpdateRef = useRef(null);
 
   // Redirect staff members to /StaffHome if they try to access other routes
   useEffect(() => {
@@ -84,12 +85,15 @@ export function AuthGuardProvider({ children }) {
           const profile = response?.data?.user;
           localStorage.setItem("userProfile", JSON.stringify(profile));
 
-          // Update timezone on backend
-          try {
-            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            await authApi.updateTimezone({ timeZone });
-          } catch (tzErr) {
-            console.error("Failed to update timezone:", tzErr);
+          const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          if (timeZone !== lastTimezoneUpdateRef.current) {
+            lastTimezoneUpdateRef.current = timeZone;
+            authApi.updateTimezone({ timeZone }).catch((tzErr) => {
+              if (lastTimezoneUpdateRef.current === timeZone) {
+                lastTimezoneUpdateRef.current = null;
+              }
+              console.error("Failed to update timezone:", tzErr);
+            });
           }
 
           const isApproved = profile?.hasBeenApproved === true || profile?.isVerified === true;
