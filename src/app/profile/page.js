@@ -698,10 +698,9 @@ function ProfileContent() {
 
   // Document Title
   useEffect(() => {
-    if (userProfile?.firstName || userProfile?.lastName) {
-      document.title = `${userProfile.firstName || ""} ${userProfile.lastName || ""} · Bondy`;
-    } else if (userProfile?.name) {
-      document.title = `${userProfile.name} · Bondy`;
+    const titleName = userProfile?.businessName || `${userProfile?.firstName || ""} ${userProfile?.lastName || ""}`.trim() || userProfile?.name || userProfile?.organizerName;
+    if (titleName) {
+      document.title = `${titleName} · Bondy`;
     } else {
       document.title = "Profile · Bondy";
     }
@@ -858,13 +857,13 @@ function ProfileContent() {
     );
   }
 
-  const orgName = `${userProfile.firstName || ""} ${userProfile.lastName || ""}`.trim() || userProfile.name || userProfile.organizerName || "Organizer";
+  const orgName = userProfile.businessName || `${userProfile.firstName || ""} ${userProfile.lastName || ""}`.trim() || userProfile.name || userProfile.organizerName || "Organizer";
   const avatarUrl = userProfile.profileImage ? getFullImageUrl(userProfile.profileImage) : "";
   const coverUrl = userProfile.backgroundImage ? getFullImageUrl(userProfile.backgroundImage) : "";
   const isVerified = Boolean(
     userProfile.role === "ORGANIZER" && (userProfile.organizerVerificationStatus === "approved" || userProfile.isVerified)
   );
-  const orgCategory = userProfile.category || (userProfile.role === "ORGANIZER" ? (t("eventOrganizer") || "Зохион байгуулагч") : (t("userRole") || "Хэрэглэгч"));
+  const orgCategory = (userProfile.businessCategory && (userProfile.businessCategory.name || userProfile.businessCategory)) || userProfile.category || (userProfile.role === "ORGANIZER" ? (t("eventOrganizer") || "Зохион байгуулагч") : (t("userRole") || "Хэрэглэгч"));
   const orgIntro = userProfile.bio || (language === "mn" ? "Танилцуулга оруулаагүй байна." : "No introduction provided yet.");
 
   const upcomingEvents = userProfile?.events?.upcoming_events || [];
