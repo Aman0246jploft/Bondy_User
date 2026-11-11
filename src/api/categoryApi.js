@@ -5,6 +5,9 @@ const categoryApi = {
         // params: { page, limit, search, type }
         return apiClient.get("/category/list", { params, skipToast: true });
     },
+    getCategoryList: (params) => {
+        return apiClient.get("/category/list", { params, skipToast: true });
+    },
     getCategoryStats: () => {
         return apiClient.get("/category/stats", { skipToast: true });
     },
