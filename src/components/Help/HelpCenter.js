@@ -154,8 +154,9 @@ export default function HelpCenter() {
     setCatLoading(true);
     try {
       const res = await categoryApi.getCategoryList({ type: "support_ticket", limit: 100 });
-      if (res?.status) {
-        setTicketCategories(res.data?.categories || []);
+      const list = res?.data?.categories || res?.categories || [];
+      if (res?.status && Array.isArray(list)) {
+        setTicketCategories(list);
       }
     } catch (e) {
       console.error("Failed to load support ticket categories:", e);
@@ -163,6 +164,15 @@ export default function HelpCenter() {
       setCatLoading(false);
     }
   }, []);
+
+  const sortedTicketCategories = useMemo(() => {
+    if (!ticketCategories || ticketCategories.length === 0) return [];
+    return [...ticketCategories].sort((a, b) => {
+      const labelA = (isMn ? a.name_thi || a.name : a.name) || "";
+      const labelB = (isMn ? b.name_thi || b.name : b.name) || "";
+      return labelA.localeCompare(labelB, isMn ? "mn" : "en", { sensitivity: "base" });
+    });
+  }, [ticketCategories, isMn]);
 
   const loadHelp = useCallback(async () => {
     setFaqLoading(true);
@@ -426,17 +436,12 @@ export default function HelpCenter() {
                 onChange={(e) => setField("topic", e.target.value)}
               >
                 <option value="">{t("hcSelect")}</option>
-                {ticketCategories.length > 0 ? (
-                  <>
-                    {ticketCategories.map((cat) => (
-                      <option key={cat._id} value={cat._id}>
-                        {categoryLabel(cat)}
-                      </option>
-                    ))}
-                    {!ticketCategories.some((c) => c.name?.toLowerCase() === "other") && (
-                      <option value={OTHER_TOPIC}>{t("hcOther")}</option>
-                    )}
-                  </>
+                {sortedTicketCategories.length > 0 ? (
+                  sortedTicketCategories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {categoryLabel(cat)}
+                    </option>
+                  ))
                 ) : (
                   <>
                     {topics.map((tp) => (
