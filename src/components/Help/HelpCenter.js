@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import authApi from "@/api/authApi";
 import supportTicketApi from "@/api/supportTicketApi";
+import categoryApi from "@/api/categoryApi";
 import { useLanguage } from "@/context/LanguageContext";
 import "./help-center.css";
 
@@ -123,6 +124,10 @@ export default function HelpCenter() {
   const [tError, setTError] = useState(false);
   const [filter, setFilter] = useState("all");
 
+  // Dynamic Support Ticket Categories (from Category collection with type: support_ticket)
+  const [ticketCategories, setTicketCategories] = useState([]);
+  const [catLoading, setCatLoading] = useState(false);
+
   // Create sheet
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -139,6 +144,25 @@ export default function HelpCenter() {
     (topic) => (isMn ? topic?.name_mn || topic?.name : topic?.name) || "",
     [isMn],
   );
+
+  const categoryLabel = useCallback(
+    (cat) => (isMn ? cat?.name_thi || cat?.name : cat?.name) || "",
+    [isMn],
+  );
+
+  const loadTicketCategories = useCallback(async () => {
+    setCatLoading(true);
+    try {
+      const res = await categoryApi.getCategoryList({ type: "support_ticket", limit: 100 });
+      if (res?.status) {
+        setTicketCategories(res.data?.categories || []);
+      }
+    } catch (e) {
+      console.error("Failed to load support ticket categories:", e);
+    } finally {
+      setCatLoading(false);
+    }
+  }, []);
 
   const loadHelp = useCallback(async () => {
     setFaqLoading(true);
@@ -175,7 +199,8 @@ export default function HelpCenter() {
   useEffect(() => {
     loadHelp();
     loadTickets();
-  }, [loadHelp, loadTickets]);
+    loadTicketCategories();
+  }, [loadHelp, loadTickets, loadTicketCategories]);
 
   // ---------- derived data ----------
   const faqTopicId = (f) => String(f.category?._id || f.categoryId || "");
@@ -212,9 +237,17 @@ export default function HelpCenter() {
   const statusLabel = (status) => (STATUS_KEYS[status] ? t(STATUS_KEYS[status]) : status);
 
   const ticketTopicLabel = (ticket) => {
-    const category = typeof ticket.category === "object" ? ticket.category?.name : ticket.category;
+    const catObj = ticket.categoryId || (typeof ticket.category === "object" ? ticket.category : null);
+    if (catObj) {
+      return isMn ? catObj.name_thi || catObj.name : catObj.name;
+    }
+    const category = ticket.category;
     if (!category) return "";
     if (category === OTHER_TOPIC) return t("hcOther");
+    const matchCat = ticketCategories.find(
+      (c) => String(c._id) === String(category) || c.name?.toLowerCase() === category.toLowerCase(),
+    );
+    if (matchCat) return categoryLabel(matchCat);
     const match = topics.find((tp) => tp.name === category);
     return match ? topicLabel(match) : category;
   };
@@ -243,7 +276,16 @@ export default function HelpCenter() {
 
   // ---------- create ----------
   const openCreate = (prefillTopic = "") => {
-    setForm({ ...EMPTY_FORM, topic: prefillTopic });
+    let prefillVal = prefillTopic;
+    if (prefillTopic && ticketCategories.length > 0) {
+      const match = ticketCategories.find(
+        (c) =>
+          String(c._id) === String(prefillTopic) ||
+          c.name?.toLowerCase() === prefillTopic.toLowerCase(),
+      );
+      if (match) prefillVal = match._id;
+    }
+    setForm({ ...EMPTY_FORM, topic: prefillVal });
     setErrors({});
     setFormError("");
     setNewRef("");
@@ -274,8 +316,12 @@ export default function HelpCenter() {
     setBusy(true);
     setFormError("");
     try {
+      const selectedCat = ticketCategories.find(
+        (c) => String(c._id) === String(form.topic) || c.name?.toLowerCase() === form.topic?.toLowerCase(),
+      );
       const payload = {
-        category: form.topic,
+        categoryId: selectedCat?._id || form.topic,
+        category: selectedCat?.name || form.topic,
         subject: form.subject.trim(),
         description: form.description.trim(),
         referenceNumber: form.referenceNumber.trim(),
@@ -380,12 +426,27 @@ export default function HelpCenter() {
                 onChange={(e) => setField("topic", e.target.value)}
               >
                 <option value="">{t("hcSelect")}</option>
-                {topics.map((tp) => (
-                  <option key={tp._id} value={tp.name}>
-                    {topicLabel(tp)}
-                  </option>
-                ))}
-                <option value={OTHER_TOPIC}>{t("hcOther")}</option>
+                {ticketCategories.length > 0 ? (
+                  <>
+                    {ticketCategories.map((cat) => (
+                      <option key={cat._id} value={cat._id}>
+                        {categoryLabel(cat)}
+                      </option>
+                    ))}
+                    {!ticketCategories.some((c) => c.name?.toLowerCase() === "other") && (
+                      <option value={OTHER_TOPIC}>{t("hcOther")}</option>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {topics.map((tp) => (
+                      <option key={tp._id} value={tp.name}>
+                        {topicLabel(tp)}
+                      </option>
+                    ))}
+                    <option value={OTHER_TOPIC}>{t("hcOther")}</option>
+                  </>
+                )}
               </select>
               {errors.topic && <span className="hc-err">{t("hcErrType")}</span>}
             </label>
